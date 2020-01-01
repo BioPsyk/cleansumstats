@@ -1,6 +1,6 @@
 # ![nf-core/cleansumstats](docs/images/nf-core-cleansumstats_logo.png)
 
-**convert GWAS sumstat files into a common format with a common reference for positions, rsids and effect alleles.**.
+**Convert GWAS sumstat files into a common format with a common reference for positions, rsids and effect alleles.**.
 
 [![Build Status](https://travis-ci.com/nf-core/cleansumstats.svg?branch=master)](https://travis-ci.com/nf-core/cleansumstats)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.32.0-brightgreen.svg)](https://www.nextflow.io/)
