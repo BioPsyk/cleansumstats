@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-cat ${1} | sstools-raw sort-index
+sstools-raw sort-index ${1}

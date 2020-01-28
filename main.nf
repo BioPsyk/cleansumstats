@@ -181,17 +181,15 @@ read_files_sumstats = Channel
  */
 process add_row_index {
 
-    publishDir "${params.output_dir}/$datasetID", mode: 'copy', overwrite: true
-
     input:
     tuple datasetID, file(sstats) from read_files_sumstats
 
     output:
-    tuple datasetID, file("added_row_index_${datasetID}.txt") into file_with_row_index
+    tuple datasetID, stdout into file_with_row_index
 
     script:
     """
-    add_row_index.sh $sstats > added_row_index_${datasetID}.txt
+    add_row_index.sh $sstats
 
     """
 }
@@ -204,14 +202,14 @@ process sort_index {
     publishDir "${params.output_dir}/$datasetID", mode: 'copy', overwrite: true
 
     input:
-    tuple datasetID, file(sstats) from file_with_row_index
+    tuple datasetID, stdin from file_with_row_index
 
     output:
     tuple datasetID, file("sorted_row_index_${datasetID}.txt") into file_with_sorted_row_index
 
     script:
     """
-    sort_row_index.sh $sstats > sorted_row_index_${datasetID}.txt
+    sort_row_index.sh - > sorted_row_index_${datasetID}.txt
     """
 }
 
