@@ -168,30 +168,30 @@ process get_software_versions {
 
 /*
  * Create a channel for input read files
+ * read_files_sumstats = Channel.fromPath(params.input)
  */
 
-/*
- *read_files_sumstats = Channel.fromPath(params.input)
- */
 
-read_files_sumstats = Channel.fromPath("/home/people/jesgaa/projects/nf-core-owntest/brcax_summaryStats.txt")
-
-
+read_files_sumstats = Channel
+                .fromPath(params.input)
+                .map { file -> tuple(file.baseName, file) }
 
 /*
  * STEP 1 - Add index
  */
 process add_row_index {
 
+    publishDir "${params.output_dir}/$datasetID", mode: 'copy', overwrite: true
+
     input:
-    file sstats from read_files_sumstats
+    tuple datasetID, file(sstats) from read_files_sumstats
 
     output:
-    file "added_row_index.txt" into file_with_row_index
+    tuple datasetID, file("added_row_index_${datasetID}.txt") into file_with_row_index
 
     script:
     """
-    cat $sstats > added_row_index.txt
+    add_row_index.sh $sstats > added_row_index_${datasetID}.txt
 
     """
 }
@@ -201,19 +201,22 @@ process add_row_index {
  */
 process sort_index {
 
+    publishDir "${params.output_dir}/$datasetID", mode: 'copy', overwrite: true
+
     input:
-    file sstats from file_with_row_index
+    tuple datasetID, file(sstats) from file_with_row_index
 
     output:
-    stdout result
+    tuple datasetID, file("sorted_row_index_${datasetID}.txt") into file_with_sorted_row_index
 
     script:
     """
-    sh /home/people/jesgaa/projects/nf-core-owntest/pipe-2.sh $sstats 
+    sort_row_index.sh $sstats > sorted_row_index_${datasetID}.txt
     """
 }
 
-result.view { it.trim() }
+
+
 
 /*
  * Completion e-mail notification
