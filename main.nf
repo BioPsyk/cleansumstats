@@ -172,47 +172,76 @@ process get_software_versions {
  */
 
 
-read_files_sumstats = Channel
-                .fromPath(params.input)
-                .map { file -> tuple(file.baseName, file) }
+read_input_folder = Channel
+                .fromPath(params.input, type: 'dir')
+                .map { dir -> tuple(dir.baseName, dir) }
+
+read_input_folder.into { to_stream_sumstat_file; to_stream_metadata_file }
+
 
 /*
- * STEP 1 - Add index
+ * STEP 0A - Channel .gz from input
  */
-process add_row_index {
+
+process gunzip_sumstat_from_dir {
 
     input:
-    tuple datasetID, file(sstats) from read_files_sumstats
+    tuple datasetID, sdir from to_stream_sumstat_file
 
     output:
-    tuple datasetID, stdout into file_with_row_index
+    tuple datasetID, stdout into sfile_unzipped_stream
 
     script:
     """
-    add_row_index.sh $sstats
+    zcat $sdir/*.gz
 
     """
 }
 
 /*
- * STEP 2 - Sort index
+ *sfile_unzipped_stream.into { sfile_stream_for_meta_check; sfile_stream_for_else }
  */
-process sort_index {
 
-    publishDir "${params.output_dir}/$datasetID", mode: 'copy', overwrite: true
+/*
+ * STEP 0B - Channel .meta from input
+ */
+
+process set_meta_from_dir {
 
     input:
-    tuple datasetID, stdin from file_with_row_index
+    tuple datasetID, sdir from to_stream_metadata_file
 
     output:
-    tuple datasetID, file("sorted_row_index_${datasetID}.txt") into file_with_sorted_row_index
+    tuple datasetID, file("meta_${datasetID}.txt") into mfile_file
 
     script:
     """
-    sort_row_index.sh - > sorted_row_index_${datasetID}.txt
+    cat $sdir/*.meta > meta_${datasetID}.txt
+
     """
 }
 
+
+/*
+ * STEP 1 - extract important meta information accessors
+ */
+process check_and_order_meta_data {
+
+    publishDir "${params.outdir}/$datasetID1", mode: 'copy', overwrite: true
+
+    input:
+    tuple datasetID1, mfile from mfile_file
+    tuple datasetID2, stdin from sfile_unzipped_stream
+
+    output:
+    tuple datasetID1, file("meta_ordered_${datasetID1}.txt") into meta_colinfo
+
+    script:
+    """
+    check_and_order_meta_data.sh - $mfile > meta_ordered_${datasetID1}.txt
+
+    """
+}
 
 
 
