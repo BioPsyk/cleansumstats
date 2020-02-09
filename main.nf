@@ -189,10 +189,12 @@ process gunzip_sumstat_from_dir {
     tuple datasetID, sdir from to_stream_sumstat_file
 
     output:
+    tuple datasetID, file("meta_${datasetID}.txt") into mfile_file
     tuple datasetID, stdout into sfile_unzipped_stream
 
     script:
     """
+    cat $sdir/*.meta > meta_${datasetID}.txt
     zcat $sdir/*.gz
 
     """
@@ -204,28 +206,29 @@ process gunzip_sumstat_from_dir {
 
 /*
  * STEP 0B - Channel .meta from input
+ *
+ *
+ *process set_meta_from_dir {
+ *
+ *    input:
+ *    tuple datasetID, sdir from to_stream_metadata_file
+ *
+ *    output:
+ *    tuple datasetID, file("meta_${datasetID}.txt") into mfile_file
+ *
+ *    script:
+ *    """
+ *    cat $sdir/*.meta > meta_${datasetID}.txt
+ *
+ *    """
+ *}
+ *
  */
-
-process set_meta_from_dir {
-
-    input:
-    tuple datasetID, sdir from to_stream_metadata_file
-
-    output:
-    tuple datasetID, file("meta_${datasetID}.txt") into mfile_file
-
-    script:
-    """
-    cat $sdir/*.meta > meta_${datasetID}.txt
-
-    """
-}
-
 
 /*
  * STEP 1 - extract important meta information accessors
  */
-process check_and_order_meta_data {
+process check_meta_data_format {
 
     publishDir "${params.outdir}/$datasetID1", mode: 'copy', overwrite: true
 
@@ -234,16 +237,17 @@ process check_and_order_meta_data {
     tuple datasetID2, stdin from sfile_unzipped_stream
 
     output:
-    tuple datasetID1, file("meta_ordered_${datasetID1}.txt") into meta_colinfo
+    tuple datasetID1, file("meta_data_ok_${datasetID1}.txt") into mfile_ok_file
 
     script:
     """
-    check_and_order_meta_data.sh - $mfile > meta_ordered_${datasetID1}.txt
+    head - > meta_data_ok_${datasetID1}.txt
 
     """
 }
 
-
+    //head - > meta_data_ok_${datasetID1}.txt
+    //check_meta_data_format.sh $mfile - > meta_data_ok_${datasetID1}.txt
 
 /*
  * Completion e-mail notification
