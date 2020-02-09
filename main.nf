@@ -172,15 +172,15 @@ process get_software_versions {
  */
 
 
-read_input_folder = Channel
+to_stream_sumstat_file = Channel
                 .fromPath(params.input, type: 'dir')
                 .map { dir -> tuple(dir.baseName, dir) }
 
-read_input_folder.into { to_stream_sumstat_file; to_stream_metadata_file }
 
 
 /*
  * STEP 0A - Channel .gz from input
+ * read_input_folder.into { to_stream_sumstat_file; to_stream_metadata_file }
  */
 
 process gunzip_sumstat_from_dir {
@@ -189,14 +189,13 @@ process gunzip_sumstat_from_dir {
     tuple datasetID, sdir from to_stream_sumstat_file
 
     output:
-    tuple datasetID, file("meta_${datasetID}.txt") into mfile_file
-    tuple datasetID, stdout into sfile_unzipped_stream
+    tuple datasetID, file("header_${datasetID}.txt"), file("meta_${datasetID}.txt"), stdout into sfile_on_stream
 
     script:
     """
     cat $sdir/*.meta > meta_${datasetID}.txt
+    extract_header_from_gzfile_in_dir.sh $sdir > header_${datasetID}.txt
     zcat $sdir/*.gz
-
     """
 }
 
@@ -204,26 +203,6 @@ process gunzip_sumstat_from_dir {
  *sfile_unzipped_stream.into { sfile_stream_for_meta_check; sfile_stream_for_else }
  */
 
-/*
- * STEP 0B - Channel .meta from input
- *
- *
- *process set_meta_from_dir {
- *
- *    input:
- *    tuple datasetID, sdir from to_stream_metadata_file
- *
- *    output:
- *    tuple datasetID, file("meta_${datasetID}.txt") into mfile_file
- *
- *    script:
- *    """
- *    cat $sdir/*.meta > meta_${datasetID}.txt
- *
- *    """
- *}
- *
- */
 
 /*
  * STEP 1 - extract important meta information accessors
@@ -233,16 +212,15 @@ process check_meta_data_format {
     publishDir "${params.outdir}/$datasetID1", mode: 'copy', overwrite: true
 
     input:
-    tuple datasetID1, mfile from mfile_file
-    tuple datasetID2, stdin from sfile_unzipped_stream
+    tuple datasetID1, hfile, mfile, stdin from sfile_on_stream
 
     output:
-    tuple datasetID1, file("meta_data_ok_${datasetID1}.txt") into mfile_ok_file
+    tuple datasetID1, hfile, mfile, stdout into mfile_ok_file
 
     script:
     """
-    head - > meta_data_ok_${datasetID1}.txt
-
+    check_meta_data_format.sh $mfile $hfile
+    cat -
     """
 }
 

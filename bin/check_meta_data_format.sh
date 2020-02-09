@@ -241,7 +241,7 @@ done
 #fi
 if [ "${noError}" == "true" ]
 then
-  cat ${mefl}
+  echo "all seems ok with the meta data format"
   exit 0
 else
   echo "one or more problems detected with the meta data format"
