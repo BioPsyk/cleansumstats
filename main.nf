@@ -20,15 +20,16 @@ def helpMessage() {
     nextflow run nf-core/cleansumstats --infile 'gwas-sumstats.gz' -profile docker
 
     Mandatory arguments:
-      --infile                       Path to tab-separated input data (must be surrounded with quotes)
+      --infile                      Path to tab-separated input data (must be surrounded with quotes)
       -profile                      Configuration profile to use. Can use multiple (comma separated)
                                     Available: conda, docker, singularity, awsbatch, test and more.
+
+    References:                     If not specified in the configuration file or you wish to overwrite any of the references.
+      --dbsnp                       Path to dbsnp GRCh38 reference. Has to be sorted on chr:pos as first column using LC_ALL=C.
 
     Options:
       --genome                      Name of reference genome in input file
 
-    References                      If not specified in the configuration file or you wish to overwrite any of the references.
-      --dbsnp                       Path to dbsnp reference
 
     Other options:
       --outdir                      The output directory where the results will be saved
@@ -69,6 +70,8 @@ if (params.help) {
 params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
 if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 
+if (params.dbsnp) { ch_dbsnp = file(params.dbsnp, checkIfExists: true) }
+
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
 custom_runName = params.name
@@ -96,8 +99,8 @@ log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
-// TODO nf-core: Report custom parameters here
 summary['Input']            = params.input
+if (params.dbsnp) summary['dbSNP'] = params.dbsnp 
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -177,7 +180,6 @@ to_stream_sumstat_file = Channel
                 .map { dir -> tuple(dir.baseName, dir) }
 
 
-
 /*
  * STEP 0A - Channel .gz from input
  * read_input_folder.into { to_stream_sumstat_file; to_stream_metadata_file }
@@ -205,17 +207,17 @@ process gunzip_sumstat_from_dir {
 
 
 /*
- * STEP 1 - extract important meta information accessors
+ * STEP 1 - check validity of all col accessors from meta file
  */
 process check_meta_data_format {
 
-    publishDir "${params.outdir}/$datasetID1", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
 
     input:
-    tuple datasetID1, hfile, mfile, stdin from sfile_on_stream
+    tuple datasetID, hfile, mfile, stdin from sfile_on_stream
 
     output:
-    tuple datasetID1, hfile, mfile, stdout into mfile_ok_file
+    tuple datasetID, hfile, mfile, stdout into mfile_ok_file
 
     script:
     """
@@ -224,8 +226,59 @@ process check_meta_data_format {
     """
 }
 
-    //head - > meta_data_ok_${datasetID1}.txt
-    //check_meta_data_format.sh $mfile - > meta_data_ok_${datasetID1}.txt
+/*
+ * STEP 2 - check which genome build the raw data has
+ */
+
+whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
+
+process genome_build_stats {
+
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, hfile, mfile, stdin from mfile_ok_file
+    each build from whichbuild
+
+    output:
+    tuple datasetID, file("GRCh*.${datasetID}.res") into genome_build_stats
+
+    script:
+    """
+    liftover_file_from_to.sh - ${build} "GRCh38" 1000 $mfile > ${build}
+    LC_ALL=C sort -k1,1 ${build} > ${build}.sorted
+    LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 ${build}.sorted ${ch_dbsnp} > ${build}.sorted.join
+    sort -u -k1,1 ${build}.sorted.join | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${build}.${datasetID}.res
+
+    """
+}
+
+// genome_build_stats_joined = genome_build_stats.collectFile() { key, item -> [ "${key}.res", item + '\n' ] }
+ genome_build_stats_grouped = genome_build_stats.groupTuple(by:0,size:4)
+
+ process infer_genome_build {
+ 
+     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+ 
+     input:
+     tuple datasetID, file(ujoins) from genome_build_stats_grouped
+
+     
+     output:
+     tuple datasetID, file("${datasetID}.*") into known_genome_build
+ 
+     script:
+     """
+     for gbuild in ${ujoins}
+     do
+         cat \$gbuild >> ${datasetID}.stats
+     done
+     cat ${datasetID}.stats | sort -r -k1,1 | head -n1 | awk '{print \$2}' > ${datasetID}.GRChmax
+     """
+ 
+ 
+ }
+
 
 /*
  * Completion e-mail notification
