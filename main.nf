@@ -201,9 +201,6 @@ process gunzip_sumstat_from_dir {
     """
 }
 
-/*
- *sfile_unzipped_stream.into { sfile_stream_for_meta_check; sfile_stream_for_else }
- */
 
 
 /*
@@ -226,6 +223,8 @@ process check_meta_data_format {
     """
 }
 
+mfile_ok_file.into { bulk_to_check_gb; bulk_to_map_gb }
+
 /*
  * STEP 2 - check which genome build the raw data has
  */
@@ -237,11 +236,11 @@ process genome_build_stats {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, hfile, mfile, stdin from mfile_ok_file
+    tuple datasetID, hfile, mfile, stdin from bulk_to_check_gb
     each build from whichbuild
 
     output:
-    tuple datasetID, file("GRCh*.${datasetID}.res") into genome_build_stats
+    tuple datasetID, hfile, mfile, stdout, file("GRCh*.${datasetID}.res") into genome_build_stats
 
     script:
     """
@@ -249,35 +248,60 @@ process genome_build_stats {
     LC_ALL=C sort -k1,1 ${build} > ${build}.sorted
     LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 ${build}.sorted ${ch_dbsnp} > ${build}.sorted.join
     sort -u -k1,1 ${build}.sorted.join | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${build}.${datasetID}.res
+    cat -
 
     """
 }
 
-// genome_build_stats_joined = genome_build_stats.collectFile() { key, item -> [ "${key}.res", item + '\n' ] }
- genome_build_stats_grouped = genome_build_stats.groupTuple(by:0,size:4)
+genome_build_stats_grouped = genome_build_stats.groupTuple(by:0,size:4)
 
- process infer_genome_build {
- 
-     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
- 
-     input:
-     tuple datasetID, file(ujoins) from genome_build_stats_grouped
+process infer_genome_build {
 
-     
-     output:
-     tuple datasetID, file("${datasetID}.*") into known_genome_build
- 
-     script:
-     """
-     for gbuild in ${ujoins}
-     do
-         cat \$gbuild >> ${datasetID}.stats
-     done
-     cat ${datasetID}.stats | sort -r -k1,1 | head -n1 | awk '{print \$2}' > ${datasetID}.GRChmax
-     """
- 
- 
- }
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, hfile, mfile, stdin, file(ujoins) from genome_build_stats_grouped
+
+    
+    output:
+    tuple datasetID, hfile, mfile, stdout, file("${datasetID}.GRChmax"), file("${datasetID}.stats") into known_genome_build
+
+    script:
+    """
+    for gbuild in ${ujoins}
+    do
+        cat \$gbuild >> ${datasetID}.stats
+    done
+    cat ${datasetID}.stats | sort -r -k1,1 | head -n1 | awk '{print \$2}' > ${datasetID}.GRChmax
+    cat -
+    """
+
+}
+
+
+// process liftover_and_map_to_rsids_and_alleles {
+// 
+//     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+// 
+//     input:
+//     tuple datasetID, hfile, mfile, stdin, gbmax, gbstats from known_genome_build
+// 
+//     
+//     output:
+//     tuple datasetID, hfile, mfile, stdout, gbmax into next_step
+// 
+//     script:
+//     """
+//     liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" $mfile > GRCh38
+// 
+//     """
+// 
+// }
+
+// "\$(cat ${gbmax})"
+ //   LC_ALL=C sort -k1,1 GRCh38 > GRCh38.sorted
+ //   LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 GRCh38.sorted ${ch_dbsnp} > GRCh38.sorted.join
+ //   split_multiallelics_to_rows.sh GRCh38.sorted.join
 
 
 /*
