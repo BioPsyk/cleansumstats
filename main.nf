@@ -247,7 +247,8 @@ process genome_build_stats {
 
     script:
     """
-    liftover_file_from_to.sh - ${build} "GRCh38" 1000 $mfile > ${build}
+    format_for_chrpos_join.sh - $mfile > tmp
+    liftover_file_from_to.sh tmp ${build} "GRCh38" 1000 > ${build}
     LC_ALL=C sort -k1,1 ${build} > ${build}.sorted
     LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 ${build}.sorted ${ch_dbsnp} > ${build}.sorted.join
     sort -u -k1,1 ${build}.sorted.join | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${build}.${datasetID}.res
@@ -291,23 +292,44 @@ process liftover_and_map_to_rsids_and_alleles {
 
     
     output:
-    tuple datasetID, hfile, mfile, stdout, gbmax into next_step
-    tuple datasetID, file("testout") into next_step2
+    tuple datasetID, hfile, mfile, stdout, gbmax into ch_mapped_data
+
     script:
     """
-    liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" $mfile > GRCh38
+    format_for_chrpos_join.sh - $mfile | liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" > GRCh38
     LC_ALL=C sort -k1,1 GRCh38 > GRCh38.sorted
     LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 GRCh38.sorted ${ch_dbsnp} > GRCh38.sorted.join
-    split_multiallelics_to_rows.sh GRCh38.sorted.join > testout
+    split_multiallelics_to_rows.sh GRCh38.sorted.join
 
     """
 
 }
 
-// "\$(cat ${gbmax})"
- //   LC_ALL=C sort -k1,1 GRCh38 > GRCh38.sorted
- //   LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 GRCh38.sorted ${ch_dbsnp} > GRCh38.sorted.join
- //   split_multiallelics_to_rows.sh GRCh38.sorted.join
+ch_mapped_data.into { ch_mapped_GRCh38; ch_mapped_GRCh37_pre }
+
+process liftback_to_GRCh37 {
+
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, hfile, mfile, stdin, gbmax from ch_mapped_GRCh37_pre
+
+    
+    output:
+    tuple datasetID, hfile, mfile, stdout, gbmax into ch_mapped_GRCh37
+    tuple datasetID, file("testout2") into placeholder
+
+    script:
+    """
+    liftover_file_from_to.sh - "GRCh38" "GRCh37" "all" > testout2
+    """
+}
+
+
+
+
+
+
 
 
 /*
