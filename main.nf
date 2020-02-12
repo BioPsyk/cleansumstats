@@ -224,7 +224,8 @@ process check_meta_data_format {
 }
 
 ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2 }
-ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream)
+ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2 }
+ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
 ch_mfile_and_stream.into { ch_check_gb; ch_liftover }
 
 
@@ -329,18 +330,37 @@ ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
 
 process resort_index {
 
-    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, stdin, gbmax from ch_mapped_data_mix
     
     output:
-    tuple datasetID, build, hfile, mfile, gbmax into nextstep
-    tuple datasetID, file("testout3") into placeholder
+    tuple datasetID, build, hfile, mfile, file("${datasetID}_${build}_mapped") into ch_allele_correction
 
     script:
     """
-    cat - | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' | LC_ALL=C sort -k1,1 > testout3
+    cat - | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' | LC_ALL=C sort -k1,1 > ${datasetID}_${build}_mapped
+    """
+}
+
+
+ch_allele_correction_combine=ch_allele_correction.combine(ch_sfile_on_stream2, by: 0)
+
+process allele_correction {
+
+    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, build, hfile, mfile, mapped, stdin from ch_allele_correction_combine
+    
+    output:
+    tuple datasetID, file("testout4") into placeholder
+    tuple datasetID, file("disc*") into placeholder2
+
+    script:
+    """
+    allele_correction_wrapper.sh - $mapped $mfile > testout4
     """
 }
 
