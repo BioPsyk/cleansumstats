@@ -292,7 +292,7 @@ process liftover_and_map_to_rsids_and_alleles {
 
     
     output:
-    tuple datasetID, hfile, mfile, stdout, gbmax into ch_mapped_data
+    tuple datasetID, val("GRCh38"), hfile, mfile, stdout, gbmax into ch_mapped_data
 
     script:
     """
@@ -312,20 +312,37 @@ process liftback_to_GRCh37 {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, hfile, mfile, stdin, gbmax from ch_mapped_GRCh37_pre
+    tuple datasetID, build, hfile, mfile, stdin, gbmax from ch_mapped_GRCh37_pre
 
     
     output:
-    tuple datasetID, hfile, mfile, stdout, gbmax into ch_mapped_GRCh37
-    tuple datasetID, file("testout2") into placeholder
+    tuple datasetID, val("GRCh37"), hfile, mfile, stdout, gbmax into ch_mapped_GRCh37
 
     script:
     """
-    liftover_file_from_to.sh - "GRCh38" "GRCh37" "all" > testout2
+    liftover_file_from_to.sh - "GRCh38" "GRCh37" "all"
     """
 }
 
 
+ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
+
+process resort_index {
+
+    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, build, hfile, mfile, stdin, gbmax from ch_mapped_data_mix
+    
+    output:
+    tuple datasetID, build, hfile, mfile, gbmax into nextstep
+    tuple datasetID, file("testout3") into placeholder
+
+    script:
+    """
+    cat - | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' | LC_ALL=C sort -k1,1 > testout3
+    """
+}
 
 
 
