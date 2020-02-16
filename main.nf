@@ -347,23 +347,78 @@ process resort_index {
 
 ch_allele_correction_combine=ch_allele_correction.combine(ch_sfile_on_stream2, by: 0)
 
-process allele_correction {
-
-    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
+process does_exist_A2 {
 
     input:
-    tuple datasetID, build, hfile, mfile, mapped, stdin from ch_allele_correction_combine
+    tuple datasetID, hfile, mfile from ch_mfile_ok2
     
     output:
-    tuple datasetID, file("testout4") into placeholder
-    tuple datasetID, file("disc*") into placeholder2
+    tuple datasetID, env(A2exists) into ch_present_A2
 
     script:
     """
-    allele_correction_wrapper.sh - $mapped $mfile > testout4
+    A2exists=\$(doesA2exist.sh $mfile)
     """
 }
 
+ch_present_A2_br=ch_present_A2.branch { key, value -> 
+                A2exists: value == "true"
+                A2missing: value == "false"
+                }
+
+
+process does_exist_A2_test {
+
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, A2var from ch_present_A2_br.A2exists
+    
+    output:
+    tuple datasetID, file("testout6") into placeholder
+
+    script:
+    """
+    echo -e $datasetID > testout6
+    """
+}
+
+
+
+//process allele_correction_A1_A2 {
+//
+//    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, build, hfile, mfile, mapped, stdin from ch_allele_correction_combine
+//    
+//    output:
+//    tuple datasetID, file("testout4") into placeholder
+//    tuple datasetID, file("disc*") into placeholder2
+//
+//    script:
+//    """
+//    allele_correction_wrapper.sh - $mapped $mfile > testout4
+//    """
+//}
+
+//process allele_correction_A1 {
+//
+//    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, build, hfile, mfile, mapped, stdin from ch_allele_correction_combine
+//    
+//    output:
+//    tuple datasetID, file("testout4") into placeholder
+//    tuple datasetID, file("disc*") into placeholder2
+//
+//    script:
+//    """
+//    allele_correction_wrapper.sh - $mapped $mfile > testout4
+//    """
+//}
+//
 
 
 
