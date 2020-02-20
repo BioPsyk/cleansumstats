@@ -346,7 +346,7 @@ process resort_index {
 
 
 ch_allele_correction_combine=ch_allele_correction.combine(ch_sfile_on_stream2, by: 0)
-
+ch_allele_correction_combine.into{ ch_allele_correction_combine1; ch_allele_correction_combine2 }
 process does_exist_A2 {
 
     input:
@@ -361,64 +361,73 @@ process does_exist_A2 {
     """
 }
 
+//Create filter for when A2 exists or not
 ch_present_A2_br=ch_present_A2.branch { key, value -> 
                 A2exists: value == "true"
                 A2missing: value == "false"
                 }
 
+//split the channels based on filter
+ch_present_A2_br2=ch_present_A2_br.A2exists
+ch_present_A2_br3=ch_present_A2_br.A2missing
 
-process does_exist_A2_test {
+//join each channel with the matching datasetID
+ch_A2_exists=ch_allele_correction_combine1.join(ch_present_A2_br2)
+ch_A2_missing=ch_allele_correction_combine2.join(ch_present_A2_br3)
+
+process allele_correction_A1_A2 {
+
+    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, build, hfile, mfile, mapped, stdin, A2exists from ch_A2_exists
+    
+    output:
+    tuple datasetID, file("disc*") into placeholder2
+    tuple datasetID, build, hfile, mfile, stdout into ch_A2_exists2
+
+    script:
+    """
+    allele_correction_wrapper.sh - $mapped $mfile "A2exists"
+    """
+}
+
+process allele_correction_A1 {
 
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, A2var from ch_present_A2_br.A2exists
+    tuple datasetID, build, hfile, mfile, mapped, stdin, A2missing from ch_A2_missing
     
     output:
-    tuple datasetID, file("testout6") into placeholder
+    tuple datasetID, build, hfile, mfile, stdout into ch_A2_missing2
 
     script:
     """
-    echo -e $datasetID > testout6
+    multiallelic_filter.sh $mapped > mapped2
+    allele_correction_wrapper.sh - mapped2 $mfile "A2missing"
     """
 }
 
-
-
-//process allele_correction_A1_A2 {
+//process assess_Z {
 //
-//    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 //
 //    input:
-//    tuple datasetID, build, hfile, mfile, mapped, stdin from ch_allele_correction_combine
+//    tuple datasetID, build, hfile, mfile, mapped, stdin, A2missing from ch_A2_missing
 //    
 //    output:
-//    tuple datasetID, file("testout4") into placeholder
-//    tuple datasetID, file("disc*") into placeholder2
+//    tuple datasetID, build, hfile, mfile, stdout into ch_A2_missing2
 //
 //    script:
 //    """
-//    allele_correction_wrapper.sh - $mapped $mfile > testout4
+//    multiallelic_filter.sh $mapped > mapped2
+//    allele_correction_wrapper.sh - mapped2 $mfile "A2missing"
 //    """
 //}
 
-//process allele_correction_A1 {
-//
-//    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
-//
-//    input:
-//    tuple datasetID, build, hfile, mfile, mapped, stdin from ch_allele_correction_combine
-//    
-//    output:
-//    tuple datasetID, file("testout4") into placeholder
-//    tuple datasetID, file("disc*") into placeholder2
-//
-//    script:
-//    """
-//    allele_correction_wrapper.sh - $mapped $mfile > testout4
-//    """
-//}
-//
+
+
 
 
 
