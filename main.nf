@@ -219,7 +219,7 @@ process check_meta_data_format {
 }
 
 ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2 }
-ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3 }
+ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4 }
 ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
 ch_mfile_and_stream.into { ch_check_gb; ch_liftover }
 
@@ -411,7 +411,7 @@ process assess_Z {
     tuple datasetID, build, hfile, mfile, acorrected, stdin from ch_allele_corrected_and_source
     
     output:
-    tuple datasetID, build, hfile, mfile, file("${build}_testout99") into ch_zmod
+    tuple datasetID, build, hfile, mfile, acorrected, file("${build}_zmod") into ch_zmod
 
     script:
     """
@@ -419,23 +419,26 @@ process assess_Z {
     """
 }
 
-//ch_final_assembly=ch_zmod.combine(ch_sfile_on_stream4, by: 0)
-//
-//process add_pvalue {
-//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-//
-//    input:
-//    tuple datasetID, build, hfile, mfile, acorrected, stdin from ch_allele_corrected_and_source
-//    
-//    output:
-//    tuple datasetID, build, hfile, mfile, file("${build}_testout99") into zmod
-//
-//    script:
-//    """
-//    apply_modifier_on_stats.sh - $acorrected $mfile > ${build}_zmod
-//    """
-//}
-//
+ch_final_assembly=ch_zmod.combine(ch_sfile_on_stream4, by: 0)
+
+process final_assembly {
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, build, hfile, mfile, acorrected, zmod, stdin from ch_final_assembly
+    
+    output:
+    tuple datasetID, build, hfile, mfile, file("${datasetID}_${build}_cleaned") into zmod
+
+    script:
+    """
+    colP1=\$(grep "^colP=" ${mfile})
+    colP2="\${colP1#*=}"
+    sstools-utils ad-hoc-do -f - -k "0|\${colP2}" -n"0,P" > pvals
+    final_assembly.sh $acorrected $zmod pvals > ${datasetID}_${build}_cleaned
+    """
+}
+
 
 
 
