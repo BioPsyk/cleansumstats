@@ -170,8 +170,8 @@ process get_software_versions {
 }
 
 /*
- * Create a channel for input read files
- * read_files_sumstats = Channel.fromPath(params.input)
+ * Main pipeline starts here
+ * 
  */
 
 
@@ -179,11 +179,6 @@ to_stream_sumstat_file = Channel
                 .fromPath(params.input, type: 'dir')
                 .map { dir -> tuple(dir.baseName, dir) }
 
-
-/*
- * STEP 0A - Channel .gz from input
- * read_input_folder.into { to_stream_sumstat_file; to_stream_metadata_file }
- */
 
 process gunzip_sumstat_from_dir {
 
@@ -205,7 +200,7 @@ process gunzip_sumstat_from_dir {
 
 
 /*
- * STEP 1 - check validity of all col accessors from meta file
+ * check validity of all col accessors from meta file
  */
 process check_meta_data_format {
 
@@ -224,14 +219,10 @@ process check_meta_data_format {
 }
 
 ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2 }
-ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2 }
+ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3 }
 ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
 ch_mfile_and_stream.into { ch_check_gb; ch_liftover }
 
-
-/*
- * STEP 2 - check which genome build the raw data has
- */
 
 whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
 
@@ -314,7 +305,6 @@ process liftback_to_GRCh37 {
 
     input:
     tuple datasetID, build, hfile, mfile, stdin, gbmax from ch_mapped_GRCh37_pre
-
     
     output:
     tuple datasetID, val("GRCh37"), hfile, mfile, stdout, gbmax into ch_mapped_GRCh37
@@ -371,26 +361,26 @@ ch_present_A2_br=ch_present_A2.branch { key, value ->
 ch_present_A2_br2=ch_present_A2_br.A2exists
 ch_present_A2_br3=ch_present_A2_br.A2missing
 
-//join each channel with the matching datasetID
-ch_A2_exists=ch_allele_correction_combine1.join(ch_present_A2_br2)
-ch_A2_missing=ch_allele_correction_combine2.join(ch_present_A2_br3)
+//combine each channel with the matching datasetID
+ch_A2_exists=ch_allele_correction_combine1.combine(ch_present_A2_br2, by: 0)
+ch_A2_missing=ch_allele_correction_combine2.combine(ch_present_A2_br3, by: 0)
 
 process allele_correction_A1_A2 {
 
-    publishDir "${params.outdir}/$datasetID/$build", mode: 'symlink', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, mapped, stdin, A2exists from ch_A2_exists
     
     output:
-    tuple datasetID, file("disc*") into placeholder2
-    tuple datasetID, build, hfile, mfile, stdout into ch_A2_exists2
+    tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_exists2
 
     script:
     """
-    allele_correction_wrapper.sh - $mapped $mfile "A2exists"
+    allele_correction_wrapper.sh - $mapped $mfile "A2exists" > ${build}_acorrected
     """
 }
+    //tuple datasetID, file("disc*") into placeholder2
 
 process allele_correction_A1 {
 
@@ -400,35 +390,52 @@ process allele_correction_A1 {
     tuple datasetID, build, hfile, mfile, mapped, stdin, A2missing from ch_A2_missing
     
     output:
-    tuple datasetID, build, hfile, mfile, stdout into ch_A2_missing2
+    tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_missing2
 
     script:
     """
     multiallelic_filter.sh $mapped > mapped2
-    allele_correction_wrapper.sh - mapped2 $mfile "A2missing"
+    allele_correction_wrapper.sh - mapped2 $mfile "A2missing" > ${build}_acorrected 
     """
 }
 
-//process assess_Z {
+//mix channels
+ch_allele_corrected_mix=ch_A2_exists2.mix(ch_A2_missing2)
+ch_allele_corrected_and_source=ch_allele_corrected_mix.combine(ch_sfile_on_stream3, by: 0)
+
+process assess_Z {
+
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, build, hfile, mfile, acorrected, stdin from ch_allele_corrected_and_source
+    
+    output:
+    tuple datasetID, build, hfile, mfile, file("${build}_testout99") into ch_zmod
+
+    script:
+    """
+    apply_modifier_on_stats.sh - $acorrected $mfile > ${build}_zmod
+    """
+}
+
+//ch_final_assembly=ch_zmod.combine(ch_sfile_on_stream4, by: 0)
 //
+//process add_pvalue {
 //    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 //
 //    input:
-//    tuple datasetID, build, hfile, mfile, mapped, stdin, A2missing from ch_A2_missing
+//    tuple datasetID, build, hfile, mfile, acorrected, stdin from ch_allele_corrected_and_source
 //    
 //    output:
-//    tuple datasetID, build, hfile, mfile, stdout into ch_A2_missing2
+//    tuple datasetID, build, hfile, mfile, file("${build}_testout99") into zmod
 //
 //    script:
 //    """
-//    multiallelic_filter.sh $mapped > mapped2
-//    allele_correction_wrapper.sh - mapped2 $mfile "A2missing"
+//    apply_modifier_on_stats.sh - $acorrected $mfile > ${build}_zmod
 //    """
 //}
-
-
-
-
+//
 
 
 

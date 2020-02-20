@@ -8,7 +8,6 @@ OPTION=${4}
 function selRightHand(){
   echo "${1#*=}"
 }
-
 function selColRow(){
   grep ${1} ${2}
 }
