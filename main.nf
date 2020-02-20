@@ -204,7 +204,7 @@ process gunzip_sumstat_from_dir {
  */
 process check_meta_data_format {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
 
     input:
     tuple datasetID, hfile, mfile from ch_hfile_mfile
@@ -228,7 +228,7 @@ whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
 
 process genome_build_stats {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, hfile, mfile, stdin from ch_check_gb
@@ -252,7 +252,7 @@ ch_genome_build_stats_grouped = ch_genome_build_stats.groupTuple(by:0,size:4)
 
 process infer_genome_build {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, file(ujoins) from ch_genome_build_stats_grouped
@@ -277,7 +277,7 @@ ch_liftover_2=ch_liftover.join(ch_known_genome_build)
 
 process liftover_and_map_to_rsids_and_alleles {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, hfile, mfile, stdin, gbmax from ch_liftover_2
@@ -301,7 +301,7 @@ ch_mapped_data.into { ch_mapped_GRCh38; ch_mapped_GRCh37_pre }
 
 process liftback_to_GRCh37 {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, stdin, gbmax from ch_mapped_GRCh37_pre
@@ -320,7 +320,7 @@ ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
 
 process resort_index {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, stdin, gbmax from ch_mapped_data_mix
@@ -367,7 +367,7 @@ ch_A2_missing=ch_allele_correction_combine2.combine(ch_present_A2_br3, by: 0)
 
 process allele_correction_A1_A2 {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, mapped, stdin, A2exists from ch_A2_exists
@@ -384,7 +384,7 @@ process allele_correction_A1_A2 {
 
 process allele_correction_A1 {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, mapped, stdin, A2missing from ch_A2_missing
@@ -405,7 +405,7 @@ ch_allele_corrected_and_source=ch_allele_corrected_mix.combine(ch_sfile_on_strea
 
 process assess_Z {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, acorrected, stdin from ch_allele_corrected_and_source
@@ -422,13 +422,13 @@ process assess_Z {
 ch_final_assembly=ch_zmod.combine(ch_sfile_on_stream4, by: 0)
 
 process final_assembly {
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, acorrected, zmod, stdin from ch_final_assembly
     
     output:
-    tuple datasetID, build, hfile, mfile, file("${datasetID}_${build}_cleaned") into zmod
+    file("${datasetID}_${build}_cleaned") into ch_end
 
     script:
     """
