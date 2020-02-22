@@ -221,7 +221,7 @@ process check_meta_data_format {
 ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2 }
 ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4 }
 ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
-ch_mfile_and_stream.into { ch_check_gb; ch_liftover }
+ch_mfile_and_stream.into { ch_check_gb; ch_liftover;ch_stats_inference }
 
 
 whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
@@ -403,44 +403,81 @@ process allele_correction_A1 {
 ch_allele_corrected_mix=ch_A2_exists2.mix(ch_A2_missing2)
 ch_allele_corrected_and_source=ch_allele_corrected_mix.combine(ch_sfile_on_stream3, by: 0)
 
-process assess_Z {
+//process assess_Z {
+//
+//    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, build, hfile, mfile, acorrected, stdin from ch_allele_corrected_and_source
+//    
+//    output:
+//    tuple datasetID, build, hfile, mfile, acorrected, file("${build}_zmod") into ch_zmod
+//
+//    script:
+//    """
+//    apply_modifier_on_stats.sh - $acorrected $mfile > ${build}_zmod
+//    """
+//}
 
-    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//ch_final_assembly=ch_zmod.combine(ch_sfile_on_stream4, by: 0)
+
+//process final_assembly {
+//    publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
+//
+//    input:
+//    tuple datasetID, build, hfile, mfile, acorrected, zmod, stdin from ch_final_assembly
+//    
+//    output:
+//    file("${datasetID}_${build}_cleaned") into ch_end
+//
+//    script:
+//    """
+//    colP1=\$(grep "^colP=" ${mfile})
+//    colP2="\${colP1#*=}"
+//    sstools-utils ad-hoc-do -f - -k "0|\${colP2}" -n"0,P" > pvals
+//    final_assembly.sh $acorrected $zmod pvals > ${datasetID}_${build}_cleaned
+//    """
+//}
+
+process filter_stats {
+
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, build, hfile, mfile, acorrected, stdin from ch_allele_corrected_and_source
+    tuple datasetID, hfile, mfile, stdin from ch_stats_inference
     
     output:
-    tuple datasetID, build, hfile, mfile, acorrected, file("${build}_zmod") into ch_zmod
+    tuple datasetID, hfile, mfile, stdout into ch_stats_inference2
+    tuple datasetID, file("st_*")  into placeholder2
 
     script:
     """
-    apply_modifier_on_stats.sh - $acorrected $mfile > ${build}_zmod
+    filter_stat_values.sh $mfile - 2> st_error
     """
 }
 
-ch_final_assembly=ch_zmod.combine(ch_sfile_on_stream4, by: 0)
+process infer_stats {
 
-process final_assembly {
-    publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, build, hfile, mfile, acorrected, zmod, stdin from ch_final_assembly
+    tuple datasetID, hfile, mfile, stdin from ch_stats_inference2
     
     output:
-    file("${datasetID}_${build}_cleaned") into ch_end
+    tuple datasetID, hfile, mfile, file("st_*") into ch_placeholder3
 
     script:
     """
-    colP1=\$(grep "^colP=" ${mfile})
-    colP2="\${colP1#*=}"
-    sstools-utils ad-hoc-do -f - -k "0|\${colP2}" -n"0,P" > pvals
-    final_assembly.sh $acorrected $zmod pvals > ${datasetID}_${build}_cleaned
+    check_stat_inference.sh $mfile > st_which_to_do
+    nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
+    nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
+    cat - | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
     """
 }
 
 
-
+    //echo \${nf} > st_hej
+    //cat - | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
 
 
 /*
