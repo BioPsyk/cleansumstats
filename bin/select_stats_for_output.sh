@@ -3,6 +3,7 @@
 #meta file
 mefl=${1}
 stdin=${2}
+inferred=${3}
 
 #helpers
 function selRightHand(){
@@ -21,6 +22,13 @@ function recode_to_tf(){
   fi
 }
 
+#recode as true or false
+function specfunx_exists(){
+  var=$1
+  infs=$2
+  head -n1 $infs | grep -q "$var"
+}
+
 #what is colname according to meta data file
 B="$(selRightHand "$(selColRow "^colBETA=" $mefl)")"
 SE="$(selRightHand "$(selColRow "^colSE=" $mefl)")"
@@ -36,29 +44,51 @@ tfP="$(recode_to_tf $P)"
 tfOR="$(recode_to_tf $OR)"
 
 #which variables to filter
-function which_to_filter(){
+function which_to_select(){
   if [ ${tfB} == "true" ]; then
     echo -e "${B}"
+    echo "B" 1>&2
   fi
+
   if [ ${tfSE} == "true" ]; then
     echo -e "${SE}"
+    echo "SE" 1>&2
   fi
+
   if [ ${tfZ} == "true" ]; then
     echo -e "${Z}"
+    echo "Z" 1>&2
+  else
+    if specfunx_exists "Z_fr_B_SE" ${inferred}; then
+      echo "Z_fr_B_SE"
+      echo "Z" 1>&2
+    elif specfunx_exists "Z_fr_OR_SE" ${inferred}; then
+      echo "Z_fr_OR_SE"
+      echo "Z" 1>&2
+    elif specfunx_exists "Z_fr_OR_P" ${inferred}; then
+      echo "Z_fr_OR_P"
+      echo "Z" 1>&2
+    else
+      :
+    fi
   fi
+
   if [ ${tfP} == "true" ]; then
     echo -e "${P}"
+    echo "P" 1>&2
   fi
+
   if [ ${tfOR} == "true" ]; then
     echo -e "${OR}"
+    echo "OR" 1>&2
   fi
 }
 
-var=$(which_to_filter | awk '{printf "%s|", $1}' | sed 's/|$//')
-nam=$(which_to_filter | awk '{printf "%s,", $1}' | sed 's/,$//')
+var=$(which_to_select 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
+nam=$(which_to_select 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
 
 #cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
-sstools-utils ad-hoc-do -f $stdin -k "0|${var}" -n"0,${nam}" | filter_stat_values_awk.sh
+LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $inferred - | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
 
-#
+#cat $inferred | sstools-utils ad-hoc-do -f - -k "0|${Z_fr_B_SE}" -n"0,${Z}" 
 

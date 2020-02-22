@@ -219,7 +219,7 @@ process check_meta_data_format {
 }
 
 ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2 }
-ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4 }
+ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
 ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
 ch_mfile_and_stream.into { ch_check_gb; ch_liftover;ch_stats_inference }
 
@@ -367,7 +367,7 @@ ch_A2_missing=ch_allele_correction_combine2.combine(ch_present_A2_br3, by: 0)
 
 process allele_correction_A1_A2 {
 
-    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, mapped, stdin, A2exists from ch_A2_exists
@@ -384,7 +384,7 @@ process allele_correction_A1_A2 {
 
 process allele_correction_A1 {
 
-    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, mapped, stdin, A2missing from ch_A2_missing
@@ -401,43 +401,8 @@ process allele_correction_A1 {
 
 //mix channels
 ch_allele_corrected_mix=ch_A2_exists2.mix(ch_A2_missing2)
-ch_allele_corrected_and_source=ch_allele_corrected_mix.combine(ch_sfile_on_stream3, by: 0)
+ch_allele_corrected_mix.into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
 
-//process assess_Z {
-//
-//    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-//
-//    input:
-//    tuple datasetID, build, hfile, mfile, acorrected, stdin from ch_allele_corrected_and_source
-//    
-//    output:
-//    tuple datasetID, build, hfile, mfile, acorrected, file("${build}_zmod") into ch_zmod
-//
-//    script:
-//    """
-//    apply_modifier_on_stats.sh - $acorrected $mfile > ${build}_zmod
-//    """
-//}
-
-//ch_final_assembly=ch_zmod.combine(ch_sfile_on_stream4, by: 0)
-
-//process final_assembly {
-//    publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
-//
-//    input:
-//    tuple datasetID, build, hfile, mfile, acorrected, zmod, stdin from ch_final_assembly
-//    
-//    output:
-//    file("${datasetID}_${build}_cleaned") into ch_end
-//
-//    script:
-//    """
-//    colP1=\$(grep "^colP=" ${mfile})
-//    colP2="\${colP1#*=}"
-//    sstools-utils ad-hoc-do -f - -k "0|\${colP2}" -n"0,P" > pvals
-//    final_assembly.sh $acorrected $zmod pvals > ${datasetID}_${build}_cleaned
-//    """
-//}
 
 process filter_stats {
 
@@ -456,6 +421,7 @@ process filter_stats {
     """
 }
 
+
 process infer_stats {
 
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
@@ -464,7 +430,7 @@ process infer_stats {
     tuple datasetID, hfile, mfile, stdin from ch_stats_inference2
     
     output:
-    tuple datasetID, hfile, mfile, file("st_*") into ch_placeholder3
+    tuple datasetID, hfile, mfile, file("st_inferred_stats") into ch_stats_selection
 
     script:
     """
@@ -475,9 +441,42 @@ process infer_stats {
     """
 }
 
+ch_stats_selection2=ch_stats_selection.combine(ch_sfile_on_stream4, by: 0)
 
-    //echo \${nf} > st_hej
-    //cat - | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
+process select_stats {
+
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, hfile, mfile, inferred, stdin from ch_stats_selection2
+    
+    output:
+    tuple datasetID, file("st_stats_for_output") into ch_stats_for_output
+
+    script:
+    """
+    select_stats_for_output.sh $mfile - $inferred > st_stats_for_output
+    """
+}
+
+ch_allele_corrected_and_outstats=ch_allele_corrected_mix1.combine(ch_stats_for_output, by: 0)
+
+process final_assembly {
+
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, build, hfile, mfile, acorrected, stats from ch_allele_corrected_and_outstats
+    
+    output:
+    file("${datasetID}_${build}_cleaned") into ch_end
+
+    script:
+    """
+    apply_modifier_on_stats.sh $acorrected $stats > ${datasetID}_${build}_cleaned
+    """
+}
+
 
 
 /*
