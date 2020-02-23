@@ -277,7 +277,7 @@ ch_liftover_2=ch_liftover.join(ch_known_genome_build)
 
 process liftover_and_map_to_rsids_and_alleles {
 
-    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, hfile, mfile, stdin, gbmax from ch_liftover_2
@@ -320,7 +320,7 @@ ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
 
 process resort_index {
 
-    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, build, hfile, mfile, stdin, gbmax from ch_mapped_data_mix
@@ -330,7 +330,8 @@ process resort_index {
 
     script:
     """
-    cat - | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' | LC_ALL=C sort -k1,1 > ${datasetID}_${build}_mapped
+    echo -e "0\tCHRPOS\tRSID\tA1\tA2" > ${datasetID}_${build}_mapped
+    cat - | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' | LC_ALL=C sort -k1,1 >> ${datasetID}_${build}_mapped
     """
 }
 
@@ -377,7 +378,8 @@ process allele_correction_A1_A2 {
 
     script:
     """
-    allele_correction_wrapper.sh - $mapped $mfile "A2exists" > ${build}_acorrected
+    echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
+    allele_correction_wrapper.sh - $mapped $mfile "A2exists" >> ${build}_acorrected
     """
 }
     //tuple datasetID, file("disc*") into placeholder2
@@ -391,11 +393,13 @@ process allele_correction_A1 {
     
     output:
     tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_missing2
+    file("${build}_mapped2") into placeholder4
 
     script:
     """
-    multiallelic_filter.sh $mapped > mapped2
-    allele_correction_wrapper.sh - mapped2 $mfile "A2missing" > ${build}_acorrected 
+    multiallelic_filter.sh $mapped > ${build}_mapped2
+    echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
+    allele_correction_wrapper.sh - ${build}_mapped2 $mfile "A2missing" >> ${build}_acorrected 
     """
 }
 
