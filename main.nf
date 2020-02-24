@@ -182,21 +182,24 @@ to_stream_sumstat_file = Channel
 
 process gunzip_sumstat_from_dir {
 
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
     input:
     tuple datasetID, sdir from to_stream_sumstat_file
 
     output:
-    tuple datasetID, file("header_${datasetID}.txt"), file("meta_${datasetID}.txt") into ch_hfile_mfile
-    tuple datasetID, stdout into ch_sfile_on_stream
+    tuple datasetID, file("${datasetID}_header"), file("${datasetID}_meta") into ch_hfile_mfile
+    tuple datasetID, file("${datasetID}_sfile") into ch_sfile_on_stream
 
     script:
     """
-    cat $sdir/*.meta > meta_${datasetID}.txt
-    extract_header_from_gzfile_in_dir.sh $sdir > header_${datasetID}.txt
-    zcat $sdir/*.gz
+    cat $sdir/*.meta > ${datasetID}_meta
+    zcat $sdir/*.gz > ${datasetID}_sfile
+    head -n1 ${datasetID}_sfile > ${datasetID}_header
     """
 }
 
+    //extract_header_from_gzfile_in_dir.sh $sdir > ${datasetID}_header
 
 
 /*
@@ -204,7 +207,7 @@ process gunzip_sumstat_from_dir {
  */
 process check_meta_data_format {
 
-    //publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
+    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, hfile, mfile from ch_hfile_mfile
@@ -231,7 +234,7 @@ process genome_build_stats {
     //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, hfile, mfile, stdin from ch_check_gb
+    tuple datasetID, hfile, mfile, sfile from ch_check_gb
     each build from whichbuild
 
     output:
@@ -239,7 +242,7 @@ process genome_build_stats {
 
     script:
     """
-    format_for_chrpos_join.sh - $mfile > tmp
+    format_for_chrpos_join.sh $sfile $mfile > tmp
     liftover_file_from_to.sh tmp ${build} "GRCh38" 1000 > ${build}
     LC_ALL=C sort -k1,1 ${build} > ${build}.sorted
     LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 ${build}.sorted ${ch_dbsnp} > ${build}.sorted.join
@@ -280,18 +283,18 @@ process liftover_and_map_to_rsids_and_alleles {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, hfile, mfile, stdin, gbmax from ch_liftover_2
+    tuple datasetID, hfile, mfile, sfile, gbmax from ch_liftover_2
 
     
     output:
-    tuple datasetID, val("GRCh38"), hfile, mfile, stdout, gbmax into ch_mapped_data
+    tuple datasetID, val("GRCh38"), hfile, mfile, file("liftgr38"), gbmax into ch_mapped_data
 
     script:
     """
-    format_for_chrpos_join.sh - $mfile | liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" > GRCh38
+    format_for_chrpos_join.sh $sfile $mfile | liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" > GRCh38
     LC_ALL=C sort -k1,1 GRCh38 > GRCh38.sorted
     LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 GRCh38.sorted ${ch_dbsnp} > GRCh38.sorted.join
-    split_multiallelics_to_rows.sh GRCh38.sorted.join
+    split_multiallelics_to_rows.sh GRCh38.sorted.join > liftgr38
 
     """
 
@@ -304,14 +307,14 @@ process liftback_to_GRCh37 {
     //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, build, hfile, mfile, stdin, gbmax from ch_mapped_GRCh37_pre
+    tuple datasetID, build, hfile, mfile, liftgr38, gbmax from ch_mapped_GRCh37_pre
     
     output:
-    tuple datasetID, val("GRCh37"), hfile, mfile, stdout, gbmax into ch_mapped_GRCh37
+    tuple datasetID, val("GRCh37"), hfile, mfile, file("liftgr37"), gbmax into ch_mapped_GRCh37
 
     script:
     """
-    liftover_file_from_to.sh - "GRCh38" "GRCh37" "all"
+    liftover_file_from_to.sh $liftgr38 "GRCh38" "GRCh37" "all" > liftgr37
     """
 }
 
@@ -323,7 +326,7 @@ process resort_index {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, build, hfile, mfile, stdin, gbmax from ch_mapped_data_mix
+    tuple datasetID, build, hfile, mfile, liftgrs, gbmax from ch_mapped_data_mix
     
     output:
     tuple datasetID, build, hfile, mfile, file("${datasetID}_${build}_mapped") into ch_allele_correction
@@ -331,7 +334,7 @@ process resort_index {
     script:
     """
     echo -e "0\tCHRPOS\tRSID\tA1\tA2" > ${datasetID}_${build}_mapped
-    cat - | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' | LC_ALL=C sort -k1,1 >> ${datasetID}_${build}_mapped
+    cat $liftgrs | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' | LC_ALL=C sort -k1,1 >> ${datasetID}_${build}_mapped
     """
 }
 
@@ -371,7 +374,7 @@ process allele_correction_A1_A2 {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, build, hfile, mfile, mapped, stdin, A2exists from ch_A2_exists
+    tuple datasetID, build, hfile, mfile, mapped, sfile, A2exists from ch_A2_exists
     
     output:
     tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_exists2
@@ -379,7 +382,7 @@ process allele_correction_A1_A2 {
     script:
     """
     echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
-    allele_correction_wrapper.sh - $mapped $mfile "A2exists" >> ${build}_acorrected
+    allele_correction_wrapper.sh $sfile $mapped $mfile "A2exists" >> ${build}_acorrected
     """
 }
     //tuple datasetID, file("disc*") into placeholder2
@@ -389,7 +392,7 @@ process allele_correction_A1 {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, build, hfile, mfile, mapped, stdin, A2missing from ch_A2_missing
+    tuple datasetID, build, hfile, mfile, mapped, sfile, A2missing from ch_A2_missing
     
     output:
     tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_missing2
@@ -399,7 +402,7 @@ process allele_correction_A1 {
     """
     multiallelic_filter.sh $mapped > ${build}_mapped2
     echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
-    allele_correction_wrapper.sh - ${build}_mapped2 $mfile "A2missing" >> ${build}_acorrected 
+    allele_correction_wrapper.sh $sfile ${build}_mapped2 $mfile "A2missing" >> ${build}_acorrected 
     """
 }
 
@@ -413,15 +416,15 @@ process filter_stats {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, hfile, mfile, stdin from ch_stats_inference
+    tuple datasetID, hfile, mfile, sfile from ch_stats_inference
     
     output:
-    tuple datasetID, hfile, mfile, stdout into ch_stats_inference2
-    tuple datasetID, file("st_*")  into placeholder2
+    tuple datasetID, hfile, mfile, file("st_filtered") into ch_stats_inference2
+    tuple datasetID, file("st_error")  into placeholder2
 
     script:
     """
-    filter_stat_values.sh $mfile - 2> st_error
+    filter_stat_values.sh $mfile $sfile > st_filtered 2> st_error 
     """
 }
 
@@ -431,7 +434,7 @@ process infer_stats {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, hfile, mfile, stdin from ch_stats_inference2
+    tuple datasetID, hfile, mfile, st_filtered from ch_stats_inference2
     
     output:
     tuple datasetID, hfile, mfile, file("st_inferred_stats") into ch_stats_selection
@@ -441,7 +444,7 @@ process infer_stats {
     check_stat_inference.sh $mfile > st_which_to_do
     nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
     nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
-    cat - | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
+    cat $st_filtered | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
     """
 }
 
@@ -452,14 +455,14 @@ process select_stats {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, hfile, mfile, inferred, stdin from ch_stats_selection2
+    tuple datasetID, hfile, mfile, inferred, sfile from ch_stats_selection2
     
     output:
     tuple datasetID, file("st_stats_for_output") into ch_stats_for_output
 
     script:
     """
-    select_stats_for_output.sh $mfile - $inferred > st_stats_for_output
+    select_stats_for_output.sh $mfile $sfile $inferred > st_stats_for_output
     """
 }
 
