@@ -226,6 +226,25 @@ ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_
 ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
 ch_mfile_and_stream.into { ch_check_gb; ch_liftover;ch_stats_inference }
 
+//process filter_location_format {
+//
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, hfile, mfile, sfile from ch_check_gb
+//
+//    
+//    output:
+//    tuple datasetID, hfile, mfile, file("location_format_filtered") into ch_location_filtered
+//
+//    script:
+//    """
+//    filter_location_format.sh $sfile > location_format_filtered
+//
+//    """
+//}
+
+
 
 whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
 
@@ -277,6 +296,7 @@ process infer_genome_build {
 }
 
 ch_liftover_2=ch_liftover.join(ch_known_genome_build)
+
 
 process liftover_and_map_to_rsids_and_alleles {
 

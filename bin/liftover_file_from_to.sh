@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# NOTE: In the R script at the core of sstools-gb liftover there is a filter removing all chromosomes that are not 1-22
+
 FILE_PATH=${1}
 FROM=${2}
 TO=${3}
