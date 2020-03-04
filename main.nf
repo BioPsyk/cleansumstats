@@ -25,7 +25,10 @@ def helpMessage() {
                                     Available: conda, docker, singularity, awsbatch, test and more.
 
     References:                     If not specified in the configuration file or you wish to overwrite any of the references.
-      --dbsnp                       Path to dbsnp GRCh38 reference. Has to be sorted on chr:pos as first column using LC_ALL=C.
+      --dbsnp38                     Path to dbsnp GRCh38 reference. Has to be sorted on chr:pos as first column using LC_ALL=C.
+      --dbsnp37                     Path to dbsnp GRCh37 reference. Has to be sorted on chr:pos as first column using LC_ALL=C.
+      --dbsnp36                     Path to dbsnp GRCh36 reference. Has to be sorted on chr:pos as first column using LC_ALL=C.
+      --dbsnp35                     Path to dbsnp GRCh35 reference. Has to be sorted on chr:pos as first column using LC_ALL=C.
 
     Options:
       --genome                      Name of reference genome in input file
@@ -70,7 +73,10 @@ if (params.help) {
 params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
 if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 
-if (params.dbsnp) { ch_dbsnp = file(params.dbsnp, checkIfExists: true) }
+if (params.dbsnp38) { ch_dbsnp38 = file(params.dbsnp38, checkIfExists: true) }
+if (params.dbsnp37) { ch_dbsnp37 = file(params.dbsnp37, checkIfExists: true) }
+if (params.dbsnp36) { ch_dbsnp36 = file(params.dbsnp36, checkIfExists: true) }
+if (params.dbsnp35) { ch_dbsnp35 = file(params.dbsnp35, checkIfExists: true) }
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
@@ -100,7 +106,10 @@ def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
 summary['Input']            = params.input
-if (params.dbsnp) summary['dbSNP'] = params.dbsnp 
+if (params.dbsnp) summary['dbSNP38'] = params.dbsnp38 
+if (params.dbsnp) summary['dbSNP37'] = params.dbsnp37 
+if (params.dbsnp) summary['dbSNP36'] = params.dbsnp36 
+if (params.dbsnp) summary['dbSNP35'] = params.dbsnp35 
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -250,25 +259,37 @@ whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
 
 process genome_build_stats {
 
-    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, hfile, mfile, sfile from ch_check_gb
     each build from whichbuild
 
     output:
-    tuple datasetID, file("GRCh*.${datasetID}.res") into ch_genome_build_stats
+    tuple datasetID, file("${datasetID}*.res") into ch_genome_build_stats
 
     script:
     """
     format_for_chrpos_join.sh $sfile $mfile > tmp
-    liftover_file_from_to.sh tmp ${build} "GRCh38" 1000 > ${build}
-    LC_ALL=C sort -k1,1 ${build} > ${build}.sorted
-    LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 ${build}.sorted ${ch_dbsnp} > ${build}.sorted.join
-    sort -u -k1,1 ${build}.sorted.join | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${build}.${datasetID}.res
 
+
+    colCHR=\$(grep "^colCHR=" ${mfile})
+    colCHR="\${colCHR#*=}"
+    colPOS=\$(grep "^colPOS=" ${mfile})
+    colPOS="\${colPOS#*=}"
+                                                                                                                                                  
+    head -n10000 ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
+    LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
+    format_chrpos_for_dbsnp.sh ${build} gb_lift_sorted ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > ${build}.map
+    sort -u -k1,1 ${build}.map | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${datasetID}.${build}.res
     """
 }
+
+ //   liftover_file_from_to.sh tmp ${build} "GRCh38" 1000 > ${build}
+ //   LC_ALL=C sort -k1,1 ${build} > ${build}.sorted
+ //   LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 ${build}.sorted ${ch_dbsnp38} > ${build}.sorted.join
+ //   sort -u -k1,1 ${build}.sorted.join | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${build}.${datasetID}.res
+
 
 ch_genome_build_stats_grouped = ch_genome_build_stats.groupTuple(by:0,size:4)
 
@@ -281,7 +302,7 @@ process infer_genome_build {
 
     
     output:
-    tuple datasetID, file("${datasetID}.GRChmax") into ch_known_genome_build
+    tuple datasetID, env(GRChmax) into ch_known_genome_build
     tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build
 
     script:
@@ -290,77 +311,128 @@ process infer_genome_build {
     do
         cat \$gbuild >> ${datasetID}.stats
     done
-    cat ${datasetID}.stats | sort -r -k1,1 | head -n1 | awk '{print \$2}' > ${datasetID}.GRChmax
+    GRChmax="\$(cat ${datasetID}.stats | sort -r -k1,1 | head -n1 | awk '{print \$2}')"
     """
 
 }
 
 ch_liftover_2=ch_liftover.join(ch_known_genome_build)
 
-
-process liftover_and_map_to_rsids_and_alleles {
-
+process prep_dbsnp_mapling_by_sorting_chrpos {
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
     tuple datasetID, hfile, mfile, sfile, gbmax from ch_liftover_2
 
-    
     output:
-    tuple datasetID, val("GRCh38"), hfile, mfile, file("liftgr38"), gbmax into ch_mapped_data
+    tuple datasetID, hfile, mfile, file("gb_lift_sorted"), gbmax into ch_liftover_3
 
     script:
     """
-    format_for_chrpos_join.sh $sfile $mfile | liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" > GRCh38
-    LC_ALL=C sort -k1,1 GRCh38 > GRCh38.sorted
-    LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 GRCh38.sorted ${ch_dbsnp} > GRCh38.sorted.join
-    split_multiallelics_to_rows.sh GRCh38.sorted.join > liftgr38
+    
+    colCHR=\$(grep "^colCHR=" ${mfile})
+    colCHR="\${colCHR#*=}"
+    colPOS=\$(grep "^colPOS=" ${mfile})
+    colPOS="\${colPOS#*=}"
 
+    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
+    LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
     """
 
 }
 
-ch_mapped_data.into { ch_mapped_GRCh38; ch_mapped_GRCh37_pre }
-
-process liftback_to_GRCh37 {
-
-    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, build, hfile, mfile, liftgr38, gbmax from ch_mapped_GRCh37_pre
-    
-    output:
-    tuple datasetID, val("GRCh37"), hfile, mfile, file("liftgr37"), gbmax into ch_mapped_GRCh37
-
-    script:
-    """
-    liftover_file_from_to.sh $liftgr38 "GRCh38" "GRCh37" "all" > liftgr37
-    """
-}
-
-
-ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
-
-process resort_index {
+process liftover_and_map_to_dbsnp38 {
 
     publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, build, hfile, mfile, liftgrs, gbmax from ch_mapped_data_mix
+    tuple datasetID, hfile, mfile, fsorted, gbmax from ch_liftover_3
+    
+    output:
+    tuple datasetID, hfile, mfile, file("gb_liftgr38") into ch_liftover_4
+
+    script:
+    """
+    format_chrpos_for_dbsnp.sh ${gbmax} ${fsorted} ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > gb_liftgr38
+    """
+}
+
+process sort_new_dbsnp38map {
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, hfile, mfile, mapped from ch_liftover_4
+    
+    output:
+    tuple datasetID, hfile, mfile, file("gb_liftgr38_sorted") into ch_liftover_5
+
+    script:
+    """
+    LC_ALL=C sort -k1,1 $mapped > gb_liftgr38_sorted
+    """
+
+}
+
+process liftover_and_map_to_rsids_and_alleles {
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, hfile, mfile, gb_liftgr38_sorted from ch_liftover_5
+    
+    output:
+    tuple datasetID, val("GRCh38"), hfile, mfile, file("gb_ready_liftgr38") into ch_mapped_GRCh38
+    tuple datasetID, val("GRCh37"), hfile, mfile, file("gb_ready_liftgr37") into ch_mapped_GRCh37
+
+    script:
+    """
+    LC_ALL=C join -1 1 -2 1 $gb_liftgr38_sorted ${ch_dbsnp38} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$6,\$7,\$8,\$9}' > gb_ready_liftgr37
+    awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' $gb_liftgr38_sorted > gb_ready_liftgr38
+    """
+}
+
+
+////    //format_for_chrpos_join.sh $sfile $mfile | liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" > GRCh38
+////
+//ch_mapped_data.into { ch_mapped_GRCh38; ch_mapped_GRCh37_pre }
+//
+//process liftback_to_GRCh37 {
+//
+//    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, build, hfile, mfile, liftgr38, gbmax from ch_mapped_GRCh37_pre
+//    
+//
+//    script:
+//    """
+//    
+//    """
+//}
+
+
+ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
+
+process split_multiallelics_and_resort_index {
+
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+
+    input:
+    tuple datasetID, build, hfile, mfile, liftgrs from ch_mapped_data_mix
     
     output:
     tuple datasetID, build, hfile, mfile, file("${datasetID}_${build}_mapped") into ch_allele_correction
 
     script:
     """
+    split_multiallelics_to_rows.sh $liftgrs > liftgrs2
     echo -e "0\tCHRPOS\tRSID\tA1\tA2" > ${datasetID}_${build}_mapped
-    cat $liftgrs | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' | LC_ALL=C sort -k1,1 >> ${datasetID}_${build}_mapped
+    LC_ALL=C sort -k1,1 liftgrs2 >> ${datasetID}_${build}_mapped
     """
 }
 
-
 ch_allele_correction_combine=ch_allele_correction.combine(ch_sfile_on_stream2, by: 0)
 ch_allele_correction_combine.into{ ch_allele_correction_combine1; ch_allele_correction_combine2 }
+
 process does_exist_A2 {
 
     input:
