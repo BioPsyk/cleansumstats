@@ -1,0 +1,16 @@
+regexp	CHR	BP	EffectAllele	AlternativeAllele
+^[c|C][h|H][r|R]\d+$	funx_chrCHR_2_CHR	tmp1	tmp1	tmp1
+^\d{1,2}:\d+$	funx_CHR_BP_2_CHR	funx_CHR_BP_2_BP	tmp2	tmp2
+^\d{1,2}:\d+:\D+!:$	funx_CHR_BP_EA_2_CHR	funx_CHR_BP_EA_2_BP	funx_CHR_BP_EA_2_EA	tmp3
+^\d{1,2}:\d+:\D+:\D+$	funx_CHR_BP_EA_AA_2_CHR	funx_CHR_BP_EA_AA_2_BP	funx_CHR_BP_EA_AA_2_EA	funx_CHR_BP_EA_AA_2_AA
+^[c|C][h|H][r|R]\d{1,2}:\d+$	funx_chrCHR_BP_2_CHR	funx_chrCHR_BP_2_BP	tmp4	tmp4
+^[c|C][h|H][r|R]\d{1,2}:\d+:\D+!:$	funx_chrCHR_BP_EA_2_CHR	funx_chrCHR_BP_EA_2_BP	funx_chrCHR_BP_EA_2_EA	tmp5
+^[c|C][h|H][r|R]\d{1,2}:\d+:\D:\D+$	funx_chrCHR_BP_EA_AA_2_CHR	funx_chrCHR_BP_EA_AA_2_BP	funx_chrCHR_BP_EA_AA_2_EA	funx_chrCHR_BP_EA_AA_2_AA
+^\d{1,2}_\d+$	funx_CHR_BP_2_CHR	funx_CHR_BP_2_BP	tmp6	tmp6
+^\d{1,2}_\d+_\D+!:$	funx_underline_CHR_BP_EA_2_CHR	funx_underline_CHR_BP_EA_2_BP	funx_underline_CHR_BP_EA_2_EA	tmp7
+^\d{1,2}_\d+_\D_\D+$	funx_underline_CHR_BP_EA_AA_2_CHR	funx_underline_CHR_BP_EA_AA_2_BP	funx_underline_CHR_BP_EA_AA_2_EA	funx_underline_CHR_BP_EA_AA_2_AA
+^[c|C][h|H][r|R]\d{1,2}_\d+$	funx_underline_chrCHR_BP_2_CHR	funx_underline_chrCHR_BP_2_BP	tmp8	tmp8
+^[c|C][h|H][r|R]\d{1,2}_\d+_\D+!:$	funx_underline_chrCHR_BP_EA_2_CHR	funx_underline_chrCHR_BP_EA_2_BP	funx_underline_chrCHR_BP_EA_2_EA	tmp9
+^[c|C][h|H][r|R]\d{1,2}_\d+_\D+_\D+$	funx_underline_chrCHR_BP_EA_AA_2_CHR	funx_underline_chrCHR_BP_EA_AA_2_BP	funx_underline_chrCHR_BP_EA_AA_2_EA	funx_underline_chrCHR_BP_EA_AA_2_AA
+^\D+$	funx_default	funx_default	funx_default	funx_default
+^\d+$	funx_default	funx_default	funx_default	funx_default

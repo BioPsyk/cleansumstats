@@ -78,6 +78,8 @@ if (params.dbsnp37) { ch_dbsnp37 = file(params.dbsnp37, checkIfExists: true) }
 if (params.dbsnp36) { ch_dbsnp36 = file(params.dbsnp36, checkIfExists: true) }
 if (params.dbsnp35) { ch_dbsnp35 = file(params.dbsnp35, checkIfExists: true) }
 
+ch_regexp_lexicon = file("$baseDir/assets/allowed_col_types.txt", checkIfExists: true)
+
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
 custom_runName = params.name
@@ -270,20 +272,20 @@ process genome_build_stats {
 
     script:
     """
-    format_for_chrpos_join.sh $sfile $mfile > tmp
 
+    colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
+    colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
 
-    colCHR=\$(grep "^colCHR=" ${mfile})
-    colCHR="\${colCHR#*=}"
-    colPOS=\$(grep "^colPOS=" ${mfile})
-    colPOS="\${colPOS#*=}"
-                                                                                                                                                  
     head -n10000 ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
     LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
     format_chrpos_for_dbsnp.sh ${build} gb_lift_sorted ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > ${build}.map
     sort -u -k1,1 ${build}.map | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${datasetID}.${build}.res
+
     """
 }
+
+
+ //   format_for_chrpos_join.sh $sfile $mfile > tmp
 
  //   liftover_file_from_to.sh tmp ${build} "GRCh38" 1000 > ${build}
  //   LC_ALL=C sort -k1,1 ${build} > ${build}.sorted
@@ -330,10 +332,8 @@ process prep_dbsnp_mapling_by_sorting_chrpos {
     script:
     """
     
-    colCHR=\$(grep "^colCHR=" ${mfile})
-    colCHR="\${colCHR#*=}"
-    colPOS=\$(grep "^colPOS=" ${mfile})
-    colPOS="\${colPOS#*=}"
+    colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
+    colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
 
     cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
     LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
@@ -389,27 +389,27 @@ process liftover_and_map_to_rsids_and_alleles {
     awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' $gb_liftgr38_sorted > gb_ready_liftgr38
     """
 }
-
-
-////    //format_for_chrpos_join.sh $sfile $mfile | liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" > GRCh38
+//
+//
+//////    //format_for_chrpos_join.sh $sfile $mfile | liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" > GRCh38
+//////
+////ch_mapped_data.into { ch_mapped_GRCh38; ch_mapped_GRCh37_pre }
 ////
-//ch_mapped_data.into { ch_mapped_GRCh38; ch_mapped_GRCh37_pre }
+////process liftback_to_GRCh37 {
+////
+////    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+////
+////    input:
+////    tuple datasetID, build, hfile, mfile, liftgr38, gbmax from ch_mapped_GRCh37_pre
+////    
+////
+////    script:
+////    """
+////    
+////    """
+////}
 //
-//process liftback_to_GRCh37 {
 //
-//    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-//
-//    input:
-//    tuple datasetID, build, hfile, mfile, liftgr38, gbmax from ch_mapped_GRCh37_pre
-//    
-//
-//    script:
-//    """
-//    
-//    """
-//}
-
-
 ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
 
 process split_multiallelics_and_resort_index {
@@ -474,9 +474,15 @@ process allele_correction_A1_A2 {
     script:
     """
     echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
-    allele_correction_wrapper.sh $sfile $mapped $mfile "A2exists" >> ${build}_acorrected
+
+    colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
+    colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
+    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | sstools-eallele correction -f - >> ${build}_acorrected
     """
 }
+
+   // allele_correction_wrapper.sh $sfile $mapped $mfile "A2exists" >> ${build}_acorrected
+
     //tuple datasetID, file("disc*") into placeholder2
 
 process allele_correction_A1 {
@@ -494,9 +500,15 @@ process allele_correction_A1 {
     """
     multiallelic_filter.sh $mapped > ${build}_mapped2
     echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
-    allele_correction_wrapper.sh $sfile ${build}_mapped2 $mfile "A2missing" >> ${build}_acorrected 
+
+    colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
+    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | sstools-eallele correction -f - -a >> ${build}_acorrected 
+
     """
 }
+
+//    allele_correction_wrapper.sh $sfile ${build}_mapped2 $mfile "A2missing" >> ${build}_acorrected 
+
 
 //mix channels
 ch_allele_corrected_mix=ch_A2_exists2.mix(ch_A2_missing2)

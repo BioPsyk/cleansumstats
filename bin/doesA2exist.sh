@@ -10,7 +10,7 @@ function selColRow(){
   grep ${1} ${2}
 }
 
-colA2="$(selRightHand "$(selColRow "^colA2=" ${MEFL})")"
+colA2="$(selRightHand "$(selColRow "^colAltAllele=" ${MEFL})")"
 
 if [ ${colA2} == "missing" ]
 then

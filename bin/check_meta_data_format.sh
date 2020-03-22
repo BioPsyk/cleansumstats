@@ -16,8 +16,8 @@ colNeeded1=(
 colCHR
 colPOS
 colSNP
-colA1
-colA2
+colEffAllele
+colAltAllele
 colBETA
 colSE
 colOR
@@ -28,19 +28,14 @@ colP
 colN
 colAFREQ
 colINFO
-colCHRtype
-colPOStype
-colSNPtype
-colA1type
-colA2type
 )
 #A set without the types
 colNeeded2=(
 colCHR
 colPOS
 colSNP
-colA1
-colA2
+colEffAllele
+colAltAllele
 colBETA
 colSE
 colOR
@@ -53,13 +48,13 @@ colAFREQ
 colINFO
 )
 #a set with only the types
-typeToCheck=(
-  colCHRtype
-  colPOStype
-  colSNPtype
-  colA1type
-  colA2type
-)
+#typeToCheck=(
+#  colCHRtype
+#  colPOStype
+#  colSNPtype
+#  colA1type
+#  colA2type
+#)
 
 function variableMissing(){
   if grep -Pq "${1}" ${2}
@@ -87,19 +82,20 @@ done
 #1:3434324
 #1_34235432_A_T
 allowedType=(
-  'default$'
-  '\d{1,2}:\d+$'
-  '\d{1,2}:\d+:\w+$'
-  '\d{1,2}:\d+:\w+:\w+$'
-  '[c|C][h|H][r|R]\d{1,2}:\d+$'
-  '[c|C][h|H][r|R]\d{1,2}:\d+:\w+$'
-  '[c|C][h|H][r|R]\d{1,2}:\d+:\w:\w+$'
-  '\d{1,2}_\d+$'
-  '\d{1,2}_\d+_\w+$'
-  '\d{1,2}_\d+_\w_\w+$'
-  '[c|C][h|H][r|R]\d{1,2}_\d+$'
-  '[c|C][h|H][r|R]\d{1,2}_\d+_\w+$'
-  '[c|C][h|H][r|R]\d{1,2}_\d+_\w+_\w+$'
+'^[c|C][h|H][r|R]\d+$'
+'^\d{1,2}:\d+$'
+'^\d{1,2}:\d+:\D+!:$'
+'^\d{1,2}:\d+:\D+:\D+$'
+'^[c|C][h|H][r|R]\d{1,2}:\d+$'
+'^[c|C][h|H][r|R]\d{1,2}:\d+:\D+!:$'
+'^[c|C][h|H][r|R]\d{1,2}:\d+:\D:\D+$'
+'^\d{1,2}_\d+$'
+'^\d{1,2}_\d+_\D+!:$'
+'^\d{1,2}_\d+_\D_\D+$'
+'^[c|C][h|H][r|R]\d{1,2}_\d+$'
+'^[c|C][h|H][r|R]\d{1,2}_\d+_\D+!:$'
+'^[c|C][h|H][r|R]\d{1,2}_\d+_\D+_\D+$'
+'^\D+$'
 )
 
 function selRightHand(){
@@ -120,28 +116,28 @@ function colTypeNotAllowed(){
 }
 
 #Check all types if the right hand side follows the allowed patterns
-for ttc in ${typeToCheck[@]}; do
-  #echo ${ttc}
-  right="$(selRightHand "$(selColRow "^${ttc}=" ${mefl})")"
-  gotHit="false"
-  for at in ${allowedType[@]}; do
-    #§echo ${at}
-    if [ $(colTypeNotAllowed ${at} ${right}) == "true" ]
-    then
-      gotHit="true"
-      #echo $at
-    else
-      :
-    fi
-  done
-  if [ ${gotHit} == "false" ]
-  then
-    echo >&2 "colType not allowed for: ${ttc}="; 
-    noError=false
-  else
-    :
-  fi
-done
+#for ttc in ${typeToCheck[@]}; do
+#  #echo ${ttc}
+#  right="$(selRightHand "$(selColRow "^${ttc}=" ${mefl})")"
+#  gotHit="false"
+#  for at in ${allowedType[@]}; do
+#    #§echo ${at}
+#    if [ $(colTypeNotAllowed ${at} ${right}) == "true" ]
+#    then
+#      gotHit="true"
+#      #echo $at
+#    else
+#      :
+#    fi
+#  done
+#  if [ ${gotHit} == "false" ]
+#  then
+#    echo >&2 "colType not allowed for: ${ttc}="; 
+#    noError=false
+#  else
+#    :
+#  fi
+#done
 
 
 #Do all col<var> names - not marked missing - exist in the header of the complementary sumstat file
