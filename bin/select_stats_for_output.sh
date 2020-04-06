@@ -88,7 +88,11 @@ var=$(which_to_select 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
 nam=$(which_to_select 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
 
 #cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
-LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $inferred $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
+if [ -s $inferred ]; then
+  LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $inferred $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
+else
+  cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
+fi
 
 #cat $inferred | sstools-utils ad-hoc-do -f - -k "0|${Z_fr_B_SE}" -n"0,${Z}" 
 

@@ -542,13 +542,18 @@ process infer_stats {
     
     output:
     tuple datasetID, hfile, mfile, file("st_inferred_stats") into ch_stats_selection
+    tuple datasetID, hfile, mfile, file("st_which_to_do") into placeholder3
 
     script:
     """
     check_stat_inference.sh $mfile > st_which_to_do
-    nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
-    nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
-    cat $st_filtered | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
+    if [ -s st_which_to_do ]; then
+      nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
+      nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
+      cat $st_filtered | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
+    else
+      touch st_inferred_stats
+    fi
     """
 }
 
