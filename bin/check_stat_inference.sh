@@ -43,7 +43,10 @@ if [ ${tfOR} == "true" ] && [ ${tfSE} == "true" ]; then
   echo -e "Z_fr_OR_SE\tfunx_OR_logORErr_2_Z(${OR},${SE})"
 fi
 if [ ${tfOR} == "true" ] && [ ${tfP} == "true" ]; then
-  echo -e "Z_fr_OR_P\tfunx_OR_and_Pvalue_2_Z(${OR},${P})"
+  echo -e "Z_fr_OR_P\tfunx_OR_and_QNORM_2_Z(${OR},QNORM)"
 fi
+
+#funx_logOR_logORErr_2_Z(logOddsRatio,logOddsRatioStandardError) 2
+#funx_logOR_and_Pvalue_2_Z(logOddsRatio,Pvalue) 2
 
 

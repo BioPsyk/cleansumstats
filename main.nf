@@ -237,282 +237,232 @@ ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_
 ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
 ch_mfile_and_stream.into { ch_check_gb; ch_liftover;ch_stats_inference }
 
-//process filter_location_format {
+//
+//whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
+//
+//process genome_build_stats {
 //
 //    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 //
 //    input:
 //    tuple datasetID, hfile, mfile, sfile from ch_check_gb
+//    each build from whichbuild
 //
-//    
 //    output:
-//    tuple datasetID, hfile, mfile, file("location_format_filtered") into ch_location_filtered
+//    tuple datasetID, file("${datasetID}*.res") into ch_genome_build_stats
 //
 //    script:
 //    """
-//    filter_location_format.sh $sfile > location_format_filtered
+//
+//    colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
+//    colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
+//
+//    head -n10000 ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
+//    LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
+//    format_chrpos_for_dbsnp.sh ${build} gb_lift_sorted ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > ${build}.map
+//    sort -u -k1,1 ${build}.map | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${datasetID}.${build}.res
 //
 //    """
 //}
-
-
-
-whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
-
-process genome_build_stats {
-
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, hfile, mfile, sfile from ch_check_gb
-    each build from whichbuild
-
-    output:
-    tuple datasetID, file("${datasetID}*.res") into ch_genome_build_stats
-
-    script:
-    """
-
-    colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
-    colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
-
-    head -n10000 ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
-    LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
-    format_chrpos_for_dbsnp.sh ${build} gb_lift_sorted ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > ${build}.map
-    sort -u -k1,1 ${build}.map | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${datasetID}.${build}.res
-
-    """
-}
-
-
- //   format_for_chrpos_join.sh $sfile $mfile > tmp
-
- //   liftover_file_from_to.sh tmp ${build} "GRCh38" 1000 > ${build}
- //   LC_ALL=C sort -k1,1 ${build} > ${build}.sorted
- //   LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 -1 1 -2 1 ${build}.sorted ${ch_dbsnp38} > ${build}.sorted.join
- //   sort -u -k1,1 ${build}.sorted.join | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${build}.${datasetID}.res
-
-
-ch_genome_build_stats_grouped = ch_genome_build_stats.groupTuple(by:0,size:4)
-
-process infer_genome_build {
-
-    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, file(ujoins) from ch_genome_build_stats_grouped
-
-    
-    output:
-    tuple datasetID, env(GRChmax) into ch_known_genome_build
-    tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build
-
-    script:
-    """
-    for gbuild in ${ujoins}
-    do
-        cat \$gbuild >> ${datasetID}.stats
-    done
-    GRChmax="\$(cat ${datasetID}.stats | sort -r -k1,1 | head -n1 | awk '{print \$2}')"
-    """
-
-}
-
-ch_liftover_2=ch_liftover.join(ch_known_genome_build)
-
-process prep_dbsnp_mapling_by_sorting_chrpos {
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, hfile, mfile, sfile, gbmax from ch_liftover_2
-
-    output:
-    tuple datasetID, hfile, mfile, file("gb_lift_sorted"), gbmax into ch_liftover_3
-
-    script:
-    """
-    
-    colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
-    colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
-
-    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
-    LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
-    """
-
-}
-
-process liftover_and_map_to_dbsnp38 {
-
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, hfile, mfile, fsorted, gbmax from ch_liftover_3
-    
-    output:
-    tuple datasetID, hfile, mfile, file("gb_liftgr38") into ch_liftover_4
-
-    script:
-    """
-    format_chrpos_for_dbsnp.sh ${gbmax} ${fsorted} ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > gb_liftgr38
-    """
-}
-
-process sort_new_dbsnp38map {
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, hfile, mfile, mapped from ch_liftover_4
-    
-    output:
-    tuple datasetID, hfile, mfile, file("gb_liftgr38_sorted") into ch_liftover_5
-
-    script:
-    """
-    LC_ALL=C sort -k1,1 $mapped > gb_liftgr38_sorted
-    """
-
-}
-
-process liftover_and_map_to_rsids_and_alleles {
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, hfile, mfile, gb_liftgr38_sorted from ch_liftover_5
-    
-    output:
-    tuple datasetID, val("GRCh38"), hfile, mfile, file("gb_ready_liftgr38") into ch_mapped_GRCh38
-    tuple datasetID, val("GRCh37"), hfile, mfile, file("gb_ready_liftgr37") into ch_mapped_GRCh37
-
-    script:
-    """
-    LC_ALL=C join -1 1 -2 1 $gb_liftgr38_sorted ${ch_dbsnp38} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$6,\$7,\$8,\$9}' > gb_ready_liftgr37
-    awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' $gb_liftgr38_sorted > gb_ready_liftgr38
-    """
-}
 //
 //
-//////    //format_for_chrpos_join.sh $sfile $mfile | liftover_file_from_to.sh - "GRCh37" "GRCh38" "all" > GRCh38
-//////
-////ch_mapped_data.into { ch_mapped_GRCh38; ch_mapped_GRCh37_pre }
-////
-////process liftback_to_GRCh37 {
-////
-////    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-////
-////    input:
-////    tuple datasetID, build, hfile, mfile, liftgr38, gbmax from ch_mapped_GRCh37_pre
-////    
-////
-////    script:
-////    """
-////    
-////    """
-////}
 //
+//ch_genome_build_stats_grouped = ch_genome_build_stats.groupTuple(by:0,size:4)
 //
-ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
+//process infer_genome_build {
+//
+//    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, file(ujoins) from ch_genome_build_stats_grouped
+//
+//    
+//    output:
+//    tuple datasetID, env(GRChmax) into ch_known_genome_build
+//    tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build
+//
+//    script:
+//    """
+//    for gbuild in ${ujoins}
+//    do
+//        cat \$gbuild >> ${datasetID}.stats
+//    done
+//    GRChmax="\$(cat ${datasetID}.stats | sort -r -k1,1 | head -n1 | awk '{print \$2}')"
+//    """
+//
+//}
+//
+//ch_liftover_2=ch_liftover.join(ch_known_genome_build)
+//
+//process prep_dbsnp_mapling_by_sorting_chrpos {
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, hfile, mfile, sfile, gbmax from ch_liftover_2
+//
+//    output:
+//    tuple datasetID, hfile, mfile, file("gb_lift_sorted"), gbmax into ch_liftover_3
+//
+//    script:
+//    """
+//    
+//    colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
+//    colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
+//
+//    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
+//    LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
+//    """
+//
+//}
+//
+//process liftover_and_map_to_dbsnp38 {
+//
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, hfile, mfile, fsorted, gbmax from ch_liftover_3
+//    
+//    output:
+//    tuple datasetID, hfile, mfile, file("gb_liftgr38") into ch_liftover_4
+//
+//    script:
+//    """
+//    format_chrpos_for_dbsnp.sh ${gbmax} ${fsorted} ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > gb_liftgr38
+//    """
+//}
+//
+//process sort_new_dbsnp38map {
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, hfile, mfile, mapped from ch_liftover_4
+//    
+//    output:
+//    tuple datasetID, hfile, mfile, file("gb_liftgr38_sorted") into ch_liftover_5
+//
+//    script:
+//    """
+//    LC_ALL=C sort -k1,1 $mapped > gb_liftgr38_sorted
+//    """
+//
+//}
+//
+//process liftover_and_map_to_rsids_and_alleles {
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, hfile, mfile, gb_liftgr38_sorted from ch_liftover_5
+//    
+//    output:
+//    tuple datasetID, val("GRCh38"), hfile, mfile, file("gb_ready_liftgr38") into ch_mapped_GRCh38
+//    tuple datasetID, val("GRCh37"), hfile, mfile, file("gb_ready_liftgr37") into ch_mapped_GRCh37
+//
+//    script:
+//    """
+//    LC_ALL=C join -1 1 -2 1 $gb_liftgr38_sorted ${ch_dbsnp38} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$6,\$7,\$8,\$9}' > gb_ready_liftgr37
+//    awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' $gb_liftgr38_sorted > gb_ready_liftgr38
+//    """
+//}
+//
+//ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
+//
+//process split_multiallelics_and_resort_index {
+//
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, build, hfile, mfile, liftgrs from ch_mapped_data_mix
+//    
+//    output:
+//    tuple datasetID, build, hfile, mfile, file("${datasetID}_${build}_mapped") into ch_allele_correction
+//
+//    script:
+//    """
+//    split_multiallelics_to_rows.sh $liftgrs > liftgrs2
+//    echo -e "0\tCHRPOS\tRSID\tA1\tA2" > ${datasetID}_${build}_mapped
+//    LC_ALL=C sort -k1,1 liftgrs2 >> ${datasetID}_${build}_mapped
+//    """
+//}
+//
+//ch_allele_correction_combine=ch_allele_correction.combine(ch_sfile_on_stream2, by: 0)
+//ch_allele_correction_combine.into{ ch_allele_correction_combine1; ch_allele_correction_combine2 }
+//
+//process does_exist_A2 {
+//
+//    input:
+//    tuple datasetID, hfile, mfile from ch_mfile_ok2
+//    
+//    output:
+//    tuple datasetID, env(A2exists) into ch_present_A2
+//
+//    script:
+//    """
+//    A2exists=\$(doesA2exist.sh $mfile)
+//    """
+//}
+//
+////Create filter for when A2 exists or not
+//ch_present_A2_br=ch_present_A2.branch { key, value -> 
+//                A2exists: value == "true"
+//                A2missing: value == "false"
+//                }
+//
+////split the channels based on filter
+//ch_present_A2_br2=ch_present_A2_br.A2exists
+//ch_present_A2_br3=ch_present_A2_br.A2missing
+//
+////combine each channel with the matching datasetID
+//ch_A2_exists=ch_allele_correction_combine1.combine(ch_present_A2_br2, by: 0)
+//ch_A2_missing=ch_allele_correction_combine2.combine(ch_present_A2_br3, by: 0)
+//
+//process allele_correction_A1_A2 {
+//
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, build, hfile, mfile, mapped, sfile, A2exists from ch_A2_exists
+//    
+//    output:
+//    tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_exists2
+//
+//    script:
+//    """
+//    echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
+//
+//    colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
+//    colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
+//    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | sstools-eallele correction -f - >> ${build}_acorrected
+//    """
+//}
+//
+//   // allele_correction_wrapper.sh $sfile $mapped $mfile "A2exists" >> ${build}_acorrected
+//
+//    //tuple datasetID, file("disc*") into placeholder2
+//
+//process allele_correction_A1 {
+//
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, build, hfile, mfile, mapped, sfile, A2missing from ch_A2_missing
+//    
+//    output:
+//    tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_missing2
+//    file("${build}_mapped2") into placeholder4
+//
+//    script:
+//    """
+//    multiallelic_filter.sh $mapped > ${build}_mapped2
+//    echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
+//
+//    colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
+//    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | sstools-eallele correction -f - -a >> ${build}_acorrected 
+//
+//    """
+//}
+//
 
-process split_multiallelics_and_resort_index {
 
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, build, hfile, mfile, liftgrs from ch_mapped_data_mix
-    
-    output:
-    tuple datasetID, build, hfile, mfile, file("${datasetID}_${build}_mapped") into ch_allele_correction
-
-    script:
-    """
-    split_multiallelics_to_rows.sh $liftgrs > liftgrs2
-    echo -e "0\tCHRPOS\tRSID\tA1\tA2" > ${datasetID}_${build}_mapped
-    LC_ALL=C sort -k1,1 liftgrs2 >> ${datasetID}_${build}_mapped
-    """
-}
-
-ch_allele_correction_combine=ch_allele_correction.combine(ch_sfile_on_stream2, by: 0)
-ch_allele_correction_combine.into{ ch_allele_correction_combine1; ch_allele_correction_combine2 }
-
-process does_exist_A2 {
-
-    input:
-    tuple datasetID, hfile, mfile from ch_mfile_ok2
-    
-    output:
-    tuple datasetID, env(A2exists) into ch_present_A2
-
-    script:
-    """
-    A2exists=\$(doesA2exist.sh $mfile)
-    """
-}
-
-//Create filter for when A2 exists or not
-ch_present_A2_br=ch_present_A2.branch { key, value -> 
-                A2exists: value == "true"
-                A2missing: value == "false"
-                }
-
-//split the channels based on filter
-ch_present_A2_br2=ch_present_A2_br.A2exists
-ch_present_A2_br3=ch_present_A2_br.A2missing
-
-//combine each channel with the matching datasetID
-ch_A2_exists=ch_allele_correction_combine1.combine(ch_present_A2_br2, by: 0)
-ch_A2_missing=ch_allele_correction_combine2.combine(ch_present_A2_br3, by: 0)
-
-process allele_correction_A1_A2 {
-
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, build, hfile, mfile, mapped, sfile, A2exists from ch_A2_exists
-    
-    output:
-    tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_exists2
-
-    script:
-    """
-    echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
-
-    colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
-    colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
-    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | sstools-eallele correction -f - >> ${build}_acorrected
-    """
-}
-
-   // allele_correction_wrapper.sh $sfile $mapped $mfile "A2exists" >> ${build}_acorrected
-
-    //tuple datasetID, file("disc*") into placeholder2
-
-process allele_correction_A1 {
-
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, build, hfile, mfile, mapped, sfile, A2missing from ch_A2_missing
-    
-    output:
-    tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_missing2
-    file("${build}_mapped2") into placeholder4
-
-    script:
-    """
-    multiallelic_filter.sh $mapped > ${build}_mapped2
-    echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
-
-    colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
-    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | sstools-eallele correction -f - -a >> ${build}_acorrected 
-
-    """
-}
-
-//    allele_correction_wrapper.sh $sfile ${build}_mapped2 $mfile "A2missing" >> ${build}_acorrected 
-
-
-//mix channels
-ch_allele_corrected_mix=ch_A2_exists2.mix(ch_A2_missing2)
-ch_allele_corrected_mix.into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
 
 
 process filter_stats {
@@ -543,56 +493,80 @@ process infer_stats {
     output:
     tuple datasetID, hfile, mfile, file("st_inferred_stats") into ch_stats_selection
     tuple datasetID, hfile, mfile, file("st_which_to_do") into placeholder3
+    tuple datasetID, hfile, mfile, file("prepared_qnorm_vals") into placeholderDEV1
+    tuple datasetID, hfile, mfile, file("st_filtered2") into placeholderDEV2
 
     script:
     """
     check_stat_inference.sh $mfile > st_which_to_do
+
     if [ -s st_which_to_do ]; then
-      nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
-      nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
-      cat $st_filtered | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
+      if grep -q "Z_fr_OR_P" st_which_to_do; then
+
+        Px="\$(grep "^colP=" $mfile)"
+        P="\$(echo "\${Px#*=}")"
+
+        echo -e "0\tQNORM" > prepared_qnorm_vals
+        head $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/people/jesgaa/images/from-own/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm | awk -vOFS="\t" '{print NR,\$1}' >> prepared_qnorm_vals
+        LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" $st_filtered prepared_qnorm_vals > st_filtered2
+
+        nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
+        nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
+        head st_filtered2 | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
+
+      else
+        nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
+        nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
+        head $st_filtered | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
+      fi
     else
       touch st_inferred_stats
     fi
     """
 }
 
-ch_stats_selection2=ch_stats_selection.combine(ch_sfile_on_stream4, by: 0)
+//echo "\${P}" > prepared_qnorm_vals
 
-process select_stats {
-
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, hfile, mfile, inferred, sfile from ch_stats_selection2
-    
-    output:
-    tuple datasetID, file("st_stats_for_output") into ch_stats_for_output
-
-    script:
-    """
-    select_stats_for_output.sh $mfile $sfile $inferred > st_stats_for_output
-    """
-}
-
-ch_allele_corrected_and_outstats=ch_allele_corrected_mix1.combine(ch_stats_for_output, by: 0)
-
-process final_assembly {
-
-    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
-
-    input:
-    tuple datasetID, build, hfile, mfile, acorrected, stats from ch_allele_corrected_and_outstats
-    
-    output:
-    file("${datasetID}_${build}_cleaned") into ch_end
-
-    script:
-    """
-    apply_modifier_on_stats.sh $acorrected $stats > ${datasetID}_${build}_cleaned
-    """
-}
-
+//ch_stats_selection2=ch_stats_selection.combine(ch_sfile_on_stream4, by: 0)
+//
+//process select_stats {
+//
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, hfile, mfile, inferred, sfile from ch_stats_selection2
+//    
+//    output:
+//    tuple datasetID, file("st_stats_for_output") into ch_stats_for_output
+//
+//    script:
+//    """
+//    select_stats_for_output.sh $mfile $sfile $inferred > st_stats_for_output
+//    """
+//}
+//
+//ch_allele_corrected_and_outstats=ch_allele_corrected_mix1.combine(ch_stats_for_output, by: 0)
+//
+////mix channels
+//ch_allele_corrected_mix=ch_A2_exists2.mix(ch_A2_missing2)
+//ch_allele_corrected_mix.into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
+//
+//process final_assembly {
+//
+//    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+//
+//    input:
+//    tuple datasetID, build, hfile, mfile, acorrected, stats from ch_allele_corrected_and_outstats
+//    
+//    output:
+//    file("${datasetID}_${build}_cleaned") into ch_end
+//
+//    script:
+//    """
+//    apply_modifier_on_stats.sh $acorrected $stats > ${datasetID}_${build}_cleaned
+//    """
+//}
+//
 
 
 /*
