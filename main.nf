@@ -190,28 +190,23 @@ to_stream_sumstat_file = Channel
                 .fromPath(params.input, type: 'dir')
                 .map { dir -> tuple(dir.baseName, dir) }
 
+to_stream_sumstat_file.into { ch_to_stream_sumstat_file1; ch_to_stream_sumstat_file2 }
 
-process gunzip_sumstat_from_dir {
+process gunzip_add_sorted_index_sumstat {
 
-    //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+    publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, sdir from to_stream_sumstat_file
+    tuple datasetID, sdir from ch_to_stream_sumstat_file1
 
     output:
-    tuple datasetID, file("${datasetID}_header"), file("${datasetID}_meta") into ch_hfile_mfile
     tuple datasetID, file("${datasetID}_sfile") into ch_sfile_on_stream
 
     script:
     """
-    cat $sdir/*.meta > ${datasetID}_meta
-    zcat $sdir/*.gz > ${datasetID}_sfile
-    head -n1 ${datasetID}_sfile > ${datasetID}_header
+    zcat $sdir/*.gz | sstools-raw add-index | LC_ALL=C sort -k 1 - > ${datasetID}_sfile
     """
 }
-
-    //extract_header_from_gzfile_in_dir.sh $sdir > ${datasetID}_header
-
 
 /*
  * check validity of all col accessors from meta file
@@ -221,16 +216,19 @@ process check_meta_data_format {
     //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
 
     input:
-    tuple datasetID, hfile, mfile from ch_hfile_mfile
+    tuple datasetID, sdir from ch_to_stream_sumstat_file2
 
     output:
-    tuple datasetID, hfile, mfile into ch_mfile_ok
+    tuple datasetID, file("${datasetID}_header"), file("${datasetID}_meta") into ch_mfile_ok
 
     script:
     """
-    check_meta_data_format.sh $mfile $hfile
+    cat $sdir/*.meta > ${datasetID}_meta
+    echo "\$(head -n 1 < <(zcat $sdir/*.gz))" > ${datasetID}_header
+    check_meta_data_format.sh ${datasetID}_meta ${datasetID}_header
     """
 }
+    //zcat $sdir/*.gz | head -n1 > ${datasetID}_header
 
 ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2 }
 ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
