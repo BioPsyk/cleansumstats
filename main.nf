@@ -493,8 +493,6 @@ process infer_stats {
     output:
     tuple datasetID, hfile, mfile, file("st_inferred_stats") into ch_stats_selection
     tuple datasetID, hfile, mfile, file("st_which_to_do") into placeholder3
-    tuple datasetID, hfile, mfile, file("prepared_qnorm_vals") into placeholderDEV1
-    tuple datasetID, hfile, mfile, file("st_filtered2") into placeholderDEV2
 
     script:
     """
@@ -506,9 +504,10 @@ process infer_stats {
         Px="\$(grep "^colP=" $mfile)"
         P="\$(echo "\${Px#*=}")"
 
-        echo -e "0\tQNORM" > prepared_qnorm_vals
-        head $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/people/jesgaa/images/from-own/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm | awk -vOFS="\t" '{print NR,\$1}' >> prepared_qnorm_vals
-        LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" $st_filtered prepared_qnorm_vals > st_filtered2
+        echo -e "QNORM" > prepared_qnorm_vals
+        head $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/people/jesgaa/images/from-own/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm >> prepared_qnorm_vals
+        cut -f 1 $st_filtered | paste - prepared_qnorm_vals > prepared_qnorm_vals2
+        LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" $st_filtered prepared_qnorm_vals2 > st_filtered2
 
         nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
         nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
@@ -525,7 +524,10 @@ process infer_stats {
     """
 }
 
-//echo "\${P}" > prepared_qnorm_vals
+
+////    tuple datasetID, hfile, mfile, file("prepared_qnorm_vals") into placeholderDEV1
+////    tuple datasetID, hfile, mfile, file("prepared_qnorm_vals2") into placeholderDEV3
+////    tuple datasetID, hfile, mfile, file("st_filtered2") into placeholderDEV2
 
 //ch_stats_selection2=ch_stats_selection.combine(ch_sfile_on_stream4, by: 0)
 //
