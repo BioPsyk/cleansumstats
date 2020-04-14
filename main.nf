@@ -503,18 +503,18 @@ process infer_stats {
         P="\$(echo "\${Px#*=}")"
 
         echo -e "QNORM" > prepared_qnorm_vals
-        head $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/people/jesgaa/images/from-own/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm >> prepared_qnorm_vals
+        cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/people/jesgaa/images/from-own/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm >> prepared_qnorm_vals
         cut -f 1 $st_filtered | paste - prepared_qnorm_vals > prepared_qnorm_vals2
         LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" $st_filtered prepared_qnorm_vals2 > st_filtered2
 
         nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
         nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
-        head st_filtered2 | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
+        cat st_filtered2 | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
 
       else
         nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
         nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
-        head $st_filtered | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
+        cat $st_filtered | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
       fi
     else
       touch st_inferred_stats
