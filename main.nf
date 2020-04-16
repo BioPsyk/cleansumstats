@@ -255,7 +255,7 @@ process genome_build_stats {
     colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
     colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
 
-    head -n10000 ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
+    cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
     LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
     format_chrpos_for_dbsnp.sh ${build} gb_lift_sorted ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > ${build}.map
     sort -u -k1,1 ${build}.map | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${datasetID}.${build}.res
