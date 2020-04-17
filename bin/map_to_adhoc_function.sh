@@ -21,10 +21,10 @@ function autoRegexpFromMeta(){
     colVal="$(selRightHand "$(selColRow "^colPOS=" ${mapfile})")"
   elif [ $colType == "effallele" ]; then
     colTypeCol=4
-    colVal="$(selRightHand "$(selColRow "^colEffAllele=" ${mapfile})")"
+    colVal="$(selRightHand "$(selColRow "^colEffectAllele=" ${mapfile})")"
   elif [ $colType == "altallele" ]; then
     colTypeCol=5
-    colVal="$(selRightHand "$(selColRow "^colAltAllele=" ${mapfile})")"
+    colVal="$(selRightHand "$(selColRow "^colOtherAllele=" ${mapfile})")"
   else 
     echo "Error: cant find colType" 1>&2
   fi

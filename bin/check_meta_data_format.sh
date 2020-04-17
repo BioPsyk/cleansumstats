@@ -22,8 +22,8 @@ colNeeded1=(
 colCHR
 colPOS
 colSNP
-colEffAllele
-colAltAllele
+colEffectAllele
+colOtherAllele
 colBETA
 colSE
 colOR
@@ -40,8 +40,8 @@ colNeeded2=(
 colCHR
 colPOS
 colSNP
-colEffAllele
-colAltAllele
+colEffectAllele
+colOtherAllele
 colBETA
 colSE
 colOR
@@ -76,7 +76,7 @@ colPOS
 )
 
 alleleColNeeded=(
-colEffAllele
+colEffectAllele
 )
 
 #functions
