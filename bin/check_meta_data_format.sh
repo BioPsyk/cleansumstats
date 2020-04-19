@@ -3,6 +3,7 @@
 
 mefl="$1"
 hfile="$2"
+#metatempl="$3"
 
 if [ $# -eq 3 ] ; then
   dirout=$3
@@ -19,39 +20,39 @@ noError=true
 
 # Does all important tags exist in the metadatafile
 colNeeded1=(
-colCHR
-colPOS
-colSNP
-colEffectAllele
-colOtherAllele
-colBETA
-colSE
-colOR
-colORL95
-colORU95
-colZ
-colP
-colN
-colAFREQ
-colINFO
+col_CHR
+col_POS
+col_SNP
+col_EffectAllele
+col_OtherAllele
+col_BETA
+col_SE
+col_OR
+col_ORL95
+col_ORU95
+col_Z
+col_P
+col_N
+col_AFREQ
+col_INFO
 )
 #A set without the types
 colNeeded2=(
-colCHR
-colPOS
-colSNP
-colEffectAllele
-colOtherAllele
-colBETA
-colSE
-colOR
-colORL95
-colORU95
-colZ
-colP
-colN
-colAFREQ
-colINFO
+col_CHR
+col_POS
+col_SNP
+col_EffectAllele
+col_OtherAllele
+col_BETA
+col_SE
+col_OR
+col_ORL95
+col_ORU95
+col_Z
+col_P
+col_N
+col_AFREQ
+col_INFO
 )
 
 #examples of pattern types
@@ -71,12 +72,12 @@ allowedType=(
 )
 
 locColNeeded=(
-colCHR
-colPOS
+col_CHR
+col_POS
 )
 
 alleleColNeeded=(
-colEffectAllele
+col_EffectAllele
 )
 
 #functions
@@ -224,7 +225,7 @@ else
 fi
 
 #Do we have a minimum set of col<var> names - to run the cleansumstats pipeline
-#colCHR and colPOS must both exist
+#col_CHR and col_POS must both exist
 min_var_required_result1=$(
   min_var_required_resultx="ok"
   for var in ${locColNeeded[@]}; do

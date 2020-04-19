@@ -15,16 +15,16 @@ function autoRegexpFromMeta(){
   
   if [ $colType == "chr" ]; then
     colTypeCol=2
-    colVal="$(selRightHand "$(selColRow "^colCHR=" ${mapfile})")"
+    colVal="$(selRightHand "$(selColRow "^col_CHR=" ${mapfile})")"
   elif [ $colType == "bp" ]; then
     colTypeCol=3
-    colVal="$(selRightHand "$(selColRow "^colPOS=" ${mapfile})")"
+    colVal="$(selRightHand "$(selColRow "^col_POS=" ${mapfile})")"
   elif [ $colType == "effallele" ]; then
     colTypeCol=4
-    colVal="$(selRightHand "$(selColRow "^colEffectAllele=" ${mapfile})")"
+    colVal="$(selRightHand "$(selColRow "^col_EffectAllele=" ${mapfile})")"
   elif [ $colType == "altallele" ]; then
     colTypeCol=5
-    colVal="$(selRightHand "$(selColRow "^colOtherAllele=" ${mapfile})")"
+    colVal="$(selRightHand "$(selColRow "^col_OtherAllele=" ${mapfile})")"
   else 
     echo "Error: cant find colType" 1>&2
   fi

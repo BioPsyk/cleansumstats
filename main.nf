@@ -32,6 +32,9 @@ def helpMessage() {
 
     Options:
 
+    Auxiliaries:
+      --generateMetafile            Generates a meta file template, which is one of the required inputs to the cleansumstats pipeline
+
     Other options:
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
@@ -43,6 +46,9 @@ def helpMessage() {
       --awsqueue                    The AWSBatch JobQueue that needs to be set when running on AWSBatch
       --awsregion                   The AWS Region for your AWS Batch job to run on
     """.stripIndent()
+
+    Debug:
+      --keepIntermediateFiles       Keeps intermediate files, useful for debugging
 }
 
 // Show help message
@@ -160,7 +166,7 @@ if (params.generateMetafile){
 
   process create_meta_data_template {
   
-      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}", mode: 'copy', overwrite: false
   
       input:
       tuple basefilename, sfilename from ch_sumstat_file
@@ -188,11 +194,10 @@ if (params.generateMetafile){
       file "software_versions.csv"
   
       script:
-      // TODO nf-core: Get all tools to print their version number here
       """
       echo $workflow.manifest.version > v_pipeline.txt
       echo $workflow.nextflow.version > v_nextflow.txt
-      #sstools -v > v_sumstattools.txt
+      sstools-version > v_sumstattools.txt
       scrape_software_versions.py &> software_versions_mqc.yaml
       """
   }
@@ -206,10 +211,10 @@ if (params.generateMetafile){
   
   process gunzip_add_sorted_index_sumstat {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
-      tuple datasetID, sdir from ch_to_stream_sumstat_file1
+      tuple datasetID, sdir from ch_to_stream_sumstat_dir1
   
       output:
       tuple datasetID, file("${datasetID}_sfile") into ch_sfile_on_stream
@@ -225,10 +230,10 @@ if (params.generateMetafile){
    */
   process check_meta_data_format {
   
-      //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
-      tuple datasetID, sdir from ch_to_stream_sumstat_file2
+      tuple datasetID, sdir from ch_to_stream_sumstat_dir2
   
       output:
       tuple datasetID, file("${datasetID}_header"), file("${datasetID}_meta") into ch_mfile_ok
@@ -252,7 +257,7 @@ if (params.generateMetafile){
   
   process genome_build_stats {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, hfile, mfile, sfile from ch_check_gb
@@ -281,7 +286,7 @@ if (params.generateMetafile){
   
   process infer_genome_build {
   
-      //publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, file(ujoins) from ch_genome_build_stats_grouped
@@ -305,7 +310,7 @@ if (params.generateMetafile){
   ch_liftover_2=ch_liftover.join(ch_known_genome_build)
   
   process prep_dbsnp_mapling_by_sorting_chrpos {
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, hfile, mfile, sfile, gbmax from ch_liftover_2
@@ -327,7 +332,7 @@ if (params.generateMetafile){
   
   process liftover_and_map_to_dbsnp38 {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, hfile, mfile, fsorted, gbmax from ch_liftover_3
@@ -342,7 +347,7 @@ if (params.generateMetafile){
   }
   
   process sort_new_dbsnp38map {
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, hfile, mfile, mapped from ch_liftover_4
@@ -358,7 +363,7 @@ if (params.generateMetafile){
   }
   
   process liftover_and_map_to_rsids_and_alleles {
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, hfile, mfile, gb_liftgr38_sorted from ch_liftover_5
@@ -378,7 +383,7 @@ if (params.generateMetafile){
   
   process split_multiallelics_and_resort_index {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, build, hfile, mfile, liftgrs from ch_mapped_data_mix
@@ -427,7 +432,7 @@ if (params.generateMetafile){
   
   process allele_correction_A1_A2 {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, build, hfile, mfile, mapped, sfile, A2exists from ch_A2_exists
@@ -445,13 +450,10 @@ if (params.generateMetafile){
       """
   }
   
-     // allele_correction_wrapper.sh $sfile $mapped $mfile "A2exists" >> ${build}_acorrected
-  
-      //tuple datasetID, file("disc*") into placeholder2
   
   process allele_correction_A1 {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, build, hfile, mfile, mapped, sfile, A2missing from ch_A2_missing
@@ -473,11 +475,9 @@ if (params.generateMetafile){
   
   
   
-  
-  
   process filter_stats {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, hfile, mfile, sfile from ch_stats_inference
@@ -495,14 +495,14 @@ if (params.generateMetafile){
   
   process infer_stats {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, hfile, mfile, st_filtered from ch_stats_inference2
       
       output:
       tuple datasetID, hfile, mfile, file("st_inferred_stats") into ch_stats_selection
-      tuple datasetID, hfile, mfile, file("st_which_to_do") into placeholder3
+      file("st_which_to_do") into out_st_which_to_do
   
       script:
       """
@@ -511,7 +511,7 @@ if (params.generateMetafile){
       if [ -s st_which_to_do ]; then
         if grep -q "Z_fr_OR_P" st_which_to_do; then
   
-          Px="\$(grep "^colP=" $mfile)"
+          Px="\$(grep "^col_P=" $mfile)"
           P="\$(echo "\${Px#*=}")"
   
           echo -e "QNORM" > prepared_qnorm_vals
@@ -534,16 +534,11 @@ if (params.generateMetafile){
       """
   }
   
-  
-  ////    tuple datasetID, hfile, mfile, file("prepared_qnorm_vals") into placeholderDEV1
-  ////    tuple datasetID, hfile, mfile, file("prepared_qnorm_vals2") into placeholderDEV3
-  ////    tuple datasetID, hfile, mfile, file("st_filtered2") into placeholderDEV2
-  
   ch_stats_selection2=ch_stats_selection.combine(ch_sfile_on_stream4, by: 0)
   
   process select_stats {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
   
       input:
       tuple datasetID, hfile, mfile, inferred, sfile from ch_stats_selection2
@@ -566,7 +561,7 @@ if (params.generateMetafile){
   
   process final_assembly {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
   
       input:
       tuple datasetID, build, hfile, mfile, acorrected, stats from ch_allele_corrected_and_outstats

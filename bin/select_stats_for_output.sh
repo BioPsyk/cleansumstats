@@ -30,11 +30,11 @@ function specfunx_exists(){
 }
 
 #what is colname according to meta data file
-B="$(selRightHand "$(selColRow "^colBETA=" $mefl)")"
-SE="$(selRightHand "$(selColRow "^colSE=" $mefl)")"
-Z="$(selRightHand "$(selColRow "^colZ=" $mefl)")"
-P="$(selRightHand "$(selColRow "^colP=" $mefl)")"
-OR="$(selRightHand "$(selColRow "^colOR=" $mefl)")"
+B="$(selRightHand "$(selColRow "^col_BETA=" $mefl)")"
+SE="$(selRightHand "$(selColRow "^col_SE=" $mefl)")"
+Z="$(selRightHand "$(selColRow "^col_Z=" $mefl)")"
+P="$(selRightHand "$(selColRow "^col_P=" $mefl)")"
+OR="$(selRightHand "$(selColRow "^col_OR=" $mefl)")"
 
 #true or false (exists or not)
 tfB="$(recode_to_tf $B)"
