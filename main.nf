@@ -66,7 +66,7 @@ if (params.dbsnp38) { ch_dbsnp38 = file(params.dbsnp38, checkIfExists: true) }
 if (params.dbsnp37) { ch_dbsnp37 = file(params.dbsnp37, checkIfExists: true) } 
 if (params.dbsnp36) { ch_dbsnp36 = file(params.dbsnp36, checkIfExists: true) } 
 if (params.dbsnp35) { ch_dbsnp35 = file(params.dbsnp35, checkIfExists: true) } 
-ch_regexp_lexicon = file("$baseDir/assets/allowed_col_types.txt", checkIfExists: true)
+ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
 
 params.dbsnp38 = "hej"
 
