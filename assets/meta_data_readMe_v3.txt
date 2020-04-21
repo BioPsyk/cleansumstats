@@ -57,11 +57,12 @@ path_pdfSupp=
 ########################################################################
 
 study_PMID=
-# Pubmed id of associated publication.  If based on a preprint such as biorXiv, provide the link.
+# Pubmed id of associated publication.  If based on a preprint such as biorXiv, provide the DOI link.
 # Will be autofilled by template generator and used to check for redundancy.
 # If missing, record extra data in study_Use, study_Controller, study_Contact, study_Restrictions.
 # options: <number>, <preprint server link> 
 # example: study_PMID=30323354
+# example: study_PMID=https://doi.org/10.1101/288662
 
 study_Year=
 # Year of publication.
