@@ -147,11 +147,12 @@ study_inHouseData=
 study_Ancestry=
 # It is important to note the genetic ancestry of the subjects in the study. 
 # An ontology of populations is provided, but this includes the 1000 genomes coding scheme: African (AFR), 
-# Native North or South American (AMR), East asian (EAS), European (EUR), or South asian (SAS).  
+# Native North or South American (AMR), East asian (EAS), European (EUR), or South asian (SAS).  If a 
+# particular isolate or population does not fit, consider describing it and adding to ontology (e.g., Greenlanders)
 # Consider checking PMID in external inventories.
 # ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
 # external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-# options: AFR, AMR, EAS, EUR, SAS, <combinations of> missing
+# options: AFR, AMR, EAS, EUR, SAS, <combinations of>, <character string>, missing
 # example: study_Population=EUR
 # example: study_Population=EUR,EAS
 
