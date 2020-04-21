@@ -82,7 +82,7 @@ study_PhenoDesc=
 # example: Education attainment, measured in years of schooling
 
 study_PhenoCode=
-# Standard, in house trait identifier.  Must be in the in ontology or error will be thrown.
+# Standard, in house trait identifier.  Must be in the in ontology (PhenoCode column) or error will be thrown.
 # Checking external inventories for the PMID/preprint link to see if a PhenoCode for exists for this PhenoDesc,
 # else select the best fit from ontology, or for inspiration via related traits.
 # ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
