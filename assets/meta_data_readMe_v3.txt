@@ -19,7 +19,8 @@
 #  and date.
 #
 #     Two resources are/may be necessary to assist in the completiong of this data:
-#       Our in house ontology which provides standard codes for certain variables:
+#       Our in house ontologies which provides standard codes for certain variables.  
+#       Note: we use the GWAS Atlas phenotype coding system (https://atlas.ctglab.nl/)
 #           https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
 #       An external data base that can be referenced to save some time:
 #           https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
