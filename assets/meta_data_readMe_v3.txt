@@ -17,6 +17,14 @@
 #  for the study you are interested in.  It will check our in house library to see if the 
 #  stats have already been processed to save time, and stamp this template with version
 #  and date.
+#
+#     Two external resources are necessary to assist in the completiong of this data:
+#  
+#  Our in house ontology which provides standard codes for certain variables:
+#     https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
+#  An external data base that can be referenced to save some time:
+#     https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+#
 ########################################################################
 
 ########################################################################
