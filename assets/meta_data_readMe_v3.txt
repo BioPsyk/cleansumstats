@@ -159,8 +159,6 @@ study_Ancestry=
 # example: study_Population=EUR
 # example: study_Population=EUR,EAS
 
-One of the five super ancestry populations defined in 1000 genome project, AFR (African), AMR (American), EAS (East asian), EUR (European), and SAS (South asian). If the GWAS is trans ethnic study, all of the population is listed but the first one has the highest proportion of the total sample size of the study. For example, EUR+EAS+SAS means the study cohorts are mix of three populations, but EUR samples occupy the highest proportion of the total sample size (does not have to be majority).
-
 study_Gender=
 # What is the gender composition of the study?
 # options: male, female, mixed
