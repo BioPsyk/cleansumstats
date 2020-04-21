@@ -91,7 +91,9 @@ study_PhenoCode=
 # example:
 
 study_PhenoMod=
-# Standard IBP phenotype modifier codes that are used to identify different versions of the same phenotype/PMID combination.
+# Standard IBP phenotype modifier codes that are used to identify different versions of the same
+# phenotype/PMID combination.  This will always be in contrast to some "base stats" that have the 
+# same PMID and PhenoCode. It might be more common with non-public stats or collaborations.
 # This is relevant when, for example, sum stats are recomputed excluding iPSYCH, in males only, or with/without specific 
 # covariates.
 # Code must be in the in-house ontology.
