@@ -18,21 +18,12 @@
 #  stats have already been processed to save time, and stamp this template with version
 #  and date.
 #
-#     Two external resources are necessary to assist in the completiong of this data:
-#  
-#  Our in house ontology which provides standard codes for certain variables:
-#     https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
-#  An external data base that can be referenced to save some time:
-#     https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+#     Two resources are/may be necessary to assist in the completiong of this data:
+#       Our in house ontology which provides standard codes for certain variables:
+#           https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
+#       An external data base that can be referenced to save some time:
+#           https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 #
-########################################################################
-
-########################################################################
-# 
-#  Notes:
-#  -If data is missing or unavailable enter "missing"
-#  -Each variable should be on one line
-# 
 ########################################################################
 
 ########################################################################
@@ -80,20 +71,20 @@ study_Year=
 study_PhenoDesc=
 # Phenotype description.  Should be as faithful to the name of the phenotype used in the publication.  This
 # will not be standardized, but should aim to be more inclusive, informative and complete.  Can be a full sentence.
-# Consider checking external inventory for the PMID to see if this has already been coded and you agree with 
+# Consider checking external inventories for the PMID to see if this has already been coded and you agree with 
 # the description.
-# external inventory: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <character string>
 # example: Parental proxy diagnosis or clinically defined Alzheimer's Disease
 # example: Schiziphrenia
 # example: Education attainment, measured in years of schooling
 
 study_PhenoCode=
-# Standard, in house trait identifier.  Must be in the in house-ontology or error will be thrown.
-# Checking external inventory for the PMID/preprint link to see if a PhenoCode for exists for this PhenoDesc,
-# else select the best fit from ontology.
+# Standard, in house trait identifier.  Must be in the in ontology or error will be thrown.
+# Checking external inventories for the PMID/preprint link to see if a PhenoCode for exists for this PhenoDesc,
+# else select the best fit from ontology, or for inspiration via related traits.
 # ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
-# external inventory: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <character string from ontology>
 # example:
 
@@ -145,21 +136,25 @@ study_Restrictions=
 study_inHouseData=
 # If iPSYCH data, UKBiobank, or some other in house data set that we analyze, is in this study, 
 # then this is very important to mark.  
-# Consider checking PMID in external inventory.
+# Consider checking PMID in external inventories.
 # List of studies to watch out for is provided in the ontology doc.
 # ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
-# external inventory: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <character string from ontology>, missing
 # example: study_inHouseData=iPSYCH
 
 study_Ancestry=
 # It is important to note the genetic ancestry of the subjects in the study. 
-# An ontology of populations is provided.  
-# Consider checking PMID in external inventory.
+# An ontology of populations is provided, but this includes the 1000 genomes coding scheme: African (AFR), 
+# Native North or South American (AMR), East asian (EAS), European (EUR), or South asian (SAS).  
+# Consider checking PMID in external inventories.
 # ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
-# external inventory: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-# options: <character string from ontology>, missing
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+# options: AFR, AMR, EAS, EUR, SAS, <combinations of> missing
 # example: study_Population=EUR
+# example: study_Population=EUR,EAS
+
+One of the five super ancestry populations defined in 1000 genome project, AFR (African), AMR (American), EAS (East asian), EUR (European), and SAS (South asian). If the GWAS is trans ethnic study, all of the population is listed but the first one has the highest proportion of the total sample size of the study. For example, EUR+EAS+SAS means the study cohorts are mix of three populations, but EUR samples occupy the highest proportion of the total sample size (does not have to be majority).
 
 study_Gender=
 # What is the gender composition of the study?
@@ -223,17 +218,29 @@ stats_TotalN=
 # Total sample size (cases and controls).  
 # ***USE CARE*** This number may not be the one in the abstract/methods.  Check
 # sum stats readme files and supplementary notes describing data release as sometimes public sum stats
-# data is censored and only a subset of the data used in the printed paper. Very tricky!
+# data is censored and only a subset of the data used in the printed paper. Very tricky! Use Care!
+# Consider checking PMID in external inventories, but only if download file is identicai! Use Care!
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <number>
 # example: stats_TotalN=12000
 
 stats_CaseN=
 # Total number of cases in study.  Will be missing for quantiative and ordinal traits.
+# ***USE CARE*** This number may not be the one in the abstract/methods.  Check
+# sum stats readme files and supplementary notes describing data release as sometimes public sum stats
+# data is censored and only a subset of the data used in the printed paper. Very tricky! Use Care!
+# Consider checking PMID in external inventories, but only if download file is identicai! Use Care!
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <number>, missing
 # example: stats_CaseN=4000
 
 stats_ControlN=
 # Total number of controls in study.  Will be missing for quantiative and ordinal traits.
+# ***USE CARE*** This number may not be the one in the abstract/methods.  Check
+# sum stats readme files and supplementary notes describing data release as sometimes public sum stats
+# data is censored and only a subset of the data used in the printed paper. Very tricky! Use Care!
+# Consider checking PMID in external inventories, but only if download file is identicai! Use Care!
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <number>, missing
 # example: stats_ControlN=8000
 
