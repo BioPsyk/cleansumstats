@@ -58,7 +58,28 @@ var=$(which_to_filter | awk '{printf "%s|", $1}' | sed 's/|$//')
 nam=$(which_to_filter | awk '{printf "%s,", $1}' | sed 's/,$//')
 
 #cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
-sstools-utils ad-hoc-do -f $stdin -k "0|${var}" -n"0,${nam}" | filter_stat_values_awk.sh
 
-#
+#check if SE is present, if so indicate the correct column for zero value filtering
+i=1
+SE_which_col=-1
+if [ ${tfB} == "true" ]; then
+  ((i++))
+fi
+if [ ${tfSE} == "true" ]; then
+  ((i++))
+  SE_which_col=$i
+fi
+if [ ${tfZ} == "true" ]; then
+  ((i++))
+fi
+if [ ${tfP} == "true" ]; then
+  ((i++))
+fi
+if [ ${tfOR} == "true" ]; then
+  ((i++))
+fi
+
+
+sstools-utils ad-hoc-do -f $stdin -k "0|${var}" -n"0,${nam}" | filter_stat_values_awk.sh -vzeroSE="${SE_which_col}"
+#sstools-utils ad-hoc-do -f $stdin -k "0|${var}" -n"0,${nam}" | filter_stat_values_awk.sh
 

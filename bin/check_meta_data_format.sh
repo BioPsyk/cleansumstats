@@ -3,14 +3,15 @@
 
 mefl="$1"
 hfile="$2"
+OUT_log="$3"
 #metatempl="$3"
 
-if [ $# -eq 3 ] ; then
-  dirout=$3
-  OUT_log="${dirout}/check_meta_formatting.log"
-else
-  OUT_log="check_meta_formatting.log"
-fi
+#if [ $# -eq 3 ] ; then
+#  dirout=$3
+#  OUT_log="${dirout}/check_meta_formatting.log"
+#else
+#  OUT_log="check_meta_formatting.log"
+#fi
 
 dat="$(date)"
 

@@ -76,8 +76,6 @@ if (params.dbsnp36) { ch_dbsnp36 = file(params.dbsnp36, checkIfExists: true) }
 if (params.dbsnp35) { ch_dbsnp35 = file(params.dbsnp35, checkIfExists: true) } 
 ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
 
-params.dbsnp38 = "hej"
-
 // Stage config files
 ch_multiqc_config = file(params.multiqc_config, checkIfExists: true)
 ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
@@ -199,70 +197,134 @@ if (params.generateMetafile){
       """
       echo $workflow.manifest.version > v_pipeline.txt
       echo $workflow.nextflow.version > v_nextflow.txt
-      sstools-version > v_sumstattools.txt
+      #sstools-version > v_sumstattools.txt
       scrape_software_versions.py &> software_versions_mqc.yaml
       """
   }
   
   
-  to_stream_sumstat_dir = Channel
-                  .fromPath(params.input, type: 'dir')
-                  .map { dir -> tuple(dir.baseName, dir) }
+  //to_stream_sumstat_dir = Channel
+  //                .fromPath(params.input, type: 'dir')
+  //                .map { dir -> tuple(dir.baseName, dir) }
+
+  //use metafile filename as datasetID through the pipeline
+  ch_mfile_check = Channel
+                  .fromPath(params.input, type: 'file')
+                  .map { file -> tuple(file.baseName, file) }
   
-  to_stream_sumstat_dir.into { ch_to_stream_sumstat_dir1; ch_to_stream_sumstat_dir2 }
+  //to_stream_sumstat_dir.into { ch_to_stream_sumstat_dir1; ch_to_stream_sumstat_dir2 }
+
+
+  process check_and_force_basic_formats {
   
-  process gunzip_add_sorted_index_sumstat {
-  
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, sdir from ch_to_stream_sumstat_dir1
+      tuple datasetID, mfile from ch_mfile_check
+  
+      output:
+      tuple datasetID, mfile into ch_mfile_ok
+      tuple datasetID, file("${datasetID}_sfile") into ch_sfile_ok
+      tuple datasetID, file("*.log") into inputchecker_log_files
+      tuple datasetID, file("${datasetID}_header") into extra_stuff1
+      tuple datasetID, file("${datasetID}_sfile_1000") into extra_stuff2
+      tuple datasetID, file("${datasetID}_sfile_1000_formatted") into extra_stuff3
+  
+      script:
+      """
+      #check if field for sumstat exists
+      if grep -q "^path_sumStats=" $mfile; then
+        Pathx="\$(grep "^path_sumStats=" $mfile)"
+        spath1="\$(echo "\${Pathx#*=}")"
+      else
+        echo "the 'path_sumStats=' field does not exist in the metafile"
+        exit 1
+      fi
+      
+      #check if file specified exists
+      spath2="\$(dirname ${mfile})/\${spath1}"
+      if [ -f "\$spath1" ] ;then
+        spath="\${spath1}"
+      elif [ -f "\$spath2" ]; then 
+        spath="\${spath2}"
+      else
+        echo "the file \$spath doesnt exist, which is pointed at in the metafile 'path_sumStats=' field"
+        exit 1
+      fi
+
+      #make complete metafile check
+      echo "\$(head -n 1 < <(zcat \$spath))" > ${datasetID}_header
+      check_meta_data_format.sh $mfile ${datasetID}_header ${datasetID}_mfile_format.log
+      
+
+      #focused sumstat file check and formatting
+      #make first sumstat file check on first 1000 lines
+      echo "\$(head -n 1000 < <(zcat \$spath))" | gzip -c > ${datasetID}_sfile_1000
+      check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile_1000_formatted ${datasetID}_sfile_1000_format.log
+      
+      #make second sumstat file check on all lines
+      #zcat \$spath > ${datasetID}_sfile
+      #echo "hej" > ${datasetID}_sfile.log
+      check_and_format_sfile.sh \$spath ${datasetID}_sfile ${datasetID}_sfile_format.log
+
+      """
+  }
+  
+  process add_sorted_index_sumstat {
+  
+  
+      input:
+      tuple datasetID, sfile from ch_sfile_ok
+
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       output:
       tuple datasetID, file("${datasetID}_sfile") into ch_sfile_on_stream
   
       script:
       """
-      zcat $sdir/*.gz | sstools-raw add-index | LC_ALL=C sort -k 1 - > ${datasetID}_sfile
+      cat $sfile | sstools-raw add-index | LC_ALL=C sort -k 1 - > ${datasetID}_sfile
       """
   }
   
   /*
    * check validity of all col accessors from meta file
    */
-  process check_meta_data_format {
-  
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
-  
-      input:
-      tuple datasetID, sdir from ch_to_stream_sumstat_dir2
-  
-      output:
-      tuple datasetID, file("${datasetID}_header"), file("${datasetID}_meta") into ch_mfile_ok
-  
-      script:
-      """
-      cat $sdir/*.meta > ${datasetID}_meta
-      echo "\$(head -n 1 < <(zcat $sdir/*.gz))" > ${datasetID}_header
-      check_meta_data_format.sh ${datasetID}_meta ${datasetID}_header
-      """
-  }
-      //zcat $sdir/*.gz | head -n1 > ${datasetID}_header
+ // process check_meta_data_format {
+ // 
+ //     if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+ // 
+ //     input:
+ //     tuple datasetID, sdir from ch_to_stream_sumstat_dir2
+ // 
+ //     output:
+ //     tuple datasetID, file("${datasetID}_header"), file("${datasetID}_meta") into ch_mfile_ok
+ // 
+ //     script:
+ //     """
+ //     cat $sdir/*.meta > ${datasetID}_meta
+ //     echo "\$(head -n 1 < <(zcat $sdir/*.gz))" > ${datasetID}_header
+ //     check_meta_data_format.sh ${datasetID}_meta ${datasetID}_header
+ //     """
+ // }
   
   ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2 }
   ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
   ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
-  ch_mfile_and_stream.into { ch_check_gb; ch_liftover;ch_stats_inference }
+  ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_stats_inference }
   
   
   whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
   
   process genome_build_stats {
   
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, hfile, mfile, sfile from ch_check_gb
+      tuple datasetID, mfile, sfile from ch_check_gb
       each build from whichbuild
   
       output:
@@ -288,7 +350,8 @@ if (params.generateMetafile){
   
   process infer_genome_build {
   
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
       tuple datasetID, file(ujoins) from ch_genome_build_stats_grouped
@@ -312,13 +375,14 @@ if (params.generateMetafile){
   ch_liftover_2=ch_liftover.join(ch_known_genome_build)
   
   process prep_dbsnp_mapling_by_sorting_chrpos {
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, hfile, mfile, sfile, gbmax from ch_liftover_2
+      tuple datasetID, mfile, sfile, gbmax from ch_liftover_2
   
       output:
-      tuple datasetID, hfile, mfile, file("gb_lift_sorted"), gbmax into ch_liftover_3
+      tuple datasetID, mfile, file("gb_lift_sorted"), gbmax into ch_liftover_3
   
       script:
       """
@@ -334,13 +398,14 @@ if (params.generateMetafile){
   
   process liftover_and_map_to_dbsnp38 {
   
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, hfile, mfile, fsorted, gbmax from ch_liftover_3
+      tuple datasetID, mfile, fsorted, gbmax from ch_liftover_3
       
       output:
-      tuple datasetID, hfile, mfile, file("gb_liftgr38") into ch_liftover_4
+      tuple datasetID, mfile, file("gb_liftgr38") into ch_liftover_4
   
       script:
       """
@@ -349,13 +414,14 @@ if (params.generateMetafile){
   }
   
   process sort_new_dbsnp38map {
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, hfile, mfile, mapped from ch_liftover_4
+      tuple datasetID, mfile, mapped from ch_liftover_4
       
       output:
-      tuple datasetID, hfile, mfile, file("gb_liftgr38_sorted") into ch_liftover_5
+      tuple datasetID, mfile, file("gb_liftgr38_sorted") into ch_liftover_5
   
       script:
       """
@@ -365,14 +431,15 @@ if (params.generateMetafile){
   }
   
   process liftover_and_map_to_rsids_and_alleles {
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, hfile, mfile, gb_liftgr38_sorted from ch_liftover_5
+      tuple datasetID, mfile, gb_liftgr38_sorted from ch_liftover_5
       
       output:
-      tuple datasetID, val("GRCh38"), hfile, mfile, file("gb_ready_liftgr38") into ch_mapped_GRCh38
-      tuple datasetID, val("GRCh37"), hfile, mfile, file("gb_ready_liftgr37") into ch_mapped_GRCh37
+      tuple datasetID, val("GRCh38"), mfile, file("gb_ready_liftgr38") into ch_mapped_GRCh38
+      tuple datasetID, val("GRCh37"), mfile, file("gb_ready_liftgr37") into ch_mapped_GRCh37
   
       script:
       """
@@ -385,13 +452,14 @@ if (params.generateMetafile){
   
   process split_multiallelics_and_resort_index {
   
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, build, hfile, mfile, liftgrs from ch_mapped_data_mix
+      tuple datasetID, build, mfile, liftgrs from ch_mapped_data_mix
       
       output:
-      tuple datasetID, build, hfile, mfile, file("${datasetID}_${build}_mapped") into ch_allele_correction
+      tuple datasetID, build, mfile, file("${datasetID}_${build}_mapped") into ch_allele_correction
   
       script:
       """
@@ -407,7 +475,7 @@ if (params.generateMetafile){
   process does_exist_A2 {
   
       input:
-      tuple datasetID, hfile, mfile from ch_mfile_ok2
+      tuple datasetID, mfile from ch_mfile_ok2
       
       output:
       tuple datasetID, env(A2exists) into ch_present_A2
@@ -434,13 +502,14 @@ if (params.generateMetafile){
   
   process allele_correction_A1_A2 {
   
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, build, hfile, mfile, mapped, sfile, A2exists from ch_A2_exists
+      tuple datasetID, build, mfile, mapped, sfile, A2exists from ch_A2_exists
       
       output:
-      tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_exists2
+      tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_exists2
   
       script:
       """
@@ -455,13 +524,14 @@ if (params.generateMetafile){
   
   process allele_correction_A1 {
   
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, build, hfile, mfile, mapped, sfile, A2missing from ch_A2_missing
+      tuple datasetID, build, mfile, mapped, sfile, A2missing from ch_A2_missing
       
       output:
-      tuple datasetID, build, hfile, mfile, file("${build}_acorrected") into ch_A2_missing2
+      tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_missing2
       file("${build}_mapped2") into placeholder4
   
       script:
@@ -479,31 +549,34 @@ if (params.generateMetafile){
   
   process filter_stats {
   
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, hfile, mfile, sfile from ch_stats_inference
+      tuple datasetID, mfile, sfile from ch_stats_inference
       
       output:
-      tuple datasetID, hfile, mfile, file("st_filtered") into ch_stats_inference2
-      tuple datasetID, file("st_error")  into placeholder2
+      tuple datasetID, mfile, file("st_filtered") into ch_stats_inference2
+      tuple datasetID, file("st_error*")  into placeholder2
   
       script:
       """
       filter_stat_values.sh $mfile $sfile > st_filtered 2> st_error 
+
       """
   }
   
   
   process infer_stats {
   
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, hfile, mfile, st_filtered from ch_stats_inference2
+      tuple datasetID, mfile, st_filtered from ch_stats_inference2
       
       output:
-      tuple datasetID, hfile, mfile, file("st_inferred_stats") into ch_stats_selection
+      tuple datasetID, mfile, file("st_inferred_stats") into ch_stats_selection
       file("st_which_to_do") into out_st_which_to_do
   
       script:
@@ -540,10 +613,11 @@ if (params.generateMetafile){
   
   process select_stats {
   
-      if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, hfile, mfile, inferred, sfile from ch_stats_selection2
+      tuple datasetID, mfile, inferred, sfile from ch_stats_selection2
       
       output:
       tuple datasetID, file("st_stats_for_output") into ch_stats_for_output
@@ -566,7 +640,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
   
       input:
-      tuple datasetID, build, hfile, mfile, acorrected, stats from ch_allele_corrected_and_outstats
+      tuple datasetID, build, mfile, acorrected, stats from ch_allele_corrected_and_outstats
       
       output:
       file("${datasetID}_${build}_cleaned") into ch_end

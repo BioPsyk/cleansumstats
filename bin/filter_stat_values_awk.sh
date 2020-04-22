@@ -36,6 +36,14 @@ NR>1{
       doprint="no"
      # printf "%s%s", $i,OFS
     }
+
+    #
+    if(i==zeroSE){
+      if($i == 0){
+        doprint="no"
+       # printf "%s%s", $i,OFS
+      }
+    }
   }
    # print ""
 
