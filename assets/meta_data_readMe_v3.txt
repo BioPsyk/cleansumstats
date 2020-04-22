@@ -1,64 +1,103 @@
 ########################################################################
 # 
 #     A critical part of our GWAS sumstats cleaning pipeline is accurate meta-data
-#  for each study.  This meta-data give critical input to the cleaning pipeline,
+#  for each study.  This meta-data gives critical input to the cleaning pipeline,
 #  allows us to annotate and organize studies, and collects information that is
-#  critical for down stream uses of the sum stats.
+#  critical for down stream uses of the cleaned sum stats.
 # 
 #     It is critical the information is filled out accurately and completely.  There 
 #  are some automated checks, but it is not possible to computationally validate all
 #  pieces of info, so please fill out with care!
 # 
 #     In addition to this meta data, we need the actual sum stats file, any associated
-#  readme files, and a pdf of the publication (potentially relevant supplementary 
+#  readme files, and a pdf of the publication (and potentially relevant supplementary 
 #  information as well).
-# 
+#
+#     The template generator tool assists this process by providing a "blank" meta-data
+#  for the study you are interested in.  It will check our in house library to see if the 
+#  stats have already been processed to save time, and stamp this template with version
+#  and date.
+#
+#     Two resources are/may be necessary to assist in the completiong of this data:
+#       Our in house ontologies which provides standard codes for certain variables.  
+#       Note: we use the GWAS Atlas phenotype coding system (https://atlas.ctglab.nl/)
+#           https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
+#       An external data base that can be referenced to save some time:
+#           https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+#
 ########################################################################
 
 ########################################################################
-# 
-#  Notes:
-#  -If data is missing or unavailable enter "missing"
-#  -Each variable should be on one line
-# 
+#  Meta data section 0 - File locations
 ########################################################################
+
+path_sumStats=
+# Specify the path to the sumstats to be cleaned.  
+# Will be autofilled by template generator and used to check for redundancy.
+# options: <directory path>
+# example: path_sumStats=/home/anscho/data/sumstats/scz.txt
+
+path_readMe=
+# Specify the path to the sumstats documentation provided by authors or hosts.
+# options: <directory path>, missing
+# example: path_sumStats=/home/anscho/data/sumstats/scz_readMe.txt
+
+path_pdf=
+# Specify the path to the PDF corresponding to the sumstats as referenced in study PMID below.
+# options: <directory path>, missing
+# example: path_sumStats=/home/anscho/data/sumstats/SCZ_108Loci.pdf
+
+path_pdfSupp=
+# Specify the path to the supplementary information associated with the PDF corresponding to 
+# the sumstats as referenced in study PMID below.  This will not often be necessary.
+# options: <directory path>, missing
+# example: path_sumStats=/home/anscho/data/sumstats/SCZ_108Loci_Supp.pdf
 
 ########################################################################
 #  Meta data section 1 - Study Descriptors
 ########################################################################
 
 study_PMID=
-# Pubmed id of associated publication.  If based on a preprint such as biorXiv, indicate preprint.  
-# If preprint of missing, record extra data in study_Use, study_Controller, study_Contact, study_Restrictions.
-# options: <number>, preprint, missing 
+# Pubmed id of associated publication.  If based on a preprint such as biorXiv, provide the DOI link.
+# Will be autofilled by template generator and used to check for redundancy.
+# If missing, record extra data in study_Use, study_Controller, study_Contact, study_Restrictions.
+# options: <number>, <preprint server link> 
 # example: study_PMID=30323354
+# example: study_PMID=https://doi.org/10.1101/288662
 
 study_Year=
 # Year of publication.
 # options: <number> 
 # example: study_Year=2018
 
-
 study_PhenoDesc=
 # Phenotype description.  Should be as faithful to the name of the phenotype used in the publication.  This
 # will not be standardized, but should aim to be more inclusive, informative and complete.  Can be a full sentence.
+# Consider checking external inventories for the PMID to see if this has already been coded and you agree with 
+# the description.
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <character string>
 # example: Parental proxy diagnosis or clinically defined Alzheimer's Disease
 # example: Schiziphrenia
 # example: Education attainment, measured in years of schooling
 
 study_PhenoCode=
-# Standard, in house trait identifier.  Must be in the in house-ontology.
-# ontology:
+# Standard, in house trait identifier.  Must be in the in ontology (PhenoCode column) or error will be thrown.
+# Checking external inventories for the PMID/preprint link to see if a PhenoCode for exists for this PhenoDesc,
+# else select the best fit from ontology, or for inspiration via related traits.
+# ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <character string from ontology>
 # example:
 
 study_PhenoMod=
-# Standard IBP phenotype modifier codes that are used to identify different versions of the same phenotype/PMID combination.
+# Standard IBP phenotype modifier codes that are used to identify different versions of the same
+# phenotype/PMID combination.  This will always be in contrast to some "base stats" that have the 
+# same PMID and PhenoCode. It might be more common with non-public stats or collaborations.
 # This is relevant when, for example, sum stats are recomputed excluding iPSYCH, in males only, or with/without specific 
 # covariates.
 # Code must be in the in-house ontology.
-# ontology: 
+# ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
 # options: <character string from ontology>, missing
 # example:
 
@@ -86,35 +125,57 @@ study_Controller=
 # example: study_Controller=missing
 
 study_Contact=
-# If private, email address of person responsible for sum stats.  Use "missing" if "public" or "preprint".
+# If private, email address of person responsible for sum stats.  Use "missing" if "public".
 # options: <email address>, missing
 # example: study_Contact=Andrew.Schork@regionh.dk 
 # example: study_Contact=missing
 
 study_Restrictions=
-# If private, describe terms of use.  Use "missing" if "public" or "preprint".
+# If private, describe terms of use.  Use "missing" if "public".
 # options: <character string>, missing
 # example: study_Restrictions=Sumstats can only be used with permission of controller until embargo date of May 12, 2021.
 # example: study_Restrictions=missing
 
 
 study_inHouseData=
-# If iPSYCH data, or some other in house data set that we analyze, is in this study, then this is very important to mark.  
-# List of studies to watch out for is provided.
-# ontology: 
+# If iPSYCH data, UKBiobank, or some other in house data set that we analyze, is in this study, 
+# then this is very important to mark.  
+# Consider checking PMID in external inventories.
+# List of studies to watch out for is provided in the ontology doc.
+# ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <character string from ontology>, missing
 # example: study_inHouseData=iPSYCH
 
 study_Ancestry=
-# It is important to note the genetic ancestry of the subjects in the study. An ontology of populations is provided.
-# ontology: 
-# options: <character string from ontology>, missing
+# It is important to note the genetic ancestry of the subjects in the study. 
+# An ontology of populations is provided, but this includes the 1000 genomes coding scheme: African (AFR), 
+# Native North or South American (AMR), East asian (EAS), European (EUR), or South asian (SAS).  If a 
+# particular isolate or population does not fit, consider describing it and adding to ontology (e.g., Greenlanders)
+# Consider checking PMID in external inventories.
+# ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+# options: AFR, AMR, EAS, EUR, SAS, <combinations of>, <character string>, missing
 # example: study_Population=EUR
+# example: study_Population=EUR,EAS
 
 study_Gender=
 # What is the gender composition of the study?
 # options: male, female, mixed
 # example: study_Gender=mixed
+
+study_PhasePanel=
+# What data set was used to assist phasing. If a meta-analysis with multiple, note "meta".
+# options: <character string>, HapMap2, HapMap2, 1KGP_pilot, 1KGP_phase1, 1KGP_phase2, 1KGP_phase3, 
+#                               1KGP_phase4, 1KGP_phase5, TOPMED, HRC, meta, missing
+# example: study_PhasePanel=HRC
+
+study_PhaseSoftware=
+# What software were use to phase and impute, comma separate values? if multiple as part of a meta, use meta.
+# options: <character string>, plink, impute, impute2, impute3, shapeIt, shapeIt2, shapeIt3, shapeIt4, shapeIt5, 
+#                                MaCH, Beagle, Beagle1.0, meta, missing
+# example: study_PhaseSoftware=meta
+# example: study_PhaseSoftware=Impute2
 
 study_ImputePanel=
 # What data set was this study imputed to? If a meta-analysis with multiple, not meta.
@@ -123,9 +184,10 @@ study_ImputePanel=
 
 study_ImputeSoftware=
 # What software were use to phase and impute, comma separate values? if multiple as part of a meta, use meta.
-# options: <character string>, <character string>; meta, meta
-# example: study_ImputeSoftware=meta, meta
-# example: study_ImputeSoftware=ShapeIt2, Impute 2
+# options: <character string>, plink, impute, impute2, impute3, shapeIt, shapeIt2, shapeIt3, shapeIt4, shapeIt5, 
+#                                MaCH, Beagle, Beagle1.0, meta, missing
+# example: study_ImputeSoftware=meta
+# example: study_ImputeSoftware=Impute2
 
 study_Array=
 # What array was used for genotyping? is multiple, choose meta.
@@ -159,34 +221,41 @@ stats_TotalN=
 # Total sample size (cases and controls).  
 # ***USE CARE*** This number may not be the one in the abstract/methods.  Check
 # sum stats readme files and supplementary notes describing data release as sometimes public sum stats
-# data is censored and only a subset of the data used in the printed paper. Very tricky!
+# data is censored and only a subset of the data used in the printed paper. Very tricky! Use Care!
+# Consider checking PMID in external inventories, but only if download file is identicai! Use Care!
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <number>
 # example: stats_TotalN=12000
 
 stats_CaseN=
-# Total number of cases in study
-# options: <number>
+# Total number of cases in study.  Will be missing for quantiative and ordinal traits.
+# ***USE CARE*** This number may not be the one in the abstract/methods.  Check
+# sum stats readme files and supplementary notes describing data release as sometimes public sum stats
+# data is censored and only a subset of the data used in the printed paper. Very tricky! Use Care!
+# Consider checking PMID in external inventories, but only if download file is identicai! Use Care!
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+# options: <number>, missing
 # example: stats_CaseN=4000
 
 stats_ControlN=
-#  Total number of controls in study, example: stats_ControlN=7448
-# options: <number>
+# Total number of controls in study.  Will be missing for quantiative and ordinal traits.
+# ***USE CARE*** This number may not be the one in the abstract/methods.  Check
+# sum stats readme files and supplementary notes describing data release as sometimes public sum stats
+# data is censored and only a subset of the data used in the printed paper. Very tricky! Use Care!
+# Consider checking PMID in external inventories, but only if download file is identicai! Use Care!
+# external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
+# options: <number>, missing
 # example: stats_ControlN=8000
 
-
-stats_GCAdjust=
-Were stats adjusted post-hoc by some version of Genomic Control?
-# options: T,F
-# example: stats_GCAdjust=F
-
 stats_GCMethod=
-# If GCAdjust is TRUE, which GC control method was used.  Could be Genomic Control (GC), or ..., or unknown
+# Were stats adjusted post-hoc by some version of Genomic Control?
+# If so, which GC control method was used.  Could be Genomic Control (GC), or ..., or unknown
 # options: <character string>, missing
 # example: stats_GCMethod=GC
 
 stats_GCValue=
-# If GCAdjust is TRUE, what was the adjustment factor?
-# options: <number>
+# If GCMethod is not "missing", what was the adjustment factor?
+# options: <number>, missing
 # example: stats_GCValue=1.4
 
 
