@@ -230,10 +230,14 @@ if (params.generateMetafile){
       tuple datasetID, file("${datasetID}_header") into extra_stuff1
       tuple datasetID, file("${datasetID}_sfile_1000") into extra_stuff2
       tuple datasetID, file("${datasetID}_sfile_1000_formatted") into extra_stuff3
+      tuple datasetID, env(spath) into ch_input_sfile
   
       script:
       """
-      #check if field for sumstat exists
+      # Check if the datasetID folder is already present, if so just increment a number to get the new outname
+      #  this is because a metafile can have the same name as another even though the content might be different. 
+     
+      # Check if field for sumstat exists
       if grep -q "^path_sumStats=" $mfile; then
         Pathx="\$(grep "^path_sumStats=" $mfile)"
         spath1="\$(echo "\${Pathx#*=}")"
@@ -242,7 +246,7 @@ if (params.generateMetafile){
         exit 1
       fi
       
-      #check if file specified exists
+      # Check if file specified exists
       spath2="\$(dirname ${mfile})/\${spath1}"
       if [ -f "\$spath1" ] ;then
         spath="\${spath1}"
@@ -253,24 +257,23 @@ if (params.generateMetafile){
         exit 1
       fi
 
-      #make complete metafile check
+      # Make complete metafile check
       echo "\$(head -n 1 < <(zcat \$spath))" > ${datasetID}_header
       check_meta_data_format.sh $mfile ${datasetID}_header ${datasetID}_mfile_format.log
       
 
-      #focused sumstat file check and formatting
-      #make first sumstat file check on first 1000 lines
+      # Sumstat file check on first 1000 lines
       echo "\$(head -n 1000 < <(zcat \$spath))" | gzip -c > ${datasetID}_sfile_1000
       check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile_1000_formatted ${datasetID}_sfile_1000_format.log
       
-      #make second sumstat file check on all lines
-      #zcat \$spath > ${datasetID}_sfile
-      #echo "hej" > ${datasetID}_sfile.log
+      # Make second sumstat file check on all lines
       check_and_format_sfile.sh \$spath ${datasetID}_sfile ${datasetID}_sfile_format.log
+      
 
       """
   }
   
+
   process add_sorted_index_sumstat {
   
   
@@ -288,27 +291,6 @@ if (params.generateMetafile){
       cat $sfile | sstools-raw add-index | LC_ALL=C sort -k 1 - > ${datasetID}_sfile
       """
   }
-  
-  /*
-   * check validity of all col accessors from meta file
-   */
- // process check_meta_data_format {
- // 
- //     if(params.keepIntermediateFiles){ publishDir "${params.outdir}/$datasetID", mode: 'symlink', overwrite: true }
- // 
- //     input:
- //     tuple datasetID, sdir from ch_to_stream_sumstat_dir2
- // 
- //     output:
- //     tuple datasetID, file("${datasetID}_header"), file("${datasetID}_meta") into ch_mfile_ok
- // 
- //     script:
- //     """
- //     cat $sdir/*.meta > ${datasetID}_meta
- //     echo "\$(head -n 1 < <(zcat $sdir/*.gz))" > ${datasetID}_header
- //     check_meta_data_format.sh ${datasetID}_meta ${datasetID}_header
- //     """
- // }
   
   ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2 }
   ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
@@ -438,8 +420,8 @@ if (params.generateMetafile){
       tuple datasetID, mfile, gb_liftgr38_sorted from ch_liftover_5
       
       output:
-      tuple datasetID, val("GRCh38"), mfile, file("gb_ready_liftgr38") into ch_mapped_GRCh38
       tuple datasetID, val("GRCh37"), mfile, file("gb_ready_liftgr37") into ch_mapped_GRCh37
+      tuple datasetID, file("gb_ready_liftgr38") into ch_mapped_GRCh38
   
       script:
       """
@@ -448,7 +430,7 @@ if (params.generateMetafile){
       """
   }
   
-  ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
+  //ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
   
   process split_multiallelics_and_resort_index {
   
@@ -456,7 +438,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, build, mfile, liftgrs from ch_mapped_data_mix
+      tuple datasetID, build, mfile, liftgrs from ch_mapped_GRCh37
       
       output:
       tuple datasetID, build, mfile, file("${datasetID}_${build}_mapped") into ch_allele_correction
@@ -609,7 +591,7 @@ if (params.generateMetafile){
       """
   }
   
-  ch_stats_selection2=ch_stats_selection.combine(ch_sfile_on_stream4, by: 0)
+  ch_stats_selection2=ch_stats_selection.combine(ch_sfile_on_stream3, by: 0)
   
   process select_stats {
   
@@ -633,21 +615,57 @@ if (params.generateMetafile){
   ch_allele_corrected_mix=ch_A2_exists2.mix(ch_A2_missing2)
   ch_allele_corrected_mix.into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
   
-  ch_allele_corrected_and_outstats=ch_allele_corrected_mix1.combine(ch_stats_for_output, by: 0)
+  ch_allele_corrected_and_outstats1=ch_allele_corrected_mix1.combine(ch_stats_for_output, by: 0)
+  ch_allele_corrected_and_outstats=ch_allele_corrected_and_outstats1.combine(ch_mapped_GRCh38, by: 0)
   
   process final_assembly {
   
-      publishDir "${params.outdir}/$datasetID", mode: 'copy', overwrite: true
+      publishDir "${params.outdir}/${datasetID}", mode: 'link', overwrite: true
   
       input:
-      tuple datasetID, build, mfile, acorrected, stats from ch_allele_corrected_and_outstats
+      tuple datasetID, build, mfile, acorrected, stats, grch38 from ch_allele_corrected_and_outstats
       
       output:
-      file("${datasetID}_${build}_cleaned") into ch_end
+      tuple datasetID, build, file("${datasetID}_${build}_cleaned"), file("${datasetID}_GRCh38") into ch_cleaned_file
   
       script:
       """
+      #
       apply_modifier_on_stats.sh $acorrected $stats > ${datasetID}_${build}_cleaned
+      # match the GRCh38 build and publish it as separate file
+      echo -e "0\tCHR\tPOS" > ${datasetID}_GRCh38
+      awk -vOFS="\t" 'NR>1{split(\$2,out,":"); print \$1, out[1], out[2]}' $grch38 | LC_ALL=C sort -k 1 - > sorted_GRCh38
+      LC_ALL=C join -t "\$(printf '\t')" -1 1 -2 1 -o 1.1 1.2 1.3 sorted_GRCh38 ${datasetID}_${build}_cleaned > ${datasetID}_GRCh38
+      """
+  }
+
+  //merge all outputs into one channel
+  //ch_mfile_and_stream=ch_mfile_ok1.join(ch_cleaned_file, ch_sfile_on_stream4)
+
+ 
+  ch_to_write_to_filelibrary1=ch_cleaned_file.combine(ch_input_sfile, by: 0)
+  ch_to_write_to_filelibrary2=ch_to_write_to_filelibrary1.combine(ch_sfile_on_stream5, by: 0)
+
+  process gzip_and_put_in_library {
+  
+      publishDir "${params.libdir}", mode: 'copy', overwrite: true
+  
+      input:
+      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted from ch_to_write_to_filelibrary2
+      
+      output:
+      //file("${datasetID}_${build}_cleaned.gz") into ch_end
+      path("sumstat_*") into ch_end2
+  
+      script:
+      """
+      # scans for an ID name available.
+      libfolder=\$(assign_folder_id.sh ${params.libdir})
+      mkdir -p "\${libfolder}"
+      gzip -c ${sclean} > \${libfolder}/\${libfolder}_cleaned_${build}.gz
+      gzip -c ${scleanGRCh38} > \${libfolder}/\${libfolder}_cleaned_GRCh38.gz
+      cp $inputsfile \${libfolder}/\${libfolder}_raw.gz
+      gzip -c ${inputformatted} > \${libfolder}/\${libfolder}_raw_formatted_rowindexed.gz
       """
   }
 
