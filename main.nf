@@ -226,37 +226,32 @@ if (params.generateMetafile){
       output:
       tuple datasetID, mfile into ch_mfile_ok
       tuple datasetID, file("${datasetID}_sfile") into ch_sfile_ok
+      tuple datasetID, env(spath) into ch_input_sfile
+      tuple datasetID, env(rpath) into ch_input_readme
+      tuple datasetID, env(pmid) into ch_pmid
       tuple datasetID, file("*.log") into inputchecker_log_files
       tuple datasetID, file("${datasetID}_header") into extra_stuff1
       tuple datasetID, file("${datasetID}_sfile_1000") into extra_stuff2
       tuple datasetID, file("${datasetID}_sfile_1000_formatted") into extra_stuff3
-      tuple datasetID, env(spath) into ch_input_sfile
+      tuple datasetID, env(pmid), env(pdfpath), file("${datasetID}_pdf_suppfiles.txt") into ch_input_pdf_stuff
   
       script:
       """
       # Check if the datasetID folder is already present, if so just increment a number to get the new outname
       #  this is because a metafile can have the same name as another even though the content might be different. 
-     
-      # Check if field for sumstat exists
-      if grep -q "^path_sumStats=" $mfile; then
-        Pathx="\$(grep "^path_sumStats=" $mfile)"
-        spath1="\$(echo "\${Pathx#*=}")"
-      else
-        echo "the 'path_sumStats=' field does not exist in the metafile"
-        exit 1
-      fi
-      
-      # Check if file specified exists
-      spath2="\$(dirname ${mfile})/\${spath1}"
-      if [ -f "\$spath1" ] ;then
-        spath="\${spath1}"
-      elif [ -f "\$spath2" ]; then 
-        spath="\${spath2}"
-      else
-        echo "the file \$spath doesnt exist, which is pointed at in the metafile 'path_sumStats=' field"
-        exit 1
-      fi
 
+      # Check if field for variable exists and if the file specified exists
+      spath="\$(check_meta_file_references.sh "path_sumStats" ${mfile})"
+      rpath="\$(check_meta_file_references.sh "path_readMe" ${mfile})"
+      pdfpath="\$(check_meta_file_references.sh "path_pdf" ${mfile})"
+      check_meta_file_references.sh "path_pdfSupp" ${mfile} > ${datasetID}_pdf_suppfiles.txt
+
+      Px="\$(grep "^study_PMID=" $mfile)"
+      pmid="\$(echo "\${Px#*=}")"
+
+      # Check library if this has been processed before
+      # TODO after the script producing the 00inventory.txt has been created 
+      
       # Make complete metafile check
       echo "\$(head -n 1 < <(zcat \$spath))" > ${datasetID}_header
       check_meta_data_format.sh $mfile ${datasetID}_header ${datasetID}_mfile_format.log
@@ -268,8 +263,36 @@ if (params.generateMetafile){
       
       # Make second sumstat file check on all lines
       check_and_format_sfile.sh \$spath ${datasetID}_sfile ${datasetID}_sfile_format.log
-      
 
+      """
+  }
+
+  process add_pdf_and_supp_to_library {
+  
+      publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false
+
+      input:
+      tuple datasetID, pmid, pdfpath, pdfsuppdir from ch_input_pdf_stuff
+
+      output:
+      tuple datasetID, file("pmid*") into ch_pdf_end
+  
+      script:
+      """
+      #check if the pdf for this pmid exist, if so dont add it
+      #if [ -f "${params.libdirpdfs}/pmid_${pmid}.pdf" ] ;then
+      #  echo "we have been here1" > type1.pdf
+      #else 
+      cp ${pdfpath} pmid_${pmid}.pdf
+      #  echo "we have been here2" > type2.pdf
+      #fi
+      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ] ;then
+        :
+      else 
+        mkdir pmid_${pmid}_supp
+        i=1
+        cat ${pdfsuppdir} | while read -r supp; do extension="\${supp##*.}"; cp -r \$supp pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension}; i=\$((i+1)); done
+      fi
       """
   }
   
@@ -292,7 +315,7 @@ if (params.generateMetafile){
       """
   }
   
-  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2 }
+  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3 }
   ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
   ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
   ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_stats_inference }
@@ -645,13 +668,21 @@ if (params.generateMetafile){
  
   ch_to_write_to_filelibrary1=ch_cleaned_file.combine(ch_input_sfile, by: 0)
   ch_to_write_to_filelibrary2=ch_to_write_to_filelibrary1.combine(ch_sfile_on_stream5, by: 0)
+  ch_to_write_to_filelibrary3=ch_to_write_to_filelibrary2.combine(ch_mfile_ok3, by: 0)
+  ch_to_write_to_filelibrary4=ch_to_write_to_filelibrary3.combine(ch_input_readme, by: 0)
+  ch_to_write_to_filelibrary5=ch_to_write_to_filelibrary4.combine(ch_pmid, by: 0)
+
+  //ch_to_write_to_filelibrary5=ch_to_write_to_filelibrary4.combine(ch_input_pdf, by: 0)
+  //ch_to_write_to_filelibrary6=ch_to_write_to_filelibrary5.combine(ch_input_pdfsupp, by: 0)
 
   process gzip_and_put_in_library {
   
-      publishDir "${params.libdir}", mode: 'copy', overwrite: true
-  
+      publishDir "${params.libdirsumstats}", mode: 'copy', overwrite: true, pattern: 'sumstat_*'
+      publishDir "${params.libdirsumstats}", mode: 'link', overwrite: true, pattern: 'pmid_*'
+      
+
       input:
-      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted from ch_to_write_to_filelibrary2
+      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid from ch_to_write_to_filelibrary5
       
       output:
       //file("${datasetID}_${build}_cleaned.gz") into ch_end
@@ -659,13 +690,21 @@ if (params.generateMetafile){
   
       script:
       """
-      # scans for an ID name available.
+      # Scan for available ID
       libfolder=\$(assign_folder_id.sh ${params.libdir})
       mkdir -p "\${libfolder}"
+
+      # Store data in library
       gzip -c ${sclean} > \${libfolder}/\${libfolder}_cleaned_${build}.gz
       gzip -c ${scleanGRCh38} > \${libfolder}/\${libfolder}_cleaned_GRCh38.gz
       cp $inputsfile \${libfolder}/\${libfolder}_raw.gz
+      cp $readme \${libfolder}/\${libfolder}_README
       gzip -c ${inputformatted} > \${libfolder}/\${libfolder}_raw_formatted_rowindexed.gz
+      cat ${mfile} > \${libfolder}/\${libfolder}_meta
+      
+      # Add the pdf and supplemental material if missing in pdf library
+       
+
       """
   }
 
