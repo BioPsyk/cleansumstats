@@ -234,6 +234,7 @@ if (params.generateMetafile){
       tuple datasetID, file("${datasetID}_sfile_1000") into extra_stuff2
       tuple datasetID, file("${datasetID}_sfile_1000_formatted") into extra_stuff3
       tuple datasetID, env(pmid), env(pdfpath), file("${datasetID}_pdf_suppfiles.txt") into ch_input_pdf_stuff
+      tuple datasetID, file("${datasetID}_one_line_summary_of_metadata.txt") into ch_one_line_metafile
   
       script:
       """
@@ -256,6 +257,14 @@ if (params.generateMetafile){
       echo "\$(head -n 1 < <(zcat \$spath))" > ${datasetID}_header
       check_meta_data_format.sh $mfile ${datasetID}_header ${datasetID}_mfile_format.log
       
+      # Make a one line metafile to use for the inventory file and test if dataset is already in library
+      cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
+        Px="\$(grep "^\${varx}=" $mfile)"
+        var="\$(echo "\${Px#*=}")"
+        printf "\t%s" "\${var}" >> one_line_summary
+      done
+      printf "\n" >> one_line_summary
+      cat one_line_summary | sed -e 's/^[\t]//' > ${datasetID}_one_line_summary_of_metadata.txt
 
       # Sumstat file check on first 1000 lines
       echo "\$(head -n 1000 < <(zcat \$spath))" | gzip -c > ${datasetID}_sfile_1000
@@ -266,36 +275,6 @@ if (params.generateMetafile){
 
       """
   }
-
-//  process add_pdf_and_supp_to_library {
-//  
-//      publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false
-//
-//      input:
-//      tuple datasetID, pmid, pdfpath, pdfsuppdir from ch_input_pdf_stuff
-//
-//      output:
-//      tuple datasetID, file("pmid*") into ch_pdf_end
-//  
-//      script:
-//      """
-//      #check if the pdf for this pmid exist, if so dont add it
-//      #if [ -f "${params.libdirpdfs}/pmid_${pmid}.pdf" ] ;then
-//      #  echo "we have been here1" > type1.pdf
-//      #else 
-//      cp ${pdfpath} pmid_${pmid}.pdf
-//      #  echo "we have been here2" > type2.pdf
-//      #fi
-//      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ] ;then
-//        :
-//      else 
-//        mkdir pmid_${pmid}_supp
-//        i=1
-//        cat ${pdfsuppdir} | while read -r supp; do extension="\${supp##*.}"; cp -r \$supp pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension}; i=\$((i+1)); done
-//      fi
-//      """
-//  }
-  
 
   process add_sorted_index_sumstat {
   
@@ -686,33 +665,11 @@ if (params.generateMetafile){
       """
   }
 
-  process make_one_line_summary {
-      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-
-      input:
-      tuple datasetID, mfile from ch_mfile_ok4
-
-      output:
-      tuple datasetID, path("${datasetID}_one_line_summary2") into ch_one_line_summary
-
-      script:
-      """
-      # extract listed variables from meta to one line summary which is tab separated
-      cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
-        Px="\$(grep "^\${varx}=" $mfile)"
-        var="\$(echo "\${Px#*=}")"
-        printf "\t%s" "\${var}" >> one_line_summary
-      done
-      printf "\n" >> one_line_summary
-      cat one_line_summary | sed -e 's/^[\t]//' > ${datasetID}_one_line_summary2
-
-      """
-  }
 
   ch_to_write_to_filelibrary4=ch_to_write_to_filelibrary3.combine(ch_mfile_ok3, by: 0)
   ch_to_write_to_filelibrary5=ch_to_write_to_filelibrary4.combine(ch_input_readme, by: 0)
   ch_to_write_to_filelibrary6=ch_to_write_to_filelibrary5.combine(ch_input_pdf_stuff, by: 0)
-  ch_to_write_to_filelibrary7=ch_to_write_to_filelibrary6.combine(ch_one_line_summary, by: 0)
+  ch_to_write_to_filelibrary7=ch_to_write_to_filelibrary6.combine(ch_one_line_metafile, by: 0)
 
   process put_in_library {
   
@@ -720,12 +677,12 @@ if (params.generateMetafile){
       publishDir "${params.libdirsumstats}", mode: 'copyNoFollow', overwrite: true, pattern: 'sumstat_*'
 
       input:
-      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onlisu from ch_to_write_to_filelibrary7
+      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta  from ch_to_write_to_filelibrary7
       
       output:
       path("sumstat_*") into ch_end2
       path("pmid_*") into ch_end3
-      tuple datasetID, env(libfolder), onlisu into ch_update_library_info_file
+      tuple datasetID, env(libfolder), mfile, onelinemeta into ch_update_library_info_file
   
       script:
       """
@@ -750,7 +707,7 @@ if (params.generateMetafile){
       cp ${inputformatted} \${libfolder}/\${libfolder}_raw_formatted_rowindexed.gz
       cp $inputsfile \${libfolder}/\${libfolder}_raw.gz
       cp $readme \${libfolder}/\${libfolder}_README.txt
-      cp $onlisu \${libfolder}/\${libfolder}_one_line_summary_of_metadata.txt
+      cp $onelinemeta \${libfolder}/\${libfolder}_one_line_summary_of_metadata.txt
       cat ${mfile} > \${libfolder}/\${libfolder}_meta.txt
       
       # Add link to the pdf and supplemental material
@@ -761,30 +718,33 @@ if (params.generateMetafile){
   }
 
 
-}
-
   process update_inventory_file {
       publishDir "${params.libdir}", mode: 'copy', overwrite: true
 
       input:
-      tuple datasetID, mfile, onlisu from ch_update_library_info_file
+      tuple datasetID, libfolder, mfile, onelinemeta from ch_update_library_info_file
 
       output:
       path("00_inventory.txt") into ch_00_inventory_end
 
       script:
       """
-      # Make header
-      cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
-        printf "\t%s" "\${varx}" >> one_line_summary_header
-      done
-      printf "\n" >> one_line_summary_header
-      cat one_line_summary_header | sed -e 's/^[\t]//' > 00_inventory.txt
-
-      # Go through all available sumstats and add their one_line_summary_of_metadata.txt files
-      cat ${params.libdirsumstats}/*/*one_line_summary_of_metadata.txt >> 00_inventory.txt
+      # Make header if the file does not exist
+      if [ -f ${params.libdir}/00_inventory.txt ] ; then 
+        cat ${params.libdir}/00_inventory.txt ${libfolder}/${libfolder}_one_line_summary_of_metadata.txt > 00_inventory.txt
+      else
+        cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
+          printf "\t%s" "\${varx}" >> one_line_summary_header
+        done
+        printf "\n" >> one_line_summary_header
+        cat one_line_summary_header | sed -e 's/^[\t]//' > 00_inventory_new.txt
+        cat 00_inventory_new.txt ${onelinemeta} > 00_inventory.txt
+      fi
+      
       """
   }
+
+}
 
 /*
  * Completion e-mail notification
