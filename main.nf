@@ -267,34 +267,34 @@ if (params.generateMetafile){
       """
   }
 
-  process add_pdf_and_supp_to_library {
-  
-      publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false
-
-      input:
-      tuple datasetID, pmid, pdfpath, pdfsuppdir from ch_input_pdf_stuff
-
-      output:
-      tuple datasetID, file("pmid*") into ch_pdf_end
-  
-      script:
-      """
-      #check if the pdf for this pmid exist, if so dont add it
-      #if [ -f "${params.libdirpdfs}/pmid_${pmid}.pdf" ] ;then
-      #  echo "we have been here1" > type1.pdf
-      #else 
-      cp ${pdfpath} pmid_${pmid}.pdf
-      #  echo "we have been here2" > type2.pdf
-      #fi
-      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ] ;then
-        :
-      else 
-        mkdir pmid_${pmid}_supp
-        i=1
-        cat ${pdfsuppdir} | while read -r supp; do extension="\${supp##*.}"; cp -r \$supp pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension}; i=\$((i+1)); done
-      fi
-      """
-  }
+//  process add_pdf_and_supp_to_library {
+//  
+//      publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false
+//
+//      input:
+//      tuple datasetID, pmid, pdfpath, pdfsuppdir from ch_input_pdf_stuff
+//
+//      output:
+//      tuple datasetID, file("pmid*") into ch_pdf_end
+//  
+//      script:
+//      """
+//      #check if the pdf for this pmid exist, if so dont add it
+//      #if [ -f "${params.libdirpdfs}/pmid_${pmid}.pdf" ] ;then
+//      #  echo "we have been here1" > type1.pdf
+//      #else 
+//      cp ${pdfpath} pmid_${pmid}.pdf
+//      #  echo "we have been here2" > type2.pdf
+//      #fi
+//      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ] ;then
+//        :
+//      else 
+//        mkdir pmid_${pmid}_supp
+//        i=1
+//        cat ${pdfsuppdir} | while read -r supp; do extension="\${supp##*.}"; cp -r \$supp pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension}; i=\$((i+1)); done
+//      fi
+//      """
+//  }
   
 
   process add_sorted_index_sumstat {
@@ -315,7 +315,7 @@ if (params.generateMetafile){
       """
   }
   
-  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3 }
+  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4}
   ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
   ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
   ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_stats_inference }
@@ -643,7 +643,7 @@ if (params.generateMetafile){
   
   process final_assembly {
   
-      publishDir "${params.outdir}/${datasetID}", mode: 'link', overwrite: true
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
       tuple datasetID, build, mfile, acorrected, stats, grch38 from ch_allele_corrected_and_outstats
@@ -668,47 +668,123 @@ if (params.generateMetafile){
  
   ch_to_write_to_filelibrary1=ch_cleaned_file.combine(ch_input_sfile, by: 0)
   ch_to_write_to_filelibrary2=ch_to_write_to_filelibrary1.combine(ch_sfile_on_stream5, by: 0)
-  ch_to_write_to_filelibrary3=ch_to_write_to_filelibrary2.combine(ch_mfile_ok3, by: 0)
-  ch_to_write_to_filelibrary4=ch_to_write_to_filelibrary3.combine(ch_input_readme, by: 0)
-  ch_to_write_to_filelibrary5=ch_to_write_to_filelibrary4.combine(ch_pmid, by: 0)
 
-  //ch_to_write_to_filelibrary5=ch_to_write_to_filelibrary4.combine(ch_input_pdf, by: 0)
-  //ch_to_write_to_filelibrary6=ch_to_write_to_filelibrary5.combine(ch_input_pdfsupp, by: 0)
 
-  process gzip_and_put_in_library {
-  
-      publishDir "${params.libdirsumstats}", mode: 'copy', overwrite: true, pattern: 'sumstat_*'
-      publishDir "${params.libdirsumstats}", mode: 'link', overwrite: true, pattern: 'pmid_*'
-      
-
+  process gzip_outfiles {
       input:
-      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid from ch_to_write_to_filelibrary5
-      
+      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted from ch_to_write_to_filelibrary2
+
       output:
-      //file("${datasetID}_${build}_cleaned.gz") into ch_end
-      path("sumstat_*") into ch_end2
-  
+      tuple datasetID, build, path("sclean.gz"), path("scleanGRCh38.gz"), inputsfile, path("raw_formatted_rowindexed.gz") into ch_to_write_to_filelibrary3
+
       script:
       """
-      # Scan for available ID
-      libfolder=\$(assign_folder_id.sh ${params.libdir})
-      mkdir -p "\${libfolder}"
-
       # Store data in library
-      gzip -c ${sclean} > \${libfolder}/\${libfolder}_cleaned_${build}.gz
-      gzip -c ${scleanGRCh38} > \${libfolder}/\${libfolder}_cleaned_GRCh38.gz
-      cp $inputsfile \${libfolder}/\${libfolder}_raw.gz
-      cp $readme \${libfolder}/\${libfolder}_README
-      gzip -c ${inputformatted} > \${libfolder}/\${libfolder}_raw_formatted_rowindexed.gz
-      cat ${mfile} > \${libfolder}/\${libfolder}_meta
-      
-      # Add the pdf and supplemental material if missing in pdf library
-       
+      gzip -c ${sclean} > sclean.gz
+      gzip -c ${scleanGRCh38} > scleanGRCh38.gz
+      gzip -c ${inputformatted} > raw_formatted_rowindexed.gz
+      """
+  }
+
+  process make_one_line_summary {
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple datasetID, mfile from ch_mfile_ok4
+
+      output:
+      tuple datasetID, path("${datasetID}_one_line_summary2") into ch_one_line_summary
+
+      script:
+      """
+      # extract listed variables from meta to one line summary which is tab separated
+      cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
+        Px="\$(grep "^\${varx}=" $mfile)"
+        var="\$(echo "\${Px#*=}")"
+        printf "\t%s" "\${var}" >> one_line_summary
+      done
+      printf "\n" >> one_line_summary
+      cat one_line_summary | sed -e 's/^[\t]//' > ${datasetID}_one_line_summary2
 
       """
   }
 
+  ch_to_write_to_filelibrary4=ch_to_write_to_filelibrary3.combine(ch_mfile_ok3, by: 0)
+  ch_to_write_to_filelibrary5=ch_to_write_to_filelibrary4.combine(ch_input_readme, by: 0)
+  ch_to_write_to_filelibrary6=ch_to_write_to_filelibrary5.combine(ch_input_pdf_stuff, by: 0)
+  ch_to_write_to_filelibrary7=ch_to_write_to_filelibrary6.combine(ch_one_line_summary, by: 0)
+
+  process put_in_library {
+  
+      publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
+      publishDir "${params.libdirsumstats}", mode: 'copyNoFollow', overwrite: true, pattern: 'sumstat_*'
+
+      input:
+      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onlisu from ch_to_write_to_filelibrary7
+      
+      output:
+      path("sumstat_*") into ch_end2
+      path("pmid_*") into ch_end3
+      tuple datasetID, env(libfolder), onlisu into ch_update_library_info_file
+  
+      script:
+      """
+      
+      # copy the pdf and supplemental material if missing in pdf library
+      cp ${pdfpath} pmid_${pmid}.pdf
+      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ] ;then
+        :
+      else 
+        mkdir pmid_${pmid}_supp
+        i=1
+        cat ${pdfsuppdir} | while read -r supp; do extension="\${supp##*.}"; cp -r \$supp pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension}; i=\$((i+1)); done
+      fi
+      
+      # Scan for available ID
+      libfolder=\$(assign_folder_id.sh ${params.libdirsumstats})
+      mkdir -p "\${libfolder}"
+
+      # Store data in library
+      cp ${sclean} \${libfolder}/\${libfolder}_cleaned_${build}.gz
+      cp ${scleanGRCh38} \${libfolder}/\${libfolder}_cleaned_GRCh38.gz
+      cp ${inputformatted} \${libfolder}/\${libfolder}_raw_formatted_rowindexed.gz
+      cp $inputsfile \${libfolder}/\${libfolder}_raw.gz
+      cp $readme \${libfolder}/\${libfolder}_README.txt
+      cp $onlisu \${libfolder}/\${libfolder}_one_line_summary_of_metadata.txt
+      cat ${mfile} > \${libfolder}/\${libfolder}_meta.txt
+      
+      # Add link to the pdf and supplemental material
+      ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf \${libfolder}/pmid_${pmid}.pdf
+      mkdir -p \${libfolder}/pmid_${pmid}_supp
+      ln -s ${params.libdirpdfs}/pmid_${pmid}_supp/* \${libfolder}/pmid_${pmid}_supp/.
+      """
+  }
+
+
 }
+
+  process update_inventory_file {
+      publishDir "${params.libdir}", mode: 'copy', overwrite: true
+
+      input:
+      tuple datasetID, mfile, onlisu from ch_update_library_info_file
+
+      output:
+      path("00_inventory.txt") into ch_00_inventory_end
+
+      script:
+      """
+      # Make header
+      cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
+        printf "\t%s" "\${varx}" >> one_line_summary_header
+      done
+      printf "\n" >> one_line_summary_header
+      cat one_line_summary_header | sed -e 's/^[\t]//' > 00_inventory.txt
+
+      # Go through all available sumstats and add their one_line_summary_of_metadata.txt files
+      cat ${params.libdirsumstats}/*/*one_line_summary_of_metadata.txt >> 00_inventory.txt
+      """
+  }
 
 /*
  * Completion e-mail notification
