@@ -497,7 +497,7 @@ if (params.generateMetafile){
   
       script:
       """
-      echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
+      echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > ${build}_acorrected
   
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
@@ -521,7 +521,7 @@ if (params.generateMetafile){
       script:
       """
       multiallelic_filter.sh $mapped > ${build}_mapped2
-      echo -e "0\tA1\tA2\tCHRPOS\tRSID\tB1\tB2\tEMOD" > ${build}_acorrected
+      echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > ${build}_acorrected
   
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | sstools-eallele correction -f - -a >> ${build}_acorrected 
@@ -731,7 +731,7 @@ if (params.generateMetafile){
       """
       # Make header if the file does not exist
       if [ -f ${params.libdir}/00_inventory.txt ] ; then 
-        cat ${params.libdir}/00_inventory.txt ${libfolder}/${libfolder}_one_line_summary_of_metadata.txt > 00_inventory.txt
+        cat ${params.libdir}/00_inventory.txt ${onelinemeta} > 00_inventory.txt
       else
         cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
           printf "\t%s" "\${varx}" >> one_line_summary_header
