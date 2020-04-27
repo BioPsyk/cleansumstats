@@ -28,8 +28,20 @@
 ########################################################################
 
 ########################################################################
-#  Meta data section 0 - File locations
+#  Meta data section 0 - File locations / User Infor
 ########################################################################
+
+run_user=
+# Specify your name.  
+# Will be autofilled by template generator.
+# options: <character string>
+# example: run_user=Andrew Schork
+
+run_date=
+# Day you fill out the meta data, fourDigitYear_twoDigitMonth_twoDigitDay
+# Will be autofilled by template generator.
+# options: <todays date>
+# example: run_date=2020_04_27
 
 path_sumStats=
 # Specify the path to the sumstats to be cleaned.  
