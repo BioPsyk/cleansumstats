@@ -407,6 +407,8 @@ col_Direction=
 
 col_Notes=
 # If there are special notes that you feel need to be included, please add them here.
+# If preprocessing was require due to a really strange format, describe the issue and
+# required preprocessing here.  You could provide a link to a preprocessing code file.
 # ***USE CARE*** Please note if the A1 was FORCED to be effect allele because of bad documentation.
 # options: <character string>, missing
 # example: col_Notes=Effect allele assumed to be A1, but documentation was ambiguous.
