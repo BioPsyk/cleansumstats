@@ -608,7 +608,7 @@ if (params.generateMetafile){
   
       script:
       """
-      select_stats_for_output.sh $mfile $sfile $inferred > st_stats_for_output
+      select_stats_for_output.sh $mfile $sfile $inferred > st_stats_for_output 
       """
   }
   

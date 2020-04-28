@@ -40,6 +40,34 @@ function which_to_keep(){
       echo "SE"
       echo "SE" 1>&2
     fi
+    if stat_exists "ORL95" ${STAT}; then
+      echo "ORL95"
+      echo "ORL95" 1>&2
+    fi
+    if stat_exists "ORU95" ${STAT}; then
+      echo "ORU95"
+      echo "ORU95" 1>&2
+    fi
+    if stat_exists "N" ${STAT}; then
+      echo "N"
+      echo "N" 1>&2
+    fi
+    if stat_exists "CaseN" ${STAT}; then
+      echo "CaseN"
+      echo "CaseN" 1>&2
+    fi
+    if stat_exists "ControlN" ${STAT}; then
+      echo "ControlN"
+      echo "ControlN" 1>&2
+    fi
+    if stat_exists "AFREQ" ${STAT}; then
+      echo "AFREQ"
+      echo "AFREQ" 1>&2
+    fi
+    if stat_exists "INFO" ${STAT}; then
+      echo "INFO"
+      echo "INFO" 1>&2
+    fi
 }
 
 var_m=$(which_to_mod 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
@@ -54,3 +82,4 @@ else
   LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $ACOR <(sstools-utils ad-hoc-do -f $STAT -k "0|${var_m}" -n"0,${nam_m}" ) | sed 's/[[:space:]]*$//' | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, "CHR",OFS, "POS",OFS, $5,OFS, $6,OFS, $7,OFS; for(i=9; i<NF; i++){printf "%s%s", $i, OFS}; print $NF} NR>1{split($4,out,":"); for(i=9; i<=NF; i++){$i=$i*$8}; printf "%s%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, out[1],OFS, out[2],OFS, $5,OFS, $6,OFS, $7,OFS; for(i=9; i<NF; i++){printf "%s%s", $i, OFS}; print $NF}' | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - <(sstools-utils ad-hoc-do -f $STAT -k "0|${var_k}" -n"0,${nam_k}" )
 
 fi
+
