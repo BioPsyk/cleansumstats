@@ -159,7 +159,7 @@ ${summary.collect { k,v -> "            <dt>$k</dt><dd><samp>${v ?: '<span style
 
 
 if (params.generateMetafile){
-  ch_metatemplate = file("${baseDir}/assets/meta_data_readMe_v3.txt")
+  ch_metatemplate = file("${baseDir}/assets/meta_data_readMe_v4.txt")
   ch_sumstat_file = Channel
                    .fromPath(params.input, type: 'file')
                    .map { file -> tuple(file.baseName, file) }
