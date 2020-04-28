@@ -42,6 +42,7 @@ CaseN="$(selRightHand "$(selColRow "^col_CaseN=" $mefl)")"
 ControlN="$(selRightHand "$(selColRow "^col_ControlN=" $mefl)")"
 AFREQ="$(selRightHand "$(selColRow "^col_AFREQ=" $mefl)")"
 INFO="$(selRightHand "$(selColRow "^col_INFO=" $mefl)")"
+DIRECTION="$(selRightHand "$(selColRow "^col_Direction=" $mefl)")"
 
 
 #true or false (exists or not)
@@ -57,6 +58,7 @@ tfCaseN="$(recode_to_tf $CaseN)"
 tfControlN="$(recode_to_tf $ControlN)"
 tfAFREQ="$(recode_to_tf $AFREQ)"
 tfINFO="$(recode_to_tf $INFO)"
+tfDIRECTION="$(selRightHand "$(selColRow "$DIRECTION" $mefl)")"
 
 
 #which variables to filter
@@ -122,6 +124,10 @@ function which_to_select(){
   if [ ${tfINFO} == "true" ]; then
     echo -e "${INFO}"
     echo "INFO" 1>&2
+  fi
+  if [ ${tfDIRECTION} == "true" ]; then
+    echo -e "${DIRECTION}"
+    echo "Direction" 1>&2
   fi
 }
 
