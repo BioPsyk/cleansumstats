@@ -23,32 +23,31 @@ NR>1{
 
   #check if numeric by trying to add 0, if the value is the same, then print line
   doprint="yes"
+  whyremoved="foobar"
   #printf "%s%s", $1, OFS
   for(i=2; i<=NF; i++){
 
-    #check if awk understands how to use math for this value
     if($i != $i+0){
+    #check if awk understands how to use math for this value
       doprint="no"
-    }
+      whyremoved="AWK_CANT_USE_MATH_HERE"
 
+    }else if($i !~ /[[:digit:]]+/){
     #check if the regexp match a digit
-    if($i !~ /[[:digit:]]+/){
       doprint="no"
+      whyremoved="AWK_REGEXP_NO_DIGIT"
      # printf "%s%s", $i,OFS
-    }
-
-    #
-    if(i==zeroSE){
+    }else if(i==zeroSE){
+    #for SE if present, check if value is not zero
       if($i == 0){
         doprint="no"
+        whyremoved="AWK_REGEXP_NO_DIGIT"
        # printf "%s%s", $i,OFS
       }
     }
   }
-   # print ""
-
   if(doprint=="no"){
-    print $1,"NOT_AWK_NUMERIC" > "/dev/stderr";
+    print $1, whyremoved > "/dev/stderr";
   }else{
     print $0
   }

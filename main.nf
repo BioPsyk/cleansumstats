@@ -294,7 +294,7 @@ if (params.generateMetafile){
       """
   }
   
-  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4}
+  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5}
   ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
   ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
   ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_stats_inference }
@@ -530,7 +530,6 @@ if (params.generateMetafile){
   }
   
   
-  
   process filter_stats {
   
       //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
@@ -540,24 +539,29 @@ if (params.generateMetafile){
       tuple datasetID, mfile, sfile from ch_stats_inference
       
       output:
-      tuple datasetID, mfile, file("st_filtered") into ch_stats_inference2
-      tuple datasetID, file("st_error*")  into placeholder2
+      tuple datasetID, file("st_filtered_remains") into ch_stats_filtered_remain
+      tuple datasetID, file("st_filtered_removed")  into ch_stats_filtered_removed
   
       script:
       """
-      filter_stat_values.sh $mfile $sfile > st_filtered 2> st_error 
-
+      filter_stat_values.sh $mfile $sfile > st_filtered_remains 2> st_filtered_removed
       """
   }
   
-  
+  ch_stats_filtered_remain
+    .into { ch_stats_filtered_remain1; ch_stats_filtered_remain2}
+
+  ch_stats_filtered_remain1
+    .combine(ch_mfile_ok5, by: 0)
+    .set{ ch_stats_filtered_remain3 }
+
   process infer_stats {
   
       //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, mfile, st_filtered from ch_stats_inference2
+      tuple datasetID, st_filtered, mfile from ch_stats_filtered_remain3
       
       output:
       tuple datasetID, mfile, file("st_inferred_stats") into ch_stats_selection
@@ -593,7 +597,9 @@ if (params.generateMetafile){
       """
   }
   
-  ch_stats_selection2=ch_stats_selection.combine(ch_sfile_on_stream3, by: 0)
+  ch_stats_selection
+    .combine(ch_sfile_on_stream3, by: 0)
+    .set{ ch_stats_selection2 }
   
   process select_stats {
   
@@ -611,14 +617,42 @@ if (params.generateMetafile){
       select_stats_for_output.sh $mfile $sfile $inferred > st_stats_for_output 
       """
   }
+
+
+  ch_stats_filtered_remain2
+    .combine(ch_stats_filtered_removed, by: 0)
+    .set{ ch_combined_desc_material }
+
+  process describe_rows_formatted_or_filtered {
   
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
-  //mix channels
-  ch_allele_corrected_mix=ch_A2_exists2.mix(ch_A2_missing2)
-  ch_allele_corrected_mix.into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
+      input:
+      tuple datasetID, filtered_stats_remain, filtered_stats_removed from ch_combined_desc_material
+      
+      output:
+      tuple datasetID, file("desc_*") into ch_desc_end
   
-  ch_allele_corrected_and_outstats1=ch_allele_corrected_mix1.combine(ch_stats_for_output, by: 0)
-  ch_allele_corrected_and_outstats=ch_allele_corrected_and_outstats1.combine(ch_mapped_GRCh38, by: 0)
+      script:
+      """
+      # prepare process specific descriptive statistics
+      echo "\$(wc -l $filtered_stats_remain)" | awk '{print \$1}' > desc_st_filt_remain.txt
+      cat $filtered_stats_removed | awk '{ seen[\$2] += 1 } END { for (i in seen) print i, seen[i] }' > desc_st_filt_removed.txt
+      
+      """
+  }
+
+  
+  //mix the A1_A2_both and A1_solo channels
+  ch_A2_exists2
+    .mix(ch_A2_missing2)
+    .into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
+  
+  ch_allele_corrected_mix1
+    .combine(ch_stats_for_output, by: 0)
+    .combine(ch_mapped_GRCh38, by: 0)
+    .set{ ch_allele_corrected_and_outstats }
   
   process final_assembly {
   
@@ -641,13 +675,10 @@ if (params.generateMetafile){
       """
   }
 
-  //merge all outputs into one channel
-  //ch_mfile_and_stream=ch_mfile_ok1.join(ch_cleaned_file, ch_sfile_on_stream4)
-
- 
-  ch_to_write_to_filelibrary1=ch_cleaned_file.combine(ch_input_sfile, by: 0)
-  ch_to_write_to_filelibrary2=ch_to_write_to_filelibrary1.combine(ch_sfile_on_stream5, by: 0)
-
+  ch_cleaned_file
+    .combine(ch_input_sfile, by: 0)
+    .combine(ch_sfile_on_stream5, by: 0)
+    .set{ ch_to_write_to_filelibrary2 }
 
   process gzip_outfiles {
       input:
@@ -666,10 +697,11 @@ if (params.generateMetafile){
   }
 
 
-  ch_to_write_to_filelibrary4=ch_to_write_to_filelibrary3.combine(ch_mfile_ok3, by: 0)
-  ch_to_write_to_filelibrary5=ch_to_write_to_filelibrary4.combine(ch_input_readme, by: 0)
-  ch_to_write_to_filelibrary6=ch_to_write_to_filelibrary5.combine(ch_input_pdf_stuff, by: 0)
-  ch_to_write_to_filelibrary7=ch_to_write_to_filelibrary6.combine(ch_one_line_metafile, by: 0)
+  ch_to_write_to_filelibrary3.combine(ch_mfile_ok3, by: 0)
+   .combine(ch_input_readme, by: 0)
+   .combine(ch_input_pdf_stuff, by: 0)
+   .combine(ch_one_line_metafile, by: 0)
+   .set{ ch_to_write_to_filelibrary7 }
 
   process put_in_library {
   
