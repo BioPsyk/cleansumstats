@@ -26,6 +26,9 @@
 #           https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 #
 ########################################################################
+version=1.0a
+# Nextflow pipeline version
+# Autofilled by template generator in next release
 
 ########################################################################
 #  Meta data section 0 - File locations / User Infor
@@ -33,35 +36,41 @@
 
 run_user=
 # Specify your name.  
-# Will be autofilled by template generator.
+# Will be autofilled by template generator in next release.
 # options: <character string>
 # example: run_user=Andrew Schork
 
 run_date=
 # Day you fill out the meta data, fourDigitYear_twoDigitMonth_twoDigitDay
-# Will be autofilled by template generator.
+# Will be autofilled by template generator in next release.
 # options: <todays date>
 # example: run_date=2020_04_27
 
 path_sumStats=
 # Specify the path to the sumstats to be cleaned.  
 # Will be autofilled by template generator and used to check for redundancy.
+# Full path needed, unless sum stats and metaData in same folder
 # options: <directory path>
 # example: path_sumStats=/home/anscho/data/sumstats/scz.txt
 
 path_readMe=
 # Specify the path to the sumstats documentation provided by authors or hosts.
+# Full path needed, unless sum stats and metaData in same folder
 # options: <directory path>, missing
 # example: path_sumStats=/home/anscho/data/sumstats/scz_readMe.txt
 
 path_pdf=
 # Specify the path to the PDF corresponding to the sumstats as referenced in study PMID below.
+# Full path needed, unless sum stats and metaData in same folder
 # options: <directory path>, missing
 # example: path_sumStats=/home/anscho/data/sumstats/SCZ_108Loci.pdf
 
 path_pdfSupp=
 # Specify the path to the supplementary information associated with the PDF corresponding to 
 # the sumstats as referenced in study PMID below.  This will not often be necessary.
+# If the files are not PDFs, convert them to PDFs.  Except for Excel files.
+# If multiple Supplements, one line per supplement.
+# Full path needed, unless sum stats and metaData in same folder
 # options: <directory path>, missing
 # example: path_sumStats=/home/anscho/data/sumstats/SCZ_108Loci_Supp.pdf
 
@@ -113,9 +122,14 @@ study_PhenoMod=
 # options: <character string from ontology>, missing
 # example:
 
+study_FilePortal=
+# Weblink to site that hosts stats.  Maybe in GWAS atlas reference.
+# options: <web URL>, missing
+# example:
 
 study_FileURL=
-# Direct weblink to sumstats.
+# Direct weblink to sumstats.    Maybe in GWAS atlas reference.
+# May not be possible if request forms are required
 # options: <web URL>, missing
 # example:
 
@@ -156,7 +170,7 @@ study_inHouseData=
 # List of studies to watch out for is provided in the ontology doc.
 # ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
 # external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-# options: <character string from ontology>, missing
+# options: <character string from ontology>, missing, none
 # example: study_inHouseData=iPSYCH
 
 study_Ancestry=
@@ -177,32 +191,37 @@ study_Gender=
 # example: study_Gender=mixed
 
 study_PhasePanel=
-# What data set was used to assist phasing. If a meta-analysis with multiple, note "meta".
+# ***NOTE*** If a meta-analysis with multiple approaches, just note "meta".
+# What data set was used to assist phasing.
 # options: <character string>, HapMap2, HapMap2, 1KGP_pilot, 1KGP_phase1, 1KGP_phase2, 1KGP_phase3, 
 #                               1KGP_phase4, 1KGP_phase5, TOPMED, HRC, meta, missing
 # example: study_PhasePanel=HRC
 
 study_PhaseSoftware=
-# What software were use to phase and impute, comma separate values? if multiple as part of a meta, use meta.
+# ***NOTE*** If a meta-analysis with multiple approaches, just note "meta".
+# What software were use to phase and impute, comma separate values?
 # options: <character string>, plink, impute, impute2, impute3, shapeIt, shapeIt2, shapeIt3, shapeIt4, shapeIt5, 
 #                                MaCH, Beagle, Beagle1.0, meta, missing
 # example: study_PhaseSoftware=meta
 # example: study_PhaseSoftware=Impute2
 
 study_ImputePanel=
-# What data set was this study imputed to? If a meta-analysis with multiple, not meta.
+# ***NOTE*** If a meta-analysis with multiple approaches, just note "meta".
+# What data set was this study imputed to?
 # options: HapMap2, HapMap2, 1KGP_pilot, 1KGP_v1, 1KGP_v2, 1KGP_v3, 1KGP_v4, 1KGP_v5, TOPMED, HRC, meta
 # example: study_ImputePanel=HRC
 
 study_ImputeSoftware=
-# What software were use to phase and impute, comma separate values? if multiple as part of a meta, use meta.
+# ***NOTE*** If a meta-analysis with multiple approaches, just note "meta".
+# What software were use to phase and impute, comma separate values?
 # options: <character string>, plink, impute, impute2, impute3, shapeIt, shapeIt2, shapeIt3, shapeIt4, shapeIt5, 
 #                                MaCH, Beagle, Beagle1.0, meta, missing
 # example: study_ImputeSoftware=meta
 # example: study_ImputeSoftware=Impute2
 
 study_Array=
-# What array was used for genotyping? is multiple, choose meta.
+# ***NOTE*** If a meta-analysis with multiple approaches, just note "meta".
+# What array was used for genotyping?
 # options: <character string>, meta
 # example: study_Array=PsychArray
 # example: study_Array=meta
@@ -261,7 +280,7 @@ stats_ControlN=
 
 stats_GCMethod=
 # Were stats adjusted post-hoc by some version of Genomic Control?
-# If so, which GC control method was used.  Could be Genomic Control (GC), or ..., or unknown
+# If so, which GC control method was used.  Could be Genomic Control (GC), none, or ..., or unknown
 # options: <character string>, missing
 # example: stats_GCMethod=GC
 
@@ -383,9 +402,16 @@ col_INFO=
 # options: <character string>, missing
 # example: col_INFO=INFO
 
+col_Direction=
+# This is to specify a column that describes effects across contributing studies to 
+# meta-analyses.  It often looks like a series of +, -, or ? (e.g., +-++---? )
+# options: <character string>, missing
+# example: col_Direction=direction
 
 col_Notes=
 # If there are special notes that you feel need to be included, please add them here.
+# If preprocessing was require due to a really strange format, describe the issue and
+# required preprocessing here.  You could provide a link to a preprocessing code file.
 # ***USE CARE*** Please note if the A1 was FORCED to be effect allele because of bad documentation.
 # options: <character string>, missing
 # example: col_Notes=Effect allele assumed to be A1, but documentation was ambiguous.
