@@ -65,7 +65,7 @@ echo "" >> ${OUT_log} 2>&1
 echo "##############################" >> ${OUT_log} 2>&1
 echo "tab-sep-NF-same" >> ${OUT_log} 2>&1
 echo "##############################" >> ${OUT_log} 2>&1
-tab_sep_NF_result1=$(${outfile} | awk -vFS="\t" '
+tab_sep_NF_result1=$(cat ${outfile} | awk -vFS="\t" '
 NR==1 {comp=NF}
 NF!=comp {rows=+1}
 END {
@@ -95,7 +95,7 @@ echo "" >> ${OUT_log} 2>&1
 
 if [ $first_test_set == "ok" ]; then
   echo "" >> ${OUT_log}
-  echo >"all seems ok with the summary statistics file" >> ${OUT_log}
+  echo "all seems ok with the summary statistics file" >> ${OUT_log}
   exit 0
 else
   echo "something failed during basic checks, not proceeding to testing the whole file" >> ${OUT_log}

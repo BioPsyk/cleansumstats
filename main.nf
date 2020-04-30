@@ -225,7 +225,7 @@ if (params.generateMetafile){
       tuple datasetID, mfile from ch_mfile_check
   
       output:
-      tuple datasetID, mfile into ch_mfile_ok
+      tuple datasetID, file("mfile_unix_safe") into ch_mfile_ok
       tuple datasetID, file("${datasetID}_sfile") into ch_sfile_ok
       tuple datasetID, env(spath) into ch_input_sfile
       tuple datasetID, env(rpath) into ch_input_readme
@@ -236,19 +236,26 @@ if (params.generateMetafile){
       tuple datasetID, file("${datasetID}_sfile_1000_formatted") into extra_stuff3
       tuple datasetID, env(pmid), env(pdfpath), file("${datasetID}_pdf_suppfiles.txt") into ch_input_pdf_stuff
       tuple datasetID, file("${datasetID}_one_line_summary_of_metadata.txt") into ch_one_line_metafile
+      file("mfile_sent_in") 
   
       script:
       """
+      metaDir="\$(dirname ${mfile})"
+      cat ${mfile} > mfile_sent_in
+      # Clean meta file from windows return characters
+      awk '{ sub("\\r\$", ""); print }' ${mfile} > mfile_unix_safe
+
+
       # Check if the datasetID folder is already present, if so just increment a number to get the new outname
       #  this is because a metafile can have the same name as another even though the content might be different. 
 
       # Check if field for variable exists and if the file specified exists
-      spath="\$(check_meta_file_references.sh "path_sumStats" ${mfile})"
-      rpath="\$(check_meta_file_references.sh "path_readMe" ${mfile})"
-      pdfpath="\$(check_meta_file_references.sh "path_pdf" ${mfile})"
-      check_meta_file_references.sh "path_pdfSupp" ${mfile} > ${datasetID}_pdf_suppfiles.txt
+      spath="\$(check_meta_file_references.sh "path_sumStats" mfile_unix_safe \$metaDir)"
+      rpath="\$(check_meta_file_references.sh "path_readMe" mfile_unix_safe \$metaDir)"
+      pdfpath="\$(check_meta_file_references.sh "path_pdf" mfile_unix_safe \$metaDir)"
+      check_meta_file_references.sh "path_pdfSupp" mfile_unix_safe \${metaDir} > ${datasetID}_pdf_suppfiles.txt
 
-      Px="\$(grep "^study_PMID=" $mfile)"
+      Px="\$(grep "^study_PMID=" mfile_unix_safe)"
       pmid="\$(echo "\${Px#*=}")"
 
       # Check library if this has been processed before
@@ -256,15 +263,15 @@ if (params.generateMetafile){
       
       # Make complete metafile check
       echo "\$(head -n 1 < <(zcat \$spath))" > ${datasetID}_header
-      check_meta_data_format.sh $mfile ${datasetID}_header ${datasetID}_mfile_format.log
+      check_meta_data_format.sh mfile_unix_safe ${datasetID}_header ${datasetID}_mfile_format.log
       
       # Make a one line metafile to use for the inventory file and test if dataset is already in library
       cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
-        Px="\$(grep "^\${varx}=" $mfile)"
+        Px="\$(grep "^\${varx}=" mfile_unix_safe)"
         var="\$(echo "\${Px#*=}")"
         printf "\t%s" "\${var}" >> one_line_summary
       done
-      printf "\n" >> one_line_summary
+      printf "\\n" >> one_line_summary
       cat one_line_summary | sed -e 's/^[\t]//' > ${datasetID}_one_line_summary_of_metadata.txt
 
       # Sumstat file check on first 1000 lines
