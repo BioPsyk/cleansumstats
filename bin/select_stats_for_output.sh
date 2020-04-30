@@ -58,7 +58,7 @@ tfCaseN="$(recode_to_tf $CaseN)"
 tfControlN="$(recode_to_tf $ControlN)"
 tfAFREQ="$(recode_to_tf $AFREQ)"
 tfINFO="$(recode_to_tf $INFO)"
-tfDIRECTION="$(selRightHand "$(selColRow "$DIRECTION" $mefl)")"
+tfDIRECTION="$(recode_to_tf $DIRECTION)"
 
 
 #which variables to filter
