@@ -191,7 +191,8 @@ if (params.generateMetafile){
   
       output:
       file 'software_versions_mqc.yaml' into software_versions_yaml
-      file "software_versions.csv"
+      file "software_versions.csv" into ch_software_versions
+
   
       script:
       """
@@ -701,6 +702,7 @@ if (params.generateMetafile){
    .combine(ch_input_readme, by: 0)
    .combine(ch_input_pdf_stuff, by: 0)
    .combine(ch_one_line_metafile, by: 0)
+   .combine(ch_software_versions)
    .set{ ch_to_write_to_filelibrary7 }
 
   process put_in_library {
@@ -709,7 +711,7 @@ if (params.generateMetafile){
       publishDir "${params.libdirsumstats}", mode: 'copyNoFollow', overwrite: true, pattern: 'sumstat_*'
 
       input:
-      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta  from ch_to_write_to_filelibrary7
+      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, softv from ch_to_write_to_filelibrary7
       
       output:
       path("sumstat_*") into ch_end2
@@ -740,6 +742,7 @@ if (params.generateMetafile){
       cp $inputsfile \${libfolder}/\${libfolder}_raw.gz
       cp $readme \${libfolder}/\${libfolder}_README.txt
       cp $onelinemeta \${libfolder}/\${libfolder}_one_line_summary_of_metadata.txt
+      cp $softv \${libfolder}/\${libfolder}_software_versions.csv
       cat ${mfile} > \${libfolder}/\${libfolder}_meta.txt
       
       # Add link to the pdf and supplemental material
