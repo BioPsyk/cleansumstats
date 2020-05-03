@@ -34,8 +34,11 @@ col_ORU95
 col_Z
 col_P
 col_N
+col_CaseN
+col_ControlN
 col_AFREQ
 col_INFO
+col_Direction
 )
 #A set without the types
 colNeeded2=(
@@ -52,9 +55,13 @@ col_ORU95
 col_Z
 col_P
 col_N
+col_CaseN
+col_ControlN
 col_AFREQ
 col_INFO
+col_Direction
 )
+
 
 #examples of pattern types
 #chr1:1324324

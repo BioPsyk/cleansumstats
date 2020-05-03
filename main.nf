@@ -279,7 +279,8 @@ if (params.generateMetafile){
       check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile_1000_formatted ${datasetID}_sfile_1000_format.log
       
       # Make second sumstat file check on all lines
-      check_and_format_sfile.sh \$spath ${datasetID}_sfile ${datasetID}_sfile_format.log
+      #check_and_format_sfile.sh \$spath ${datasetID}_sfile ${datasetID}_sfile_format.log
+      check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile ${datasetID}_sfile_format.log
 
       """
   }
@@ -689,11 +690,13 @@ if (params.generateMetafile){
     .set{ ch_to_write_to_filelibrary2 }
 
   process gzip_outfiles {
+
       input:
       tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted from ch_to_write_to_filelibrary2
 
       output:
-      tuple datasetID, build, path("sclean.gz"), path("scleanGRCh38.gz"), inputsfile, path("raw_formatted_rowindexed.gz") into ch_to_write_to_filelibrary3
+      tuple datasetID, path("sclean.gz"), path("scleanGRCh38.gz"), inputsfile, path("raw_formatted_rowindexed.gz") into ch_to_write_to_filelibrary3
+      val datasetID into ch_check_avail
 
       script:
       """
@@ -701,11 +704,31 @@ if (params.generateMetafile){
       gzip -c ${sclean} > sclean.gz
       gzip -c ${scleanGRCh38} > scleanGRCh38.gz
       gzip -c ${inputformatted} > raw_formatted_rowindexed.gz
+
       """
   }
 
+  process assign_sumstat_id {
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
-  ch_to_write_to_filelibrary3.combine(ch_mfile_ok3, by: 0)
+      input:
+      val datasetID from ch_check_avail
+
+      output:
+      tuple datasetID, env(libfolder) into ch_assigned_sumstat_id
+
+      script:
+      """
+      # Scan for available ID and move directory there
+      libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
+      mkdir "${params.libdirsumstats}/\${libfolder}"
+      echo "\${libfolder}" > assigned_sumstat_id 
+      """
+  }
+
+  ch_assigned_sumstat_id
+   .combine(ch_to_write_to_filelibrary3, by: 0)
+   .combine(ch_mfile_ok3, by: 0)
    .combine(ch_input_readme, by: 0)
    .combine(ch_input_pdf_stuff, by: 0)
    .combine(ch_one_line_metafile, by: 0)
@@ -715,47 +738,62 @@ if (params.generateMetafile){
   process put_in_library {
   
       publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
-      publishDir "${params.libdirsumstats}", mode: 'copyNoFollow', overwrite: true, pattern: 'sumstat_*'
+      publishDir "${params.libdirsumstats}/${libfolder}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*'
 
       input:
-      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, softv from ch_to_write_to_filelibrary7
+      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, softv from ch_to_write_to_filelibrary7
       
       output:
       path("sumstat_*") into ch_end2
       path("pmid_*") into ch_end3
-      tuple datasetID, env(libfolder), mfile, onelinemeta into ch_update_library_info_file
+      tuple datasetID, libfolder, mfile, onelinemeta into ch_update_library_info_file
   
       script:
       """
       
       # copy the pdf and supplemental material if missing in pdf library
       cp ${pdfpath} pmid_${pmid}.pdf
+!
       if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ] ;then
         :
       else 
         mkdir pmid_${pmid}_supp
         i=1
-        cat ${pdfsuppdir} | while read -r supp; do extension="\${supp##*.}"; cp -r \$supp pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension}; i=\$((i+1)); done
+        cat ${pdfsuppdir} | while read -r supp; do 
+          if [ "\${supp}" != "missing" ] ; then
+            extension="\${supp##*.}"; cp -r \$supp pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension}; i=\$((i+1))
+          else
+            :
+          fi
+        done
       fi
       
-      # Scan for available ID
-      libfolder=\$(assign_folder_id.sh ${params.libdirsumstats})
-      mkdir -p "\${libfolder}"
+      # copy input file to be able to move it fast once the directory has been created
+      cp $inputsfile tmp_raw.gz
+      cat ${mfile} > tmp_mfile
+      cp $softv tmp_softv
+      cp $onelinemeta tmp_onelinemeta
+      if [ "${readme}" != "missing" ] ; then
+        cp $readme tmp_readme
+      fi
 
-      # Store data in library
-      cp ${sclean} \${libfolder}/\${libfolder}_cleaned_${build}.gz
-      cp ${scleanGRCh38} \${libfolder}/\${libfolder}_cleaned_GRCh38.gz
-      cp ${inputformatted} \${libfolder}/\${libfolder}_raw_formatted_rowindexed.gz
-      cp $inputsfile \${libfolder}/\${libfolder}_raw.gz
-      cp $readme \${libfolder}/\${libfolder}_README.txt
-      cp $onelinemeta \${libfolder}/\${libfolder}_one_line_summary_of_metadata.txt
-      cp $softv \${libfolder}/\${libfolder}_software_versions.csv
-      cat ${mfile} > \${libfolder}/\${libfolder}_meta.txt
+      # Store data in library by moving
+      mv ${sclean} ${libfolder}_cleaned_GRCh37.gz
+      mv ${scleanGRCh38} ${libfolder}_cleaned_GRCh38.gz
+      mv ${inputformatted} ${libfolder}_raw_formatted_rowindexed.gz
+      mv tmp_raw.gz ${libfolder}_raw.gz
+      if [ "${readme}" != "missing" ] ; then
+        mv tmp_readme ${libfolder}_README.txt
+      fi
+      mv tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
+      mv tmp_softv ${libfolder}_software_versions.csv
+      mv tmp_mfile ${libfolder}_meta.txt
       
       # Add link to the pdf and supplemental material
-      ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf \${libfolder}/pmid_${pmid}.pdf
-      mkdir -p \${libfolder}/pmid_${pmid}_supp
-      ln -s ${params.libdirpdfs}/pmid_${pmid}_supp/* \${libfolder}/pmid_${pmid}_supp/.
+      ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
+      mkdir -p ${libfolder}_pmid_${pmid}_supp
+      ln -s ${params.libdirpdfs}/pmid_${pmid}_supp/* ${libfolder}_pmid_${pmid}_supp/.
+      
       """
   }
 
