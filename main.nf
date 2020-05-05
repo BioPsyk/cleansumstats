@@ -501,8 +501,8 @@ if (params.generateMetafile){
       tuple datasetID, mfile, fsorted, gbmax from ch_liftover_3
       
       output:
-      tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh37_and_GRCh38") into ch_liftover_4
-      tuple datasetID, file("desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp.txt") into ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA
+      tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh37_and_GRCh38") into ch_liftover_44
+      tuple datasetID, file("desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA
   
       script:
       """
@@ -511,9 +511,45 @@ if (params.generateMetafile){
       #process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1}')"
       rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh37_and_GRCh38 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh37 and GRCh38 and map to dbsnp" > desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh37 and GRCh38 and simultaneously map to dbsnp" > desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA
       """
   }
+
+  process remove_duplicated_chr_position_allele_rows {
+  
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile, liftedandmapped from ch_liftover_44
+      
+      output:
+      tuple datasetID, mfile, file("gb_unique_rows2") into ch_liftover_4
+      file("gb_unique_rows")
+      file("gb_duplicated_rows_removed")
+      file("gb_multiallelic_rows_removed")
+      tuple datasetID, file("desc_removed_duplicated_rows_BA") into ch_desc_removed_duplicated_rows_BA
+      tuple datasetID, file("desc_removed_multiallelic_rows_BA") into ch_desc_removed_multiallelic_rows_BA
+
+      script:
+      """
+      #remove all but the first ecnountered row where chr:pos REF and ALT 
+      awk 'BEGIN{r0="initrowhere"} {var=\$1"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed"}; r0=var}' $liftedandmapped > gb_unique_rows
+      
+      #remove all multi-allelic rows (this filter can lifted in the future)
+      awk -vFS="\t" -vOFS="\t" '{if(\$6 ~ /,/){print > "gb_multiallelic_rows_removed"}else{print \$0} }' gb_unique_rows > gb_unique_rows2
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l ${liftedandmapped} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_unique_rows | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT" > desc_removed_duplicated_rows_BA
+
+      rowsBefore="\$(wc -l gb_unique_rows | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_unique_rows2 | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved multi-allelics" > desc_removed_multiallelic_rows_BA
+      """
+  }
+
 
   process split_off_GRCh38 {
       //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
@@ -563,17 +599,18 @@ if (params.generateMetafile){
       output:
       tuple datasetID, build, mfile, file("gb_multialleles_splittorows") into ch_allele_correction
       tuple datasetID, file("desc_split_multi_allelics_and_sort_on_rowindex_BA.txt") into ch_desc_split_multi_allelics_and_sort_on_rowindex_BA  
+      file("gb_splitted_multiallelics")
   
       script:
       """
-      split_multiallelics_to_rows.sh $liftgrs > liftgrs2
+      split_multiallelics_to_rows.sh $liftgrs > gb_splitted_multiallelics
       echo -e "0\tCHRPOS\tRSID\tA1\tA2" > gb_multialleles_splittorows
-      LC_ALL=C sort -k1,1 liftgrs2 >> gb_multialleles_splittorows
+      LC_ALL=C sort -k1,1 gb_splitted_multiallelics >> gb_multialleles_splittorows
       
-      #process before and after stats
+      #process before and after stats (rows is -1 because of header)
       rowsBefore="\$(wc -l $liftgrs | awk '{print \$1}')"
-      rowsAfter="\$(wc -l gb_multialleles_splittorows | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tSplit multi-allelics to multiple rows and sort on original rowindex" > desc_split_multi_allelics_and_sort_on_rowindex_BA.txt
+      rowsAfter="\$(wc -l gb_multialleles_splittorows | awk '{print \$1-1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tSplit multi-allelics to multiple rows and sort on original rowindex (Should make no diffrence because of the multi-allelic filter)" > desc_split_multi_allelics_and_sort_on_rowindex_BA.txt
 
       """
   }
@@ -636,7 +673,7 @@ if (params.generateMetafile){
       #process before and after stats
       rowsBefore="\$(wc -l ${mapped} | awk '{print \$1}')"
       rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows based on allele-pair matching to dbsnp" > desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels and allele-pair matching to dbsnp for palindroms, impossible match and nonGTAC characters" > desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt
       """
   }
   
@@ -681,7 +718,47 @@ if (params.generateMetafile){
   ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
     .mix(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA)
     .set{ ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA }
+
+  //mix the A1_A2_both and A1_solo channels
+  ch_A2_exists2
+    .mix(ch_A2_missing2)
+    .set{ ch_allele_corrected_mix_X }
   
+  process remove_duplicated_chr_position_rows {
+  
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, build, mfile, acorrected from ch_allele_corrected_mix_X
+      
+      output:
+      tuple datasetID, build, mfile, file("gb_unique_rows3_sorted") into ch_allele_corrected_mix_Y
+      file("gb_unique_rows3")
+      file("gb_acorrected_sorted_on_chrpos")
+      file("gb_duplicated_chr_pos_rows_removed")
+      tuple datasetID, file("desc_removed_duplicated_chr_pos_rows_BA") into ch_desc_removed_duplicated_chr_pos_rows_BA
+
+      script:
+      """
+      #sort on fourth column
+      LC_ALL=C sort -k4,1 $acorrected > gb_acorrected_sorted_on_chrpos
+      
+      #remove all but the first ecnountered row where chr:pos (seems some chrpos that mapped to more than one rsid are caught here)
+      awk 'BEGIN{r0="initrowhere"} {var=\$4; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_chr_pos_rows_removed"}; r0=var}' gb_acorrected_sorted_on_chrpos > gb_unique_rows3
+      
+      #re-sort on first column
+      LC_ALL=C sort -k1,1 gb_unique_rows3 > gb_unique_rows3_sorted
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l ${acorrected} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_unique_rows3_sorted | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos" > desc_removed_duplicated_chr_pos_rows_BA
+
+      """
+  }
+  ch_allele_corrected_mix_Y
+    .into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
 
   process describe_rows_filtered_by_allele_filter {
   
@@ -692,7 +769,7 @@ if (params.generateMetafile){
       tuple datasetID, disc_indel, disc_notGCTA, disc_notPossPair, disc_palin from ch_describe_allele_filter
       
       output:
-      tuple datasetID, file("desc_*") into ch_desc_end2
+      tuple datasetID, file("desc_gb_filt_remove_by_allele_filter.txt") into ch_desc_allele_filter_removed
   
       script:
       """
@@ -833,7 +910,8 @@ if (params.generateMetafile){
       tuple datasetID, filtered_stats_remain, filtered_stats_removed from ch_combined_desc_material
       
       output:
-      tuple datasetID, file("desc_*") into ch_desc_end
+      tuple datasetID, file("desc_st_filt_remain.txt") into ch_extra_st_filt_remain
+      tuple datasetID, file("desc_st_filt_removed.txt") into ch_extra_st_filt_removed
   
       script:
       """
@@ -845,10 +923,6 @@ if (params.generateMetafile){
   }
 
   
-  //mix the A1_A2_both and A1_solo channels
-  ch_A2_exists2
-    .mix(ch_A2_missing2)
-    .into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
   
   ch_allele_corrected_mix1
     .combine(ch_stats_for_output, by: 0)
@@ -912,10 +986,13 @@ if (params.generateMetafile){
    .combine(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
    .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
    .combine(ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA, by: 0)
+   .combine(ch_desc_removed_duplicated_rows_BA, by: 0)
+   .combine(ch_desc_removed_multiallelic_rows_BA, by: 0)
    .combine(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
    .combine(ch_desc_keep_only_GRCh37_version_BA, by: 0)
    .combine(ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
    .combine(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA, by: 0)
+   .combine(ch_desc_removed_duplicated_chr_pos_rows_BA, by: 0)
    .combine(ch_desc_filtered_stat_rows_with_non_numbers_BA, by: 0)
    .combine(ch_desc_inferred_stats_if_inferred_BA, by: 0)
    .combine(ch_desc_from_inferred_to_joined_selection_BA, by: 0)
@@ -927,27 +1004,30 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4, step5a, step5b, step6, step7, step8, step9, step10a, step10b, step11 from ch_collected_workflow_stepwise_stats
+      tuple datasetID, step1, step2, step3, step4, step5, step6, step7a, step7b, step8, step9, step10, step11, step12, step13a, step13b, step14 from ch_collected_workflow_stepwise_stats
 
       output:
-      file("desc_collected_workflow_stepwise_stats.txt")
+      file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
 
       script:
       """
-      echo -e "Step\tBefore\tAfter\tDescription" > desc_collected_workflow_stepwise_stats.txt
+      echo -e "Steps\tBefore\tAfter\tDescription" > desc_collected_workflow_stepwise_stats.txt
       cat $step1 | awk -vFS="\t" -vOFS="\t" '{print "Step1", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step2 | awk -vFS="\t" -vOFS="\t" '{print "Step2", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step3 | awk -vFS="\t" -vOFS="\t" '{print "Step3", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step4 | awk -vFS="\t" -vOFS="\t" '{print "Step4", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step5a | awk -vFS="\t" -vOFS="\t" '{print "Step5a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step5b | awk -vFS="\t" -vOFS="\t" '{print "Step5b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step5 | awk -vFS="\t" -vOFS="\t" '{print "Step5", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step6 | awk -vFS="\t" -vOFS="\t" '{print "Step6", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step7 | awk -vFS="\t" -vOFS="\t" '{print "Step7", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step7a | awk -vFS="\t" -vOFS="\t" '{print "Step7a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step7b | awk -vFS="\t" -vOFS="\t" '{print "Step7b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step8 | awk -vFS="\t" -vOFS="\t" '{print "Step8", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step9 | awk -vFS="\t" -vOFS="\t" '{print "Step9", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step10a | awk -vFS="\t" -vOFS="\t" '{print "Step10a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step10b | awk -vFS="\t" -vOFS="\t" '{print "Step10b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step10 | awk -vFS="\t" -vOFS="\t" '{print "Step10", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step11 | awk -vFS="\t" -vOFS="\t" '{print "Step11", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12 | awk -vFS="\t" -vOFS="\t" '{print "Step12", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13a | awk -vFS="\t" -vOFS="\t" '{print "Step13a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13b | awk -vFS="\t" -vOFS="\t" '{print "Step13b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step14 | awk -vFS="\t" -vOFS="\t" '{print "Step14", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       """
   }
 
@@ -959,6 +1039,7 @@ if (params.generateMetafile){
 
       output:
       tuple datasetID, env(libfolder) into ch_assigned_sumstat_id
+      file("assigned_sumstat_id")      
 
       script:
       """
@@ -979,12 +1060,18 @@ if (params.generateMetafile){
    .combine(ch_software_versions)
    .set{ ch_to_write_to_filelibrary7 }
 
+ //  .combine(ch_overview_workflow_steps, by: 0)
+ //  .combine(ch_extra_st_filt_removed, by: 0)
+ //  .combine(ch_desc_allele_filter_removed, by: 0)
+ //  .combine(ch_stats_genome_build, by: 0)
+
   process put_in_library {
   
       publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
       publishDir "${params.libdirsumstats}/${libfolder}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*'
 
       input:
+      //tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, stfiltremoved, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
       tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, softv from ch_to_write_to_filelibrary7
       
       output:
@@ -1027,12 +1114,19 @@ if (params.generateMetafile){
       mv ${inputformatted} ${libfolder}_raw_formatted_rowindexed.gz
       mv tmp_raw.gz ${libfolder}_raw.gz
       if [ "${readme}" != "missing" ] ; then
-        mv tmp_readme ${libfolder}_README.txt
+        mv tmp_readme ${libfolder}_raw_README.txt
       fi
       mv tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
       mv tmp_softv ${libfolder}_software_versions.csv
       mv tmp_mfile ${libfolder}_meta.txt
-      
+
+      # Make a folder with detailed data of the cleaning
+      mkdir ${libfolder}_cleaning_details
+     # cp overviewworkflow ${libfolder}_cleaning_details/${libfolder}_stepwise_overview.txt
+     # cp stfiltremoved ${libfolder}_cleaning_details/${libfolder}_stat_filter_table_of_removed_types.txt
+     # cp allelefiltremoved ${libfolder}_cleaning_details/${libfolder}_allele_filter_table_of_removed_types.txt
+     # cp gbdetect ${libfolder}_cleaning_details/${libfolder}_genome_build_map_count_table.txt
+
       # Add link to the pdf and supplemental material
       ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
       mkdir -p ${libfolder}_pmid_${pmid}_supp
