@@ -179,6 +179,87 @@ if (params.generateMetafile){
       cat ${ch_metatemplate} > ${basefilename}.meta
       """
   }
+}else if(params.generateDbSNPreference){
+
+  process create_dnsnp_database {
+
+      publishDir "${params.outdir}", mode: 'copy', overwrite: false
+
+      output:
+      file("tmp.db") into ch_db
+
+      script:
+     // #1-22
+     // ##X
+     // ##Y
+     // ##MT
+     // #
+     // ##Download from web
+     // #wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.*
+     // #
+     // ##cp All_20180418.vcf.gz All_20180418_GRCh38.bed
+     // #
+     // #
+     // #module load tools
+     // #module load bcftools/1.9
+     // #
+     // #date 
+     // ##Wed Feb 26 10:11:02 CET 2020
+     // ##bcftools view All_20180418.vcf.gz -Ov | grep -v "#" | awk '{print "chr"$1, $2, $2, $3, $4, $5}' > All_20180418_GRCh38.bed
+     // #date 
+     // ##Wed Feb 26 10:48:33 CET 2020
+     // #
+     // ##Add extra chrpos column
+     // #bcftools view All_20180418.vcf.gz -Ov | grep -v "#" | awk '{print "chr"$1, $2, $2,  $1":"$2, $3, $4, $5}' > All_20180418_GRCh38.bed
+     // #
+     // #module load tools
+     // #module load singularity/3.5.2
+     // #
+     // ##map to GRCh37
+     // #./images/liftover-lates.img bed data/hg38ToHg19.over.chain.gz All_20180418_GRCh38.bed All_20180418_GRCh37.bed
+     // #awk '{tmp=$1; sub(/[cC][hH][rR]/, "", tmp); print $1, $2, $3, tmp":"$2, $4, $5, $6, $7}' All_20180418_GRCh37.bed > All_20180418_liftcoord_GRCh37_GRCh38.bed
+     // #
+     // #./images/liftover-lates.img bed data/hg19ToHg18.over.chain.gz All_20180418_liftcoord_GRCh37_GRCh38.bed All_20180418_liftcoord_GRCh36.bed
+     // #./images/liftover-lates.img bed data/hg19ToHg17.over.chain.gz All_20180418_liftcoord_GRCh37_GRCh38.bed All_20180418_liftcoord_GRCh35.bed
+     // #
+     // #awk '{tmp=$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"$2, $4, $5, $6, $7, $8}' All_20180418_liftcoord_GRCh36.bed > All_20180418_GRCh36_GRCh37_GRCh38.bed
+     // #awk '{tmp=$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"$2, $4, $5, $6, $7, $8}' All_20180418_liftcoord_GRCh35.bed > All_20180418_GRCh35_GRCh37_GRCh38.bed
+     // #awk '{print $4, $5, $6, $7, $8}' All_20180418_liftcoord_GRCh37_GRCh38.bed > All_20180418_GRCh37_GRCh38.bed
+     // #awk '{print $5, $4, $6, $7, $8}' All_20180418_liftcoord_GRCh37_GRCh38.bed > All_20180418_GRCh38_GRCh37.bed
+     // #
+     // #
+     // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh37_GRCh38.bed > All_20180418_GRCh37_GRCh38.sorted.bed
+     // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh38_GRCh37.bed > All_20180418_GRCh38_GRCh37.sorted.bed
+     // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh36_GRCh37_GRCh38.bed > All_20180418_GRCh36_GRCh37_GRCh38.sorted.bed
+     // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh35_GRCh37_GRCh38.bed > All_20180418_GRCh35_GRCh37_GRCh38.sorted.bed
+     // #
+     // ##map to GRCh37
+     // ##awk '{print $2,$1,$3,$4,$5}' All_20180418_GRCh37.chrpos.sorted.bed | LC_ALL=C sort -k 1 --parallel 8 > All_20180418_GRCh37.chrpos.sorted.reverse.bed
+     // #
+     // #nextflow run ../../../repos/nf-core-cleansumstats --input 'raw_formatted_row-indexed/sumstat_*' --outdir raw_formatted_row-indexed_cleaned \
+     // #--dbsnp38 ../../../data/dbsnp151/All_20180418_GRCh38_GRCh37.sorted.bed \
+     // #--dbsnp37 ../../../data/dbsnp151/All_20180418_GRCh37_GRCh38.sorted.bed \
+     // #--dbsnp36 ../../../data/dbsnp151/All_20180418_GRCh36_GRCh37_GRCh38.sorted.bed \
+     // #--dbsnp35 ../../../data/dbsnp151/All_20180418_GRCh35_GRCh37_GRCh38.sorted.bed \
+     // #-resume
+     // #
+     // #
+     // #
+     // ##remove temp files
+     // #rm All_20180418_GRCh38.chrpos.bed
+     // #rm All_20180418_GRCh37.chrpos.bed
+     // #rm All_20180418_GRCh36.chrpos.bed
+     // #rm All_20180418_GRCh35.chrpos.bed
+     // #rm All_20180418_GRCh37.bed
+     // #rm All_20180418_GRCh36.bed
+     // #rm All_20180418_GRCh35.bed
+     // #
+      """
+      cat "hek" > tmp.db
+
+      """
+  }
+
 }else {
 
 
@@ -237,6 +318,7 @@ if (params.generateMetafile){
       tuple datasetID, env(pmid), env(pdfpath), file("${datasetID}_pdf_suppfiles.txt") into ch_input_pdf_stuff
       tuple datasetID, file("${datasetID}_one_line_summary_of_metadata.txt") into ch_one_line_metafile
       file("mfile_sent_in") 
+      tuple datasetID, file("desc_force_tab_sep_BA.txt") into ch_desc_prep_force_tab_sep_BA
   
       script:
       """
@@ -279,8 +361,13 @@ if (params.generateMetafile){
       check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile_1000_formatted ${datasetID}_sfile_1000_format.log
       
       # Make second sumstat file check on all lines
-      #check_and_format_sfile.sh \$spath ${datasetID}_sfile ${datasetID}_sfile_format.log
-      check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile ${datasetID}_sfile_format.log
+      check_and_format_sfile.sh \$spath ${datasetID}_sfile ${datasetID}_sfile_format.log
+      #check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile ${datasetID}_sfile_format.log
+      
+      #process before and after stats
+      rowsBefore="\$(zcat \$spath | wc -l )"
+      rowsAfter="\$(wc -l ${datasetID}_sfile | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tForce tab separation" > desc_force_tab_sep_BA.txt
 
       """
   }
@@ -295,11 +382,17 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       output:
-      tuple datasetID, file("${datasetID}_sfile") into ch_sfile_on_stream
+      tuple datasetID, file("prep_sfile_added_rowindex") into ch_sfile_on_stream
+      tuple datasetID, file("desc_add_sorted_rowindex_BA.txt") into ch_desc_prep_add_sorted_rowindex_BA
   
       script:
       """
-      cat $sfile | sstools-raw add-index | LC_ALL=C sort -k 1 - > ${datasetID}_sfile
+      cat $sfile | sstools-raw add-index | LC_ALL=C sort -k 1 - > prep_sfile_added_rowindex
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l $sfile | awk '{print \$1}')"
+      rowsAfter="\$(wc -l prep_sfile_added_rowindex | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tAdd sorted rowindex, which maps back to the unfiltered file" > desc_add_sorted_rowindex_BA.txt
       """
   }
   
@@ -322,16 +415,20 @@ if (params.generateMetafile){
   
       output:
       tuple datasetID, file("${datasetID}*.res") into ch_genome_build_stats
+      file("gb_*")
   
       script:
       """
   
       colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
       colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
-  
-      cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
-      LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
-      format_chrpos_for_dbsnp.sh ${build} gb_lift_sorted ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > ${build}.map
+      echo "\${colCHR}" > gb_ad-hoc-do_funx_CHR
+      echo "\${colPOS}" > gb_ad-hoc-do_funx_POS
+
+      cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" > gb_extract_and_format_chr_and_pos_to_detect_build
+      awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' gb_extract_and_format_chr_and_pos_to_detect_build > gb_ready_to_join_to_detect_build
+      LC_ALL=C sort -k1,1 gb_ready_to_join_to_detect_build > gb_ready_to_join_to_detect_build_sorted
+      format_chrpos_for_dbsnp.sh ${build} gb_ready_to_join_to_detect_build_sorted ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > ${build}.map
       sort -u -k1,1 ${build}.map | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${datasetID}.${build}.res
   
       """
@@ -367,7 +464,7 @@ if (params.generateMetafile){
   
   ch_liftover_2=ch_liftover.join(ch_known_genome_build)
   
-  process prep_dbsnp_mapling_by_sorting_chrpos {
+  process prep_dbsnp_mapping_by_sorting_chrpos {
       //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
@@ -376,6 +473,7 @@ if (params.generateMetafile){
   
       output:
       tuple datasetID, mfile, file("gb_lift_sorted"), gbmax into ch_liftover_3
+      tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA
   
       script:
       """
@@ -385,6 +483,11 @@ if (params.generateMetafile){
   
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
       LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting a chr:pos index for present build" > desc_prepare_format_for_dbsnp_mapping_BA.txt
       """
   
   }
@@ -398,11 +501,17 @@ if (params.generateMetafile){
       tuple datasetID, mfile, fsorted, gbmax from ch_liftover_3
       
       output:
-      tuple datasetID, mfile, file("gb_liftgr38") into ch_liftover_4
+      tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh38") into ch_liftover_4
+      tuple datasetID, file("desc_liftover_to_GRCh38_and_map_to_dbsnp.txt") into ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA
   
       script:
       """
-      format_chrpos_for_dbsnp.sh ${gbmax} ${fsorted} ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > gb_liftgr38
+      format_chrpos_for_dbsnp.sh ${gbmax} ${fsorted} ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > gb_lifted_and_mapped_to_GRCh38
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh38 | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh38 and map to dbsnp" > desc_liftover_to_GRCh38_and_map_to_dbsnp.txt
       """
   }
   
@@ -411,16 +520,21 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, mfile, mapped from ch_liftover_4
+      tuple datasetID, mfile, liftedandmapped from ch_liftover_4
       
       output:
-      tuple datasetID, mfile, file("gb_liftgr38_sorted") into ch_liftover_5
-  
+      tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh38_sorted") into ch_liftover_5
+      tuple datasetID, file("desc_sort_chrpos_based_on_GRCh38_BA.txt") into ch_desc_sort_chrpos_based_on_GRCh38_BA  
+
       script:
       """
-      LC_ALL=C sort -k1,1 $mapped > gb_liftgr38_sorted
+      LC_ALL=C sort -k1,1 $liftedandmapped > gb_lifted_and_mapped_to_GRCh38_sorted
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l $liftedandmapped | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh38_sorted | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tSort file on aquired chr:pos based on GRCh38" > desc_sort_chrpos_based_on_GRCh38_BA.txt
       """
-  
   }
   
   process liftover_and_map_to_rsids_and_alleles {
@@ -431,17 +545,31 @@ if (params.generateMetafile){
       tuple datasetID, mfile, gb_liftgr38_sorted from ch_liftover_5
       
       output:
-      tuple datasetID, val("GRCh37"), mfile, file("gb_ready_liftgr37") into ch_mapped_GRCh37
-      tuple datasetID, file("gb_ready_liftgr38") into ch_mapped_GRCh38
+      tuple datasetID, val("GRCh37"), mfile, file("gb_lifted_GRCh37") into ch_mapped_GRCh37
+      tuple datasetID, file("gb_lifted_GRCh38") into ch_mapped_GRCh38
+      tuple datasetID, file("desc_map_back_coordinates_to_GRCh37_BA.txt") into ch_desc_map_back_coordinates_to_GRCh37_BA  
+      tuple datasetID, file("desc_keep_a_GRCh38_reference_BA.txt") into ch_desc_keep_a_GRCh38_reference_BA  
   
       script:
       """
-      LC_ALL=C join -1 1 -2 1 $gb_liftgr38_sorted ${ch_dbsnp38} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$6,\$7,\$8,\$9}' > gb_ready_liftgr37
-      awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' $gb_liftgr38_sorted > gb_ready_liftgr38
+      LC_ALL=C join -1 1 -2 1 $gb_liftgr38_sorted ${ch_dbsnp38} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$6,\$7,\$8,\$9}' > gb_lifted_GRCh37
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l $gb_liftgr38_sorted | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_lifted_GRCh37 | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tMap back coordinates to GRCh37, which will be the file subjected to further cleaning" > desc_map_back_coordinates_to_GRCh37_BA.txt
+
+
+      awk -vFS="[[:space:]]" -vOFS="\t" '{print \$2,\$1,\$3,\$4,\$5}' $gb_liftgr38_sorted > gb_lifted_GRCh38
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l $gb_liftgr38_sorted | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_lifted_GRCh38 | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tKeep a version of GRCh38 coordinates as reference" > desc_keep_a_GRCh38_reference_BA.txt
+
       """
   }
-  
-  //ch_mapped_data_mix=ch_mapped_GRCh38.mix(ch_mapped_GRCh37)
+
   
   process split_multiallelics_and_resort_index {
   
@@ -452,13 +580,20 @@ if (params.generateMetafile){
       tuple datasetID, build, mfile, liftgrs from ch_mapped_GRCh37
       
       output:
-      tuple datasetID, build, mfile, file("${datasetID}_${build}_mapped") into ch_allele_correction
+      tuple datasetID, build, mfile, file("gb_multialleles_splittorows") into ch_allele_correction
+      tuple datasetID, file("desc_split_multi_allelics_and_sort_on_rowindex_BA.txt") into ch_desc_split_multi_allelics_and_sort_on_rowindex_BA  
   
       script:
       """
       split_multiallelics_to_rows.sh $liftgrs > liftgrs2
-      echo -e "0\tCHRPOS\tRSID\tA1\tA2" > ${datasetID}_${build}_mapped
-      LC_ALL=C sort -k1,1 liftgrs2 >> ${datasetID}_${build}_mapped
+      echo -e "0\tCHRPOS\tRSID\tA1\tA2" > gb_multialleles_splittorows
+      LC_ALL=C sort -k1,1 liftgrs2 >> gb_multialleles_splittorows
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l $liftgrs | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_multialleles_splittorows | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tSplit multi-allelics to multiple rows and sort on original rowindex" > desc_split_multi_allelics_and_sort_on_rowindex_BA.txt
+
       """
   }
   
@@ -503,14 +638,24 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_exists2
-  
+      tuple datasetID, file("disc_indel"), file("disc_notGCTA"), file("disc_notPossPair"), file("disc_palin") into ch_describe_allele_filter1
+      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
+
       script:
       """
       echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > ${build}_acorrected
-  
+      
+      #init some the files collecting variants removed because of allele composition
+      touch disc_indel disc_notGCTA disc_notPossPair disc_palin
+
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | sstools-eallele correction -f - >> ${build}_acorrected
+
+      #process before and after stats
+      rowsBefore="\$(wc -l ${mapped} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows based on allele-pair matching to dbsnp" > desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt
       """
   }
   
@@ -525,16 +670,58 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_missing2
-      file("${build}_mapped2") into placeholder4
+      file("${build}_mapped2")
+      tuple datasetID, file("disc_indel"), file("disc_notGCTA"), file("disc_notPossPair"), file("disc_palin") into ch_describe_allele_filter2
+      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
   
       script:
       """
       multiallelic_filter.sh $mapped > ${build}_mapped2
       echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > ${build}_acorrected
+      #init some the files collecting variants removed because of allele composition
+      touch disc_indel disc_notGCTA disc_notPossPair disc_palin
   
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | sstools-eallele correction -f - -a >> ${build}_acorrected 
+
+      #process before and after stats
+      rowsBefore="\$(wc -l ${mapped} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows based on allele-pair matching to dbsnp" > desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt
   
+      """
+  }
+
+  //put the two brances into the same channel (as only one will be used per file, there will be no duplicates)
+  ch_describe_allele_filter1
+    .mix(ch_describe_allele_filter2)
+    .set{ ch_describe_allele_filter }
+
+  ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
+    .mix(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA)
+    .set{ ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA }
+  
+
+  process describe_rows_filtered_by_allele_filter {
+  
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, disc_indel, disc_notGCTA, disc_notPossPair, disc_palin from ch_describe_allele_filter
+      
+      output:
+      tuple datasetID, file("desc_*") into ch_desc_end2
+  
+      script:
+      """
+
+      # prepare process specific descriptive statistics
+      echo -e "rowsremoved\tfiltertype" > desc_gb_filt_remove_by_allele_filter.txt
+      echo "\$(wc -l $disc_indel)" | awk -vOFS="\t" '{print \$1, "indels"}' >> desc_gb_filt_remove_by_allele_filter.txt
+      echo "\$(wc -l $disc_notGCTA)" | awk -vOFS="\t" '{print \$1, "notAnyOfATGC"}' >> desc_gb_filt_remove_by_allele_filter.txt
+      echo "\$(wc -l $disc_notPossPair)" | awk -vOFS="\t" '{print \$1, "notPossiblePair"}' >> desc_gb_filt_remove_by_allele_filter.txt
+      echo "\$(wc -l $disc_palin)" | awk -vOFS="\t" '{print \$1, "palindrome"}' >> desc_gb_filt_remove_by_allele_filter.txt
       """
   }
   
@@ -550,10 +737,16 @@ if (params.generateMetafile){
       output:
       tuple datasetID, file("st_filtered_remains") into ch_stats_filtered_remain
       tuple datasetID, file("st_filtered_removed")  into ch_stats_filtered_removed
+      tuple datasetID, file("desc_filtered_stat_rows_with_non_numbers_BA.txt")  into ch_desc_filtered_stat_rows_with_non_numbers_BA
   
       script:
       """
       filter_stat_values.sh $mfile $sfile > st_filtered_remains 2> st_filtered_removed
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l st_filtered_remains | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered out rows with stats impossible to do calculations from" > desc_filtered_stat_rows_with_non_numbers_BA.txt
       """
   }
   
@@ -575,6 +768,7 @@ if (params.generateMetafile){
       output:
       tuple datasetID, mfile, file("st_inferred_stats") into ch_stats_selection
       file("st_which_to_do") into out_st_which_to_do
+      tuple datasetID, file("desc_inferred_stats_if_inferred_BA.txt") into ch_desc_inferred_stats_if_inferred_BA
   
       script:
       """
@@ -603,6 +797,11 @@ if (params.generateMetafile){
       else
         touch st_inferred_stats
       fi
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l ${st_filtered} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l st_inferred_stats | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tInferred stats, if stats are inferred" > desc_inferred_stats_if_inferred_BA.txt
       """
   }
   
@@ -620,10 +819,22 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, file("st_stats_for_output") into ch_stats_for_output
+      tuple datasetID, file("desc_from_inferred_to_joined_selection_BA.txt") into ch_desc_from_inferred_to_joined_selection_BA
+      tuple datasetID, file("desc_from_sumstats_to_joined_selection_BA.txt") into ch_desc_from_sumstats_to_joined_selection_BA
   
       script:
       """
       select_stats_for_output.sh $mfile $sfile $inferred > st_stats_for_output 
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l ${inferred} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l st_stats_for_output | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFrom inferred to joined selection of stats" > desc_from_inferred_to_joined_selection_BA.txt
+      
+      #process before and after stats
+      rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l st_stats_for_output | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFrom raw sumstat to joined selection of stats" > desc_from_sumstats_to_joined_selection_BA.txt
       """
   }
 
@@ -672,15 +883,22 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, build, file("${datasetID}_${build}_cleaned"), file("${datasetID}_GRCh38") into ch_cleaned_file
+      tuple datasetID, file("desc_final_merge_BA.txt") into ch_desc_final_merge_BA
   
       script:
       """
-      #
+      
       apply_modifier_on_stats.sh $acorrected $stats > ${datasetID}_${build}_cleaned
+      
       # match the GRCh38 build and publish it as separate file
       echo -e "0\tCHR\tPOS" > ${datasetID}_GRCh38
       awk -vOFS="\t" 'NR>1{split(\$2,out,":"); print \$1, out[1], out[2]}' $grch38 | LC_ALL=C sort -k 1 - > sorted_GRCh38
       LC_ALL=C join -t "\$(printf '\t')" -1 1 -2 1 -o 1.1 1.2 1.3 sorted_GRCh38 ${datasetID}_${build}_cleaned > ${datasetID}_GRCh38
+      
+      # process before and after stats
+      rowsBefore="\$(wc -l $acorrected | awk '{print \$1}')"
+      rowsAfter="\$(wc -l ${datasetID}_${build}_cleaned | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFrom dbsnp mapped to merged selection of stats, final step" > desc_final_merge_BA.txt
       """
   }
 
@@ -707,6 +925,52 @@ if (params.generateMetafile){
 
       """
   }
+  
+  //Do actual collection, placed in corresponding step order
+  ch_desc_prep_force_tab_sep_BA
+   .combine(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
+   .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
+   .combine(ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA, by: 0)
+   .combine(ch_desc_sort_chrpos_based_on_GRCh38_BA, by: 0)
+   .combine(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
+   .combine(ch_desc_map_back_coordinates_to_GRCh37_BA, by: 0)
+   .combine(ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
+   .combine(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA, by: 0)
+   .combine(ch_desc_filtered_stat_rows_with_non_numbers_BA, by: 0)
+   .combine(ch_desc_inferred_stats_if_inferred_BA, by: 0)
+   .combine(ch_desc_from_inferred_to_joined_selection_BA, by: 0)
+   .combine(ch_desc_from_sumstats_to_joined_selection_BA, by: 0)
+   .combine(ch_desc_final_merge_BA, by: 0)
+   .set{ ch_collected_workflow_stepwise_stats }
+
+  process collect_and_prepare_stepwise_readme {
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple datasetID, step1, step2, step3, step4, step5, step6a, step6b, step7, step8, step9, step10, step11a, step11b, step12 from ch_collected_workflow_stepwise_stats
+
+      output:
+      file("desc_collected_workflow_stepwise_stats.txt")
+
+      script:
+      """
+      echo -e "Step\tBefore\tAfter\tDescription" > desc_collected_workflow_stepwise_stats.txt
+      cat $step1 | awk -vFS="\t" -vOFS="\t" '{print "Step1", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step2 | awk -vFS="\t" -vOFS="\t" '{print "Step2", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step3 | awk -vFS="\t" -vOFS="\t" '{print "Step3", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step4 | awk -vFS="\t" -vOFS="\t" '{print "Step4", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step5 | awk -vFS="\t" -vOFS="\t" '{print "Step5", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step6a | awk -vFS="\t" -vOFS="\t" '{print "Step6a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step6b | awk -vFS="\t" -vOFS="\t" '{print "Step6b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step7 | awk -vFS="\t" -vOFS="\t" '{print "Step7", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step8 | awk -vFS="\t" -vOFS="\t" '{print "Step8", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step9 | awk -vFS="\t" -vOFS="\t" '{print "Step9", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step10 | awk -vFS="\t" -vOFS="\t" '{print "Step10", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step11a | awk -vFS="\t" -vOFS="\t" '{print "Step11a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step11b | awk -vFS="\t" -vOFS="\t" '{print "Step11b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12 | awk -vFS="\t" -vOFS="\t" '{print "Step12", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      """
+  }
 
   process assign_sumstat_id {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
@@ -725,6 +989,7 @@ if (params.generateMetafile){
       echo "\${libfolder}" > assigned_sumstat_id 
       """
   }
+
 
   ch_assigned_sumstat_id
    .combine(ch_to_write_to_filelibrary3, by: 0)
