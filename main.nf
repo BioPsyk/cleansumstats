@@ -322,6 +322,7 @@ if (params.generateMetafile){
   
       script:
       """
+
       metaDir="\$(dirname ${mfile})"
       cat ${mfile} > mfile_sent_in
       # Clean meta file from windows return characters
@@ -1103,6 +1104,7 @@ if (params.generateMetafile){
    .combine(ch_input_readme, by: 0)
    .combine(ch_input_pdf_stuff, by: 0)
    .combine(ch_one_line_metafile, by: 0)
+   .combine(ch_extra_st_filt_removed, by: 0)
    .combine(ch_software_versions)
    .set{ ch_to_write_to_filelibrary7 }
 
@@ -1118,11 +1120,11 @@ if (params.generateMetafile){
 
       input:
       //tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, stfiltremoved, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
-      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, softv from ch_to_write_to_filelibrary7
+      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, stfiltremoved, softv from ch_to_write_to_filelibrary7
       
       output:
-      path("sumstat_*") into ch_end2
-      path("pmid_*") into ch_end3
+      path("sumstat_*")
+      path("pmid_*") 
       tuple datasetID, libfolder, mfile, onelinemeta into ch_update_library_info_file
   
       script:
@@ -1130,7 +1132,7 @@ if (params.generateMetafile){
       
       # copy the pdf and supplemental material if missing in pdf library
       cp ${pdfpath} pmid_${pmid}.pdf
-!
+
       if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ] ;then
         :
       else 
@@ -1153,6 +1155,7 @@ if (params.generateMetafile){
       if [ "${readme}" != "missing" ] ; then
         cp $readme tmp_readme
       fi
+      cp ${stfiltremoved} tmp_stfiltremoved
 
       # Store data in library by moving
       mv ${sclean} ${libfolder}_cleaned_GRCh37.gz
@@ -1164,12 +1167,12 @@ if (params.generateMetafile){
       fi
       mv tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
       mv tmp_softv ${libfolder}_software_versions.csv
-      mv tmp_mfile ${libfolder}_meta.txt
+      mv tmp_mfile ${libfolder}_raw_meta.txt
 
       # Make a folder with detailed data of the cleaning
       mkdir ${libfolder}_cleaning_details
      # cp overviewworkflow ${libfolder}_cleaning_details/${libfolder}_stepwise_overview.txt
-     # cp stfiltremoved ${libfolder}_cleaning_details/${libfolder}_stat_filter_table_of_removed_types.txt
+      mv tmp_stfiltremoved ${libfolder}_cleaning_details/${libfolder}_stat_filter_table_of_removed_types.txt
      # cp allelefiltremoved ${libfolder}_cleaning_details/${libfolder}_allele_filter_table_of_removed_types.txt
      # cp gbdetect ${libfolder}_cleaning_details/${libfolder}_genome_build_map_count_table.txt
 
