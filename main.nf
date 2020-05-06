@@ -524,28 +524,66 @@ if (params.generateMetafile){
       tuple datasetID, mfile, liftedandmapped from ch_liftover_44
       
       output:
-      tuple datasetID, mfile, file("gb_unique_rows2") into ch_liftover_4
+      tuple datasetID, mfile, file("gb_unique_rows5") into ch_liftover_4
       file("gb_unique_rows")
-      file("gb_duplicated_rows_removed")
+      file("gb_unique_rows2")
+      file("gb_unique_rows3")
+      file("gb_unique_rows4")
+      file("gb_duplicated_rows_removed_GRCh37")
+      file("gb_duplicated_rows_removed_GRCh37_hard")
+      //file("gb_duplicated_rows_removed_GRCh37_allele_switch_in_db")
+      file("gb_duplicated_rows_removed_GRCh38")
+      file("gb_duplicated_rows_removed_GRCh38_hard")
+      //file("gb_duplicated_rows_removed_GRCh38_allele_switch_in_db")
       file("gb_multiallelic_rows_removed")
-      tuple datasetID, file("desc_removed_duplicated_rows_BA") into ch_desc_removed_duplicated_rows_BA
+      tuple datasetID, file("desc_removed_duplicated_rows_GRCh37_BA") into ch_desc_removed_duplicated_rows_GRCh37_BA
+      tuple datasetID, file("desc_removed_duplicated_rows_GRCh37_HARD_BA") into ch_desc_removed_duplicated_rows_GRCh37_HARD_BA
+      //tuple datasetID, file("desc_removed_duplicated_rows_GRCh37_AF_BA") into ch_desc_removed_duplicated_rows_GRCh37_AF_BA
+      tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_BA") into ch_desc_removed_duplicated_rows_GRCh38_BA
+      tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_HARD_BA") into ch_desc_removed_duplicated_rows_GRCh38_HARD_BA
+      //tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_AF_BA") into ch_desc_removed_duplicated_rows_GRCh38_AF_BA
       tuple datasetID, file("desc_removed_multiallelic_rows_BA") into ch_desc_removed_multiallelic_rows_BA
 
       script:
       """
-      #remove all but the first ecnountered row where chr:pos REF and ALT 
-      awk 'BEGIN{r0="initrowhere"} {var=\$1"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed"}; r0=var}' $liftedandmapped > gb_unique_rows
+      #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh37
+      touch gb_duplicated_rows_removed_GRCh37
+      awk 'BEGIN{r0="initrowhere"} {var=\$2"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed_GRCh37"}; r0=var}' $liftedandmapped > gb_unique_rows
+      #awk 'BEGIN{pos0="init"; ref="init"; alt="init"} {pos=\$2; ref=\$5; alt=\$6; if(pos0==pos && ((ref0==ref && alt0==alt) || (ref0==alt && alt0==ref))){print \$0 > "gb_duplicated_rows_removed_GRCh37_allele_switch_in_db"}else{print \$0}; pos0=\$2; ref0=\$5; alt0=\$6}' gb_unique_rows > gb_unique_rows2
       
-      #remove all multi-allelic rows (this filter can lifted in the future)
-      awk -vFS="\t" -vOFS="\t" '{if(\$6 ~ /,/){print > "gb_multiallelic_rows_removed"}else{print \$0} }' gb_unique_rows > gb_unique_rows2
+      #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh38
+      touch gb_duplicated_rows_removed_GRCh38
+      awk 'BEGIN{r0="initrowhere"} {var=\$1"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed_GRCh38"}; r0=var}' gb_unique_rows > gb_unique_rows2
+
+      #Filter only on position duplicates (A very hard filter but is good enough for alpha release)
+      touch gb_duplicated_rows_removed_GRCh37_hard
+      touch gb_duplicated_rows_removed_GRCh38_hard
+      awk 'BEGIN{r0="initrowhere"} {var=\$2; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed_GRCh37_hard"}; r0=var}' gb_unique_rows2 > gb_unique_rows3
+      awk 'BEGIN{r0="initrowhere"} {var=\$1; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed_GRCh38_hard"}; r0=var}' gb_unique_rows3 > gb_unique_rows4
+      #awk 'BEGIN{pos0="init"; ref="init"; alt="init"} {pos=\$1; ref=\$5; alt=\$6; if(pos0==pos && ((ref0==ref && alt0==alt) || (ref0==alt && alt0==ref))){print \$0 > "gb_duplicated_rows_removed_GRCh38_allele_switch_in_db"}else{print \$0}; pos0=\$2; ref0=\$5; alt0=\$6}' gb_unique_rows3 > gb_unique_rows4
+      
+      touch gb_multiallelic_rows_removed
+      awk -vFS="\t" -vOFS="\t" '{if(\$6 ~ /,/){print > "gb_multiallelic_rows_removed"}else{print \$0} }' gb_unique_rows4 > gb_unique_rows5
       
       #process before and after stats
       rowsBefore="\$(wc -l ${liftedandmapped} | awk '{print \$1}')"
       rowsAfter="\$(wc -l gb_unique_rows | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT" > desc_removed_duplicated_rows_BA
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT, GRCh37" > desc_removed_duplicated_rows_GRCh37_BA
 
       rowsBefore="\$(wc -l gb_unique_rows | awk '{print \$1}')"
       rowsAfter="\$(wc -l gb_unique_rows2 | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT, GRCh38" > desc_removed_duplicated_rows_GRCh38_BA
+
+      rowsBefore="\$(wc -l gb_unique_rows2 | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_unique_rows3 | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh37" > desc_removed_duplicated_rows_GRCh37_HARD_BA
+
+      rowsBefore="\$(wc -l gb_unique_rows3 | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_unique_rows4 | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh38" > desc_removed_duplicated_rows_GRCh38_HARD_BA
+
+      rowsBefore="\$(wc -l gb_unique_rows4 | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_unique_rows5 | awk '{print \$1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tRemoved multi-allelics" > desc_removed_multiallelic_rows_BA
       """
   }
@@ -745,6 +783,7 @@ if (params.generateMetafile){
       LC_ALL=C sort -k4,1 $acorrected > gb_acorrected_sorted_on_chrpos
       
       #remove all but the first ecnountered row where chr:pos (seems some chrpos that mapped to more than one rsid are caught here)
+      touch gb_duplicated_chr_pos_rows_removed
       awk 'BEGIN{r0="initrowhere"} {var=\$4; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_chr_pos_rows_removed"}; r0=var}' gb_acorrected_sorted_on_chrpos > gb_unique_rows3
       
       #re-sort on first column
@@ -981,12 +1020,16 @@ if (params.generateMetafile){
       """
   }
   
+
   //Do actual collection, placed in corresponding step order
   ch_desc_prep_force_tab_sep_BA
    .combine(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
    .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
    .combine(ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA, by: 0)
-   .combine(ch_desc_removed_duplicated_rows_BA, by: 0)
+   .combine(ch_desc_removed_duplicated_rows_GRCh37_BA, by: 0)
+   .combine(ch_desc_removed_duplicated_rows_GRCh38_BA, by: 0)
+   .combine(ch_desc_removed_duplicated_rows_GRCh37_HARD_BA, by: 0)
+   .combine(ch_desc_removed_duplicated_rows_GRCh38_HARD_BA, by: 0)
    .combine(ch_desc_removed_multiallelic_rows_BA, by: 0)
    .combine(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
    .combine(ch_desc_keep_only_GRCh37_version_BA, by: 0)
@@ -1004,7 +1047,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4, step5, step6, step7a, step7b, step8, step9, step10, step11, step12, step13a, step13b, step14 from ch_collected_workflow_stepwise_stats
+      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10a, step10b, step11, step12, step13, step14, step15, step16a, step16b, step17 from ch_collected_workflow_stepwise_stats
 
       output:
       file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
@@ -1018,16 +1061,19 @@ if (params.generateMetafile){
       cat $step4 | awk -vFS="\t" -vOFS="\t" '{print "Step4", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step5 | awk -vFS="\t" -vOFS="\t" '{print "Step5", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step6 | awk -vFS="\t" -vOFS="\t" '{print "Step6", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step7a | awk -vFS="\t" -vOFS="\t" '{print "Step7a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step7b | awk -vFS="\t" -vOFS="\t" '{print "Step7b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step7 | awk -vFS="\t" -vOFS="\t" '{print "Step7", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step8 | awk -vFS="\t" -vOFS="\t" '{print "Step8", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step9 | awk -vFS="\t" -vOFS="\t" '{print "Step9", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step10 | awk -vFS="\t" -vOFS="\t" '{print "Step10", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step10a | awk -vFS="\t" -vOFS="\t" '{print "Step10a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step10b | awk -vFS="\t" -vOFS="\t" '{print "Step10b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step11 | awk -vFS="\t" -vOFS="\t" '{print "Step11", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step12 | awk -vFS="\t" -vOFS="\t" '{print "Step12", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13a | awk -vFS="\t" -vOFS="\t" '{print "Step13a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13b | awk -vFS="\t" -vOFS="\t" '{print "Step13b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13 | awk -vFS="\t" -vOFS="\t" '{print "Step13", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step14 | awk -vFS="\t" -vOFS="\t" '{print "Step14", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step15 | awk -vFS="\t" -vOFS="\t" '{print "Step15", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step16a | awk -vFS="\t" -vOFS="\t" '{print "Step16a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step16b | awk -vFS="\t" -vOFS="\t" '{print "Step16b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step17 | awk -vFS="\t" -vOFS="\t" '{print "Step17", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       """
   }
 
