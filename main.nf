@@ -74,6 +74,7 @@ if (params.dbsnp38) { ch_dbsnp38 = file(params.dbsnp38, checkIfExists: true) }
 if (params.dbsnp37) { ch_dbsnp37 = file(params.dbsnp37, checkIfExists: true) } 
 if (params.dbsnp36) { ch_dbsnp36 = file(params.dbsnp36, checkIfExists: true) } 
 if (params.dbsnp35) { ch_dbsnp35 = file(params.dbsnp35, checkIfExists: true) } 
+if (params.dbsnpRSID) { ch_dbsnpRSID = file(params.dbsnpRSID, checkIfExists: true) } 
 ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
 
 // Stage config files
@@ -113,6 +114,8 @@ if (params.dbsnp38) summary['dbSNP38'] = params.dbsnp38
 if (params.dbsnp37) summary['dbSNP37'] = params.dbsnp37 
 if (params.dbsnp36) summary['dbSNP36'] = params.dbsnp36 
 if (params.dbsnp35) summary['dbSNP35'] = params.dbsnp35 
+if (params.dbsnpRSID) summary['dbsnpRSID'] = params.dbsnpRSID 
+
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -233,8 +236,9 @@ if (params.generateMetafile){
      // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh36_GRCh37_GRCh38.bed > All_20180418_GRCh36_GRCh37_GRCh38.sorted.bed
      // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh35_GRCh37_GRCh38.bed > All_20180418_GRCh35_GRCh37_GRCh38.sorted.bed
      // #
-     // ##map to GRCh37
-     // ##awk '{print $2,$1,$3,$4,$5}' All_20180418_GRCh37.chrpos.sorted.bed | LC_ALL=C sort -k 1 --parallel 8 > All_20180418_GRCh37.chrpos.sorted.reverse.bed
+     // #
+     // ## Make version sorted on RSID to get correct coordinates
+     // # awk '{print $3, $1, $2, $4, $5}' All_20180418_GRCh37_GRCh38.sorted.bed | LC_ALL=C sort -k 1 --parallel 8 > All_20180418_RSID_GRCh37_GRCh38.sorted.bed
      // #
      // #nextflow run ../../../repos/nf-core-cleansumstats --input 'raw_formatted_row-indexed/sumstat_*' --outdir raw_formatted_row-indexed_cleaned \
      // #--dbsnp38 ../../../data/dbsnp151/All_20180418_GRCh38_GRCh37.sorted.bed \

@@ -79,14 +79,6 @@ allowedType=(
 '^\d+$'
 )
 
-locColNeeded=(
-col_CHR
-col_POS
-)
-
-alleleColNeeded=(
-col_EffectAllele
-)
 
 #functions
 
@@ -232,11 +224,19 @@ else
  echo "var_in_header_test-check2 fail" >> ${OUT_log}
 fi
 
+
 #Do we have a minimum set of col<var> names - to run the cleansumstats pipeline
-#col_CHR and col_POS must both exist
-min_var_required_result1=$(
+#col_CHR and col_POS must both exist or col_SNP must exist, which can be used instead
+locColNeededA=(
+col_CHR
+col_POS
+)
+locColNeededB=(
+col_SNP
+)
+min_var_required_resultA=$(
   min_var_required_resultx="ok"
-  for var in ${locColNeeded[@]}; do
+  for var in ${locColNeededA[@]}; do
     right="$(selRightHand "$(selColRow "^${var}=" ${mefl})")"
     if [ ${right} == "missing" ]
     then
@@ -248,18 +248,83 @@ min_var_required_result1=$(
   done
   echo $min_var_required_resultx
 )
-
 if [ $? == 0  ]; then
- min_var_required_result2="ok"
- echo "min_var_required-check1 ${min_var_required_result1}" >> ${OUT_log}
- echo "min_var_required-check2 ok" >> ${OUT_log}
-else
- min_var_required_result2="fail"
- echo "min_var_required-check1 ${min_var_required_result1}" >> ${OUT_log}
- echo "min_var_required-check2 fail" >> ${OUT_log}
+ min_var_funx_test1="ok"
 fi
 
+min_var_required_resultB=$(
+  min_var_required_resultx="ok"
+  for var in ${locColNeededB[@]}; do
+    right="$(selRightHand "$(selColRow "^${var}=" ${mefl})")"
+    if [ ${right} == "missing" ]
+    then
+        #echo >&2 "colType cannot be set to missing: ${var}=${right}"; 
+        min_var_required_resultx="fail"
+    else
+      :
+    fi
+  done
+  echo $min_var_required_resultx
+)
+if [ $? == 0  ]; then
+ min_var_funx_test2="ok"
+fi
+
+min_var_required_result1=$(
+
+  if [ "${min_var_required_resultA}" == "ok" ]
+  then
+    result="ok"
+  elif [ "${min_var_required_resultB}" == "ok" ]
+  then
+    result="ok"
+  else
+    echo >&2 "col_CHR and col_POS, or col_SNP cant be set to missing"; 
+    result="fail"
+  fi
+  echo "${result}"
+)
+
+if [ $? == 0  ]; then
+ min_var_funx_test3="ok"
+fi
+
+echo "min_var_required-check1 ${min_var_required_result1}" >> ${OUT_log}
+echo "min_var_required-check2 ${min_var_funx_test1}" >> ${OUT_log}
+echo "min_var_required-check3 ${min_var_funx_test2}" >> ${OUT_log}
+echo "min_var_required-check4 ${min_var_funx_test3}" >> ${OUT_log}
+
+#min_var_required_result1=$(
+#  min_var_required_resultx="ok"
+#  for var in ${locColNeeded[@]}; do
+#    right="$(selRightHand "$(selColRow "^${var}=" ${mefl})")"
+#    if [ ${right} == "missing" ]
+#    then
+#        #echo >&2 "colType cannot be set to missing: ${var}=${right}"; 
+#        min_var_required_resultx="fail"
+#    else
+#      :
+#    fi
+#  done
+#  echo $min_var_required_resultx
+#)
+#
+#if [ $? == 0  ]; then
+# min_var_required_result2="ok"
+# echo "min_var_required-check1 ${min_var_required_result1}" >> ${OUT_log}
+# echo "min_var_required-check2 ok" >> ${OUT_log}
+#else
+# min_var_required_result2="fail"
+# echo "min_var_required-check1 ${min_var_required_result1}" >> ${OUT_log}
+# echo "min_var_required-check2 fail" >> ${OUT_log}
+#fi
+
+
 #at least colA1 must exist
+alleleColNeeded=(
+col_EffectAllele
+)
+
 min_var_required_result3=$(
   min_var_required_resultx="ok"
   for var in ${alleleColNeeded[@]}; do
@@ -312,7 +377,7 @@ fi
 #  :
 #fi
 
-if [ $gzipheadertest_result == "ok" ] && [ $var_in_meta_test_result1 == "ok" ] && [ $var_in_meta_test_result2 == "ok" ] && [ $var_in_header_test_result1 == "ok" ] && [ $var_in_header_test_result2 == "ok" ] && [ $min_var_required_result1 == "ok" ] && [ $min_var_required_result2 == "ok" ] && [ $min_var_required_result3 == "ok" ] && [ $min_var_required_result4 == "ok" ] ; then
+if [ $gzipheadertest_result == "ok" ] && [ $var_in_meta_test_result1 == "ok" ] && [ $var_in_meta_test_result2 == "ok" ] && [ $var_in_header_test_result1 == "ok" ] && [ $var_in_header_test_result2 == "ok" ] && [ $min_var_required_result1 == "ok" ] && [ ${min_var_funx_test1} == "ok" ] && [ ${min_var_funx_test2} == "ok" ] && [ ${min_var_funx_test3} == "ok" ] && [ $min_var_required_result3 == "ok" ] && [ $min_var_required_result4 == "ok" ] ; then
   test_set="ok"
 else
   test_set="fail"
@@ -335,7 +400,9 @@ else
  echo "var_in_header_test-check1 ${var_in_header_test_result1}" >> ${OUT_log}
  echo "var_in_header_test-check2 ${var_in_header_test_result2}" >> ${OUT_log}
  echo "min_var_required-check1 ${min_var_required_result1}" >> ${OUT_log}
- echo "min_var_required-check2 ${min_var_required_result2}" >> ${OUT_log}
+ echo "min_var_funx_test1 ${min_var_funx_test1}" >> ${OUT_log}
+ echo "min_var_funx_test2 ${min_var_funx_test2}" >> ${OUT_log}
+ echo "min_var_funx_test3 ${min_var_funx_test3}" >> ${OUT_log}
  echo "min_var_required-check3 ${min_var_required_result3}" >> ${OUT_log}
  echo "min_var_required-check4 ${min_var_required_result4}" >> ${OUT_log}
 
