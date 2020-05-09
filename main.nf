@@ -319,15 +319,35 @@ if (params.generateMetafile){
       tuple datasetID, file("${datasetID}_one_line_summary_of_metadata.txt") into ch_one_line_metafile
       file("mfile_sent_in") 
       tuple datasetID, file("desc_force_tab_sep_BA.txt") into ch_desc_prep_force_tab_sep_BA
+      tuple datasetID, env(sumstatID) into ch_preassigned_sumstat_id
+      file("tmp_dev") 
   
       script:
       """
+
 
       metaDir="\$(dirname ${mfile})"
       cat ${mfile} > mfile_sent_in
       # Clean meta file from windows return characters
       awk '{ sub("\\r\$", ""); print }' ${mfile} > mfile_unix_safe
-
+      
+      # Check if new sumstatname should be assigned (place secret file in processing dir, only dev option right now)
+      iter=0
+      for f in \${metaDir}/*assigned_id.txt; do
+        if [ "\${iter}" == "0" ] ;then
+          :
+        else
+          echo 1>&2 "cant be more files than one with *assigned_id.txt glob expansion"
+          exit 1
+        fi
+        if [ -f "\${f}" ] ;then
+          sumstatID="\$(cat \${f} )"
+        else
+          sumstatID="missing"
+        fi
+        echo "\${sumstatID}" > tmp_dev
+        iter="\$((iter + 1))"
+      done
 
       # Check if the datasetID folder is already present, if so just increment a number to get the new outname
       #  this is because a metafile can have the same name as another even though the content might be different. 
@@ -458,7 +478,7 @@ if (params.generateMetafile){
       do
           cat \$gbuild >> ${datasetID}.stats
       done
-      GRChmax="\$(cat ${datasetID}.stats | sort -r -k1,1 | head -n1 | awk '{print \$2}')"
+      GRChmax="\$(cat ${datasetID}.stats | sort -nr -k1,1 | head -n1 | awk '{print \$2}')"
       """
   
   }
@@ -1051,7 +1071,7 @@ if (params.generateMetafile){
       tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10a, step10b, step11, step12, step13, step14, step15, step16a, step16b, step17 from ch_collected_workflow_stepwise_stats
 
       output:
-      file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
+      tuple datasetID, file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
 
       script:
       """
@@ -1078,11 +1098,15 @@ if (params.generateMetafile){
       """
   }
 
+  ch_preassigned_sumstat_id
+   .combine(ch_check_avail, by: 0)
+   .set{ ch_assign_sumstat_id }
+
   process assign_sumstat_id {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      val datasetID from ch_check_avail
+      tuple datasetID, sumstatname from ch_assign_sumstat_id
 
       output:
       tuple datasetID, env(libfolder) into ch_assigned_sumstat_id
@@ -1090,10 +1114,16 @@ if (params.generateMetafile){
 
       script:
       """
-      # Scan for available ID and move directory there
-      libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
-      mkdir "${params.libdirsumstats}/\${libfolder}"
-      echo "\${libfolder}" > assigned_sumstat_id 
+      if [ "${sumstatname}" == "missing" ] ; then
+        # Scan for available ID and move directory there
+        libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
+        mkdir "${params.libdirsumstats}/\${libfolder}"
+        echo "\${libfolder}" > assigned_sumstat_id 
+      else
+        mkdir "${params.libdirsumstats}/${sumstatname}"
+        echo "${sumstatname}" > assigned_sumstat_id 
+       libfolder="${sumstatname}"
+      fi
       """
   }
 
@@ -1104,14 +1134,13 @@ if (params.generateMetafile){
    .combine(ch_input_readme, by: 0)
    .combine(ch_input_pdf_stuff, by: 0)
    .combine(ch_one_line_metafile, by: 0)
+   .combine(ch_overview_workflow_steps, by: 0)
    .combine(ch_extra_st_filt_removed, by: 0)
+   .combine(ch_desc_allele_filter_removed, by: 0)
+   .combine(ch_stats_genome_build, by: 0)
    .combine(ch_software_versions)
    .set{ ch_to_write_to_filelibrary7 }
 
- //  .combine(ch_overview_workflow_steps, by: 0)
- //  .combine(ch_extra_st_filt_removed, by: 0)
- //  .combine(ch_desc_allele_filter_removed, by: 0)
- //  .combine(ch_stats_genome_build, by: 0)
 
   process put_in_library {
   
@@ -1119,8 +1148,8 @@ if (params.generateMetafile){
       publishDir "${params.libdirsumstats}/${libfolder}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*'
 
       input:
-      //tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, stfiltremoved, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
-      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, stfiltremoved, softv from ch_to_write_to_filelibrary7
+      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, stfiltremoved, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
+      //tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, stfiltremoved, softv from ch_to_write_to_filelibrary7
       
       output:
       path("sumstat_*")
@@ -1151,11 +1180,14 @@ if (params.generateMetafile){
       cp $inputsfile tmp_raw.gz
       cat ${mfile} > tmp_mfile
       cp $softv tmp_softv
-      cp $onelinemeta tmp_onelinemeta
       if [ "${readme}" != "missing" ] ; then
         cp $readme tmp_readme
       fi
       cp ${stfiltremoved} tmp_stfiltremoved
+
+      # Add ID and Date of creation
+      dateOfCreation="\$(date +%F-%H%M)"
+      awk -vDATE="\${dateOfCreation}" -vID="${libfolder}" -vFS="\t" -vOFS="\t" '{print DATE, ID, \$0}' $onelinemeta > tmp_onelinemeta
 
       # Store data in library by moving
       mv ${sclean} ${libfolder}_cleaned_GRCh37.gz
@@ -1168,13 +1200,14 @@ if (params.generateMetafile){
       mv tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
       mv tmp_softv ${libfolder}_software_versions.csv
       mv tmp_mfile ${libfolder}_raw_meta.txt
+      echo "${libfolder}" > ${libfolder}_assigned_id.txt
 
       # Make a folder with detailed data of the cleaning
       mkdir ${libfolder}_cleaning_details
-     # cp overviewworkflow ${libfolder}_cleaning_details/${libfolder}_stepwise_overview.txt
+      cp $overviewworkflow ${libfolder}_cleaning_details/${libfolder}_stepwise_overview.txt
       mv tmp_stfiltremoved ${libfolder}_cleaning_details/${libfolder}_stat_filter_table_of_removed_types.txt
-     # cp allelefiltremoved ${libfolder}_cleaning_details/${libfolder}_allele_filter_table_of_removed_types.txt
-     # cp gbdetect ${libfolder}_cleaning_details/${libfolder}_genome_build_map_count_table.txt
+      cp $allelefiltremoved ${libfolder}_cleaning_details/${libfolder}_allele_filter_table_of_removed_types.txt
+      cp $gbdetect ${libfolder}_cleaning_details/${libfolder}_genome_build_map_count_table.txt
 
       # Add link to the pdf and supplemental material
       ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf

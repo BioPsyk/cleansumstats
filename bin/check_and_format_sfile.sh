@@ -3,7 +3,6 @@ outfile=$2
 OUT_log=$3
 dat="$(date)"
 
-echo "" >> ${OUT_log} 2>&1
 echo "init $dat" > ${OUT_log} 2>&1
 
 echo "" >> ${OUT_log} 2>&1
