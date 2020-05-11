@@ -421,12 +421,99 @@ if (params.generateMetafile){
       """
   }
   
-  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5}
+  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5; ; ch_mfile_ok6}
   ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
   ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
-  ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_stats_inference }
+  ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_liftover1; ch_liftover2; ch_stats_inference }
+  
+  process does_chrpos_exist {
+  
+      input:
+      tuple datasetID, mfile from ch_mfile_ok6
+      
+      output:
+      tuple datasetID, env(CHRPOSexists) into ch_present_CHRPOS
+  
+      script:
+      """
+      CHRPOSexists=\$(does_CHR_and_POS_exist.sh $mfile)
+      """
+  }
+
+  //Create filter for when CHR and POS exists or not
+  ch_present_CHRPOS_br=ch_present_CHRPOS.branch { key, value -> 
+                 CHRPOSexists: value == "true"
+                 CHRPOSmissing: value == "false"
+                  }
+  
+  //split the channels based on filter
+  ch_present_CHRPOS_br2=ch_present_CHRPOS_br.CHRPOSexists
+  ch_present_CHRPOS_br3=ch_present_CHRPOS_br.CHRPOSmissing
+  
+  //combine each channel with the matching datasetID
+  ch_CHRPOS_exists=ch_liftover1.combine(ch_present_CHRPOS_br2, by: 0)
+  ch_CHRPOS_missing=ch_liftover2.combine(ch_present_CHRPOS_br3, by: 0)
+
+  // LIFTOVER BRANCH 1
+
+  process prep_dbsnp_mapping_by_sorting_rsid_version {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile, sfile, chrposExists from ch_CHRPOS_missing
+  
+      output:
+      tuple datasetID, mfile, file("gb_lift_sorted") into ch_liftover_33
+      tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos_rsid
+      file("gb_*")
+
+      script:
+      """
+  
+      Sx="\$(grep "^col_SNP=" $mfile)"
+      colSNP="\$(echo "\${Sx#*=}")"
+      cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colSNP}" -n"0,RSID" | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1}' > gb_lift
+      LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
+      #
+      #process before and after stats
+      rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
+  
+      """
+  }
+
+  process liftover_GRCh37_and_GRCh38_and_map_to_dbsnp_rsid_version {
+  
+      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile, fsorted from ch_liftover_33
+      
+      output:
+      tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh37_and_GRCh38") into ch_liftover_49
+      tuple datasetID, file("desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA_rsid
+      tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build_rsid
+  
+      script:
+      """
+      LC_ALL=C join -1 1 -2 1 ${fsorted} ${ch_dbsnpRSID} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$3,\$4,\$2,\$1,\$5,\$6}'  > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+      
+      # Process before and after stats
+      rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh37_and_GRCh38 | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh37 and GRCh38 and simultaneously map to dbsnp" > desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA
+
+      # Make an empty stats file as we are not trying to infer genome build
+      echo "No inference of build going from RSID" > ${datasetID}.stats
+      """
+  }
   
   
+  // LIFTOVER BRANCH 2
+
   whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
   
   process genome_build_stats {
@@ -435,7 +522,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, mfile, sfile from ch_check_gb
+      tuple datasetID, mfile, sfile from ch_CHRPOS_exists
       each build from whichbuild
   
       output:
@@ -474,7 +561,7 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, env(GRChmax) into ch_known_genome_build
-      tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build
+      tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build_chrpos
   
       script:
       """
@@ -489,7 +576,7 @@ if (params.generateMetafile){
   
   ch_liftover_2=ch_liftover.join(ch_known_genome_build)
   
-  process prep_dbsnp_mapping_by_sorting_chrpos {
+  process prep_dbsnp_mapping_by_sorting_chrpos_version {
       //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
@@ -498,7 +585,7 @@ if (params.generateMetafile){
   
       output:
       tuple datasetID, mfile, file("gb_lift_sorted"), gbmax into ch_liftover_3
-      tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA
+      tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos
   
       script:
       """
@@ -512,12 +599,12 @@ if (params.generateMetafile){
       #process before and after stats
       rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
       rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting a chr:pos index for present build" > desc_prepare_format_for_dbsnp_mapping_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
       """
   
   }
   
-  process liftover_GRCh37_and_GRCh38_and_map_to_dbsnp {
+  process liftover_GRCh37_and_GRCh38_and_map_to_dbsnp_chrpos_version {
   
       //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
@@ -527,7 +614,7 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh37_and_GRCh38") into ch_liftover_44
-      tuple datasetID, file("desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA
+      tuple datasetID, file("desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA_chrpos
   
       script:
       """
@@ -540,13 +627,32 @@ if (params.generateMetafile){
       """
   }
 
+  //mix the chrpos and rsid channels
+  ch_liftover_49
+    .mix(ch_liftover_44)
+    .set{ ch_liftover_mix_X }
+
+  ch_stats_genome_build_rsid
+    .mix(ch_stats_genome_build_chrpos)
+    .set{ ch_stats_genome_build }
+
+  ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA_rsid
+    .mix(ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA_chrpos)
+    .set{ ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA }
+
+  ch_desc_prep_for_dbsnp_mapping_BA_chrpos_rsid
+    .mix(ch_desc_prep_for_dbsnp_mapping_BA_chrpos)
+    .set{ ch_desc_prep_for_dbsnp_mapping_BA }
+
+  
+
   process remove_duplicated_chr_position_allele_rows {
   
       //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, mfile, liftedandmapped from ch_liftover_44
+      tuple datasetID, mfile, liftedandmapped from ch_liftover_mix_X
       
       output:
       tuple datasetID, mfile, file("gb_unique_rows5") into ch_liftover_4
