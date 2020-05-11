@@ -170,9 +170,33 @@ function existInHeader(){
   fi
 }
 
-
 echo "" >> ${OUT_log} 2>&1
 echo "init $dat" > ${OUT_log} 2>&1
+
+echo "" >> ${OUT_log} 2>&1
+echo "" >> ${OUT_log} 2>&1
+echo "##############################" >> ${OUT_log} 2>&1
+echo "check for all required params in metafile" >> ${OUT_log} 2>&1
+echo "##############################" >> ${OUT_log} 2>&1
+
+#check that there is no tab in file
+if grep -Pq '\t' ${mefl}
+then
+  tab_in_meta_test_result1="fail"
+else
+  tab_in_meta_test_result1="ok"
+fi
+
+if [ $? == 0  ]; then
+ tab_in_meta_test_result2="ok"
+ echo "tab_in_meta_test-check1 ${tab_in_meta_test_result1}" >> ${OUT_log}
+ echo "tab_in_meta_test-check2 ok" >> ${OUT_log}
+else
+ tab_in_meta_test_result2="fail"
+ echo "tab_in_meta_test-check1 ${tab_in_meta_test_result1}" >> ${OUT_log}
+ echo "tab_in_meta_test-check2 fail" >> ${OUT_log}
+fi
+
 
 echo "" >> ${OUT_log} 2>&1
 echo "" >> ${OUT_log} 2>&1
@@ -444,7 +468,7 @@ fi
 #  :
 #fi
 
-if [ $gzipheadertest_result == "ok" ] && [ $var_in_meta_test_result1 == "ok" ] && [ $var_in_meta_test_result2 == "ok" ] && [ $var_in_header_test_result1 == "ok" ] && [ $var_in_header_test_result2 == "ok" ] && [ $min_var_required_result1 == "ok" ] && [ ${min_var_funx_test1} == "ok" ] && [ ${min_var_funx_test2} == "ok" ] && [ ${min_var_funx_test3} == "ok" ] && [ $min_var_required_result3 == "ok" ] && [ $min_var_required_result4 == "ok" ] && [ "${var_in_meta_test_mutliline_result1}" == "ok" ] && [ "${var_in_meta_test_mutliline_result2}" == "ok" ]
+if [ $gzipheadertest_result == "ok" ] && [ $var_in_meta_test_result1 == "ok" ] && [ $var_in_meta_test_result2 == "ok" ] && [ $var_in_header_test_result1 == "ok" ] && [ $var_in_header_test_result2 == "ok" ] && [ $min_var_required_result1 == "ok" ] && [ ${min_var_funx_test1} == "ok" ] && [ ${min_var_funx_test2} == "ok" ] && [ ${min_var_funx_test3} == "ok" ] && [ $min_var_required_result3 == "ok" ] && [ $min_var_required_result4 == "ok" ] && [ "${var_in_meta_test_mutliline_result1}" == "ok" ] && [ "${var_in_meta_test_mutliline_result2}" == "ok" ] && [ "${tab_in_meta_test_result1}" == "ok" ] && [ "${tab_in_meta_test_result2}" == "ok" ]
 then
   test_set="ok"
 else
@@ -475,6 +499,8 @@ else
  echo "min_var_required-check4 ${min_var_required_result4}" >> ${OUT_log}
  echo "multiline-check1 ${var_in_meta_test_mutliline_result1}" >> ${OUT_log}
  echo "multiline-check2 ${var_in_meta_test_mutliline_result2}" >> ${OUT_log}
+ echo "tab-check1 ${tab_in_meta_test_result1}" >> ${OUT_log}
+ echo "tab-check2 ${tab_in_meta_test_result2}" >> ${OUT_log}
 fi
 
 if [ $test_set == "ok" ]
