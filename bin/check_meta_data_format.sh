@@ -20,7 +20,43 @@ dat="$(date)"
 noError=true
 
 # Does all important tags exist in the metadatafile
-colNeeded1=(
+colNeededInMeta=(
+version
+run_user
+run_date
+path_sumStats
+path_readMe
+path_pdf
+path_pdfSupp
+study_PMID
+study_Year
+study_PhenoDesc
+study_PhenoCode
+study_PhenoMod
+study_FilePortal
+study_FileURL
+study_AccessDate
+study_Use
+study_Controller
+study_Contact
+study_Restrictions
+study_inHouseData
+study_Ancestry
+study_Gender
+study_PhasePanel
+study_PhaseSoftware
+study_ImputePanel
+study_ImputeSoftware
+study_Array
+study_Notes
+stats_TraitType
+stats_Model
+stats_TotalN
+stats_CaseN
+stats_ControlN
+stats_GCMethod
+stats_GCValue
+stats_Notes
 col_CHR
 col_POS
 col_SNP
@@ -39,9 +75,16 @@ col_ControlN
 col_AFREQ
 col_INFO
 col_Direction
+col_Notes
+
 )
-#A set without the types
-colNeeded2=(
+
+colNeededInMetaCanHaveMultipleLines=(
+path_pdfSupp
+)
+
+# A set without the types
+colNeededInHeader=(
 col_CHR
 col_POS
 col_SNP
@@ -90,6 +133,16 @@ function variableMissing(){
       echo true
   fi
 }
+
+function variableMultiLine(){
+  if $(grep -P "${1}" ${2} | wc -l | awk '{if($1>1){print "true"}else{print "false"}}' )
+  then
+      echo true
+  else
+      echo false
+  fi
+}
+
 
 function selRightHand(){
   echo "${1#*=}"
@@ -160,7 +213,7 @@ echo "##############################" >> ${OUT_log} 2>&1
 #check that all required paramter names are present in metadata file
 var_in_meta_test_result1=$(
   var_in_meta_test_resultx="ok"
-  for var in ${colNeeded1[@]}; do
+  for var in ${colNeededInMeta[@]}; do
     if [ $(variableMissing "^${var}=" ${mefl}) == "true" ]
     then
       #echo >&2 "variable missing: ${var}="; 
@@ -181,12 +234,52 @@ else
  echo "var_in_meta_test-check2 fail" >> ${OUT_log}
 fi
 
+#check that all required paramter names are present in metadata file
+
+var_in_meta_test_mutliline_result1=$(
+  var_in_meta_test_mutliline_resultx="ok"
+  for var in ${colNeededInMeta[@]}; do
+    if [ $(variableMultiLine "^${var}=" ${mefl}) == "true" ]
+    then
+      exception=false
+      for exceptionVar in ${colNeededInMetaCanHaveMultipleLines[@]}; do
+        if [ "${exceptionVar}" ==  "${var}" ]
+        then
+          exception=true
+        else
+          :
+        fi
+      done 
+
+      if ${exception}
+      then
+        :
+      else
+        #echo >&2 "variable is not allowed to have multiple lines: ${var}="; 
+        var_in_meta_test_mutliline_resultx="fail"
+      fi
+    else
+      :
+    fi
+  done
+  echo $var_in_meta_test_mutliline_resultx
+)
+if [ $? == 0  ]; then
+ var_in_meta_test_mutliline_result2="ok"
+ echo "var_in_meta_test_multiline-check1 ${var_in_meta_test_mutliline_result1}" >> ${OUT_log}
+ echo "var_in_meta_test_multiline-check2 ok" >> ${OUT_log}
+else
+ var_in_meta_test_mutliline_result2="fail"
+ echo "var_in_meta_test_multiline-check1 ${var_in_meta_test_mutliline_result1}" >> ${OUT_log}
+ echo "var_in_meta_test_multiline-check2 fail" >> ${OUT_log}
+fi
+
 
 #Do all col<var> names - not marked missing - exist in the header of the complementary sumstat file
 #header=($(zcat sorted_row_index_sumstat_1.txt.gz | head -n1 | head -c -2))
 var_in_header_test_result1=$(
   var_in_header_test_resultx="ok"
-  for var in ${colNeeded2[@]}; do
+  for var in ${colNeededInHeader[@]}; do
     right="$(selRightHand "$(selColRow "^${var}=" ${mefl})")"
     if [ ${right} == "missing" ]
     then
@@ -211,7 +304,7 @@ var_in_header_test_result1=$(
       fi
     fi
   done
-  echo $var_in_header_test_resultx
+  echo ${var_in_header_test_resultx}
 )
 
 if [ $? == 0  ]; then
@@ -294,32 +387,6 @@ echo "min_var_required-check2 ${min_var_funx_test1}" >> ${OUT_log}
 echo "min_var_required-check3 ${min_var_funx_test2}" >> ${OUT_log}
 echo "min_var_required-check4 ${min_var_funx_test3}" >> ${OUT_log}
 
-#min_var_required_result1=$(
-#  min_var_required_resultx="ok"
-#  for var in ${locColNeeded[@]}; do
-#    right="$(selRightHand "$(selColRow "^${var}=" ${mefl})")"
-#    if [ ${right} == "missing" ]
-#    then
-#        #echo >&2 "colType cannot be set to missing: ${var}=${right}"; 
-#        min_var_required_resultx="fail"
-#    else
-#      :
-#    fi
-#  done
-#  echo $min_var_required_resultx
-#)
-#
-#if [ $? == 0  ]; then
-# min_var_required_result2="ok"
-# echo "min_var_required-check1 ${min_var_required_result1}" >> ${OUT_log}
-# echo "min_var_required-check2 ok" >> ${OUT_log}
-#else
-# min_var_required_result2="fail"
-# echo "min_var_required-check1 ${min_var_required_result1}" >> ${OUT_log}
-# echo "min_var_required-check2 fail" >> ${OUT_log}
-#fi
-
-
 #at least colA1 must exist
 alleleColNeeded=(
 col_EffectAllele
@@ -377,7 +444,8 @@ fi
 #  :
 #fi
 
-if [ $gzipheadertest_result == "ok" ] && [ $var_in_meta_test_result1 == "ok" ] && [ $var_in_meta_test_result2 == "ok" ] && [ $var_in_header_test_result1 == "ok" ] && [ $var_in_header_test_result2 == "ok" ] && [ $min_var_required_result1 == "ok" ] && [ ${min_var_funx_test1} == "ok" ] && [ ${min_var_funx_test2} == "ok" ] && [ ${min_var_funx_test3} == "ok" ] && [ $min_var_required_result3 == "ok" ] && [ $min_var_required_result4 == "ok" ] ; then
+if [ $gzipheadertest_result == "ok" ] && [ $var_in_meta_test_result1 == "ok" ] && [ $var_in_meta_test_result2 == "ok" ] && [ $var_in_header_test_result1 == "ok" ] && [ $var_in_header_test_result2 == "ok" ] && [ $min_var_required_result1 == "ok" ] && [ ${min_var_funx_test1} == "ok" ] && [ ${min_var_funx_test2} == "ok" ] && [ ${min_var_funx_test3} == "ok" ] && [ $min_var_required_result3 == "ok" ] && [ $min_var_required_result4 == "ok" ] && [ "${var_in_meta_test_mutliline_result1}" == "ok" ] && [ "${var_in_meta_test_mutliline_result2}" == "ok" ]
+then
   test_set="ok"
 else
   test_set="fail"
@@ -405,7 +473,8 @@ else
  echo "min_var_funx_test3 ${min_var_funx_test3}" >> ${OUT_log}
  echo "min_var_required-check3 ${min_var_required_result3}" >> ${OUT_log}
  echo "min_var_required-check4 ${min_var_required_result4}" >> ${OUT_log}
-
+ echo "multiline-check1 ${var_in_meta_test_mutliline_result1}" >> ${OUT_log}
+ echo "multiline-check2 ${var_in_meta_test_mutliline_result2}" >> ${OUT_log}
 fi
 
 if [ $test_set == "ok" ]
