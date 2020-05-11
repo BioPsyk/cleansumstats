@@ -499,7 +499,7 @@ if (params.generateMetafile){
   
       script:
       """
-      LC_ALL=C join -1 1 -2 1 ${fsorted} ${ch_dbsnpRSID} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$3,\$4,\$2,\$1,\$5,\$6}'  > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+      LC_ALL=C join -1 1 -2 1 ${fsorted} ${ch_dbsnpRSID} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$1,\$5,\$6}'  > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
       
       # Process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1}')"
