@@ -1254,7 +1254,7 @@ if (params.generateMetafile){
       output:
       path("sumstat_*")
       path("pmid_*") 
-      tuple datasetID, libfolder, mfile, onelinemeta into ch_update_library_info_file
+      tuple datasetID, libfolder, mfile, file("tmp_onelinemeta") into ch_update_library_info_file
   
       script:
       """
@@ -1290,8 +1290,9 @@ if (params.generateMetafile){
       create_output_meta_data_file.sh raw_mfile changes_mfile > new_mfile
 
       # Add ID and Date of creation
-      dateOfCreation="\$(date +%F-%H%M)"
-      awk -vDATE="\${dateOfCreation}" -vID="${libfolder}" -vFS="\t" -vOFS="\t" '{print DATE, ID, \$0}' $onelinemeta > tmp_onelinemeta
+      #dateOfCreation="\$(date +%F-%H%M)"
+      #awk -vDATE="\${dateOfCreation}" -vID="${libfolder}" -vFS="\t" -vOFS="\t" '{print DATE, ID, \$0}' $onelinemeta > tmp_onelinemeta
+      create_output_one_line_meta_data_file.sh new_mfile tmp_onelinemeta
 
       # Store data in library by moving
       mv ${sclean} ${libfolder}_cleaned_GRCh37.gz
@@ -1301,7 +1302,7 @@ if (params.generateMetafile){
       if [ "${readme}" != "missing" ] ; then
         mv tmp_readme ${libfolder}_raw_README.txt
       fi
-      mv tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
+      cp tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
       mv tmp_softv ${libfolder}_software_versions.csv
       mv raw_mfile ${libfolder}_raw_meta.txt
       mv new_mfile ${libfolder}_new_meta.txt
@@ -1334,16 +1335,15 @@ if (params.generateMetafile){
 
       script:
       """
+      tail -n+2 ${onelinemeta} > oneline
+
       # Make header if the file does not exist
       if [ -f ${params.libdir}/00_inventory.txt ] ; then 
-        cat ${params.libdir}/00_inventory.txt ${onelinemeta} > 00_inventory.txt
+        cat ${params.libdir}/00_inventory.txt oneline > 00_inventory.txt
       else
-        cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
-          printf "\t%s" "\${varx}" >> one_line_summary_header
-        done
-        printf "\n" >> one_line_summary_header
-        cat one_line_summary_header | sed -e 's/^[\t]//' > 00_inventory_new.txt
-        cat 00_inventory_new.txt ${onelinemeta} > 00_inventory.txt
+      head -n1 ${onelinemeta} > onelineheader
+        cat onelineheader > 00_inventory_new.txt
+        cat 00_inventory_new.txt oneline > 00_inventory.txt
       fi
       
       """
