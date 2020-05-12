@@ -505,7 +505,7 @@ fi
 
 if [ $test_set == "ok" ]
 then
-  echo >&2 "all seems ok with the meta data format"
+  #echo >&2 "all seems ok with the meta data format"
   exit 0
 else
   echo >&2 "one or more problems detected with the meta data format"

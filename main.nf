@@ -324,7 +324,6 @@ if (params.generateMetafile){
       file("mfile_sent_in") 
       tuple datasetID, file("desc_force_tab_sep_BA.txt") into ch_desc_prep_force_tab_sep_BA
       tuple datasetID, env(sumstatID) into ch_preassigned_sumstat_id
-      file("tmp_dev") 
   
       script:
       """
@@ -335,24 +334,6 @@ if (params.generateMetafile){
       # Clean meta file from windows return characters
       awk '{ sub("\\r\$", ""); print }' ${mfile} > mfile_unix_safe
       
-      # Check if new sumstatname should be assigned (place secret file in processing dir, only dev option right now)
-      iter=0
-      for f in \${metaDir}/*assigned_id.txt; do
-        if [ "\${iter}" == "0" ] ;then
-          :
-        else
-          echo 1>&2 "cant be more files than one with *assigned_id.txt glob expansion"
-          exit 1
-        fi
-        if [ -f "\${f}" ] ;then
-          sumstatID="\$(cat \${f} )"
-        else
-          sumstatID="missing"
-        fi
-        echo "\${sumstatID}" > tmp_dev
-        iter="\$((iter + 1))"
-      done
-
       # Check if the datasetID folder is already present, if so just increment a number to get the new outname
       #  this is because a metafile can have the same name as another even though the content might be different. 
 
@@ -371,6 +352,15 @@ if (params.generateMetafile){
       # Make complete metafile check
       echo "\$(head -n 1 < <(zcat \$spath))" > ${datasetID}_header
       check_meta_data_format.sh mfile_unix_safe ${datasetID}_header ${datasetID}_mfile_format.log
+
+      #Check if new sumstatname should be assigned
+      if grep -Pq "^sumstat_ID=" mfile_unix_safe
+      then
+        SIDx="\$(grep "^sumstat_ID=" mfile_unix_safe)"
+        sumstatID="\$(echo "\${SIDx#*=}")"
+      else
+        sumstatID="missing"
+      fi
       
       # Make a one line metafile to use for the inventory file and test if dataset is already in library
       cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
@@ -1288,12 +1278,16 @@ if (params.generateMetafile){
       
       # copy input file to be able to move it fast once the directory has been created
       cp $inputsfile tmp_raw.gz
-      cat ${mfile} > tmp_mfile
+      cat ${mfile} > raw_mfile
       cp $softv tmp_softv
       if [ "${readme}" != "missing" ] ; then
         cp $readme tmp_readme
       fi
       cp ${stfiltremoved} tmp_stfiltremoved
+
+      # Restructure output to allow replace or extending some variables
+      echo "sumstat_ID=${libfolder}" > changes_mfile
+      create_output_meta_data_file.sh raw_mfile changes_mfile > new_mfile
 
       # Add ID and Date of creation
       dateOfCreation="\$(date +%F-%H%M)"
@@ -1309,8 +1303,9 @@ if (params.generateMetafile){
       fi
       mv tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
       mv tmp_softv ${libfolder}_software_versions.csv
-      mv tmp_mfile ${libfolder}_raw_meta.txt
-      echo "${libfolder}" > ${libfolder}_assigned_id.txt
+      mv raw_mfile ${libfolder}_raw_meta.txt
+      mv new_mfile ${libfolder}_new_meta.txt
+      #echo "${libfolder}" > ${libfolder}_assigned_id.txt
 
       # Make a folder with detailed data of the cleaning
       mkdir ${libfolder}_cleaning_details
