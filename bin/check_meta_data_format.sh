@@ -21,9 +21,9 @@ noError=true
 
 # Does all important tags exist in the metadatafile
 colNeededInMeta=(
-version
-run_user
-run_date
+cleansumstats_version
+cleansumstats_metafile_user
+cleansumstats_metafile_date
 path_sumStats
 path_readMe
 path_pdf

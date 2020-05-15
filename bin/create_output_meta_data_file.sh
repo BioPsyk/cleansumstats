@@ -1,15 +1,55 @@
 oldMefl=$1
 toReplaceOrExtend=$2
 
+# Stamp the new meta file with date and sumstat user
+dateOfCreation="$(date +%F-%H%M)"
+printf "%s\n" "cleansumstats_date=${dateOfCreation}"
+printf "%s\n" "cleansumstats_user=${USER}"
+
 # Keep all mandatory fields
-colNeededInMetaOutfile=(
-version
-run_user
-run_date
+colNeededInMetaOutfile1=(
+cleansumstats_ID
+cleansumstats_version
+cleansumstats_metafile_user
+cleansumstats_metafile_date
 path_sumStats
 path_readMe
 path_pdf
-path_pdfSupp
+)
+
+# Add user input if not present in "to replace or extend"
+for var in ${colNeededInMetaOutfile1[@]}; do
+   if grep -Pq "^${var}=" ${toReplaceOrExtend}
+   then
+     grep -P "^${var}=" ${toReplaceOrExtend}
+   else
+     grep -P "^${var}=" ${oldMefl}
+   fi
+done
+
+#for pdfSupp we only replace as it can have multiple lines
+grep -P "^path_pdfSupp=" ${toReplaceOrExtend} 
+
+colNeededInMetaOutfile2=(
+path_original_sumStats
+path_original_readMe
+path_original_pdf
+)
+
+# Add user input if not present in "to replace or extend"
+for var in ${colNeededInMetaOutfile2[@]}; do
+   if grep -Pq "^${var}=" ${toReplaceOrExtend}
+   then
+     grep -P "^${var}=" ${toReplaceOrExtend}
+   else
+     grep -P "^${var}=" ${oldMefl}
+   fi
+done
+
+#for original_pdfSupp we only replace as it can have multiple lines
+grep -P "^path_original_pdfSupp=" ${toReplaceOrExtend} 
+
+colNeededInMetaOutfile3=(
 study_PMID
 study_Year
 study_PhenoDesc
@@ -58,10 +98,10 @@ col_AFREQ
 col_INFO
 col_Direction
 col_Notes
-sumstat_ID
 )
+
 # Add user input if not present in "to replace or extend"
-for var in ${colNeededInMetaOutfile[@]}; do
+for var in ${colNeededInMetaOutfile3[@]}; do
    if grep -Pq "^${var}=" ${toReplaceOrExtend}
    then
      grep -P "^${var}=" ${toReplaceOrExtend}
@@ -69,6 +109,5 @@ for var in ${colNeededInMetaOutfile[@]}; do
      grep -P "^${var}=" ${oldMefl}
    fi
 done
-
 
 

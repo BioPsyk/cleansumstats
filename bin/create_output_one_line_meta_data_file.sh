@@ -3,10 +3,10 @@ outFile=$2
 
 # Keep all mandatory fields
 colForOneLineMetaFile=(
-version
-sumstat_ID
-run_user
-run_date
+cleansumstats_version
+cleansumstats_ID
+cleansumstats_metafile_user
+cleansumstats_metafile_date
 path_sumStats
 path_readMe
 path_pdf
@@ -59,27 +59,29 @@ col_AFREQ
 col_INFO
 col_Direction
 col_Notes
+cleansumstats_date
 )
 
 #
 # Make header
 #
-printf "%s\t" "cleansumstats_date" > ${outFile}
-
-# Add all variables in same order as above
-for var in ${colForOneLineMetaFile[@]}; do
-   printf "%s\t" "${var}" >> ${outFile}
-done
-
-printf "%s\n" "cleansumstats_user" >> ${outFile}
-
+#printf "%s\t" "cleansumstats_date" > ${outFile}
+#
+## Add all variables in same order as above
+#for var in ${colForOneLineMetaFile[@]}; do
+#   printf "%s\t" "${var}" >> ${outFile}
+#done
+#
+#printf "%s\n" "cleansumstats_user" >> ${outFile}
+#printf "%s\n" "${USER}" >> ${outFile}
+#
 #
 # Make content
 #
 
 # Add DATE as first column
-dateOfCreation="$(date +%F-%H%M)"
-printf "%s\t" "${dateOfCreation}" >> ${outFile}
+#dateOfCreation="$(date +%F-%H%M)"
+#printf "%s\t" "${dateOfCreation}" >> ${outFile}
 
 # Add all variables in same order as above
 for var in ${colForOneLineMetaFile[@]}; do
@@ -88,5 +90,8 @@ for var in ${colForOneLineMetaFile[@]}; do
    printf "%s\t" "${P}" >> ${outFile}
 done
 
-printf "%s\n" "${USER}" >> ${outFile}
+# Let the last element end with newline
+Px="$(grep "^cleansumstats_user=" $newMefl)"
+P="$(echo "${Px#*=}")"
+printf "%s\n" "${P}" >> ${outFile}
 

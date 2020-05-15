@@ -354,9 +354,9 @@ if (params.generateMetafile){
       check_meta_data_format.sh mfile_unix_safe ${datasetID}_header ${datasetID}_mfile_format.log
 
       #Check if new sumstatname should be assigned
-      if grep -Pq "^sumstat_ID=" mfile_unix_safe
+      if grep -Pq "^cleansumstats_ID=" mfile_unix_safe
       then
-        SIDx="\$(grep "^sumstat_ID=" mfile_unix_safe)"
+        SIDx="\$(grep "^cleansumstats=" mfile_unix_safe)"
         sumstatID="\$(echo "\${SIDx#*=}")"
       else
         sumstatID="missing"
@@ -999,7 +999,7 @@ if (params.generateMetafile){
           P="\$(echo "\${Px#*=}")"
   
           echo -e "QNORM" > prepared_qnorm_vals
-          cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_v1.0a/cleansumstats_images/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm >> prepared_qnorm_vals
+          cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_v1.0.0-alpha/cleansumstats_images/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm >> prepared_qnorm_vals
           cut -f 1 $st_filtered | paste - prepared_qnorm_vals > prepared_qnorm_vals2
           LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" $st_filtered prepared_qnorm_vals2 > st_filtered2
   
@@ -1227,12 +1227,55 @@ if (params.generateMetafile){
       """
   }
 
+  process update_pdf_library {
+      publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
+
+      input:
+      tuple datasetID, pmid, pdfpath, pdfsuppdir from ch_input_pdf_stuff
+
+      output:
+      tuple datasetID, pmid, pdfpath, pdfsuppdir into ch_input_pdf_stuff2
+      path("pmid_*") 
+
+      script:
+      """
+      if [ -f "${params.libdirpdfs}/pmid_${pmid}.pdf" ]
+      then
+        :
+      else
+        cp ${pdfpath} pmid_${pmid}.pdf
+      fi
+      
+      #check supplementary materail folder
+      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ]
+      then
+        :
+      else
+        mkdir pmid_${pmid}_supp
+        i=1
+        cat ${pdfsuppdir} | while read -r supp; do 
+          if [ "\${supp}" != "missing" ]
+          then
+            supp2="\$(basename "\${supp}")" 
+            extension="\${supp2##*.}" 
+            cp -r \$supp pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension} 
+            i=\$((i+1))
+          else
+            :
+          fi
+        done
+      fi
+
+      """
+  }
+
+
 
   ch_assigned_sumstat_id
    .combine(ch_to_write_to_filelibrary3, by: 0)
    .combine(ch_mfile_ok3, by: 0)
    .combine(ch_input_readme, by: 0)
-   .combine(ch_input_pdf_stuff, by: 0)
+   .combine(ch_input_pdf_stuff2, by: 0)
    .combine(ch_one_line_metafile, by: 0)
    .combine(ch_overview_workflow_steps, by: 0)
    .combine(ch_extra_st_filt_removed, by: 0)
@@ -1244,8 +1287,9 @@ if (params.generateMetafile){
 
   process put_in_library {
   
-      publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
+      //publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
       publishDir "${params.libdirsumstats}/${libfolder}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*'
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true, pattern: 'libprep_*'
 
       input:
       tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, stfiltremoved, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
@@ -1253,72 +1297,104 @@ if (params.generateMetafile){
       
       output:
       path("sumstat_*")
-      path("pmid_*") 
+      path("libprep_*") 
       tuple datasetID, libfolder, mfile, file("tmp_onelinemeta") into ch_update_library_info_file
   
       script:
       """
       
-      # copy the pdf and supplemental material if missing in pdf library
-      cp ${pdfpath} pmid_${pmid}.pdf
+      # Restructure output to allow replace or extending some variables, save changes in changes_mfile
+      echo "cleansumstats=${libfolder}" > libprep_changes_mfile
 
-      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ] ;then
-        :
+      # To make batch updates easier, change the path to raw files to the new name convention, but save old paths for traceability
+      echo "path_sumStats=${libfolder}_raw.gz" >> libprep_changes_mfile
+      Sx="\$(grep "^path_sumStats=" $mfile)"
+      S="\$(echo "\${Sx#*=}")"
+      echo "path_original_sumStats=\${S}" >> libprep_changes_mfile
+
+      if [ "${readme}" != "missing" ] ; then
+        Rx="\$(grep "^path_readMe=" $mfile)"
+        R="\$(echo "\${Rx#*=}")"
+        echo "path_readMe=${libfolder}_raw_README.txt" >> libprep_changes_mfile
+        echo "path_original_readMe=\${R}" >> libprep_changes_mfile
+      else
+        echo "path_readMe=missing" >> libprep_changes_mfile
+        echo "path_original_readMe=missing" >> libprep_changes_mfile
+      fi
+
+      Px="\$(grep "^path_pdf=" $mfile)"
+      P="\$(echo "\${Px#*=}")"
+      echo "path_pdf=${libfolder}_pmid_${pmid}.pdf" >> libprep_changes_mfile
+      echo "path_original_pdf=\${P}" >> libprep_changes_mfile
+
+      
+      # copy the pdf and supplemental material if missing in pdf library
+      # and prepare changes for the new mfile
+      #cp ${pdfpath} pmid_${pmid}.pdf
+      ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
+
+      mkdir -p ${libfolder}_pmid_${pmid}_supp
+
+      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ]
+      then
+        for fil in ${params.libdirpdfs}/pmid_${pmid}_supp/*
+        do 
+          supp="\$(basename "\${fil}")" 
+          echo "path_pdfSupp=${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}" >> libprep_changes_mfile 
+          ln -s \${fil} ${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}
+          #Will be set to same if the one already in library is used (only keep basename)
+          echo "path_original_pdfSupp=\${supp}" >> libprep_changes_mfile 
+        done
       else 
         mkdir pmid_${pmid}_supp
         i=1
         cat ${pdfsuppdir} | while read -r supp; do 
-          if [ "\${supp}" != "missing" ] ; then
-            extension="\${supp##*.}"; cp -r \$supp pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension}; i=\$((i+1))
+          if [ "\${supp}" != "missing" ]
+          then
+            supp2="\$(basename "\${supp}")" 
+            extension="\${supp2##*.}" 
+            echo "path_pdfSupp=${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}" >> libprep_changes_mfile 
+            ln -s ${params.libdirpdfs}/pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension} ${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}
+            echo "path_original_pdfSupp=\$supp2" >> libprep_changes_mfile 
+            i=\$((i+1))
           else
-            :
+            # Keep missing for path_pdfSupp and set missing to path_pdfSupp_original
+            echo "path_pdfSupp=missing" >> libprep_changes_mfile
+            echo "path_original_pdfSupp=missing" >> libprep_changes_mfile
           fi
         done
       fi
       
-      # copy input file to be able to move it fast once the directory has been created
-      cp $inputsfile tmp_raw.gz
-      cat ${mfile} > raw_mfile
-      cp $softv tmp_softv
-      if [ "${readme}" != "missing" ] ; then
-        cp $readme tmp_readme
-      fi
-      cp ${stfiltremoved} tmp_stfiltremoved
 
-      # Restructure output to allow replace or extending some variables
-      echo "sumstat_ID=${libfolder}" > changes_mfile
-      create_output_meta_data_file.sh raw_mfile changes_mfile > new_mfile
-
-      # Add ID and Date of creation
-      #dateOfCreation="\$(date +%F-%H%M)"
-      #awk -vDATE="\${dateOfCreation}" -vID="${libfolder}" -vFS="\t" -vOFS="\t" '{print DATE, ID, \$0}' $onelinemeta > tmp_onelinemeta
-      create_output_one_line_meta_data_file.sh new_mfile tmp_onelinemeta
+      # Apply changes when making the new_mfile
+      cat ${mfile} > libprep_raw_mfile
+      create_output_meta_data_file.sh libprep_raw_mfile libprep_changes_mfile > libprep_new_mfile
+      
+      # make one_line_meta data for info file
+      create_output_one_line_meta_data_file.sh libprep_new_mfile tmp_onelinemeta
 
       # Store data in library by moving
-      mv ${sclean} ${libfolder}_cleaned_GRCh37.gz
-      mv ${scleanGRCh38} ${libfolder}_cleaned_GRCh38.gz
-      mv ${inputformatted} ${libfolder}_raw_formatted_rowindexed.gz
-      mv tmp_raw.gz ${libfolder}_raw.gz
+      cp ${sclean} ${libfolder}_cleaned_GRCh37.gz
+      cp ${scleanGRCh38} ${libfolder}_cleaned_GRCh38.gz
+      cp ${inputformatted} ${libfolder}_raw_formatted_rowindexed.gz
+      cp $inputsfile ${libfolder}_raw.gz
       if [ "${readme}" != "missing" ] ; then
-        mv tmp_readme ${libfolder}_raw_README.txt
+        cp $readme ${libfolder}_raw_README.txt
       fi
       cp tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
-      mv tmp_softv ${libfolder}_software_versions.csv
-      mv raw_mfile ${libfolder}_raw_meta.txt
-      mv new_mfile ${libfolder}_new_meta.txt
-      #echo "${libfolder}" > ${libfolder}_assigned_id.txt
+      cp $softv ${libfolder}_software_versions.csv
+      cp libprep_raw_mfile ${libfolder}_raw_meta.txt
+      cp libprep_new_mfile ${libfolder}_new_meta.txt
 
       # Make a folder with detailed data of the cleaning
       mkdir ${libfolder}_cleaning_details
       cp $overviewworkflow ${libfolder}_cleaning_details/${libfolder}_stepwise_overview.txt
-      mv tmp_stfiltremoved ${libfolder}_cleaning_details/${libfolder}_stat_filter_table_of_removed_types.txt
+      cp ${stfiltremoved} ${libfolder}_cleaning_details/${libfolder}_stat_filter_table_of_removed_types.txt
       cp $allelefiltremoved ${libfolder}_cleaning_details/${libfolder}_allele_filter_table_of_removed_types.txt
       cp $gbdetect ${libfolder}_cleaning_details/${libfolder}_genome_build_map_count_table.txt
-
+      
       # Add link to the pdf and supplemental material
-      ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
-      mkdir -p ${libfolder}_pmid_${pmid}_supp
-      ln -s ${params.libdirpdfs}/pmid_${pmid}_supp/* ${libfolder}_pmid_${pmid}_supp/.
+      #ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
       
       """
   }
