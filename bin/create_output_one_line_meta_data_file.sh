@@ -62,26 +62,6 @@ col_Notes
 cleansumstats_date
 )
 
-#
-# Make header
-#
-#printf "%s\t" "cleansumstats_date" > ${outFile}
-#
-## Add all variables in same order as above
-#for var in ${colForOneLineMetaFile[@]}; do
-#   printf "%s\t" "${var}" >> ${outFile}
-#done
-#
-#printf "%s\n" "cleansumstats_user" >> ${outFile}
-#printf "%s\n" "${USER}" >> ${outFile}
-#
-#
-# Make content
-#
-
-# Add DATE as first column
-#dateOfCreation="$(date +%F-%H%M)"
-#printf "%s\t" "${dateOfCreation}" >> ${outFile}
 
 # Add all variables in same order as above
 for var in ${colForOneLineMetaFile[@]}; do

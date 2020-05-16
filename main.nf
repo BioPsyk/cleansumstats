@@ -356,7 +356,7 @@ if (params.generateMetafile){
       #Check if new sumstatname should be assigned
       if grep -Pq "^cleansumstats_ID=" mfile_unix_safe
       then
-        SIDx="\$(grep "^cleansumstats=" mfile_unix_safe)"
+        SIDx="\$(grep "^cleansumstats_ID=" mfile_unix_safe)"
         sumstatID="\$(echo "\${SIDx#*=}")"
       else
         sumstatID="missing"
@@ -1227,30 +1227,60 @@ if (params.generateMetafile){
       """
   }
 
-  process update_pdf_library {
+  process check_pdf_library {
       publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
-
       input:
       tuple datasetID, pmid, pdfpath, pdfsuppdir from ch_input_pdf_stuff
 
       output:
-      tuple datasetID, pmid, pdfpath, pdfsuppdir into ch_input_pdf_stuff2
-      path("pmid_*") 
+      tuple datasetID, pmid, pdfpath, pdfsuppdir, env(makePDF), env(makePDFsupp) into ch_input_pdf_stuff2
+      path("pmid_*") optional true
 
       script:
       """
       if [ -f "${params.libdirpdfs}/pmid_${pmid}.pdf" ]
       then
-        :
+        makePDF="false"
       else
+        makePDF="true"
+        #will be overwritten in update library step (but here to limit parallell processes to change the same file)
+        touch pmid_${pmid}.pdf
+      fi
+
+      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ]
+      then
+        makePDFsupp="false"
+      else
+        makePDFsupp="true"
+        #will be overwritten in update library step
+        mkdir pmid_${pmid}_supp
+      fi
+
+      """
+  }
+
+  process update_pdf_library {
+      publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: true, pattern: 'pmid_*'
+
+      input:
+      tuple datasetID, pmid, pdfpath, pdfsuppdir, makePDF, makePDFsupp from ch_input_pdf_stuff2
+
+      output:
+      tuple datasetID, pmid, pdfpath, pdfsuppdir into ch_input_pdf_stuff3
+      path("pmid_*") optional true
+
+      script:
+      """
+      if [ "${makePDF}" == "true" ]
+      then
         cp ${pdfpath} pmid_${pmid}.pdf
+      else
+        :
       fi
       
       #check supplementary materail folder
-      if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ]
+      if [ "${makePDFsupp}" == "true" ]
       then
-        :
-      else
         mkdir pmid_${pmid}_supp
         i=1
         cat ${pdfsuppdir} | while read -r supp; do 
@@ -1264,6 +1294,8 @@ if (params.generateMetafile){
             :
           fi
         done
+      else
+        :
       fi
 
       """
@@ -1275,7 +1307,7 @@ if (params.generateMetafile){
    .combine(ch_to_write_to_filelibrary3, by: 0)
    .combine(ch_mfile_ok3, by: 0)
    .combine(ch_input_readme, by: 0)
-   .combine(ch_input_pdf_stuff2, by: 0)
+   .combine(ch_input_pdf_stuff3, by: 0)
    .combine(ch_one_line_metafile, by: 0)
    .combine(ch_overview_workflow_steps, by: 0)
    .combine(ch_extra_st_filt_removed, by: 0)
@@ -1304,7 +1336,7 @@ if (params.generateMetafile){
       """
       
       # Restructure output to allow replace or extending some variables, save changes in changes_mfile
-      echo "cleansumstats=${libfolder}" > libprep_changes_mfile
+      echo "cleansumstats_ID=${libfolder}" > libprep_changes_mfile
 
       # To make batch updates easier, change the path to raw files to the new name convention, but save old paths for traceability
       echo "path_sumStats=${libfolder}_raw.gz" >> libprep_changes_mfile

@@ -1,6 +1,6 @@
 libdir=$1
 # Check which ID is free
-dirs=($(ls ${libdir}))
+dirs=($(ls ${libdir} | grep -P "^sumstat_" ))
 
 newVal=$(for i in "${dirs[@]}"
 do
