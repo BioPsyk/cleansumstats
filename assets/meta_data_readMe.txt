@@ -26,25 +26,24 @@
 #           https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 #
 ########################################################################
-version=1.0a
+cleansumstats_version=1.0.0-alpha
 # Nextflow pipeline version
-# Autofilled by template generator in next release
 
 ########################################################################
 #  Meta data section 0 - File locations / User Infor
 ########################################################################
 
-run_user=
+cleansumstats_metafile_user=
 # Specify your name.  
 # Will be autofilled by template generator in next release.
 # options: <character string>
 # example: run_user=Andrew Schork
 
-run_date=
+cleansumstats_metafile_date=
 # Day you fill out the meta data, fourDigitYear_twoDigitMonth_twoDigitDay
 # Will be autofilled by template generator in next release.
 # options: <todays date>
-# example: run_date=2020_04_27
+# example: run_date=2020-04-27
 
 path_sumStats=
 # Specify the path to the sumstats to be cleaned.  
