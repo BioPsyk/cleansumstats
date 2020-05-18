@@ -512,7 +512,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, mfile, sfile from ch_CHRPOS_exists
+      tuple datasetID, mfile, sfile, chrposexist from ch_CHRPOS_exists
       each build from whichbuild
   
       output:
@@ -1433,25 +1433,36 @@ if (params.generateMetafile){
 
 
   process update_inventory_file {
-      publishDir "${params.libdir}", mode: 'copy', overwrite: true
+      publishDir "${params.libdirinventory}", mode: 'copy', overwrite: false
 
       input:
       tuple datasetID, libfolder, mfile, onelinemeta from ch_update_library_info_file
 
       output:
-      path("00_inventory.txt") into ch_00_inventory_end
+      path("*_inventory.txt")
 
       script:
       """
+      # This is a little risky as two parallel flows in theory could enter this process at the same time
+      # An idea for the future is to use a simple dbmanager
+      # For the moment we can survey that all inventory files are incremented by one for each newer date
+      # I leave this to be manual checked right now, but a quick test can be to check that number of inventory
+      # files corresponds to number of entries(minus header row) in the most recent file
+     
+      # Extract 
       tail -n+2 ${onelinemeta} > oneline
+      dateOfCreation="\$(date +%F-%H%M)"
 
-      # Make header if the file does not exist
-      if [ -f ${params.libdir}/00_inventory.txt ] ; then 
-        cat ${params.libdir}/00_inventory.txt oneline > 00_inventory.txt
+      # Select most recent inventory file (if any exists)
+      count="\$(ls -1 ${params.libdirinventory} | wc -l)"
+      if [ "\${count}" -gt 0 ]
+      then
+        mostrecentfile="\$(ls -1 ${params.libdirinventory}/*_inventory.txt | awk '{old=\$1; sub(".*/","",\$1); gsub("-","",\$1); print \$1, old}' | sort -rn -k1.1,1.12 | awk '{print \$2}' | head -n1 )"
+        cat \${mostrecentfile} oneline > \${dateOfCreation}_inventory.txt
       else
-      head -n1 ${onelinemeta} > onelineheader
-        cat onelineheader > 00_inventory_new.txt
-        cat 00_inventory_new.txt oneline > 00_inventory.txt
+        # Make header if the file does not exist
+        head -n1 ${onelinemeta} > \${dateOfCreation}_inventory.txt
+        cat oneline >> \${dateOfCreation}_inventory.txt 
       fi
       
       """

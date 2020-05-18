@@ -3,21 +3,15 @@ outFile=$2
 
 # Keep all mandatory fields
 colForOneLineMetaFile=(
-cleansumstats_version
+cleansumstats_date
 cleansumstats_ID
-cleansumstats_metafile_user
-cleansumstats_metafile_date
-path_sumStats
-path_readMe
-path_pdf
-path_pdfSupp
 study_PMID
 study_Year
 study_PhenoDesc
 study_PhenoCode
 study_PhenoMod
-study_FilePortal
 study_FileURL
+study_FilePortal
 study_AccessDate
 study_Use
 study_Controller
@@ -59,11 +53,21 @@ col_AFREQ
 col_INFO
 col_Direction
 col_Notes
-cleansumstats_date
+path_sumStats
+path_readMe
+path_pdf
+cleansumstats_metafile_date
+cleansumstats_metafile_user
+cleansumstats_version
 )
 
+# Add headers for all vars above
+for var in ${colForOneLineMetaFile[@]}; do
+   printf "%s\t" "${var}" >> ${outFile}
+done
+printf "%s\n" "${var}" >> ${outFile}
 
-# Add all variables in same order as above
+# Add all variable values in same order as above
 for var in ${colForOneLineMetaFile[@]}; do
    Px="$(grep "^${var}=" $newMefl)"
    P="$(echo "${Px#*=}")"
