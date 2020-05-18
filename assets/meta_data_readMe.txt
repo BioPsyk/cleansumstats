@@ -37,13 +37,13 @@ cleansumstats_metafile_user=
 # Specify your name.  
 # Will be autofilled by template generator in next release.
 # options: <character string>
-# example: run_user=Andrew Schork
+# example: cleansumstats_metafile_user=Andrew Schork
 
 cleansumstats_metafile_date=
 # Day you fill out the meta data, fourDigitYear_twoDigitMonth_twoDigitDay
 # Will be autofilled by template generator in next release.
 # options: <todays date>
-# example: run_date=2020-04-27
+# example: cleansumstats_metafile_date=2020-04-27
 
 path_sumStats=
 # Specify the path to the sumstats to be cleaned.  
