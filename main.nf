@@ -1369,16 +1369,25 @@ if (params.generateMetafile){
 
       if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ]
       then
-        for fil in ${params.libdirpdfs}/pmid_${pmid}_supp/*
-        do 
-          supp="\$(basename "\${fil}")" 
-          echo "path_pdfSupp=${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}" >> libprep_changes_mfile 
-          ln -s \${fil} ${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}
-          #Will be set to same if the one already in library is used (only keep basename)
-          echo "path_original_pdfSupp=\${supp}" >> libprep_changes_mfile 
-        done
+        #Check dir if is not empty
+        count="\$(ls -1 ${params.libdirpdfs}/pmid_${pmid}_supp | wc -l)"
+        if [ "\${count}" -gt 0 ]
+        then
+          # If supplementary is already available, then use those, and do not use new from meta data file
+          for fil in ${params.libdirpdfs}/pmid_${pmid}_supp/*
+          do 
+            supp="\$(basename "\${fil}")" 
+            echo "path_pdfSupp=${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}" >> libprep_changes_mfile 
+            ln -s \${fil} ${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}
+            #Will be set to same if the one already in library is used (only keep basename)
+            echo "path_original_pdfSupp=\${supp}" >> libprep_changes_mfile 
+          done
+        else
+          # If empty then set missing (if supps exist but not in the dedicated library, then it has to be manually inserted there, and will be included in next batch update)
+            echo "path_pdfSupp=missing" >> libprep_changes_mfile
+            echo "path_original_pdfSupp=missing" >> libprep_changes_mfile
+        fi
       else 
-        mkdir pmid_${pmid}_supp
         i=1
         cat ${pdfsuppdir} | while read -r supp; do 
           if [ "\${supp}" != "missing" ]
