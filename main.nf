@@ -1460,13 +1460,13 @@ if (params.generateMetafile){
      
       # Extract 
       tail -n+2 ${onelinemeta} > oneline
-      dateOfCreation="\$(date +%F-%H%M)"
+      dateOfCreation="\$(date +%F-%H%M%S-%N)"
 
       # Select most recent inventory file (if any exists)
       count="\$(ls -1 ${params.libdirinventory} | wc -l)"
       if [ "\${count}" -gt 0 ]
       then
-        mostrecentfile="\$(ls -1 ${params.libdirinventory}/*_inventory.txt | awk '{old=\$1; sub(".*/","",\$1); gsub("-","",\$1); print \$1, old}' | sort -rn -k1.1,1.12 | awk '{print \$2}' | head -n1 )"
+        mostrecentfile="\$(ls -1 ${params.libdirinventory}/*_inventory.txt | awk '{old=\$1; sub(".*/","",\$1); gsub("-","",\$1); print \$1, old}' | sort -rn -k1.1,1.23 | awk '{print \$2}' | head -n1 )"
         cat \${mostrecentfile} oneline > \${dateOfCreation}_inventory.txt
       else
         # Make header if the file does not exist
