@@ -1412,7 +1412,7 @@ if (params.generateMetafile){
       create_output_meta_data_file.sh libprep_raw_mfile libprep_changes_mfile > libprep_new_mfile
       
       # make one_line_meta data for info file
-      create_output_one_line_meta_data_file.sh libprep_new_mfile tmp_onelinemeta
+      create_output_one_line_meta_data_file.sh libprep_new_mfile tmp_onelinemeta "${params.libdirinventory}"
 
       # Store data in library by moving
       cp ${sclean} ${libfolder}_cleaned_GRCh37.gz
@@ -1453,13 +1453,10 @@ if (params.generateMetafile){
       script:
       """
       # This is a little risky as two parallel flows in theory could enter this process at the same time
-      # An idea for the future is to use a simple dbmanager
-      # For the moment we can survey that all inventory files are incremented by one for each newer date
-      # I leave this to be manual checked right now, but a quick test can be to check that number of inventory
-      # files corresponds to number of entries(minus header row) in the most recent file
+      # An idea for the future is to use a simple dbmanager (or use a lock file)
      
-      # Extract 
-      tail -n+2 ${onelinemeta} > oneline
+      # Extract the most recent added row, except the header
+      tail -n+2 ${onelinemeta} | head -n1 > oneline
       dateOfCreation="\$(date +%F-%H%M%S-%N)"
 
       # Select most recent inventory file (if any exists)

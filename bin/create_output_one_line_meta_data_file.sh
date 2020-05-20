@@ -1,5 +1,6 @@
 newMefl=$1
 outFile=$2
+inventory=$3
 
 # Keep all mandatory fields
 colForOneLineMetaFile=(
@@ -79,3 +80,16 @@ Px="$(grep "^cleansumstats_user=" $newMefl)"
 P="$(echo "${Px#*=}")"
 printf "%s\n" "${P}" >> ${outFile}
 
+# Sumstat ID
+SIDx="$(grep "^cleansumstats_ID=" $newMefl)"
+SID="$(echo "${SIDx#*=}")"
+
+# Add a row for each time this ID has been run before
+count="$(ls -1 ${inventory} | wc -l)"
+if [ "${count}" -gt 0 ]
+then
+  mostrecentfile="$(ls -1 ${inventory}/*_inventory.txt | awk '{old=$1; sub(".*/","",$1); gsub("-","",$1); print $1, old}' | sort -rn -k1.1,1.23 | awk '{print $2}' | head -n1 )"
+  awk -vFS="\t" -vOFS="\t" -vSID=${SID} '$2==SID{print $0}' ${mostrecentfile} >> ${outFile}
+else
+  :
+fi
