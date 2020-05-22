@@ -1204,6 +1204,7 @@ if (params.generateMetafile){
 
   process assign_sumstat_id {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+      publishDir "${params.libdirsumstats}", mode: 'copy', overwrite: false, pattern: 'sumstat_*'
 
       input:
       tuple datasetID, sumstatname from ch_assign_sumstat_id
@@ -1217,12 +1218,12 @@ if (params.generateMetafile){
       if [ "${sumstatname}" == "missing" ] ; then
         # Scan for available ID and move directory there
         libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
-        mkdir "${params.libdirsumstats}/\${libfolder}"
+        mkdir "\${libfolder}"
         echo "\${libfolder}" > assigned_sumstat_id 
       else
-        mkdir "${params.libdirsumstats}/${sumstatname}"
+        libfolder="${sumstatname}"
+        mkdir "\${libfolder}"
         echo "${sumstatname}" > assigned_sumstat_id 
-       libfolder="${sumstatname}"
       fi
       """
   }
@@ -1319,13 +1320,11 @@ if (params.generateMetafile){
 
   process put_in_library {
   
-      //publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
       publishDir "${params.libdirsumstats}/${libfolder}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*'
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true, pattern: 'libprep_*'
 
       input:
       tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, stfiltremoved, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
-      //tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, stfiltremoved, softv from ch_to_write_to_filelibrary7
       
       output:
       path("sumstat_*")
@@ -1454,24 +1453,31 @@ if (params.generateMetafile){
       """
       # This is a little risky as two parallel flows in theory could enter this process at the same time
       # An idea for the future is to use a simple dbmanager (or use a lock file)
+      # Or perhaps use a smarter channeling mixing the different files
      
       # Extract the most recent added row, except the header
       tail -n+2 ${onelinemeta} | head -n1 > oneline
       dateOfCreation="\$(date +%F-%H%M%S-%N)"
 
       # Select most recent inventory file (if any exists)
-      count="\$(ls -1 ${params.libdirinventory} | wc -l)"
-      if [ "\${count}" -gt 0 ]
+      if [ -d "${params.libdirinventory}" ]
       then
-        ls -1 ${params.libdirinventory}/*_inventory.txt | awk '{old=\$1; sub(".*/","",\$1); gsub("-","",\$1); print \$1, old}' | sort -rn -k1.1,1.23 | awk '{print \$2}' > libprep_sorted_inventory_files
-        mostrecentfile="\$(head -n1 libprep_sorted_inventory_files)"
-        cat \${mostrecentfile} oneline > \${dateOfCreation}_inventory.txt
+        count="\$(ls -1 ${params.libdirinventory} | wc -l)"
+        if [ "\${count}" -gt 0 ]
+        then
+          ls -1 ${params.libdirinventory}/*_inventory.txt | awk '{old=\$1; sub(".*/","",\$1); gsub("-","",\$1); print \$1, old}' | sort -rn -k1.1,1.23 | awk '{print \$2}' > libprep_sorted_inventory_files
+          mostrecentfile="\$(head -n1 libprep_sorted_inventory_files)"
+          cat \${mostrecentfile} oneline > \${dateOfCreation}_inventory.txt
+        else
+          # Make header if the file does not exist
+          head -n1 ${onelinemeta} > \${dateOfCreation}_inventory.txt
+          cat oneline >> \${dateOfCreation}_inventory.txt 
+        fi
       else
         # Make header if the file does not exist
         head -n1 ${onelinemeta} > \${dateOfCreation}_inventory.txt
         cat oneline >> \${dateOfCreation}_inventory.txt 
       fi
-      
       """
   }
 
