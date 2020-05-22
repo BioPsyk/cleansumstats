@@ -1128,16 +1128,18 @@ if (params.generateMetafile){
       tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted from ch_to_write_to_filelibrary2
 
       output:
-      tuple datasetID, path("sclean.gz"), path("scleanGRCh38.gz"), inputsfile, path("raw_formatted_rowindexed.gz") into ch_to_write_to_filelibrary3
+      tuple datasetID, path("sclean.gz"), path("scleanGRCh38.gz"), inputsfile, path("raw_formatted_rowindexed.gz"), path("cleanedheader") into ch_to_write_to_filelibrary3
       val datasetID into ch_check_avail
 
       script:
       """
+      # Make a header file to use when deciding on what cols are present for the new meta file
+      head -n1 ${sclean} > cleanedheader
+
       # Store data in library
       gzip -c ${sclean} > sclean.gz
       gzip -c ${scleanGRCh38} > scleanGRCh38.gz
       gzip -c ${inputformatted} > raw_formatted_rowindexed.gz
-
       """
   }
   
@@ -1324,7 +1326,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true, pattern: 'libprep_*'
 
       input:
-      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, stfiltremoved, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
+      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, cleanedheader, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, stfiltremoved, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
       
       output:
       path("sumstat_*")
@@ -1357,6 +1359,10 @@ if (params.generateMetafile){
       P="\$(echo "\${Px#*=}")"
       echo "path_pdf=${libfolder}_pmid_${pmid}.pdf" >> libprep_changes_mfile
       echo "path_original_pdf=\${P}" >> libprep_changes_mfile
+
+      #Add cleaned output files
+      echo "cleansumstats_cleaned_GRCh37=${libfolder}_cleaned_GRCh37.gz" >> libprep_changes_mfile
+      echo "cleansumstats_cleaned_GRCh38_coordinates=${libfolder}_cleaned_GRCh38.gz" >> libprep_changes_mfile
 
       
       # copy the pdf and supplemental material if missing in pdf library
@@ -1408,7 +1414,7 @@ if (params.generateMetafile){
 
       # Apply changes when making the new_mfile
       cat ${mfile} > libprep_raw_mfile
-      create_output_meta_data_file.sh libprep_raw_mfile libprep_changes_mfile > libprep_new_mfile
+      create_output_meta_data_file.sh libprep_raw_mfile libprep_changes_mfile ${cleanedheader} > libprep_new_mfile
       
       # make one_line_meta data for info file
       create_output_one_line_meta_data_file.sh libprep_new_mfile tmp_onelinemeta "${params.libdirinventory}"
