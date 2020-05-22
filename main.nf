@@ -1463,7 +1463,8 @@ if (params.generateMetafile){
       count="\$(ls -1 ${params.libdirinventory} | wc -l)"
       if [ "\${count}" -gt 0 ]
       then
-        mostrecentfile="\$(ls -1 ${params.libdirinventory}/*_inventory.txt | awk '{old=\$1; sub(".*/","",\$1); gsub("-","",\$1); print \$1, old}' | sort -rn -k1.1,1.23 | awk '{print \$2}' | head -n1 )"
+        ls -1 ${params.libdirinventory}/*_inventory.txt | awk '{old=\$1; sub(".*/","",\$1); gsub("-","",\$1); print \$1, old}' | sort -rn -k1.1,1.23 | awk '{print \$2}' > libprep_sorted_inventory_files
+        mostrecentfile="\$(head -n1 libprep_sorted_inventory_files)"
         cat \${mostrecentfile} oneline > \${dateOfCreation}_inventory.txt
       else
         # Make header if the file does not exist
