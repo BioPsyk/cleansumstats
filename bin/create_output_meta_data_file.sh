@@ -73,6 +73,7 @@ stats_Model
 stats_TotalN
 stats_CaseN
 stats_ControlN
+stats_EffectiveN
 stats_GCMethod
 stats_GCValue
 stats_Notes
