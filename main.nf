@@ -1364,7 +1364,6 @@ if (params.generateMetafile){
       echo "cleansumstats_cleaned_GRCh37=${libfolder}_cleaned_GRCh37.gz" >> libprep_changes_mfile
       echo "cleansumstats_cleaned_GRCh38_coordinates=${libfolder}_cleaned_GRCh38.gz" >> libprep_changes_mfile
 
-
       #Calcualate effective N using meta data info
       sh try_infere_Neffective.sh ${mfile} >> libprep_changes_mfile
       
