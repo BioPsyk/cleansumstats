@@ -815,24 +815,53 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_exists2
-      tuple datasetID, file("disc_indel"), file("disc_notGCTA"), file("disc_notPossPair"), file("disc_palin") into ch_describe_allele_filter1
-      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
+      tuple datasetID, file("disc_notGCTA"),file("disc_indel"), file("disc_hom"), file("disc_palin"), file("disc_notPossPair"), file("disc_notExpA2") into ch_describe_allele_filter1
+      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
 
       script:
       """
       echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > ${build}_acorrected
       
       #init some the files collecting variants removed because of allele composition
-      touch disc_indel disc_notGCTA disc_notPossPair disc_palin
+      touch disc_notGCTA
+      touch disc_indel
+      touch disc_hom
+      touch disc_palin
+      touch disc_notPossPair
+      touch disc_notExpA2
 
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
-      cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | sstools-eallele correction -f - >> ${build}_acorrected
+      cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | tail -n+2 | sstools-eallele correction -f - >> ${build}_acorrected
 
-      #process before and after stats
-      rowsBefore="\$(wc -l ${mapped} | awk '{print \$1}')"
-      rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels and allele-pair matching to dbsnp for palindroms, impossible match and nonGTAC characters" > desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt
+      #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
+      rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l disc_notGCTA | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on nonGTAC characters" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" > desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not expected otherAllele in reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1-1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tsanity sanity check that final filtered file before and after file have same row count" > desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt
       """
   }
   
@@ -848,23 +877,55 @@ if (params.generateMetafile){
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_missing2
       file("${build}_mapped2")
-      tuple datasetID, file("disc_indel"), file("disc_notGCTA"), file("disc_notPossPair"), file("disc_palin") into ch_describe_allele_filter2
-      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
+      //tuple datasetID, file("disc_indel"), file("disc_notGCTA"), file("disc_notPossPair"), file("disc_palin") into ch_describe_allele_filter2
+      tuple datasetID, file("disc_notGCTA"),file("disc_indel"), file("disc_hom"), file("disc_palin"), file("disc_notPossPair"), file("disc_notExpA2") into ch_describe_allele_filter2
+      //tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
+      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
   
       script:
       """
       multiallelic_filter.sh $mapped > ${build}_mapped2
       echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > ${build}_acorrected
+      #
       #init some the files collecting variants removed because of allele composition
-      touch disc_indel disc_notGCTA disc_notPossPair disc_palin
+      touch disc_notGCTA
+      touch disc_indel
+      touch disc_hom
+      touch disc_palin
+      touch disc_notPossPair
+      touch disc_notExpA2
   
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
-      cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | sstools-eallele correction -f - -a >> ${build}_acorrected 
+      cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | tail -n+2 | sstools-eallele correction -f - -a >> ${build}_acorrected 
 
-      #process before and after stats
-      rowsBefore="\$(wc -l ${mapped} | awk '{print \$1}')"
-      rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows based on allele-pair matching to dbsnp" > desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt
+      #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
+      rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l disc_notGCTA | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on nonGTAC characters" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" > desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l disc_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not expected otherAllele in reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt
+
+      rowsBefore="\${rowsAfter}"
+      rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1-1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tsanity sanity check that final filtered file before and after file have same row count" > desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt
   
       """
   }
@@ -926,7 +987,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, disc_indel, disc_notGCTA, disc_notPossPair, disc_palin from ch_describe_allele_filter
+      tuple datasetID, disc_notGCTA, disc_indel, disc_hom, disc_palin, disc_notPossPair, disc_notExpA2 from ch_describe_allele_filter
       
       output:
       tuple datasetID, file("desc_gb_filt_remove_by_allele_filter.txt") into ch_desc_allele_filter_removed
@@ -936,10 +997,12 @@ if (params.generateMetafile){
 
       # prepare process specific descriptive statistics
       echo -e "rowsremoved\tfiltertype" > desc_gb_filt_remove_by_allele_filter.txt
-      echo "\$(wc -l $disc_indel)" | awk -vOFS="\t" '{print \$1, "indels"}' >> desc_gb_filt_remove_by_allele_filter.txt
       echo "\$(wc -l $disc_notGCTA)" | awk -vOFS="\t" '{print \$1, "notAnyOfATGC"}' >> desc_gb_filt_remove_by_allele_filter.txt
-      echo "\$(wc -l $disc_notPossPair)" | awk -vOFS="\t" '{print \$1, "notPossiblePair"}' >> desc_gb_filt_remove_by_allele_filter.txt
-      echo "\$(wc -l $disc_palin)" | awk -vOFS="\t" '{print \$1, "palindrome"}' >> desc_gb_filt_remove_by_allele_filter.txt
+      echo "\$(wc -l $disc_indel)" | awk -vOFS="\t" '{print \$1, "indels"}' >> desc_gb_filt_remove_by_allele_filter.txt
+      echo "\$(wc -l $disc_hom)" | awk -vOFS="\t" '{print \$1, "homozygotes"}' >> desc_gb_filt_remove_by_allele_filter.txt
+      echo "\$(wc -l $disc_palin)" | awk -vOFS="\t" '{print \$1, "palindromes"}' >> desc_gb_filt_remove_by_allele_filter.txt
+      echo "\$(wc -l $disc_notPossPair)" | awk -vOFS="\t" '{print \$1, "notPossiblePairs"}' >> desc_gb_filt_remove_by_allele_filter.txt
+      echo "\$(wc -l $disc_notExpA2)" | awk -vOFS="\t" '{print \$1, "notExpectedOtherAllele"}' >> desc_gb_filt_remove_by_allele_filter.txt
       """
   }
   
@@ -1166,11 +1229,13 @@ if (params.generateMetafile){
    .combine(ch_desc_final_merge_BA, by: 0)
    .set{ ch_collected_workflow_stepwise_stats }
 
+//ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA  - contains all allele filtering substeps
+
   process collect_and_prepare_stepwise_readme {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10a, step10b, step11, step12, step13, step14, step15, step16a, step16b, step17 from ch_collected_workflow_stepwise_stats
+      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10a, step10b, step11, step12a, step12b, step12c, step12d, step12e, step12f, step12g, step13, step14, step15, step16a, step16b, step17 from ch_collected_workflow_stepwise_stats
 
       output:
       tuple datasetID, file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
@@ -1190,7 +1255,13 @@ if (params.generateMetafile){
       cat $step10a | awk -vFS="\t" -vOFS="\t" '{print "Step10a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step10b | awk -vFS="\t" -vOFS="\t" '{print "Step10b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step11 | awk -vFS="\t" -vOFS="\t" '{print "Step11", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step12 | awk -vFS="\t" -vOFS="\t" '{print "Step12", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12a | awk -vFS="\t" -vOFS="\t" '{print "Step12a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12b | awk -vFS="\t" -vOFS="\t" '{print "Step12b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12c | awk -vFS="\t" -vOFS="\t" '{print "Step12c", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12d | awk -vFS="\t" -vOFS="\t" '{print "Step12d", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12e | awk -vFS="\t" -vOFS="\t" '{print "Step12e", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12f | awk -vFS="\t" -vOFS="\t" '{print "Step12f", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12g | awk -vFS="\t" -vOFS="\t" '{print "Step12g", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step13 | awk -vFS="\t" -vOFS="\t" '{print "Step13", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step14 | awk -vFS="\t" -vOFS="\t" '{print "Step14", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step15 | awk -vFS="\t" -vOFS="\t" '{print "Step15", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
