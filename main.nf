@@ -416,7 +416,7 @@ if (params.generateMetafile){
    .combine(ch_sfile_on_stream0, by: 0)
    .set { ch_sfile_on_stream00 }
 
-  process reformat_X_Y_XY_and_MT {
+  process reformat_X_Y_XY_and_MT_and_remove_noninterpretables {
   
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
@@ -426,6 +426,8 @@ if (params.generateMetafile){
       output:
       tuple datasetID, file("prep_sfile_forced_sex_chromosome_format") into ch_sfile_on_stream
       path("new_chr_sex_format")
+      path("new_chr_sex_format2")
+      path("new_chr_sex_format3")
       tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA
   
       script:
@@ -435,10 +437,18 @@ if (params.generateMetafile){
 
       #make
       cat $sfile | sstools-utils ad-hoc-do -k "0|funx_force_sex_chromosomes_format(\${colCHR})" -n"0,\${colCHR}" > new_chr_sex_format
+
+      #remove sex formats of unknown origin
+      colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
+      echo "\${colCHR}" > gb_ad-hoc-do_funx_CHR_sex_chrom_filter
+      cat new_chr_sex_format | sstools-utils ad-hoc-do -k "0|\${colCHR}" -n"0,CHR" | awk -vFS="\t" -vOFS="\t" 'BEGIN{getline; print \$0}; {if(\$2 > 0 && \$2 < 27){ print \$1, \$2 }}' > new_chr_sex_format2
+      #use the index to remove everything no part of chr numers 1-26 but keep original format
+      LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 -1 1 -2 1 new_chr_sex_format new_chr_sex_format2 > new_chr_sex_format3
+
       #replace (if bp or allele info is in the same column it will be kept, as the function above only replaces the chr info part)
       head -n1 $sfile > header
       to_keep_from_join="\$(awk -vFS="\t" -vobj=\${colCHR} '{for (i=1; i<=NF; i++){if(obj==\$i){print "2."2}else{print "1."i}}}' header)"
-      LC_ALL=C join -t "\$(printf '\t')" -o \${to_keep_from_join} -1 1 -2 1 $sfile new_chr_sex_format > prep_sfile_forced_sex_chromosome_format
+      LC_ALL=C join -t "\$(printf '\t')" -o \${to_keep_from_join} -1 1 -2 1 $sfile new_chr_sex_format3 > prep_sfile_forced_sex_chromosome_format
       
       #process before and after stats (the -1 is to remove the header count)
       rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
@@ -623,8 +633,8 @@ if (params.generateMetafile){
       LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
       
       #process before and after stats
-      rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
-      rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1}')"
+      rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1-1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
       """
   
@@ -647,7 +657,7 @@ if (params.generateMetafile){
       format_chrpos_for_dbsnp.sh ${gbmax} ${fsorted} ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
       
       #process before and after stats
-      rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1}')"
+      rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh37_and_GRCh38 | awk '{print \$1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh37 and GRCh38 and simultaneously map to dbsnp" > desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA
       """
