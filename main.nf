@@ -379,16 +379,15 @@ if (params.generateMetafile){
       check_and_format_sfile.sh \$spath ${datasetID}_sfile ${datasetID}_sfile_format.log
       #check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile ${datasetID}_sfile_format.log
       
-      #process before and after stats
-      rowsBefore="\$(zcat \$spath | wc -l )"
-      rowsAfter="\$(wc -l ${datasetID}_sfile | awk '{print \$1}')"
+      #process before and after stats (the -1 is to remove the header count)
+      rowsBefore="\$(zcat \$spath | wc -l | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l ${datasetID}_sfile | awk '{print \$1-1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tForce tab separation" > desc_force_tab_sep_BA.txt
 
       """
   }
 
   process add_sorted_index_sumstat {
-  
   
       input:
       tuple datasetID, sfile from ch_sfile_ok
@@ -397,21 +396,57 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       output:
-      tuple datasetID, file("prep_sfile_added_rowindex") into ch_sfile_on_stream
+      tuple datasetID, file("prep_sfile_added_rowindex") into ch_sfile_on_stream0
       tuple datasetID, file("desc_add_sorted_rowindex_BA.txt") into ch_desc_prep_add_sorted_rowindex_BA
   
       script:
       """
       cat $sfile | sstools-raw add-index | LC_ALL=C sort -k 1 - > prep_sfile_added_rowindex
       
-      #process before and after stats
-      rowsBefore="\$(wc -l $sfile | awk '{print \$1}')"
-      rowsAfter="\$(wc -l prep_sfile_added_rowindex | awk '{print \$1}')"
+      #process before and after stats (the -1 is to remove the header count)
+      rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l prep_sfile_added_rowindex | awk '{print \$1-1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tAdd sorted rowindex, which maps back to the unfiltered file" > desc_add_sorted_rowindex_BA.txt
       """
   }
+
+  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5; ; ch_mfile_ok6; ch_mfile_ok7}
+
+  ch_mfile_ok7
+   .combine(ch_sfile_on_stream0, by: 0)
+   .set { ch_sfile_on_stream00 }
+
+  process reformat_X_Y_XY_and_MT {
   
-  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5; ; ch_mfile_ok6}
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple datasetID, mfile, sfile from ch_sfile_on_stream00
+  
+      output:
+      tuple datasetID, file("prep_sfile_forced_sex_chromosome_format") into ch_sfile_on_stream
+      path("new_chr_sex_format")
+      tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA
+  
+      script:
+      """
+      Cx="\$(grep "^col_CHR=" $mfile)"
+      colCHR="\$(echo "\${Cx#*=}")"
+
+      #make
+      cat $sfile | sstools-utils ad-hoc-do -k "0|funx_force_sex_chromosomes_format(\${colCHR})" -n"0,\${colCHR}" > new_chr_sex_format
+      #replace (if bp or allele info is in the same column it will be kept, as the function above only replaces the chr info part)
+      head -n1 $sfile > header
+      to_keep_from_join="\$(awk -vFS="\t" -vobj=\${colCHR} '{for (i=1; i<=NF; i++){if(obj==\$i){print "2."2}else{print "1."i}}}' header)"
+      LC_ALL=C join -t "\$(printf '\t')" -o \${to_keep_from_join} -1 1 -2 1 $sfile new_chr_sex_format > prep_sfile_forced_sex_chromosome_format
+      
+      #process before and after stats (the -1 is to remove the header count)
+      rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l prep_sfile_forced_sex_chromosome_format | awk '{print \$1-1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
+      """
+  }
+  
   ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
   ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
   ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_liftover1; ch_liftover2; ch_stats_inference }
@@ -467,7 +502,7 @@ if (params.generateMetafile){
       LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
       #
       #process before and after stats
-      rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
+      rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
   
@@ -492,7 +527,7 @@ if (params.generateMetafile){
       LC_ALL=C join -1 1 -2 1 ${fsorted} ${ch_dbsnpRSID} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$1,\$5,\$6}'  > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
       
       # Process before and after stats
-      rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1}')"
+      rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh37_and_GRCh38 | awk '{print \$1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh37 and GRCh38 and simultaneously map to dbsnp" > desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA
 
@@ -532,6 +567,7 @@ if (params.generateMetafile){
       LC_ALL=C sort -k1,1 gb_ready_to_join_to_detect_build > gb_ready_to_join_to_detect_build_sorted
       format_chrpos_for_dbsnp.sh ${build} gb_ready_to_join_to_detect_build_sorted ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > ${build}.map
       sort -u -k1,1 ${build}.map | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > ${datasetID}.${build}.res
+
   
       """
   }
@@ -1210,6 +1246,7 @@ if (params.generateMetafile){
   //Do actual collection, placed in corresponding step order
   ch_desc_prep_force_tab_sep_BA
    .combine(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
+   .combine(ch_desc_sex_chrom_formatting_BA, by: 0)
    .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
    .combine(ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA, by: 0)
    .combine(ch_desc_removed_duplicated_rows_GRCh37_BA, by: 0)
@@ -1235,7 +1272,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10a, step10b, step11, step12a, step12b, step12c, step12d, step12e, step12f, step12g, step13, step14, step15, step16a, step16b, step17 from ch_collected_workflow_stepwise_stats
+      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10, step11a, step11b, step12, step13a, step13b, step13c, step13d, step13e, step13f, step13g, step14, step15, step16, step17a, step17b, step18 from ch_collected_workflow_stepwise_stats
 
       output:
       tuple datasetID, file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
@@ -1252,22 +1289,23 @@ if (params.generateMetafile){
       cat $step7 | awk -vFS="\t" -vOFS="\t" '{print "Step7", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step8 | awk -vFS="\t" -vOFS="\t" '{print "Step8", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step9 | awk -vFS="\t" -vOFS="\t" '{print "Step9", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step10a | awk -vFS="\t" -vOFS="\t" '{print "Step10a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step10b | awk -vFS="\t" -vOFS="\t" '{print "Step10b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step11 | awk -vFS="\t" -vOFS="\t" '{print "Step11", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step12a | awk -vFS="\t" -vOFS="\t" '{print "Step12a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step12b | awk -vFS="\t" -vOFS="\t" '{print "Step12b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step12c | awk -vFS="\t" -vOFS="\t" '{print "Step12c", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step12d | awk -vFS="\t" -vOFS="\t" '{print "Step12d", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step12e | awk -vFS="\t" -vOFS="\t" '{print "Step12e", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step12f | awk -vFS="\t" -vOFS="\t" '{print "Step12f", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step12g | awk -vFS="\t" -vOFS="\t" '{print "Step12g", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13 | awk -vFS="\t" -vOFS="\t" '{print "Step13", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step10 | awk -vFS="\t" -vOFS="\t" '{print "Step10", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step11a | awk -vFS="\t" -vOFS="\t" '{print "Step11a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step11b | awk -vFS="\t" -vOFS="\t" '{print "Step11b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step12 | awk -vFS="\t" -vOFS="\t" '{print "Step12", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13a | awk -vFS="\t" -vOFS="\t" '{print "Step13a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13b | awk -vFS="\t" -vOFS="\t" '{print "Step13b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13c | awk -vFS="\t" -vOFS="\t" '{print "Step13c", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13d | awk -vFS="\t" -vOFS="\t" '{print "Step13d", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13e | awk -vFS="\t" -vOFS="\t" '{print "Step13e", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13f | awk -vFS="\t" -vOFS="\t" '{print "Step13f", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step13g | awk -vFS="\t" -vOFS="\t" '{print "Step13g", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step14 | awk -vFS="\t" -vOFS="\t" '{print "Step14", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       cat $step15 | awk -vFS="\t" -vOFS="\t" '{print "Step15", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step16a | awk -vFS="\t" -vOFS="\t" '{print "Step16a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step16b | awk -vFS="\t" -vOFS="\t" '{print "Step16b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step17 | awk -vFS="\t" -vOFS="\t" '{print "Step17", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step16 | awk -vFS="\t" -vOFS="\t" '{print "Step16", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step17a | awk -vFS="\t" -vOFS="\t" '{print "Step17a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step17b | awk -vFS="\t" -vOFS="\t" '{print "Step17b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      cat $step18 | awk -vFS="\t" -vOFS="\t" '{print "Step18", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       """
   }
 

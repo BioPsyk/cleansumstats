@@ -110,6 +110,10 @@ col_Direction
 #chr1:1324324
 #1:3434324
 #1_34235432_A_T
+#since update 2020-05-28 it is now also possible with some non-autosomes
+#X
+#Y
+#chrMT
 allowedType=(
 '^[c|C][h|H][r|R]\d+$'
 '^\d{1,2}[:_]\d+$'
@@ -121,7 +125,6 @@ allowedType=(
 '^\D+$'
 '^\d+$'
 )
-
 
 #functions
 
