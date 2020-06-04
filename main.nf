@@ -301,33 +301,23 @@ if (params.generateMetafile){
   //to_stream_sumstat_dir.into { ch_to_stream_sumstat_dir1; ch_to_stream_sumstat_dir2 }
 
 
-  process check_and_force_basic_formats {
+  process check_most_crucial_paths_exists {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
       tuple datasetID, mfile from ch_mfile_check
   
       output:
-      tuple datasetID, file("mfile_unix_safe") into ch_mfile_ok
-      tuple datasetID, file("${datasetID}_sfile") into ch_sfile_ok
+      tuple datasetID, file("mfile_unix_safe"), env(spath) into ch_mfile_check_format
       tuple datasetID, env(spath) into ch_input_sfile
       tuple datasetID, env(rpath) into ch_input_readme
       tuple datasetID, env(pmid) into ch_pmid
-      tuple datasetID, file("*.log") into inputchecker_log_files
-      tuple datasetID, file("${datasetID}_header") into extra_stuff1
-      tuple datasetID, file("${datasetID}_sfile_1000") into extra_stuff2
-      tuple datasetID, file("${datasetID}_sfile_1000_formatted") into extra_stuff3
       tuple datasetID, env(pmid), env(pdfpath), file("${datasetID}_pdf_suppfiles.txt") into ch_input_pdf_stuff
-      tuple datasetID, file("${datasetID}_one_line_summary_of_metadata.txt") into ch_one_line_metafile
       file("mfile_sent_in") 
-      tuple datasetID, file("desc_force_tab_sep_BA.txt") into ch_desc_prep_force_tab_sep_BA
-      tuple datasetID, env(sumstatID) into ch_preassigned_sumstat_id
   
       script:
       """
-
 
       metaDir="\$(dirname ${mfile})"
       cat ${mfile} > mfile_sent_in
@@ -348,42 +338,114 @@ if (params.generateMetafile){
 
       # Check library if this has been processed before
       # TODO after the script producing the 00inventory.txt has been created 
-      
-      # Make complete metafile check
-      echo "\$(head -n 1 < <(zcat \$spath))" > ${datasetID}_header
-      check_meta_data_format.sh mfile_unix_safe ${datasetID}_header ${datasetID}_mfile_format.log
 
+      """
+  }
+
+  process check_mfile_format {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile, sfilePath from ch_mfile_check_format
+  
+      output:
+      tuple datasetID, mfile, sfilePath into ch_mfile_check_libID
+      file("${datasetID}_header") 
+      tuple datasetID, file("*.log")
+
+      script:
+      """
+      # Make complete metafile check
+      echo "\$(head -n 1 < <(zcat ${sfilePath}))" > ${datasetID}_header
+      check_meta_data_format.sh ${mfile} ${datasetID}_header ${datasetID}_mfile_format.log
+
+      """
+
+  }
+
+  process check_preassigned_libraryID {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile, sfilePath from ch_mfile_check_libID
+  
+      output:
+      tuple datasetID, mfile, sfilePath into ch_check_if_already_in_library
+      tuple datasetID, env(sumstatID) into ch_preassigned_sumstat_id
+
+      script:
+      """
+      
       #Check if new sumstatname should be assigned
-      if grep -Pq "^cleansumstats_ID=" mfile_unix_safe
+      if grep -Pq "^cleansumstats_ID=" ${mfile}
       then
-        SIDx="\$(grep "^cleansumstats_ID=" mfile_unix_safe)"
+        SIDx="\$(grep "^cleansumstats_ID=" ${mfile})"
         sumstatID="\$(echo "\${SIDx#*=}")"
       else
         sumstatID="missing"
       fi
+
+      """
+  }
+
+  process check_if_already_in_library {
+     
+      // This functionality is inactive right now, as it is not exactly clear what info to look for 
+
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile, sfilePath from ch_check_if_already_in_library
+  
+      output:
+      tuple datasetID, mfile, sfilePath into ch_check_and_force_sumstat_format
+      tuple datasetID, file("${datasetID}_one_line_summary_of_metadata.txt") into ch_one_line_metafile
+
+      script:
+      """
       
       # Make a one line metafile to use for the inventory file and test if dataset is already in library
       cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
-        Px="\$(grep "^\${varx}=" mfile_unix_safe)"
+        Px="\$(grep "^\${varx}=" ${mfile})"
         var="\$(echo "\${Px#*=}")"
         printf "\t%s" "\${var}" >> one_line_summary
       done
       printf "\\n" >> one_line_summary
       cat one_line_summary | sed -e 's/^[\t]//' > ${datasetID}_one_line_summary_of_metadata.txt
+      """
+  }
 
+  process check_and_force_basic_sumstat_format {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile, sfilePath from ch_check_and_force_sumstat_format
+  
+      output:
+      tuple datasetID, mfile into ch_mfile_ok
+      tuple datasetID, file("${datasetID}_sfile") into ch_sfile_ok
+      tuple datasetID, file("desc_force_tab_sep_BA.txt") into ch_desc_prep_force_tab_sep_BA
+      file("${datasetID}_sfile_1000")
+      file("${datasetID}_sfile_1000_formatted")
+      file("*.log")
+
+      script:
+      """
       # Sumstat file check on first 1000 lines
-      echo "\$(head -n 1000 < <(zcat \$spath))" | gzip -c > ${datasetID}_sfile_1000
+      echo "\$(head -n 1000 < <(zcat ${sfilePath}))" | gzip -c > ${datasetID}_sfile_1000
       check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile_1000_formatted ${datasetID}_sfile_1000_format.log
       
       # Make second sumstat file check on all lines
-      check_and_format_sfile.sh \$spath ${datasetID}_sfile ${datasetID}_sfile_format.log
+      check_and_format_sfile.sh ${sfilePath} ${datasetID}_sfile ${datasetID}_sfile_format.log
       #check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile ${datasetID}_sfile_format.log
       
       #process before and after stats (the -1 is to remove the header count)
-      rowsBefore="\$(zcat \$spath | wc -l | awk '{print \$1-1}')"
+      rowsBefore="\$(zcat ${sfilePath} | wc -l | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l ${datasetID}_sfile | awk '{print \$1-1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tForce tab separation" > desc_force_tab_sep_BA.txt
-
       """
   }
 
