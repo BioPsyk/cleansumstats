@@ -458,7 +458,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       output:
-      tuple datasetID, file("prep_sfile_added_rowindex") into ch_sfile_on_stream0
+      tuple datasetID, file("prep_sfile_added_rowindex") into ch_sfile_on_stream
       tuple datasetID, file("desc_add_sorted_rowindex_BA.txt") into ch_desc_prep_add_sorted_rowindex_BA
   
       script:
@@ -472,52 +472,12 @@ if (params.generateMetafile){
       """
   }
 
-  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5; ; ch_mfile_ok6; ch_mfile_ok7}
+  ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5; ; ch_mfile_ok6}
 
-  ch_mfile_ok7
-   .combine(ch_sfile_on_stream0, by: 0)
-   .set { ch_sfile_on_stream00 }
+ // ch_mfile_ok7
+ //  .combine(ch_sfile_on_stream0, by: 0)
+ //  .set { ch_sfile_on_stream00 }
 
-  process reformat_X_Y_XY_and_MT_and_remove_noninterpretables {
-  
-      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-
-      input:
-      tuple datasetID, mfile, sfile from ch_sfile_on_stream00
-  
-      output:
-      tuple datasetID, file("prep_sfile_forced_sex_chromosome_format") into ch_sfile_on_stream
-      path("new_chr_sex_format")
-      path("new_chr_sex_format2")
-      path("new_chr_sex_format3")
-      tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA
-  
-      script:
-      """
-      Cx="\$(grep "^col_CHR=" $mfile)"
-      colCHR="\$(echo "\${Cx#*=}")"
-
-      #make
-      cat $sfile | sstools-utils ad-hoc-do -k "0|funx_force_sex_chromosomes_format(\${colCHR})" -n"0,\${colCHR}" > new_chr_sex_format
-
-      #remove sex formats of unknown origin
-      colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
-      echo "\${colCHR}" > gb_ad-hoc-do_funx_CHR_sex_chrom_filter
-      cat new_chr_sex_format | sstools-utils ad-hoc-do -k "0|\${colCHR}" -n"0,CHR" | awk -vFS="\t" -vOFS="\t" 'BEGIN{getline; print \$0}; {if(\$2 > 0 && \$2 < 27){ print \$1, \$2 }}' > new_chr_sex_format2
-      #use the index to remove everything no part of chr numers 1-26 but keep original format
-      LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 -1 1 -2 1 new_chr_sex_format new_chr_sex_format2 > new_chr_sex_format3
-
-      #replace (if bp or allele info is in the same column it will be kept, as the function above only replaces the chr info part)
-      head -n1 $sfile > header
-      to_keep_from_join="\$(awk -vFS="\t" -vobj=\${colCHR} '{for (i=1; i<=NF; i++){if(obj==\$i){print "2."2}else{print "1."i}}}' header)"
-      LC_ALL=C join -t "\$(printf '\t')" -o \${to_keep_from_join} -1 1 -2 1 $sfile new_chr_sex_format3 > prep_sfile_forced_sex_chromosome_format
-      
-      #process before and after stats (the -1 is to remove the header count)
-      rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
-      rowsAfter="\$(wc -l prep_sfile_forced_sex_chromosome_format | awk '{print \$1-1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
-      """
-  }
   
   ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
   ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
@@ -563,6 +523,7 @@ if (params.generateMetafile){
       output:
       tuple datasetID, mfile, file("gb_lift_sorted") into ch_liftover_33
       tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos_rsid
+      tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_1
       file("gb_*")
 
       script:
@@ -575,8 +536,13 @@ if (params.generateMetafile){
       #
       #process before and after stats
       rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
-      rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1}')"
+      rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1-1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
+      #
+      #process before and after stats (the -1 is to remove the header count)
+      rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1-1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
   
       """
   }
@@ -605,11 +571,53 @@ if (params.generateMetafile){
 
       # Make an empty stats file as we are not trying to infer genome build
       echo "No inference of build going from RSID" > ${datasetID}.stats
+      #
       """
   }
   
   
   // LIFTOVER BRANCH 2
+
+  process reformat_X_Y_XY_and_MT_and_remove_noninterpretables {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple datasetID, mfile, sfile, chrposexist from ch_CHRPOS_exists
+  
+      output:
+      tuple datasetID, mfile, file("prep_sfile_forced_sex_chromosome_format"), chrposexist into ch_chromosome_fixed
+      path("new_chr_sex_format")
+      path("new_chr_sex_format2")
+      path("new_chr_sex_format3")
+      tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_2
+  
+      script:
+      """
+      Cx="\$(grep "^col_CHR=" $mfile)"
+      colCHR="\$(echo "\${Cx#*=}")"
+
+      #make
+      cat $sfile | sstools-utils ad-hoc-do -k "0|funx_force_sex_chromosomes_format(\${colCHR})" -n"0,\${colCHR}" > new_chr_sex_format
+
+      #remove sex formats of unknown origin
+      colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
+      echo "\${colCHR}" > gb_ad-hoc-do_funx_CHR_sex_chrom_filter
+      cat new_chr_sex_format | sstools-utils ad-hoc-do -k "0|\${colCHR}" -n"0,CHR" | awk -vFS="\t" -vOFS="\t" 'BEGIN{getline; print \$0}; {if(\$2 > 0 && \$2 < 27){ print \$1, \$2 }}' > new_chr_sex_format2
+      #use the index to remove everything no part of chr numers 1-26 but keep original format
+      LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 -1 1 -2 1 new_chr_sex_format new_chr_sex_format2 > new_chr_sex_format3
+
+      #replace (if bp or allele info is in the same column it will be kept, as the function above only replaces the chr info part)
+      head -n1 $sfile > header
+      to_keep_from_join="\$(awk -vFS="\t" -vobj=\${colCHR} '{for (i=1; i<=NF; i++){if(obj==\$i){print "2."2}else{print "1."i}}}' header)"
+      LC_ALL=C join -t "\$(printf '\t')" -o \${to_keep_from_join} -1 1 -2 1 $sfile new_chr_sex_format3 > prep_sfile_forced_sex_chromosome_format
+      
+      #process before and after stats (the -1 is to remove the header count)
+      rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l prep_sfile_forced_sex_chromosome_format | awk '{print \$1-1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
+      """
+  }
 
   whichbuild = ['GRCh35', 'GRCh36', 'GRCh37', 'GRCh38']
   
@@ -619,7 +627,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, mfile, sfile, chrposexist from ch_CHRPOS_exists
+      tuple datasetID, mfile, sfile, chrposexist from ch_chromosome_fixed
       each build from whichbuild
   
       output:
@@ -729,6 +737,10 @@ if (params.generateMetafile){
   ch_liftover_49
     .mix(ch_liftover_44)
     .set{ ch_liftover_mix_X }
+
+  ch_desc_sex_chrom_formatting_BA_1
+    .mix(ch_desc_sex_chrom_formatting_BA_2)
+    .set{ ch_desc_sex_chrom_formatting_BA }
 
   ch_stats_genome_build_rsid
     .mix(ch_stats_genome_build_chrpos)
