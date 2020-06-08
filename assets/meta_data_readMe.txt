@@ -47,10 +47,10 @@ cleansumstats_metafile_date=
 
 path_sumStats=
 # Specify the path to the sumstats to be cleaned.  
-# Will be autofilled by template generator and used to check for redundancy.
+# Needs to be gzipped
 # Full path needed, unless sum stats and metaData in same folder
 # options: <file path>
-# example: path_sumStats=/home/anscho/data/sumstats/scz.txt
+# example: path_sumStats=/home/anscho/data/sumstats/scz.txt.gz
 
 path_readMe=
 # Specify the path to the sumstats documentation provided by authors or hosts.
