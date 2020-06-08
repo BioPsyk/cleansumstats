@@ -49,28 +49,31 @@ path_sumStats=
 # Specify the path to the sumstats to be cleaned.  
 # Will be autofilled by template generator and used to check for redundancy.
 # Full path needed, unless sum stats and metaData in same folder
-# options: <directory path>
+# options: <file path>
 # example: path_sumStats=/home/anscho/data/sumstats/scz.txt
 
 path_readMe=
 # Specify the path to the sumstats documentation provided by authors or hosts.
 # Full path needed, unless sum stats and metaData in same folder
-# options: <directory path>, missing
+# options: <file path>, missing
 # example: path_sumStats=/home/anscho/data/sumstats/scz_readMe.txt
 
 path_pdf=
 # Specify the path to the PDF corresponding to the sumstats as referenced in study PMID below.
 # Full path needed, unless sum stats and metaData in same folder
-# options: <directory path>, missing
+# options: <file path>, missing
 # example: path_sumStats=/home/anscho/data/sumstats/SCZ_108Loci.pdf
 
-path_pdfSupp=
+path_supplementary=
 # Specify the path to the supplementary information associated with the PDF corresponding to 
 # the sumstats as referenced in study PMID below.  This will not often be necessary.
-# If the files are not PDFs, convert them to PDFs.  Except for Excel files.
-# If multiple Supplements, one line per supplement.
+# If the files are not PDFs, convert them to PDFs.  Except for Excel files, or .txt files.
+# If multiple Supplements, one line per supplement can be supplied.
+# example: 
+#   path_supplementary=file1.txt
+#   path_supplementary=file2.txt
 # Full path needed, unless sum stats and metaData in same folder
-# options: <directory path>, missing
+# options: <file path>, missing
 # example: path_sumStats=/home/anscho/data/sumstats/SCZ_108Loci_Supp.pdf
 
 ########################################################################

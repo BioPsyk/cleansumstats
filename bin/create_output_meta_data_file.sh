@@ -25,7 +25,7 @@ for var in ${colNeededInMetaOutfile1[@]}; do
 done
 
 #for pdfSupp we only replace as it can have multiple lines
-grep -P "^path_pdfSupp=" ${toReplaceOrExtend} 
+grep -P "^path_supplementary=" ${toReplaceOrExtend} 
 
 colNeededInMetaOutfile2=(
 path_original_sumStats
@@ -44,7 +44,7 @@ for var in ${colNeededInMetaOutfile2[@]}; do
 done
 
 #for original_pdfSupp we only replace as it can have multiple lines
-grep -P "^path_original_pdfSupp=" ${toReplaceOrExtend} 
+grep -P "^path_original_supplementary=" ${toReplaceOrExtend} 
 
 colNeededInMetaOutfile3=(
 study_PMID

@@ -27,7 +27,7 @@ cleansumstats_metafile_date
 path_sumStats
 path_readMe
 path_pdf
-path_pdfSupp
+path_supplementary
 study_PMID
 study_Year
 study_PhenoDesc
@@ -80,7 +80,7 @@ col_Notes
 )
 
 colNeededInMetaCanHaveMultipleLines=(
-path_pdfSupp
+path_supplementary
 )
 
 # A set without the types
