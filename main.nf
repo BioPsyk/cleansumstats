@@ -331,7 +331,7 @@ if (params.generateMetafile){
       spath="\$(check_meta_file_references.sh "path_sumStats" mfile_unix_safe \$metaDir)"
       rpath="\$(check_meta_file_references.sh "path_readMe" mfile_unix_safe \$metaDir)"
       pdfpath="\$(check_meta_file_references.sh "path_pdf" mfile_unix_safe \$metaDir)"
-      check_meta_file_references.sh "path_pdfSupp" mfile_unix_safe \${metaDir} > ${datasetID}_pdf_suppfiles.txt
+      check_meta_file_references.sh "path_supplementary" mfile_unix_safe \${metaDir} > ${datasetID}_pdf_suppfiles.txt
 
       Px="\$(grep "^study_PMID=" mfile_unix_safe)"
       pmid="\$(echo "\${Px#*=}")"
@@ -1577,15 +1577,15 @@ if (params.generateMetafile){
           for fil in ${params.libdirpdfs}/pmid_${pmid}_supp/*
           do 
             supp="\$(basename "\${fil}")" 
-            echo "path_pdfSupp=${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}" >> libprep_changes_mfile 
+            echo "path_supplementary=${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}" >> libprep_changes_mfile 
             ln -s \${fil} ${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}
             #Will be set to same if the one already in library is used (only keep basename)
-            echo "path_original_pdfSupp=\${supp}" >> libprep_changes_mfile 
+            echo "path_original_supplementary=\${supp}" >> libprep_changes_mfile 
           done
         else
           # If empty then set missing (if supps exist but not in the dedicated library, then it has to be manually inserted there, and will be included in next batch update)
-            echo "path_pdfSupp=missing" >> libprep_changes_mfile
-            echo "path_original_pdfSupp=missing" >> libprep_changes_mfile
+            echo "path_supplementary=missing" >> libprep_changes_mfile
+            echo "path_original_supplementary=missing" >> libprep_changes_mfile
         fi
       else 
         i=1
@@ -1594,14 +1594,14 @@ if (params.generateMetafile){
           then
             supp2="\$(basename "\${supp}")" 
             extension="\${supp2##*.}" 
-            echo "path_pdfSupp=${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}" >> libprep_changes_mfile 
+            echo "path_supplementary=${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}" >> libprep_changes_mfile 
             ln -s ${params.libdirpdfs}/pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension} ${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}
-            echo "path_original_pdfSupp=\$supp2" >> libprep_changes_mfile 
+            echo "path_original_supplementary=\$supp2" >> libprep_changes_mfile 
             i=\$((i+1))
           else
-            # Keep missing for path_pdfSupp and set missing to path_pdfSupp_original
-            echo "path_pdfSupp=missing" >> libprep_changes_mfile
-            echo "path_original_pdfSupp=missing" >> libprep_changes_mfile
+            # Keep missing for path_supplementary and set missing to path_supplementary_original
+            echo "path_supplementary=missing" >> libprep_changes_mfile
+            echo "path_original_supplementary=missing" >> libprep_changes_mfile
           fi
         done
       fi
