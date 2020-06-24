@@ -567,7 +567,7 @@ if (params.generateMetafile){
       LC_ALL=C join -1 1 -2 1 ${fsorted} ${ch_dbsnpRSID} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$1,\$5,\$6}'  > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
        
       # Lines not possible to map
-      LC_ALL=C join -a1 -1 1 -2 4 ${fsorted} gb_lifted_and_mapped_to_GRCh37_and_GRCh38 > removed_liftover
+      LC_ALL=C join -v 1 -1 1 -2 4 ${fsorted} gb_lifted_and_mapped_to_GRCh37_and_GRCh38 > removed_liftover
       
       # Process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
@@ -688,7 +688,6 @@ if (params.generateMetafile){
   ch_liftover_2=ch_liftover.join(ch_known_genome_build)
   
   process prep_dbsnp_mapping_by_sorting_chrpos_version {
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
@@ -717,8 +716,8 @@ if (params.generateMetafile){
   
   process liftover_GRCh37_and_GRCh38_and_map_to_dbsnp_chrpos_version {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
   
       input:
       tuple datasetID, mfile, fsorted, gbmax from ch_liftover_3
@@ -726,11 +725,30 @@ if (params.generateMetafile){
       output:
       tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh37_and_GRCh38") into ch_liftover_44
       tuple datasetID, file("desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA_chrpos
+      file("removed_*")
   
       script:
       """
-      format_chrpos_for_dbsnp.sh ${gbmax} ${fsorted} ${ch_dbsnp35} ${ch_dbsnp36} ${ch_dbsnp37} ${ch_dbsnp38} > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
       
+      if [ "${gbmax}" == "GRCh38" ] ; then
+        LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp38} > lifted_middle_step 
+        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$1,\$3,\$2,\$4,\$5,\$6}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+      elif [ "${gbmax}" == "GRCh37" ] ; then
+        LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp37} > lifted_middle_step 
+        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$3,\$1,\$2,\$4,\$5,\$6}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+      elif [ "${gbmax}" == "GRCh36" ] ; then
+        LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp36} > lifted_middle_step
+        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$5,\$6,\$7}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+      elif [ "${gbmax}" == "GRCh35" ] ; then
+        LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp35} > lifted_middle_step
+        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$5,\$6,\$7}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+      else
+        echo "${gbmax} is none of the available builds 35, 36, 37 or 38"
+      fi
+
+      # Lines not possible to map
+      LC_ALL=C join -v 1 -1 1 -2 1 ${fsorted} lifted_middle_step > removed_liftover
+
       #process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh37_and_GRCh38 | awk '{print \$1}')"
@@ -763,7 +781,6 @@ if (params.generateMetafile){
 
   process remove_duplicated_chr_position_allele_rows {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
