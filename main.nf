@@ -782,6 +782,7 @@ if (params.generateMetafile){
   process remove_duplicated_chr_position_allele_rows {
   
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
   
       input:
       tuple datasetID, mfile, liftedandmapped from ch_liftover_mix_X
@@ -792,41 +793,33 @@ if (params.generateMetafile){
       file("gb_unique_rows2")
       file("gb_unique_rows3")
       file("gb_unique_rows4")
-      file("gb_duplicated_rows_removed_GRCh37")
-      file("gb_duplicated_rows_removed_GRCh37_hard")
-      //file("gb_duplicated_rows_removed_GRCh37_allele_switch_in_db")
-      file("gb_duplicated_rows_removed_GRCh38")
-      file("gb_duplicated_rows_removed_GRCh38_hard")
-      //file("gb_duplicated_rows_removed_GRCh38_allele_switch_in_db")
-      file("gb_multiallelic_rows_removed")
       tuple datasetID, file("desc_removed_duplicated_rows_GRCh37_BA") into ch_desc_removed_duplicated_rows_GRCh37_BA
       tuple datasetID, file("desc_removed_duplicated_rows_GRCh37_HARD_BA") into ch_desc_removed_duplicated_rows_GRCh37_HARD_BA
-      //tuple datasetID, file("desc_removed_duplicated_rows_GRCh37_AF_BA") into ch_desc_removed_duplicated_rows_GRCh37_AF_BA
       tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_BA") into ch_desc_removed_duplicated_rows_GRCh38_BA
       tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_HARD_BA") into ch_desc_removed_duplicated_rows_GRCh38_HARD_BA
-      //tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_AF_BA") into ch_desc_removed_duplicated_rows_GRCh38_AF_BA
       tuple datasetID, file("desc_removed_multiallelic_rows_BA") into ch_desc_removed_multiallelic_rows_BA
+      file("removed_*")
 
       script:
       """
       #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh37
-      touch gb_duplicated_rows_removed_GRCh37
-      awk 'BEGIN{r0="initrowhere"} {var=\$2"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed_GRCh37"}; r0=var}' $liftedandmapped > gb_unique_rows
+      touch removed_duplicated_rows_GRCh37
+      awk 'BEGIN{r0="initrowhere"} {var=\$2"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37"}; r0=var}' $liftedandmapped > gb_unique_rows
       #awk 'BEGIN{pos0="init"; ref="init"; alt="init"} {pos=\$2; ref=\$5; alt=\$6; if(pos0==pos && ((ref0==ref && alt0==alt) || (ref0==alt && alt0==ref))){print \$0 > "gb_duplicated_rows_removed_GRCh37_allele_switch_in_db"}else{print \$0}; pos0=\$2; ref0=\$5; alt0=\$6}' gb_unique_rows > gb_unique_rows2
       
       #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh38
-      touch gb_duplicated_rows_removed_GRCh38
-      awk 'BEGIN{r0="initrowhere"} {var=\$1"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed_GRCh38"}; r0=var}' gb_unique_rows > gb_unique_rows2
+      touch removed_duplicated_rows_GRCh38
+      awk 'BEGIN{r0="initrowhere"} {var=\$1"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38"}; r0=var}' gb_unique_rows > gb_unique_rows2
 
       #Filter only on position duplicates (A very hard filter but is good enough for alpha release)
-      touch gb_duplicated_rows_removed_GRCh37_hard
-      touch gb_duplicated_rows_removed_GRCh38_hard
-      awk 'BEGIN{r0="initrowhere"} {var=\$2; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed_GRCh37_hard"}; r0=var}' gb_unique_rows2 > gb_unique_rows3
-      awk 'BEGIN{r0="initrowhere"} {var=\$1; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_rows_removed_GRCh38_hard"}; r0=var}' gb_unique_rows3 > gb_unique_rows4
+      touch removed_duplicated_rows_GRCh37_hard
+      touch removed_duplicated_rows_GRCh38_hard
+      awk 'BEGIN{r0="initrowhere"} {var=\$2; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37_hard"}; r0=var}' gb_unique_rows2 > gb_unique_rows3
+      awk 'BEGIN{r0="initrowhere"} {var=\$1; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38_hard"}; r0=var}' gb_unique_rows3 > gb_unique_rows4
       #awk 'BEGIN{pos0="init"; ref="init"; alt="init"} {pos=\$1; ref=\$5; alt=\$6; if(pos0==pos && ((ref0==ref && alt0==alt) || (ref0==alt && alt0==ref))){print \$0 > "gb_duplicated_rows_removed_GRCh38_allele_switch_in_db"}else{print \$0}; pos0=\$2; ref0=\$5; alt0=\$6}' gb_unique_rows3 > gb_unique_rows4
       
-      touch gb_multiallelic_rows_removed
-      awk -vFS="\t" -vOFS="\t" '{if(\$6 ~ /,/){print > "gb_multiallelic_rows_removed"}else{print \$0} }' gb_unique_rows4 > gb_unique_rows5
+      touch removed_multiallelic_rows
+      awk -vFS="\t" -vOFS="\t" '{if(\$6 ~ /,/){print > "removed_multiallelic_rows"}else{print \$0} }' gb_unique_rows4 > gb_unique_rows5
       
       #process before and after stats
       rowsBefore="\$(wc -l ${liftedandmapped} | awk '{print \$1}')"
@@ -853,7 +846,6 @@ if (params.generateMetafile){
 
 
   process split_off_GRCh38 {
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
@@ -891,7 +883,6 @@ if (params.generateMetafile){
 
   process split_multiallelics_and_resort_index {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
@@ -949,15 +940,15 @@ if (params.generateMetafile){
   
   process allele_correction_A1_A2 {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
   
       input:
       tuple datasetID, build, mfile, mapped, sfile, A2exists from ch_A2_exists
       
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_exists2
-      tuple datasetID, file("disc_notGCTA"),file("disc_indel"), file("disc_hom"), file("disc_palin"), file("disc_notPossPair"), file("disc_notExpA2") into ch_describe_allele_filter1
+      tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter1
       tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
 
       script:
@@ -965,12 +956,12 @@ if (params.generateMetafile){
       echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > ${build}_acorrected
       
       #init some the files collecting variants removed because of allele composition
-      touch disc_notGCTA
-      touch disc_indel
-      touch disc_hom
-      touch disc_palin
-      touch disc_notPossPair
-      touch disc_notExpA2
+      touch removed_notGCTA
+      touch removed_indel
+      touch removed_hom
+      touch removed_palin
+      touch removed_notPossPair
+      touch removed_notExpA2
 
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
@@ -978,27 +969,27 @@ if (params.generateMetafile){
 
       #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
       rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
-      rowsAfter="\$(wc -l disc_notGCTA | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_notGCTA | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on nonGTAC characters" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" > desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not expected otherAllele in reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt
 
       rowsBefore="\${rowsAfter}"
@@ -1010,8 +1001,8 @@ if (params.generateMetafile){
   
   process allele_correction_A1 {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
   
       input:
       tuple datasetID, build, mfile, mapped, sfile, A2missing from ch_A2_missing
@@ -1020,7 +1011,7 @@ if (params.generateMetafile){
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_missing2
       file("${build}_mapped2")
       //tuple datasetID, file("disc_indel"), file("disc_notGCTA"), file("disc_notPossPair"), file("disc_palin") into ch_describe_allele_filter2
-      tuple datasetID, file("disc_notGCTA"),file("disc_indel"), file("disc_hom"), file("disc_palin"), file("disc_notPossPair"), file("disc_notExpA2") into ch_describe_allele_filter2
+      tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter2
       //tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
       tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
   
@@ -1030,39 +1021,39 @@ if (params.generateMetafile){
       echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > ${build}_acorrected
       #
       #init some the files collecting variants removed because of allele composition
-      touch disc_notGCTA
-      touch disc_indel
-      touch disc_hom
-      touch disc_palin
-      touch disc_notPossPair
-      touch disc_notExpA2
+      touch removed_notGCTA
+      touch removed_indel
+      touch removed_hom
+      touch removed_palin
+      touch removed_notPossPair
+      touch removed_notExpA2
   
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | tail -n+2 | sstools-eallele correction -f - -a >> ${build}_acorrected 
 
       #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
       rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
-      rowsAfter="\$(wc -l disc_notGCTA | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_notGCTA | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on nonGTAC characters" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" > desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt
 
       rowsBefore="\${rowsAfter}"
-      rowsAfter="\$(wc -l disc_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
+      rowsAfter="\$(wc -l removed_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not expected otherAllele in reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt
 
       rowsBefore="\${rowsAfter}"
@@ -1151,7 +1142,6 @@ if (params.generateMetafile){
   
   process filter_stats {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
