@@ -533,7 +533,8 @@ if (params.generateMetafile){
       colSNP="\$(echo "\${Sx#*=}")"
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colSNP}" -n"0,RSID" | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1}' > gb_lift
       LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
-      #
+      
+
       #process before and after stats
       rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1-1}')"
@@ -549,8 +550,8 @@ if (params.generateMetafile){
 
   process liftover_GRCh37_and_GRCh38_and_map_to_dbsnp_rsid_version {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
   
       input:
       tuple datasetID, mfile, fsorted from ch_liftover_33
@@ -559,10 +560,14 @@ if (params.generateMetafile){
       tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh37_and_GRCh38") into ch_liftover_49
       tuple datasetID, file("desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA_rsid
       tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build_rsid
-  
+      file("removed_*")
+       
       script:
       """
       LC_ALL=C join -1 1 -2 1 ${fsorted} ${ch_dbsnpRSID} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$1,\$5,\$6}'  > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+       
+      # Lines not possible to map
+      LC_ALL=C join -a1 -1 1 -2 4 ${fsorted} gb_lifted_and_mapped_to_GRCh37_and_GRCh38 > removed_liftover
       
       # Process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
