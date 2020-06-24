@@ -567,7 +567,7 @@ if (params.generateMetafile){
       LC_ALL=C join -1 1 -2 1 ${fsorted} ${ch_dbsnpRSID} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$1,\$5,\$6}'  > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
        
       # Lines not possible to map
-      LC_ALL=C join -v 1 -1 1 -2 4 ${fsorted} gb_lifted_and_mapped_to_GRCh37_and_GRCh38 > removed_liftover
+      LC_ALL=C join -v 1 -1 1 -2 4 ${fsorted} gb_lifted_and_mapped_to_GRCh37_and_GRCh38 > removed_not_matching_during_liftover
       
       # Process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
@@ -747,7 +747,7 @@ if (params.generateMetafile){
       fi
 
       # Lines not possible to map
-      LC_ALL=C join -v 1 -1 1 -2 1 ${fsorted} lifted_middle_step > removed_liftover
+      LC_ALL=C join -v 1 -1 1 -2 1 ${fsorted} lifted_middle_step > removed_not_matching_during_liftover
 
       #process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
