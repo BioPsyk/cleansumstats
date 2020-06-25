@@ -568,7 +568,8 @@ if (params.generateMetafile){
        
       # Lines not possible to map
       LC_ALL=C join -v 1 -1 1 -2 4 ${fsorted} gb_lifted_and_mapped_to_GRCh37_and_GRCh38 > removed_not_matching_during_liftover
-      
+      awk -vOFS="\t" '{print \$2,"not_matching_during_liftover"}' removed_not_matching_during_liftover > removed_not_matching_during_liftover_ix
+
       # Process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh37_and_GRCh38 | awk '{print \$1}')"
@@ -748,6 +749,7 @@ if (params.generateMetafile){
 
       # Lines not possible to map
       LC_ALL=C join -v 1 -1 1 -2 1 ${fsorted} lifted_middle_step > removed_not_matching_during_liftover
+      awk -vOFS="\t" '{print \$2,"not_matching_during_liftover"}' removed_not_matching_during_liftover > removed_not_matching_during_liftover_ix
 
       #process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
@@ -805,21 +807,24 @@ if (params.generateMetafile){
       #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh37
       touch removed_duplicated_rows_GRCh37
       awk 'BEGIN{r0="initrowhere"} {var=\$2"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37"}; r0=var}' $liftedandmapped > gb_unique_rows
-      #awk 'BEGIN{pos0="init"; ref="init"; alt="init"} {pos=\$2; ref=\$5; alt=\$6; if(pos0==pos && ((ref0==ref && alt0==alt) || (ref0==alt && alt0==ref))){print \$0 > "gb_duplicated_rows_removed_GRCh37_allele_switch_in_db"}else{print \$0}; pos0=\$2; ref0=\$5; alt0=\$6}' gb_unique_rows > gb_unique_rows2
+      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh37"}' removed_duplicated_rows_GRCh37 > removed_duplicated_rows_GRCh37_ix
       
       #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh38
       touch removed_duplicated_rows_GRCh38
       awk 'BEGIN{r0="initrowhere"} {var=\$1"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38"}; r0=var}' gb_unique_rows > gb_unique_rows2
+      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh38"}' removed_duplicated_rows_GRCh38 > removed_duplicated_rows_GRCh38_ix
 
       #Filter only on position duplicates (A very hard filter but is good enough for alpha release)
       touch removed_duplicated_rows_GRCh37_hard
       touch removed_duplicated_rows_GRCh38_hard
       awk 'BEGIN{r0="initrowhere"} {var=\$2; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37_hard"}; r0=var}' gb_unique_rows2 > gb_unique_rows3
       awk 'BEGIN{r0="initrowhere"} {var=\$1; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38_hard"}; r0=var}' gb_unique_rows3 > gb_unique_rows4
-      #awk 'BEGIN{pos0="init"; ref="init"; alt="init"} {pos=\$1; ref=\$5; alt=\$6; if(pos0==pos && ((ref0==ref && alt0==alt) || (ref0==alt && alt0==ref))){print \$0 > "gb_duplicated_rows_removed_GRCh38_allele_switch_in_db"}else{print \$0}; pos0=\$2; ref0=\$5; alt0=\$6}' gb_unique_rows3 > gb_unique_rows4
+      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh37_hard"}' removed_duplicated_rows_GRCh37_hard > removed_duplicated_rows_GRCh37_hard_ix
+      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh38_hard"}' removed_duplicated_rows_GRCh38_hard > removed_duplicated_rows_GRCh38_hard_ix
       
       touch removed_multiallelic_rows
       awk -vFS="\t" -vOFS="\t" '{if(\$6 ~ /,/){print > "removed_multiallelic_rows"}else{print \$0} }' gb_unique_rows4 > gb_unique_rows5
+      #TODO add remove_ for multiallelic rows
       
       #process before and after stats
       rowsBefore="\$(wc -l ${liftedandmapped} | awk '{print \$1}')"
@@ -949,6 +954,7 @@ if (params.generateMetafile){
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_exists2
       tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter1
+      tuple datasetID, file("removed_notGCTA_ix"),file("removed_indel_ix"), file("removed_hom_ix"), file("removed_palin_ix"), file("removed_notPossPair_ix"), file("removed_notExpA2_ix") into ch_removed_by_allele_filter_ix1
       tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
 
       script:
@@ -966,6 +972,14 @@ if (params.generateMetafile){
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | tail -n+2 | sstools-eallele correction -f - >> ${build}_acorrected
+      
+      #only keep the index to prepare for the file with all removed lines
+      awk -vOFS="\t" '{print \$1,"notGCTA"}' removed_notGCTA > removed_notGCTA_ix
+      awk -vOFS="\t" '{print \$1,"indel"}' removed_indel > removed_indel_ix
+      awk -vOFS="\t" '{print \$1,"hom"}' removed_hom > removed_hom_ix
+      awk -vOFS="\t" '{print \$1,"palin"}' removed_palin > removed_palin_ix
+      awk -vOFS="\t" '{print \$1,"notPossPair"}' removed_notPossPair > removed_notPossPair_ix
+      awk -vOFS="\t" '{print \$1,"notExpA2"}' removed_notExpA2 > removed_notExpA2_ix
 
       #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
       rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
@@ -1010,16 +1024,18 @@ if (params.generateMetafile){
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_missing2
       file("${build}_mapped2")
-      //tuple datasetID, file("disc_indel"), file("disc_notGCTA"), file("disc_notPossPair"), file("disc_palin") into ch_describe_allele_filter2
       tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter2
-      //tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
+      tuple datasetID, file("removed_notGCTA_ix"),file("removed_indel_ix"), file("removed_hom_ix"), file("removed_palin_ix"), file("removed_notPossPair_ix"), file("removed_notExpA2_ix") into ch_removed_by_allele_filter_ix2
       tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
   
       script:
       """
+
+      #NOTE to use A1 allele only complicates the filtering on possible pairs etc, so we always need a multiallelic filter in how the filter works right now.
+      # This is something we should try to accomodate to, so that it is not required. 
       multiallelic_filter.sh $mapped > ${build}_mapped2
       echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > ${build}_acorrected
-      #
+      
       #init some the files collecting variants removed because of allele composition
       touch removed_notGCTA
       touch removed_indel
@@ -1030,6 +1046,14 @@ if (params.generateMetafile){
   
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | tail -n+2 | sstools-eallele correction -f - -a >> ${build}_acorrected 
+
+      #only keep the index to prepare for the file with all removed lines
+      awk -vOFS="\t" '{print \$1,"notGCTA"}' removed_notGCTA > removed_notGCTA_ix
+      awk -vOFS="\t" '{print \$1,"indel"}' removed_indel > removed_indel_ix
+      awk -vOFS="\t" '{print \$1,"hom"}' removed_hom > removed_hom_ix
+      awk -vOFS="\t" '{print \$1,"palin"}' removed_palin > removed_palin_ix
+      awk -vOFS="\t" '{print \$1,"notPossPair"}' removed_notPossPair > removed_notPossPair_ix
+      awk -vOFS="\t" '{print \$1,"notExpA2"}' removed_notExpA2 > removed_notExpA2_ix
 
       #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
       rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
@@ -1064,6 +1088,9 @@ if (params.generateMetafile){
   }
 
   //put the two brances into the same channel (as only one will be used per file, there will be no duplicates)
+  ch_removed_by_allele_filter_ix1
+    .mix(ch_removed_by_allele_filter_ix2)
+    .set{ ch_removed_by_allele_filter_ix }
   ch_describe_allele_filter1
     .mix(ch_describe_allele_filter2)
     .set{ ch_describe_allele_filter }
@@ -1071,6 +1098,7 @@ if (params.generateMetafile){
   ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
     .mix(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA)
     .set{ ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA }
+
 
   //mix the A1_A2_both and A1_solo channels
   ch_A2_exists2
@@ -1143,18 +1171,21 @@ if (params.generateMetafile){
   process filter_stats {
   
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
   
       input:
       tuple datasetID, mfile, sfile from ch_stats_inference
       
       output:
       tuple datasetID, file("st_filtered_remains") into ch_stats_filtered_remain
-      tuple datasetID, file("st_filtered_removed")  into ch_stats_filtered_removed
-      tuple datasetID, file("desc_filtered_stat_rows_with_non_numbers_BA.txt")  into ch_desc_filtered_stat_rows_with_non_numbers_BA
+      tuple datasetID, file("removed_stat_non_numeric_in_awk") into ch_stats_filtered_removed
+      tuple datasetID, file("removed_stat_non_numeric_in_awk_ix") into ch_stats_filtered_removed_ix
+      tuple datasetID, file("desc_filtered_stat_rows_with_non_numbers_BA.txt") into ch_desc_filtered_stat_rows_with_non_numbers_BA
   
       script:
       """
-      filter_stat_values.sh $mfile $sfile > st_filtered_remains 2> st_filtered_removed
+      filter_stat_values.sh $mfile $sfile > st_filtered_remains 2> removed_stat_non_numeric_in_awk
+      awk -vOFS="\t" '{print \$1,"stat_non_numeric_in_awk"}' removed_stat_non_numeric_in_awk > removed_stat_non_numeric_in_awk_ix
       
       #process before and after stats
       rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
@@ -1172,7 +1203,6 @@ if (params.generateMetafile){
 
   process infer_stats {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
@@ -1224,7 +1254,6 @@ if (params.generateMetafile){
   
   process select_stats {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
@@ -1258,7 +1287,6 @@ if (params.generateMetafile){
 
   process describe_rows_formatted_or_filtered {
   
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
