@@ -1239,7 +1239,7 @@ if (params.generateMetafile){
           P="\$(echo "\${Px#*=}")"
   
           echo -e "QNORM" > prepared_qnorm_vals
-          cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_v1.0.0-alpha/cleansumstats_images/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm >> prepared_qnorm_vals
+          cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm >> prepared_qnorm_vals
           cut -f 1 $st_filtered | paste - prepared_qnorm_vals > prepared_qnorm_vals2
           LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" $st_filtered prepared_qnorm_vals2 > st_filtered2
   
