@@ -1191,7 +1191,7 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, file("st_filtered_remains") into ch_stats_filtered_remain
-      tuple datasetID, file("removed_stat_non_numeric_in_awk") into ch_stats_filtered_removed
+      tuple datasetID, file("removed_stat_non_numeric_in_awk")
       tuple datasetID, file("removed_stat_non_numeric_in_awk_ix") into ch_stats_filtered_removed_ix
       tuple datasetID, file("desc_filtered_stat_rows_with_non_numbers_BA.txt") into ch_desc_filtered_stat_rows_with_non_numbers_BA
   
@@ -1210,7 +1210,7 @@ if (params.generateMetafile){
   }
   
   ch_stats_filtered_remain
-    .into { ch_stats_filtered_remain1; ch_stats_filtered_remain2}
+    .into { ch_stats_filtered_remain1}
 
   ch_stats_filtered_remain1
     .combine(ch_mfile_ok5, by: 0)
@@ -1296,30 +1296,6 @@ if (params.generateMetafile){
   }
 
 
-  ch_stats_filtered_remain2
-    .combine(ch_stats_filtered_removed, by: 0)
-    .set{ ch_combined_desc_material }
-
-  process describe_rows_formatted_or_filtered {
-  
-      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-  
-      input:
-      tuple datasetID, filtered_stats_remain, filtered_stats_removed from ch_combined_desc_material
-      
-      output:
-      tuple datasetID, file("desc_st_filt_remain.txt") into ch_extra_st_filt_remain
-      tuple datasetID, file("desc_st_filt_removed.txt") into ch_extra_st_filt_removed
-  
-      script:
-      """
-      # prepare process specific descriptive statistics
-      echo "\$(wc -l $filtered_stats_remain)" | awk '{print \$1}' > desc_st_filt_remain.txt
-      cat $filtered_stats_removed | awk '{ seen[\$2] += 1 } END { for (i in seen) print i, seen[i] }' > desc_st_filt_removed.txt
-      
-      """
-  }
-
   
   
   ch_allele_corrected_mix1
@@ -1355,18 +1331,69 @@ if (params.generateMetafile){
       """
   }
 
+  //Collect and place in corresponding stepwise order
+  ch_not_matching_during_liftover
+   .combine(ch_duplicated_rows_GRCh37_ix, by: 0)
+   .combine(ch_duplicated_rows_GRCh38_ix, by: 0)
+   .combine(ch_duplicated_rows_GRCh37_hard_ix, by: 0)
+   .combine(ch_duplicated_rows_GRCh38_hard_ix, by: 0)
+   .combine(ch_removed_multiallelic_rows_ix, by: 0)
+   .combine(ch_removed_by_allele_filter_ix, by: 0)
+   .combine(ch_stats_filtered_removed_ix, by: 0)
+   .set{ ch_collected_removed_lines }
+
+  process collect_all_removed_lines {
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8 from ch_collected_removed_lines
+
+      output:
+      tuple datasetID, file("removed_lines_collected.txt") into ch_collected_removed_lines2
+
+      script:
+      """
+      echo -e "RowIndex\tExclusionReason" > removed_lines_collected.txt
+      cat ${step1} ${step2} ${step3} ${step4} ${step5} ${step6} ${step7} ${step8} >> removed_lines_collected.txt
+      """
+  }
+
+  ch_collected_removed_lines2
+    .into { ch_collected_removed_lines3; ch_collected_removed_lines4 }
+
+  process describe_removed_lines_as_table {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, filtered_stats_removed from ch_collected_removed_lines3
+      
+      output:
+      tuple datasetID, file("desc_removed_lines_table.txt") into ch_removed_lines_table
+  
+      script:
+      """
+      # prepare process specific descriptive statistics
+      echo -e "NrExcludedRows\tExclusionReason" > desc_removed_lines_table.txt
+      cat $filtered_stats_removed | tail -n+2 | awk -vOFS="\t" '{ seen[\$2] += 1 } END { for (i in seen) print seen[i],i }' >> desc_removed_lines_table.txt
+
+      """
+  }
+
+
   ch_cleaned_file
     .combine(ch_input_sfile, by: 0)
     .combine(ch_sfile_on_stream5, by: 0)
+    .combine(ch_collected_removed_lines4, by: 0)
     .set{ ch_to_write_to_filelibrary2 }
 
   process gzip_outfiles {
 
       input:
-      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted from ch_to_write_to_filelibrary2
+      tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, removedlines from ch_to_write_to_filelibrary2
 
       output:
-      tuple datasetID, path("sclean.gz"), path("scleanGRCh38.gz"), inputsfile, path("raw_formatted_rowindexed.gz"), path("cleanedheader") into ch_to_write_to_filelibrary3
+      tuple datasetID, path("sclean.gz"), path("scleanGRCh38.gz"), inputsfile, path("raw_formatted_rowindexed.gz"), path("cleanedheader"), path("removed_lines.gz") into ch_to_write_to_filelibrary3
       val datasetID into ch_check_avail
 
       script:
@@ -1378,6 +1405,7 @@ if (params.generateMetafile){
       gzip -c ${sclean} > sclean.gz
       gzip -c ${scleanGRCh38} > scleanGRCh38.gz
       gzip -c ${inputformatted} > raw_formatted_rowindexed.gz
+      gzip -c ${removedlines} > removed_lines.gz
       """
   }
   
@@ -1445,33 +1473,6 @@ if (params.generateMetafile){
       cat $step18 | awk -vFS="\t" -vOFS="\t" '{print "Step18", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
       """
   }
-  //Collect and place in corresponding stepwise order
-  ch_not_matching_during_liftover
-   .combine(ch_duplicated_rows_GRCh37_ix, by: 0)
-   .combine(ch_duplicated_rows_GRCh38_ix, by: 0)
-   .combine(ch_duplicated_rows_GRCh37_hard_ix, by: 0)
-   .combine(ch_duplicated_rows_GRCh38_hard_ix, by: 0)
-   .combine(ch_removed_multiallelic_rows_ix, by: 0)
-   .combine(ch_removed_by_allele_filter_ix, by: 0)
-   .combine(ch_stats_filtered_removed_ix, by: 0)
-   .set{ ch_collected_removed_lines }
-
-  process collect_all_removed_lines {
-      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-
-      input:
-      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8 from ch_collected_removed_lines
-
-      output:
-      tuple datasetID, file("removed_lines_collected.txt") into ch_collected_removed_lines2
-
-      script:
-      """
-      echo -e "RowIndex\tExclusionReason" > removed_lines_collected.txt
-      cat ${step1} ${step2} ${step3} ${step4} ${step5} ${step6} ${step7} ${step8} >> removed_lines_collected.txt
-      """
-  }
-
 
   ch_preassigned_sumstat_id
    .combine(ch_check_avail, by: 0)
@@ -1586,12 +1587,13 @@ if (params.generateMetafile){
    .combine(ch_input_pdf_stuff3, by: 0)
    .combine(ch_one_line_metafile, by: 0)
    .combine(ch_overview_workflow_steps, by: 0)
-   .combine(ch_extra_st_filt_removed, by: 0)
+   .combine(ch_removed_lines_table, by: 0)
    .combine(ch_desc_allele_filter_removed, by: 0)
    .combine(ch_stats_genome_build, by: 0)
    .combine(ch_software_versions)
    .set{ ch_to_write_to_filelibrary7 }
 
+   //.combine(ch_collected_removed_lines2)
 
   process put_in_library {
   
@@ -1599,7 +1601,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true, pattern: 'libprep_*'
 
       input:
-      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, cleanedheader, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, stfiltremoved, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
+      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, cleanedheader, removedlines, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, removedlinestable, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
       
       output:
       path("sumstat_*")
@@ -1697,6 +1699,7 @@ if (params.generateMetafile){
       # Store data in library by moving
       cp ${sclean} ${libfolder}_cleaned_GRCh37.gz
       cp ${scleanGRCh38} ${libfolder}_cleaned_GRCh38.gz
+      cp ${removedlines} ${libfolder}_removed_lines.gz
       cp ${inputformatted} ${libfolder}_raw_formatted_rowindexed.gz
       cp $inputsfile ${libfolder}_raw.gz
       if [ "${readme}" != "missing" ] ; then
@@ -1710,7 +1713,7 @@ if (params.generateMetafile){
       # Make a folder with detailed data of the cleaning
       mkdir ${libfolder}_cleaning_details
       cp $overviewworkflow ${libfolder}_cleaning_details/${libfolder}_stepwise_overview.txt
-      cp ${stfiltremoved} ${libfolder}_cleaning_details/${libfolder}_stat_filter_table_of_removed_types.txt
+      cp ${removedlinestable} ${libfolder}_cleaning_details/${libfolder}_removed_lines_per_type_table.txt
       cp $allelefiltremoved ${libfolder}_cleaning_details/${libfolder}_allele_filter_table_of_removed_types.txt
       cp $gbdetect ${libfolder}_cleaning_details/${libfolder}_genome_build_map_count_table.txt
       
