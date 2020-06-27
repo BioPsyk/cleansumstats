@@ -963,7 +963,7 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_exists2
-      tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter1
+      //tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter1
       tuple datasetID, file("removed_allele_filter_ix") into ch_removed_by_allele_filter_ix1
       tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
 
@@ -1035,7 +1035,7 @@ if (params.generateMetafile){
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_missing2
       file("${build}_mapped2")
-      tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter2
+      //tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter2
       tuple datasetID, file("removed_allele_filter_ix") into ch_removed_by_allele_filter_ix2
       tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
   
@@ -1104,9 +1104,9 @@ if (params.generateMetafile){
     .mix(ch_removed_by_allele_filter_ix2)
     .set{ ch_removed_by_allele_filter_ix }
 
-  ch_describe_allele_filter1
-    .mix(ch_describe_allele_filter2)
-    .set{ ch_describe_allele_filter }
+ // ch_describe_allele_filter1
+ //   .mix(ch_describe_allele_filter2)
+ //   .set{ ch_describe_allele_filter }
 
   ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
     .mix(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA)
@@ -1155,30 +1155,30 @@ if (params.generateMetafile){
   ch_allele_corrected_mix_Y
     .into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
 
-  process describe_rows_filtered_by_allele_filter {
-  
-      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
-      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-  
-      input:
-      tuple datasetID, disc_notGCTA, disc_indel, disc_hom, disc_palin, disc_notPossPair, disc_notExpA2 from ch_describe_allele_filter
-      
-      output:
-      tuple datasetID, file("desc_gb_filt_remove_by_allele_filter.txt") into ch_desc_allele_filter_removed
-  
-      script:
-      """
-
-      # prepare process specific descriptive statistics
-      echo -e "rowsremoved\tfiltertype" > desc_gb_filt_remove_by_allele_filter.txt
-      echo "\$(wc -l $disc_notGCTA)" | awk -vOFS="\t" '{print \$1, "notAnyOfATGC"}' >> desc_gb_filt_remove_by_allele_filter.txt
-      echo "\$(wc -l $disc_indel)" | awk -vOFS="\t" '{print \$1, "indels"}' >> desc_gb_filt_remove_by_allele_filter.txt
-      echo "\$(wc -l $disc_hom)" | awk -vOFS="\t" '{print \$1, "homozygotes"}' >> desc_gb_filt_remove_by_allele_filter.txt
-      echo "\$(wc -l $disc_palin)" | awk -vOFS="\t" '{print \$1, "palindromes"}' >> desc_gb_filt_remove_by_allele_filter.txt
-      echo "\$(wc -l $disc_notPossPair)" | awk -vOFS="\t" '{print \$1, "notPossiblePairs"}' >> desc_gb_filt_remove_by_allele_filter.txt
-      echo "\$(wc -l $disc_notExpA2)" | awk -vOFS="\t" '{print \$1, "notExpectedOtherAllele"}' >> desc_gb_filt_remove_by_allele_filter.txt
-      """
-  }
+//  process describe_rows_filtered_by_allele_filter {
+//  
+//      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
+//      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+//  
+//      input:
+//      tuple datasetID, disc_notGCTA, disc_indel, disc_hom, disc_palin, disc_notPossPair, disc_notExpA2 from ch_describe_allele_filter
+//      
+//      output:
+//      tuple datasetID, file("desc_gb_filt_remove_by_allele_filter.txt") into ch_desc_allele_filter_removed
+//  
+//      script:
+//      """
+//
+//      # prepare process specific descriptive statistics
+//      echo -e "rowsremoved\tfiltertype" > desc_gb_filt_remove_by_allele_filter.txt
+//      echo "\$(wc -l $disc_notGCTA)" | awk -vOFS="\t" '{print \$1, "notAnyOfATGC"}' >> desc_gb_filt_remove_by_allele_filter.txt
+//      echo "\$(wc -l $disc_indel)" | awk -vOFS="\t" '{print \$1, "indels"}' >> desc_gb_filt_remove_by_allele_filter.txt
+//      echo "\$(wc -l $disc_hom)" | awk -vOFS="\t" '{print \$1, "homozygotes"}' >> desc_gb_filt_remove_by_allele_filter.txt
+//      echo "\$(wc -l $disc_palin)" | awk -vOFS="\t" '{print \$1, "palindromes"}' >> desc_gb_filt_remove_by_allele_filter.txt
+//      echo "\$(wc -l $disc_notPossPair)" | awk -vOFS="\t" '{print \$1, "notPossiblePairs"}' >> desc_gb_filt_remove_by_allele_filter.txt
+//      echo "\$(wc -l $disc_notExpA2)" | awk -vOFS="\t" '{print \$1, "notExpectedOtherAllele"}' >> desc_gb_filt_remove_by_allele_filter.txt
+//      """
+//  }
   
   
   process filter_stats {
@@ -1588,7 +1588,6 @@ if (params.generateMetafile){
    .combine(ch_one_line_metafile, by: 0)
    .combine(ch_overview_workflow_steps, by: 0)
    .combine(ch_removed_lines_table, by: 0)
-   .combine(ch_desc_allele_filter_removed, by: 0)
    .combine(ch_stats_genome_build, by: 0)
    .combine(ch_software_versions)
    .set{ ch_to_write_to_filelibrary7 }
@@ -1601,7 +1600,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true, pattern: 'libprep_*'
 
       input:
-      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, cleanedheader, removedlines, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, removedlinestable, allelefiltremoved, gbdetect, softv from ch_to_write_to_filelibrary7
+      tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, cleanedheader, removedlines, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, removedlinestable, gbdetect, softv from ch_to_write_to_filelibrary7
       
       output:
       path("sumstat_*")
@@ -1714,7 +1713,6 @@ if (params.generateMetafile){
       mkdir ${libfolder}_cleaning_details
       cp $overviewworkflow ${libfolder}_cleaning_details/${libfolder}_stepwise_overview.txt
       cp ${removedlinestable} ${libfolder}_cleaning_details/${libfolder}_removed_lines_per_type_table.txt
-      cp $allelefiltremoved ${libfolder}_cleaning_details/${libfolder}_allele_filter_table_of_removed_types.txt
       cp $gbdetect ${libfolder}_cleaning_details/${libfolder}_genome_build_map_count_table.txt
       
       # Add link to the pdf and supplemental material
