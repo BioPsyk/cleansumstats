@@ -804,36 +804,33 @@ if (params.generateMetafile){
       tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_BA") into ch_desc_removed_duplicated_rows_GRCh38_BA
       tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_HARD_BA") into ch_desc_removed_duplicated_rows_GRCh38_HARD_BA
       tuple datasetID, file("desc_removed_multiallelic_rows_BA") into ch_desc_removed_multiallelic_rows_BA
-      tuple datasetID, file("removed_duplicated_rows_GRCh37_ix") into ch_duplicated_rows_GRCh37_ix
-      tuple datasetID, file("removed_duplicated_rows_GRCh38_ix") into ch_duplicated_rows_GRCh38_ix
-      tuple datasetID, file("removed_duplicated_rows_GRCh37_hard_ix") into ch_duplicated_rows_GRCh37_hard_ix
-      tuple datasetID, file("removed_duplicated_rows_GRCh38_hard_ix") into ch_duplicated_rows_GRCh38_hard_ix
-      tuple datasetID, file("removed_multiallelic_rows_ix") into ch_removed_multiallelic_rows_ix
+      tuple datasetID, file("removed_duplicated_rows") into removed_rows_before_after_liftover_ix
       file("removed_*")
 
       script:
       """
+      touch removed_duplicated_rows
+      
       #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh37
-      touch removed_duplicated_rows_GRCh37
       awk 'BEGIN{r0="initrowhere"} {var=\$2"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37"}; r0=var}' $liftedandmapped > gb_unique_rows
-      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh37"}' removed_duplicated_rows_GRCh37 > removed_duplicated_rows_GRCh37_ix
+      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh37"}' removed_duplicated_rows_GRCh37 >> removed_duplicated_rows
       
       #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh38
       touch removed_duplicated_rows_GRCh38
       awk 'BEGIN{r0="initrowhere"} {var=\$1"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38"}; r0=var}' gb_unique_rows > gb_unique_rows2
-      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh38"}' removed_duplicated_rows_GRCh38 > removed_duplicated_rows_GRCh38_ix
+      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh38"}' removed_duplicated_rows_GRCh38 >> removed_duplicated_rows
 
       #Filter only on position duplicates (A very hard filter but is good enough for alpha release)
       touch removed_duplicated_rows_GRCh37_hard
       touch removed_duplicated_rows_GRCh38_hard
       awk 'BEGIN{r0="initrowhere"} {var=\$2; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37_hard"}; r0=var}' gb_unique_rows2 > gb_unique_rows3
       awk 'BEGIN{r0="initrowhere"} {var=\$1; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38_hard"}; r0=var}' gb_unique_rows3 > gb_unique_rows4
-      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh37_hard"}' removed_duplicated_rows_GRCh37_hard > removed_duplicated_rows_GRCh37_hard_ix
-      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh38_hard"}' removed_duplicated_rows_GRCh38_hard > removed_duplicated_rows_GRCh38_hard_ix
+      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh37_hard"}' removed_duplicated_rows_GRCh37_hard >> removed_duplicated_rows
+      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh38_hard"}' removed_duplicated_rows_GRCh38_hard >> removed_duplicated_rows
       
       touch removed_multiallelic_rows
       awk -vFS="\t" -vOFS="\t" '{if(\$6 ~ /,/){print > "removed_multiallelic_rows"}else{print \$0} }' gb_unique_rows4 > gb_unique_rows5
-      awk -vOFS="\t" '{print \$3,"multiallelic_in_dbsnp"}' removed_multiallelic_rows > removed_multiallelic_rows_ix
+      awk -vOFS="\t" '{print \$3,"multiallelic_in_dbsnp"}' removed_multiallelic_rows >> removed_duplicated_rows
       #TODO add remove_ for multiallelic rows
       
       #process before and after stats
@@ -963,7 +960,6 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_exists2
-      //tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter1
       tuple datasetID, file("removed_allele_filter_ix") into ch_removed_by_allele_filter_ix1
       tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
 
@@ -1035,7 +1031,6 @@ if (params.generateMetafile){
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_missing2
       file("${build}_mapped2")
-      //tuple datasetID, file("removed_notGCTA"),file("removed_indel"), file("removed_hom"), file("removed_palin"), file("removed_notPossPair"), file("removed_notExpA2") into ch_describe_allele_filter2
       tuple datasetID, file("removed_allele_filter_ix") into ch_removed_by_allele_filter_ix2
       tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
   
@@ -1184,9 +1179,6 @@ if (params.generateMetafile){
   }
   
   ch_stats_filtered_remain
-    .into { ch_stats_filtered_remain1}
-
-  ch_stats_filtered_remain1
     .combine(ch_mfile_ok5, by: 0)
     .set{ ch_stats_filtered_remain3 }
 
@@ -1307,11 +1299,7 @@ if (params.generateMetafile){
 
   //Collect and place in corresponding stepwise order
   ch_not_matching_during_liftover
-   .combine(ch_duplicated_rows_GRCh37_ix, by: 0)
-   .combine(ch_duplicated_rows_GRCh38_ix, by: 0)
-   .combine(ch_duplicated_rows_GRCh37_hard_ix, by: 0)
-   .combine(ch_duplicated_rows_GRCh38_hard_ix, by: 0)
-   .combine(ch_removed_multiallelic_rows_ix, by: 0)
+   .combine(removed_rows_before_after_liftover_ix, by: 0)
    .combine(ch_removed_by_allele_filter_ix, by: 0)
    .combine(ch_stats_filtered_removed_ix, by: 0)
    .set{ ch_collected_removed_lines }
@@ -1320,7 +1308,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8 from ch_collected_removed_lines
+      tuple datasetID, step1, step2, step3, step4 from ch_collected_removed_lines
 
       output:
       tuple datasetID, file("removed_lines_collected.txt") into ch_collected_removed_lines2
@@ -1328,7 +1316,7 @@ if (params.generateMetafile){
       script:
       """
       echo -e "RowIndex\tExclusionReason" > removed_lines_collected.txt
-      cat ${step1} ${step2} ${step3} ${step4} ${step5} ${step6} ${step7} ${step8} >> removed_lines_collected.txt
+      cat ${step1} ${step2} ${step3} ${step4} >> removed_lines_collected.txt
       """
   }
 
