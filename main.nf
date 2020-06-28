@@ -795,17 +795,10 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, mfile, file("gb_unique_rows5") into ch_liftover_4
-      file("gb_unique_rows")
-      file("gb_unique_rows2")
-      file("gb_unique_rows3")
-      file("gb_unique_rows4")
-      tuple datasetID, file("desc_removed_duplicated_rows_GRCh37_BA") into ch_desc_removed_duplicated_rows_GRCh37_BA
-      tuple datasetID, file("desc_removed_duplicated_rows_GRCh37_HARD_BA") into ch_desc_removed_duplicated_rows_GRCh37_HARD_BA
-      tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_BA") into ch_desc_removed_duplicated_rows_GRCh38_BA
-      tuple datasetID, file("desc_removed_duplicated_rows_GRCh38_HARD_BA") into ch_desc_removed_duplicated_rows_GRCh38_HARD_BA
-      tuple datasetID, file("desc_removed_multiallelic_rows_BA") into ch_desc_removed_multiallelic_rows_BA
+      tuple datasetID, file("desc_removed_duplicated_rows") into removed_rows_before_after_liftover
       tuple datasetID, file("removed_duplicated_rows") into removed_rows_before_after_liftover_ix
       file("removed_*")
+      file("gb_unique_rows*")
 
       script:
       """
@@ -836,23 +829,23 @@ if (params.generateMetafile){
       #process before and after stats
       rowsBefore="\$(wc -l ${liftedandmapped} | awk '{print \$1}')"
       rowsAfter="\$(wc -l gb_unique_rows | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT, GRCh37" > desc_removed_duplicated_rows_GRCh37_BA
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT, GRCh37" >> desc_removed_duplicated_rows
 
       rowsBefore="\$(wc -l gb_unique_rows | awk '{print \$1}')"
       rowsAfter="\$(wc -l gb_unique_rows2 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT, GRCh38" > desc_removed_duplicated_rows_GRCh38_BA
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT, GRCh38" >> desc_removed_duplicated_rows
 
       rowsBefore="\$(wc -l gb_unique_rows2 | awk '{print \$1}')"
       rowsAfter="\$(wc -l gb_unique_rows3 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh37" > desc_removed_duplicated_rows_GRCh37_HARD_BA
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh37" >> desc_removed_duplicated_rows
 
       rowsBefore="\$(wc -l gb_unique_rows3 | awk '{print \$1}')"
       rowsAfter="\$(wc -l gb_unique_rows4 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh38" > desc_removed_duplicated_rows_GRCh38_HARD_BA
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh38" >> desc_removed_duplicated_rows
 
       rowsBefore="\$(wc -l gb_unique_rows4 | awk '{print \$1}')"
       rowsAfter="\$(wc -l gb_unique_rows5 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved multi-allelics" > desc_removed_multiallelic_rows_BA
+      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved multi-allelics" >> desc_removed_duplicated_rows
       """
   }
 
@@ -1378,11 +1371,7 @@ if (params.generateMetafile){
    .combine(ch_desc_sex_chrom_formatting_BA, by: 0)
    .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
    .combine(ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA, by: 0)
-   .combine(ch_desc_removed_duplicated_rows_GRCh37_BA, by: 0)
-   .combine(ch_desc_removed_duplicated_rows_GRCh38_BA, by: 0)
-   .combine(ch_desc_removed_duplicated_rows_GRCh37_HARD_BA, by: 0)
-   .combine(ch_desc_removed_duplicated_rows_GRCh38_HARD_BA, by: 0)
-   .combine(ch_desc_removed_multiallelic_rows_BA, by: 0)
+   .combine(removed_rows_before_after_liftover, by: 0)
    .combine(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
    .combine(ch_desc_keep_only_GRCh37_version_BA, by: 0)
    .combine(ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
@@ -1399,14 +1388,14 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10, step11a, step11b, step12, step13a, step13b, step13c, step13d, step13e, step13f, step13g, step14, step15, step16, step17a, step17b, step18 from ch_collected_workflow_stepwise_stats
+      tuple datasetID, step1, step2, step3, step4, step5, step6, step11a, step11b, step12, step13a, step13b, step13c, step13d, step13e, step13f, step13g, step14, step15, step16, step17a, step17b, step18 from ch_collected_workflow_stepwise_stats
 
       output:
       tuple datasetID, file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
 
       script:
       """
-      cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11a $step11b $step12 $step13a $step13b $step13c $step13d $step13e $step13f $step13g $step14 $step15 $step16 $step17a $step17b $step18 > all_removed_steps
+      cat $step1 $step2 $step3 $step4 $step5 $step6 $step11a $step11b $step12 $step13a $step13b $step13c $step13d $step13e $step13f $step13g $step14 $step15 $step16 $step17a $step17b $step18 > all_removed_steps
 
       echo -e "Steps\tBefore\tAfter\tDescription" > desc_collected_workflow_stepwise_stats.txt
       awk -vFS="\t" -vOFS="\t" '{print "Step"NR, \$1, \$2, \$3}' all_removed_steps >> desc_collected_workflow_stepwise_stats.txt
