@@ -1155,32 +1155,6 @@ if (params.generateMetafile){
   ch_allele_corrected_mix_Y
     .into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
 
-//  process describe_rows_filtered_by_allele_filter {
-//  
-//      //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
-//      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-//  
-//      input:
-//      tuple datasetID, disc_notGCTA, disc_indel, disc_hom, disc_palin, disc_notPossPair, disc_notExpA2 from ch_describe_allele_filter
-//      
-//      output:
-//      tuple datasetID, file("desc_gb_filt_remove_by_allele_filter.txt") into ch_desc_allele_filter_removed
-//  
-//      script:
-//      """
-//
-//      # prepare process specific descriptive statistics
-//      echo -e "rowsremoved\tfiltertype" > desc_gb_filt_remove_by_allele_filter.txt
-//      echo "\$(wc -l $disc_notGCTA)" | awk -vOFS="\t" '{print \$1, "notAnyOfATGC"}' >> desc_gb_filt_remove_by_allele_filter.txt
-//      echo "\$(wc -l $disc_indel)" | awk -vOFS="\t" '{print \$1, "indels"}' >> desc_gb_filt_remove_by_allele_filter.txt
-//      echo "\$(wc -l $disc_hom)" | awk -vOFS="\t" '{print \$1, "homozygotes"}' >> desc_gb_filt_remove_by_allele_filter.txt
-//      echo "\$(wc -l $disc_palin)" | awk -vOFS="\t" '{print \$1, "palindromes"}' >> desc_gb_filt_remove_by_allele_filter.txt
-//      echo "\$(wc -l $disc_notPossPair)" | awk -vOFS="\t" '{print \$1, "notPossiblePairs"}' >> desc_gb_filt_remove_by_allele_filter.txt
-//      echo "\$(wc -l $disc_notExpA2)" | awk -vOFS="\t" '{print \$1, "notExpectedOtherAllele"}' >> desc_gb_filt_remove_by_allele_filter.txt
-//      """
-//  }
-  
-  
   process filter_stats {
   
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
