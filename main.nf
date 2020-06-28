@@ -954,7 +954,7 @@ if (params.generateMetafile){
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_exists2
       tuple datasetID, file("removed_allele_filter_ix") into ch_removed_by_allele_filter_ix1
-      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
+      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
 
       script:
       """
@@ -984,32 +984,33 @@ if (params.generateMetafile){
       #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
       rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l removed_notGCTA | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on nonGTAC characters" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on nonGTAC characters" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" > desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not expected otherAllele in reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not expected otherAllele in reference db" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1-1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tsanity sanity check that final filtered file before and after file have same row count" > desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tsanity sanity check that final filtered file before and after file have same row count" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
       """
+
   }
   
   
@@ -1023,9 +1024,9 @@ if (params.generateMetafile){
       
       output:
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_missing2
-      file("${build}_mapped2")
       tuple datasetID, file("removed_allele_filter_ix") into ch_removed_by_allele_filter_ix2
-      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt"), file("desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
+      tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
+      file("${build}_mapped2")
   
       script:
       """
@@ -1058,31 +1059,31 @@ if (params.generateMetafile){
       #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
       rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l removed_notGCTA | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on nonGTAC characters" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notGCTA_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on nonGTAC characters" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" > desc_filtered_allele-pairs_with_dbsnp_as_reference_indel_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_hom_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes" > desc_filtered_allele-pairs_with_dbsnp_as_reference_palin_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notPossPair_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l removed_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not expected otherAllele in reference db" > desc_filtered_allele-pairs_with_dbsnp_as_reference_notExpA2_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not expected otherAllele in reference db" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1-1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tsanity sanity check that final filtered file before and after file have same row count" > desc_filtered_allele-pairs_with_dbsnp_as_reference_sanity_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tsanity sanity check that final filtered file before and after file have same row count" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
   
       """
   }
@@ -1388,14 +1389,14 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4, step5, step6, step11a, step11b, step12, step13a, step13b, step13c, step13d, step13e, step13f, step13g, step14, step15, step16, step17a, step17b, step18 from ch_collected_workflow_stepwise_stats
+      tuple datasetID, step1, step2, step3, step4, step5, step6, step11a, step11b, step12, step13, step14, step15, step16, step17a, step17b, step18 from ch_collected_workflow_stepwise_stats
 
       output:
       tuple datasetID, file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
 
       script:
       """
-      cat $step1 $step2 $step3 $step4 $step5 $step6 $step11a $step11b $step12 $step13a $step13b $step13c $step13d $step13e $step13f $step13g $step14 $step15 $step16 $step17a $step17b $step18 > all_removed_steps
+      cat $step1 $step2 $step3 $step4 $step5 $step6 $step11a $step11b $step12 $step13 $step14 $step15 $step16 $step17a $step17b $step18 > all_removed_steps
 
       echo -e "Steps\tBefore\tAfter\tDescription" > desc_collected_workflow_stepwise_stats.txt
       awk -vFS="\t" -vOFS="\t" '{print "Step"NR, \$1, \$2, \$3}' all_removed_steps >> desc_collected_workflow_stepwise_stats.txt
