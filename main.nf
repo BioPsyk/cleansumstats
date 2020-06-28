@@ -1406,33 +1406,11 @@ if (params.generateMetafile){
 
       script:
       """
+      cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11a $step11b $step12 $step13a $step13b $step13c $step13d $step13e $step13f $step13g $step14 $step15 $step16 $step17a $step17b $step18 > all_removed_steps
+
       echo -e "Steps\tBefore\tAfter\tDescription" > desc_collected_workflow_stepwise_stats.txt
-      cat $step1 | awk -vFS="\t" -vOFS="\t" '{print "Step1", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step2 | awk -vFS="\t" -vOFS="\t" '{print "Step2", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step3 | awk -vFS="\t" -vOFS="\t" '{print "Step3", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step4 | awk -vFS="\t" -vOFS="\t" '{print "Step4", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step5 | awk -vFS="\t" -vOFS="\t" '{print "Step5", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step6 | awk -vFS="\t" -vOFS="\t" '{print "Step6", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step7 | awk -vFS="\t" -vOFS="\t" '{print "Step7", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step8 | awk -vFS="\t" -vOFS="\t" '{print "Step8", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step9 | awk -vFS="\t" -vOFS="\t" '{print "Step9", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step10 | awk -vFS="\t" -vOFS="\t" '{print "Step10", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step11a | awk -vFS="\t" -vOFS="\t" '{print "Step11a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step11b | awk -vFS="\t" -vOFS="\t" '{print "Step11b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step12 | awk -vFS="\t" -vOFS="\t" '{print "Step12", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13a | awk -vFS="\t" -vOFS="\t" '{print "Step13a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13b | awk -vFS="\t" -vOFS="\t" '{print "Step13b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13c | awk -vFS="\t" -vOFS="\t" '{print "Step13c", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13d | awk -vFS="\t" -vOFS="\t" '{print "Step13d", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13e | awk -vFS="\t" -vOFS="\t" '{print "Step13e", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13f | awk -vFS="\t" -vOFS="\t" '{print "Step13f", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step13g | awk -vFS="\t" -vOFS="\t" '{print "Step13g", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step14 | awk -vFS="\t" -vOFS="\t" '{print "Step14", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step15 | awk -vFS="\t" -vOFS="\t" '{print "Step15", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step16 | awk -vFS="\t" -vOFS="\t" '{print "Step16", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step17a | awk -vFS="\t" -vOFS="\t" '{print "Step17a", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step17b | awk -vFS="\t" -vOFS="\t" '{print "Step17b", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
-      cat $step18 | awk -vFS="\t" -vOFS="\t" '{print "Step18", \$1, \$2, \$3}' >> desc_collected_workflow_stepwise_stats.txt
+      awk -vFS="\t" -vOFS="\t" '{print "Step"NR, \$1, \$2, \$3}' all_removed_steps >> desc_collected_workflow_stepwise_stats.txt
+
       """
   }
 
