@@ -328,9 +328,12 @@ if (params.generateMetafile){
       #  this is because a metafile can have the same name as another even though the content might be different. 
 
       # Check if field for variable exists and if the file specified exists
-      spath="\$(check_meta_file_references.sh "path_sumStats" mfile_unix_safe \$metaDir)"
-      rpath="\$(check_meta_file_references.sh "path_readMe" mfile_unix_safe \$metaDir)"
-      pdfpath="\$(check_meta_file_references.sh "path_pdf" mfile_unix_safe \$metaDir)"
+      check_meta_file_references.sh "path_sumStats" mfile_unix_safe \$metaDir > spath.txt
+      spath="\$(cat spath.txt)"
+      check_meta_file_references.sh "path_readMe" mfile_unix_safe \$metaDir > rpath.txt
+      rpath="\$(cat rpath.txt)"
+      check_meta_file_references.sh "path_pdf" mfile_unix_safe \$metaDir > pdfpath.txt
+      pdfpath="\$(cat pdfpath.txt)"
       check_meta_file_references.sh "path_supplementary" mfile_unix_safe \${metaDir} > ${datasetID}_pdf_suppfiles.txt
 
       Px="\$(grep "^study_PMID=" mfile_unix_safe)"
