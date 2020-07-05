@@ -33,6 +33,15 @@ def helpMessage() {
     Options:
       --placeholderOption           Generates a meta file template, which is one of the required inputs to the cleansumstats pipeline
 
+    Filtering:
+      --afterLiftoverFilter         A comma separated list ordered by filtering exclusion order including any of the following:
+                                      duplicated_chrpos_refalt_in_GRCh37
+                                      duplicated_chrpos_refalt_in_GRCh38
+                                      duplicated_chrpos_in_GRCh37
+                                      duplicated_chrpos_in_GRCh38
+                                      multiallelics_in_dbsnp
+                                    Example(default): --afterLiftoverFilter duplicated_chrpos_refalt_in_GRCh37,duplicated_chrpos_refalt_in_GRCh38,duplicated_chrpos_in_GRCh37,duplicated_chrpos_in_GRCh38,multiallelics_in_dbsnp
+
     Auxiliaries:
       --generateMetafile            Generates a meta file template, which is one of the required inputs to the cleansumstats pipeline
 
@@ -68,6 +77,8 @@ if (params.help) {
 //    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(", ")}"
 //}
 
+// check filter
+afterLiftoverFilter = params.afterLiftoverFilter
 
 // Set channels
 if (params.dbsnp38) { ch_dbsnp38 = file(params.dbsnp38, checkIfExists: true) }
@@ -797,58 +808,17 @@ if (params.generateMetafile){
       tuple datasetID, mfile, liftedandmapped from ch_liftover_mix_X
       
       output:
-      tuple datasetID, mfile, file("gb_unique_rows5") into ch_liftover_4
+      tuple datasetID, mfile, file("gb_unique_rows") into ch_liftover_4
       tuple datasetID, file("desc_removed_duplicated_rows") into removed_rows_before_after_liftover
       tuple datasetID, file("removed_duplicated_rows") into removed_rows_before_after_liftover_ix
       file("removed_*")
-      file("gb_unique_rows*")
+      file("afterLiftoverFiltering_executionorder")
 
       script:
       """
-      touch removed_duplicated_rows
-      
-      #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh37
-      awk 'BEGIN{r0="initrowhere"} {var=\$2"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37"}; r0=var}' $liftedandmapped > gb_unique_rows
-      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh37"}' removed_duplicated_rows_GRCh37 >> removed_duplicated_rows
-      
-      #remove all but the first ecnountered row where chr:pos REF and ALT for GRCh38
-      touch removed_duplicated_rows_GRCh38
-      awk 'BEGIN{r0="initrowhere"} {var=\$1"-"\$5"-"\$6; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38"}; r0=var}' gb_unique_rows > gb_unique_rows2
-      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh38"}' removed_duplicated_rows_GRCh38 >> removed_duplicated_rows
+      echo ${afterLiftoverFilter} > tmp_alof
+      filter_after_liftover.sh $liftedandmapped ${afterLiftoverFilter}
 
-      #Filter only on position duplicates (A very hard filter but is good enough for alpha release)
-      touch removed_duplicated_rows_GRCh37_hard
-      touch removed_duplicated_rows_GRCh38_hard
-      awk 'BEGIN{r0="initrowhere"} {var=\$2; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37_hard"}; r0=var}' gb_unique_rows2 > gb_unique_rows3
-      awk 'BEGIN{r0="initrowhere"} {var=\$1; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38_hard"}; r0=var}' gb_unique_rows3 > gb_unique_rows4
-      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh37_hard"}' removed_duplicated_rows_GRCh37_hard >> removed_duplicated_rows
-      awk -vOFS="\t" '{print \$3,"duplicated_rows_GRCh38_hard"}' removed_duplicated_rows_GRCh38_hard >> removed_duplicated_rows
-      
-      touch removed_multiallelic_rows
-      awk -vFS="\t" -vOFS="\t" '{if(\$6 ~ /,/){print > "removed_multiallelic_rows"}else{print \$0} }' gb_unique_rows4 > gb_unique_rows5
-      awk -vOFS="\t" '{print \$3,"multiallelic_in_dbsnp"}' removed_multiallelic_rows >> removed_duplicated_rows
-      #TODO add remove_ for multiallelic rows
-      
-      #process before and after stats
-      rowsBefore="\$(wc -l ${liftedandmapped} | awk '{print \$1}')"
-      rowsAfter="\$(wc -l gb_unique_rows | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT, GRCh37" >> desc_removed_duplicated_rows
-
-      rowsBefore="\$(wc -l gb_unique_rows | awk '{print \$1}')"
-      rowsAfter="\$(wc -l gb_unique_rows2 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos and dbsnp REF/ALT, GRCh38" >> desc_removed_duplicated_rows
-
-      rowsBefore="\$(wc -l gb_unique_rows2 | awk '{print \$1}')"
-      rowsAfter="\$(wc -l gb_unique_rows3 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh37" >> desc_removed_duplicated_rows
-
-      rowsBefore="\$(wc -l gb_unique_rows3 | awk '{print \$1}')"
-      rowsAfter="\$(wc -l gb_unique_rows4 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh38" >> desc_removed_duplicated_rows
-
-      rowsBefore="\$(wc -l gb_unique_rows4 | awk '{print \$1}')"
-      rowsAfter="\$(wc -l gb_unique_rows5 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved multi-allelics" >> desc_removed_duplicated_rows
       """
   }
 
