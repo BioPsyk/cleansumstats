@@ -42,6 +42,10 @@ def helpMessage() {
                                       multiallelics_in_dbsnp
                                     Example(default): --afterLiftoverFilter duplicated_chrpos_refalt_in_GRCh37,duplicated_chrpos_refalt_in_GRCh38,duplicated_chrpos_in_GRCh37,duplicated_chrpos_in_GRCh38,multiallelics_in_dbsnp
 
+      --afterAlleleCorrection       A comma separated list ordered by filtering exclusion order including any of the following:
+                                      duplicated_chrpos_in_GRCh37
+                                    Example(default): --afterLiftoverFilter duplicated_chrpos_in_GRCh37
+
     Auxiliaries:
       --generateMetafile            Generates a meta file template, which is one of the required inputs to the cleansumstats pipeline
 
@@ -79,6 +83,7 @@ if (params.help) {
 
 // check filter
 afterLiftoverFilter = params.afterLiftoverFilter
+afterAlleleCorrection = params.afterAlleleCorrection
 
 // Set channels
 if (params.dbsnp38) { ch_dbsnp38 = file(params.dbsnp38, checkIfExists: true) }
@@ -739,26 +744,28 @@ if (params.generateMetafile){
       tuple datasetID, mfile, fsorted, gbmax from ch_liftover_3
       
       output:
-      tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh37_and_GRCh38") into ch_liftover_44
-      tuple datasetID, file("desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA_chrpos
+      tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh38_and_GRCh37") into ch_liftover_44
+      tuple datasetID, file("desc_liftover_to_GRCh38_and_GRCh37_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA_chrpos
       tuple datasetID, file("removed_not_matching_during_liftover_ix") into ch_not_matching_during_liftover_chrpos
       file("removed_*")
   
       script:
       """
       
+      #in gb_lifted_and_mapped_to_GRCh37_and_GRCh38, the order will be 
+      #GRCh38, GRCh37, rowIndex, RSID, REF, ALT
       if [ "${gbmax}" == "GRCh38" ] ; then
         LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp38} > lifted_middle_step 
-        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$1,\$3,\$2,\$4,\$5,\$6}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$1,\$3,\$2,\$4,\$5,\$6}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh38_and_GRCh37
       elif [ "${gbmax}" == "GRCh37" ] ; then
         LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp37} > lifted_middle_step 
-        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$3,\$1,\$2,\$4,\$5,\$6}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$3,\$1,\$2,\$4,\$5,\$6}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh38_and_GRCh37
       elif [ "${gbmax}" == "GRCh36" ] ; then
         LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp36} > lifted_middle_step
-        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$5,\$6,\$7}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$5,\$6,\$7}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh38_and_GRCh37
       elif [ "${gbmax}" == "GRCh35" ] ; then
         LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp35} > lifted_middle_step
-        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$5,\$6,\$7}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+        awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$5,\$6,\$7}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh38_and_GRCh37
       else
         echo "${gbmax} is none of the available builds 35, 36, 37 or 38"
       fi
@@ -769,8 +776,8 @@ if (params.generateMetafile){
 
       #process before and after stats
       rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
-      rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh37_and_GRCh38 | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh37 and GRCh38 and simultaneously map to dbsnp" > desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA
+      rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh38_and_GRCh37 | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh37 and GRCh38 and simultaneously map to dbsnp" > desc_liftover_to_GRCh38_and_GRCh37_and_map_to_dbsnp_BA
       """
   }
 
@@ -808,7 +815,7 @@ if (params.generateMetafile){
       tuple datasetID, mfile, liftedandmapped from ch_liftover_mix_X
       
       output:
-      tuple datasetID, mfile, file("gb_unique_rows") into ch_liftover_4
+      tuple datasetID, mfile, file("gb_unique_rows_sorted") into ch_liftover_4
       tuple datasetID, file("desc_removed_duplicated_rows") into removed_rows_before_after_liftover
       tuple datasetID, file("removed_duplicated_rows") into removed_rows_before_after_liftover_ix
       file("removed_*")
@@ -816,7 +823,6 @@ if (params.generateMetafile){
 
       script:
       """
-      echo ${afterLiftoverFilter} > tmp_alof
       filter_after_liftover.sh $liftedandmapped ${afterLiftoverFilter}
 
       """
@@ -1089,29 +1095,19 @@ if (params.generateMetafile){
       tuple datasetID, build, mfile, acorrected from ch_allele_corrected_mix_X
       
       output:
-      tuple datasetID, build, mfile, file("gb_unique_rows3_sorted") into ch_allele_corrected_mix_Y
-      file("gb_unique_rows3")
-      file("gb_acorrected_sorted_on_chrpos")
-      file("gb_duplicated_chr_pos_rows_removed")
-      tuple datasetID, file("desc_removed_duplicated_chr_pos_rows_BA") into ch_desc_removed_duplicated_chr_pos_rows_BA
+      tuple datasetID, build, mfile, file("ac_unique_rows_sorted") into ch_allele_corrected_mix_Y
+      tuple datasetID, file("desc_removed_duplicated_rows") into ch_desc_removed_duplicated_chr_pos_rows_BA
+      file("ac_unique_rows")
+      file("ac_acorrected_sorted_on_chrpos")
+      file("afterAlleleCorrection_executionorder")
+      file("removed_*")
 
       script:
       """
-      #sort on fourth column
-      LC_ALL=C sort -k4,1 $acorrected > gb_acorrected_sorted_on_chrpos
-      
-      #remove all but the first ecnountered row where chr:pos (seems some chrpos that mapped to more than one rsid are caught here)
-      touch gb_duplicated_chr_pos_rows_removed
-      awk 'BEGIN{r0="initrowhere"} {var=\$4; if(r0!=var){print \$0}else{print \$0 > "gb_duplicated_chr_pos_rows_removed"}; r0=var}' gb_acorrected_sorted_on_chrpos > gb_unique_rows3
-      
-      #re-sort on first column
-      LC_ALL=C sort -k1,1 gb_unique_rows3 > gb_unique_rows3_sorted
-      
-      #process before and after stats
-      rowsBefore="\$(wc -l ${acorrected} | awk '{print \$1}')"
-      rowsAfter="\$(wc -l gb_unique_rows3_sorted | awk '{print \$1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicated rows in respect to chr:pos" > desc_removed_duplicated_chr_pos_rows_BA
 
+      #Can be used as a sanitycheck-filter to discover potential misbehaviour
+      filter_after_allele_correction.sh $acorrected ${afterAlleleCorrection}
+      
       """
   }
   ch_allele_corrected_mix_Y
