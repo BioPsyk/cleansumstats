@@ -987,7 +987,7 @@ if (params.generateMetafile){
 
       rowsBefore="\${rowsAfter}"
       rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1-1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tsanity sanity check that final filtered file before and after file have same row count" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
+      echo -e "\$rowsBefore\t\$rowsAfter\tAllele corretion sanity check that final filtered file before and after file have same row count" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
       """
 
   }
@@ -1097,8 +1097,7 @@ if (params.generateMetafile){
       output:
       tuple datasetID, build, mfile, file("ac_unique_rows_sorted") into ch_allele_corrected_mix_Y
       tuple datasetID, file("desc_removed_duplicated_rows") into ch_desc_removed_duplicated_chr_pos_rows_BA
-      file("ac_unique_rows")
-      file("ac_acorrected_sorted_on_chrpos")
+      file("ac_*")
       file("afterAlleleCorrection_executionorder")
       file("removed_*")
 

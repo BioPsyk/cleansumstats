@@ -9,7 +9,16 @@ touch desc_removed_duplicated_rows
 touch removed_duplicated_rows
 touch afterAlleleCorrection_executionorder
 
+#copy input to not break anything
 cp ${acorrected} ac_unique_rows
+
+#check if no filtering will be applied
+if [ "${#filterArr[@]}" -eq 0 ]
+then
+  applyFilter="no"
+else
+  applyFilter="yes"
+fi
 
 #loop over bash array applying each correspondinng filtering type in the samee order
 for var in ${filterArr[@]}; do
@@ -32,12 +41,16 @@ for var in ${filterArr[@]}; do
     mv ac_unique_rows2 ac_unique_rows
     echo "duplicated_chrpos_in_GRCh37" >> afterAlleleCorrection_executionorder
 
-    #re-sort on first column (to get back to same sorting as input)
-    #If we get more than one option for this filtering then it might be worth doing this sorting only ones in the end
-    LC_ALL=C sort -k1,1 ac_unique_rows > ac_unique_rows_sorted
 
   fi
 done
 
-
+if [ "${applyFilter}" == "yes" ]
+then
+  #re-sort on first column (to get back to same sorting as input)
+  LC_ALL=C sort -k1,1 ac_unique_rows > ac_unique_rows_sorted
+else
+  #make output same as input
+  mv ac_unique_rows ac_unique_rows_sorted
+fi
 

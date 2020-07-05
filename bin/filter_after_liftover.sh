@@ -11,6 +11,14 @@ touch afterLiftoverFiltering_executionorder
 
 cp ${liftedandmapped} gb_unique_rows
 
+#check if no filtering will be applied
+if [ "${#filterArr[@]}" -eq 0 ]
+then
+  applyFilter="no"
+else
+  applyFilter="yes"
+fi
+
 #loop over bash array applying each correspondinng filtering type in the samee order
 for var in ${filterArr[@]}; do
 
@@ -83,5 +91,13 @@ for var in ${filterArr[@]}; do
 
 done
 
-#resort to same as input, which is first column containing GRCh38 (at least now when this comment is written. 2020-07-05)
-LC_ALL=C sort -k1,1 gb_unique_rows > gb_unique_rows_sorted
+
+if [ "${applyFilter}" == "yes" ]
+then
+  #resort to same as input, which is first column containing GRCh38 (not, it is likely that future input also will be sorted on first column)
+  LC_ALL=C sort -k1,1 gb_unique_rows > gb_unique_rows_sorted
+else
+  #make output same as input
+  mv gb_unique_rows gb_unique_rows_sorted
+fi
+
