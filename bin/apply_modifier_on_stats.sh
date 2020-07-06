@@ -83,12 +83,24 @@ nam_m=$(which_to_mod 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
 var_k=$(which_to_keep 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
 nam_k=$(which_to_keep 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
 
+#selected stats variables that are NOT going to be modified
+sstools-utils ad-hoc-do -f $STAT -k "0|${var_k}" -n"0,${nam_k}" > sel_stats_k
+
+
+
 if [ -z "$var_m" ]; then
 # -z returns true if variable is unset
-  cat $ACOR | sed 's/[[:space:]]*$//' | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, "CHR",OFS, "POS",OFS, $5,OFS, $6,OFS, $7; for(i=9; i<NF; i++){printf "%s%s", OFS, $i}; if(NF != 8){ printf "%s%s", OFS,$NF }else{printf "%s","\n"}} NR>1{split($4,out,":"); for(i=9; i<=NF; i++){$i=$i*$8}; printf "%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, out[1],OFS, out[2],OFS, $5,OFS, $6,OFS, $7; for(i=9; i<NF; i++){printf "%s%s", OFS, $i}; if(NF != 8){ printf "%s%s", OFS,$NF }else{printf "%s","\n"}}' | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - <(sstools-utils ad-hoc-do -f $STAT -k "0|${var_k}" -n"0,${nam_k}" )
+  cat $ACOR \
+  | sed 's/[[:space:]]*$//' \
+  | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, "CHR",OFS, "POS",OFS, $5,OFS, $6,OFS, $7; for(i=9; i<NF; i++){printf "%s%s", OFS, $i}; if(NF != 8){ printf "%s%s", OFS,$NF }else{printf "%s","\n"}} NR>1{split($4,out,":"); for(i=9; i<=NF; i++){$i=$i*$8}; printf "%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, out[1],OFS, out[2],OFS, $5,OFS, $6,OFS, $7; for(i=9; i<NF; i++){printf "%s%s", OFS, $i}; if(NF != 8){ printf "%s%s", OFS,$NF }else{printf "%s","\n"}}' \
+  | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_k
 else
-# do this if there are variables in $var_m
-  LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $ACOR <(sstools-utils ad-hoc-do -f $STAT -k "0|${var_m}" -n"0,${nam_m}" ) | sed 's/[[:space:]]*$//' | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, "CHR",OFS, "POS",OFS, $5,OFS, $6,OFS, $7,OFS; for(i=9; i<NF; i++){printf "%s%s", $i, OFS}; print $NF} NR>1{split($4,out,":"); for(i=9; i<=NF; i++){$i=$i*$8}; printf "%s%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, out[1],OFS, out[2],OFS, $5,OFS, $6,OFS, $7,OFS; for(i=9; i<NF; i++){printf "%s%s", $i, OFS}; print $NF}' | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - <(sstools-utils ad-hoc-do -f $STAT -k "0|${var_k}" -n"0,${nam_k}" )
+  #selected stats variables that are going to be modified
+  sstools-utils ad-hoc-do -f $STAT -k "0|${var_m}" -n"0,${nam_m}" > sel_stats_m
+
+  LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $ACOR sel_stats_m \
+  | sed 's/[[:space:]]*$//' | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, "CHR",OFS, "POS",OFS, $5,OFS, $6,OFS, $7,OFS; for(i=9; i<NF; i++){printf "%s%s", $i, OFS}; print $NF} NR>1{split($4,out,":"); for(i=9; i<=NF; i++){$i=$i*$8}; printf "%s%s%s%s%s%s%s%s%s%s%s%s", $1,OFS, out[1],OFS, out[2],OFS, $5,OFS, $6,OFS, $7,OFS; for(i=9; i<NF; i++){printf "%s%s", $i, OFS}; print $NF}' \
+  | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_k
 
 fi
 
