@@ -78,6 +78,7 @@ for var in ${filterArr[@]}; do
   elif [ "${var}" == "multiallelics_in_dbsnp" ]
   then
     #Filter on presence of comma in alt allele column, if so, it is by definition a multiallelic in dbsnp
+    cp gb_unique_rows gb_unique_rows_sorted
     touch removed_multiallelic_rows
     awk -vFS="\t" -vOFS="\t" '{if($6 ~ /,/){print > "removed_multiallelic_rows"}else{print $0} }' gb_unique_rows_sorted > gb_unique_rows2
     awk -vOFS="\t" '{print $3,"multiallelic_in_dbsnp"}' removed_multiallelic_rows >> removed_duplicated_rows
@@ -90,12 +91,13 @@ for var in ${filterArr[@]}; do
   elif [ "${var}" == "multiple_rsids_in_dbsnp" ]
   then
     #Filter on presence of multiple rsids
+    LC_ALL=C sort -k4,4 gb_unique_rows > gb_unique_rows_sorted
     touch removed_multiple_rsids
     awk 'BEGIN{r0="initrowhere"} {var=$4; if(r0!=var){print $0}else{print $0 > "removed_multiple_rsids"}; r0=var}' gb_unique_rows_sorted > gb_unique_rows2
     awk -vOFS="\t" '{print $3,"multiple_rsids_in_dbsnp"}' removed_multiallelic_rows >> removed_duplicated_rows
     rowsBefore="$(wc -l gb_unique_rows | awk '{print $1}')"
     rowsAfter="$(wc -l gb_unique_rows2 | awk '{print $1}')"
-    echo -e "$rowsBefore\t$rowsAfter\tRemoved multiple rsidi rows" >> desc_removed_duplicated_rows
+    echo -e "$rowsBefore\t$rowsAfter\tRemoved multiple rsid rows" >> desc_removed_duplicated_rows
     mv gb_unique_rows2 gb_unique_rows
     echo "multiple_rsids_in_dbsnp" >> afterLiftoverFiltering_executionorder
   

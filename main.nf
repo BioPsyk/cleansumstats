@@ -34,6 +34,10 @@ def helpMessage() {
       --placeholderOption           Generates a meta file template, which is one of the required inputs to the cleansumstats pipeline
 
     Filtering:
+      --beforeLiftoverFilter        A comma separated list ordered by filtering exclusion order including any of the following:
+                                      duplicated_keys
+                                    Example(default): --beforeLiftoverFilter duplicated_keys
+
       --afterLiftoverFilter         A comma separated list ordered by filtering exclusion order including any of the following:
                                       duplicated_chrpos_refalt_in_GRCh37
                                       duplicated_chrpos_refalt_in_GRCh38
@@ -42,9 +46,10 @@ def helpMessage() {
                                       multiallelics_in_dbsnp
                                     Example(default): --afterLiftoverFilter duplicated_chrpos_refalt_in_GRCh37,duplicated_chrpos_refalt_in_GRCh38,duplicated_chrpos_in_GRCh37,duplicated_chrpos_in_GRCh38,multiallelics_in_dbsnp
 
-      --afterAlleleCorrection       A comma separated list ordered by filtering exclusion order including any of the following:
+
+      --afterAlleleCorrectionFilter A comma separated list ordered by filtering exclusion order including any of the following:
                                       duplicated_chrpos_in_GRCh37
-                                    Example(default): --afterLiftoverFilter duplicated_chrpos_in_GRCh37
+                                    Example(default): --afterAlleleCorrectionFilter duplicated_chrpos_in_GRCh37
 
     Auxiliaries:
       --generateMetafile            Generates a meta file template, which is one of the required inputs to the cleansumstats pipeline
@@ -82,8 +87,9 @@ if (params.help) {
 //}
 
 // check filter
+beforeLiftoverFilter = params.beforeLiftoverFilter
 afterLiftoverFilter = params.afterLiftoverFilter
-afterAlleleCorrection = params.afterAlleleCorrection
+afterAlleleCorrectionFilter = params.afterAlleleCorrectionFilter
 
 // Set channels
 if (params.dbsnp38) { ch_dbsnp38 = file(params.dbsnp38, checkIfExists: true) }
@@ -551,7 +557,7 @@ if (params.generateMetafile){
       Sx="\$(grep "^col_SNP=" $mfile)"
       colSNP="\$(echo "\${Sx#*=}")"
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colSNP}" -n"0,RSID" | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1}' > gb_lift
-      LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
+      #LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
       
 
       #process before and after stats
@@ -567,13 +573,36 @@ if (params.generateMetafile){
       """
   }
 
+  process remove_duplicated_rsid_before_liftover_rsid_version {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
+  
+      input:
+      tuple datasetID, mfile, rsidprep from ch_liftover_33
+      
+      output:
+      tuple datasetID, mfile, file("gb_unique_rows_sorted") into ch_liftover_3333
+      tuple datasetID, file("desc_removed_duplicated_rows") into ch_removed_rows_before_liftover_rsids
+      tuple datasetID, file("removed_duplicated_rows") into ch_removed_rows_before_liftover_ix_rsids
+      file("removed_*")
+      file("beforeLiftoverFiltering_executionorder")
+
+      script:
+      """
+      filter_before_liftover.sh $rsidprep ${beforeLiftoverFilter}
+
+      """
+  }
+
+
   process liftover_GRCh37_and_GRCh38_and_map_to_dbsnp_rsid_version {
   
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
       publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
   
       input:
-      tuple datasetID, mfile, fsorted from ch_liftover_33
+      tuple datasetID, mfile, fsorted from ch_liftover_3333
       
       output:
       tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh37_and_GRCh38") into ch_liftover_49
@@ -715,7 +744,7 @@ if (params.generateMetafile){
       tuple datasetID, mfile, sfile, gbmax from ch_liftover_2
   
       output:
-      tuple datasetID, mfile, file("gb_lift_sorted"), gbmax into ch_liftover_3
+      tuple datasetID, mfile, file("gb_lift"), gbmax into ch_liftover_3
       tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos
   
       script:
@@ -725,15 +754,38 @@ if (params.generateMetafile){
       colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
   
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > gb_lift
-      LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
+      #LC_ALL=C sort -k1,1 gb_lift > gb_lift_sorted
       
       #process before and after stats
       rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
-      rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l gb_lift | awk '{print \$1-1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
       """
   
   }
+
+  process remove_duplicated_chr_position_before_liftover {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+      publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
+  
+      input:
+      tuple datasetID, mfile, chrposprep, gbmax from ch_liftover_3
+      
+      output:
+      tuple datasetID, mfile, file("gb_unique_rows_sorted"), gbmax into ch_liftover_333
+      tuple datasetID, file("desc_removed_duplicated_rows") into ch_removed_rows_before_liftover_chrpos
+      tuple datasetID, file("removed_duplicated_rows") into ch_removed_rows_before_liftover_ix_chrpos
+      file("removed_*")
+      file("beforeLiftoverFiltering_executionorder")
+
+      script:
+      """
+      filter_before_liftover.sh $chrposprep ${beforeLiftoverFilter}
+
+      """
+  }
+
   
   process liftover_GRCh37_and_GRCh38_and_map_to_dbsnp_chrpos_version {
   
@@ -741,7 +793,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
   
       input:
-      tuple datasetID, mfile, fsorted, gbmax from ch_liftover_3
+      tuple datasetID, mfile, fsorted, gbmax from ch_liftover_333
       
       output:
       tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh38_and_GRCh37") into ch_liftover_44
@@ -785,6 +837,14 @@ if (params.generateMetafile){
   ch_not_matching_during_liftover_rsid
     .mix(ch_not_matching_during_liftover_chrpos)
     .set{ ch_not_matching_during_liftover }
+
+  ch_removed_rows_before_liftover_chrpos
+    .mix(ch_removed_rows_before_liftover_rsids)
+    .set{ ch_removed_rows_before_liftover }
+
+  ch_removed_rows_before_liftover_ix_chrpos
+    .mix(ch_removed_rows_before_liftover_ix_rsids)
+    .set{ ch_removed_rows_before_liftover_ix }
 
   ch_liftover_49
     .mix(ch_liftover_44)
@@ -1105,7 +1165,7 @@ if (params.generateMetafile){
       """
 
       #Can be used as a sanitycheck-filter to discover potential misbehaviour
-      filter_after_allele_correction.sh $acorrected ${afterAlleleCorrection}
+      filter_after_allele_correction.sh $acorrected ${afterAlleleCorrectionFilter}
       
       """
   }
@@ -1260,7 +1320,8 @@ if (params.generateMetafile){
   }
 
   //Collect and place in corresponding stepwise order
-  ch_not_matching_during_liftover
+  ch_removed_rows_before_liftover_ix
+   .combine(ch_not_matching_during_liftover, by: 0)
    .combine(removed_rows_before_after_liftover_ix, by: 0)
    .combine(ch_removed_by_allele_filter_ix, by: 0)
    .combine(ch_stats_filtered_removed_ix, by: 0)
@@ -1270,7 +1331,7 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4 from ch_collected_removed_lines
+      tuple datasetID, step1, step2, step3, step4, step5 from ch_collected_removed_lines
 
       output:
       tuple datasetID, file("removed_lines_collected.txt") into ch_collected_removed_lines2
@@ -1339,6 +1400,7 @@ if (params.generateMetafile){
    .combine(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
    .combine(ch_desc_sex_chrom_formatting_BA, by: 0)
    .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
+   .combine(ch_removed_rows_before_liftover, by: 0)
    .combine(ch_desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA, by: 0)
    .combine(removed_rows_before_after_liftover, by: 0)
    .combine(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
@@ -1357,14 +1419,14 @@ if (params.generateMetafile){
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4, step5, step6, step11a, step11b, step12, step13, step14, step15, step16, step17a, step17b, step18 from ch_collected_workflow_stepwise_stats
+      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10, step11, step12, step13, step14, step15, step16, step17 from ch_collected_workflow_stepwise_stats
 
       output:
       tuple datasetID, file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
 
       script:
       """
-      cat $step1 $step2 $step3 $step4 $step5 $step6 $step11a $step11b $step12 $step13 $step14 $step15 $step16 $step17a $step17b $step18 > all_removed_steps
+      cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11 $step12 $step13 $step14 $step15 $step16 $step17 > all_removed_steps
 
       echo -e "Steps\tBefore\tAfter\tDescription" > desc_collected_workflow_stepwise_stats.txt
       awk -vFS="\t" -vOFS="\t" '{print "Step"NR, \$1, \$2, \$3}' all_removed_steps >> desc_collected_workflow_stepwise_stats.txt
