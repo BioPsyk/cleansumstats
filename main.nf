@@ -237,11 +237,21 @@ if (params.generateMetafile){
      // ##Add extra chrpos column
      // #bcftools view All_20180418.vcf.gz -Ov | grep -v "#" | awk '{print "chr"$1, $2, $2,  $1":"$2, $3, $4, $5}' > All_20180418_GRCh38.bed
      // #
+     // ## Remove all insertions or deletions
+     // ## this will eliminate some rsids, both the ones with multiple rsids for the exact same snp, but also the ones with ref and alt switched.
+     // #awk '{if(ans=length($6)!=1 || length($7)!=1){print $0 > "rm_indels"}else{print $0}}' All_20180418_GRCh38.bed > All_20180418_GRCh38.bed.noindel
+     //
+     // # 
+     // ## Remove all duplicated positions GRCh38
+     // ## this will eliminate some rsids, both the ones with multiple rsids for the exact same snp, but also the ones with ref and alt swithed.
+     // #LC_ALL=C sort -k 4,4 --parallel 8 All_20180418_GRCh38.bed.noindel > All_20180418_GRCh38.bed.noindel.sorted
+     // #awk 'BEGIN{r0="initrowhere"} {var=$4; if(r0!=var){print $0}else{print $0 > "removed_duplicated_rows_GRCh38"}; r0=var}' All_20180418_GRCh38.bed.noindel.sorted > All_20180418_GRCh38.bed.noindel.sorted.nodup
+     // #
      // #module load tools
      // #module load singularity/3.5.2
      // #
      // ##map to GRCh37
-     // #./images/liftover-lates.img bed data/hg38ToHg19.over.chain.gz All_20180418_GRCh38.bed All_20180418_GRCh37.bed
+     // #./images/liftover-lates.img bed data/hg38ToHg19.over.chain.gz All_20180418_GRCh38.bed.noindel.sorted.nodup All_20180418_GRCh37.bed
      // #awk '{tmp=$1; sub(/[cC][hH][rR]/, "", tmp); print $1, $2, $3, tmp":"$2, $4, $5, $6, $7}' All_20180418_GRCh37.bed > All_20180418_liftcoord_GRCh37_GRCh38.bed
      // #
      // #./images/liftover-lates.img bed data/hg19ToHg18.over.chain.gz All_20180418_liftcoord_GRCh37_GRCh38.bed All_20180418_liftcoord_GRCh36.bed
@@ -253,23 +263,15 @@ if (params.generateMetafile){
      // #awk '{print $5, $4, $6, $7, $8}' All_20180418_liftcoord_GRCh37_GRCh38.bed > All_20180418_GRCh38_GRCh37.bed
      // #
      // #
-     // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh37_GRCh38.bed > All_20180418_GRCh37_GRCh38.sorted.bed
-     // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh38_GRCh37.bed > All_20180418_GRCh38_GRCh37.sorted.bed
-     // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh36_GRCh37_GRCh38.bed > All_20180418_GRCh36_GRCh37_GRCh38.sorted.bed
-     // #LC_ALL=C sort -k 1 --parallel 8 All_20180418_GRCh35_GRCh37_GRCh38.bed > All_20180418_GRCh35_GRCh37_GRCh38.sorted.bed
+     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh37_GRCh38.bed > All_20180418_GRCh37_GRCh38.sorted.bed
+     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh38_GRCh37.bed > All_20180418_GRCh38_GRCh37.sorted.bed
+     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh36_GRCh37_GRCh38.bed > All_20180418_GRCh36_GRCh37_GRCh38.sorted.bed
+     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh35_GRCh37_GRCh38.bed > All_20180418_GRCh35_GRCh37_GRCh38.sorted.bed
      // #
+     // # 
      // #
      // ## Make version sorted on RSID to get correct coordinates
      // # awk '{print $3, $1, $2, $4, $5}' All_20180418_GRCh37_GRCh38.sorted.bed | LC_ALL=C sort -k 1 --parallel 8 > All_20180418_RSID_GRCh37_GRCh38.sorted.bed
-     // #
-     // #nextflow run ../../../repos/nf-core-cleansumstats --input 'raw_formatted_row-indexed/sumstat_*' --outdir raw_formatted_row-indexed_cleaned \
-     // #--dbsnp38 ../../../data/dbsnp151/All_20180418_GRCh38_GRCh37.sorted.bed \
-     // #--dbsnp37 ../../../data/dbsnp151/All_20180418_GRCh37_GRCh38.sorted.bed \
-     // #--dbsnp36 ../../../data/dbsnp151/All_20180418_GRCh36_GRCh37_GRCh38.sorted.bed \
-     // #--dbsnp35 ../../../data/dbsnp151/All_20180418_GRCh35_GRCh37_GRCh38.sorted.bed \
-     // #-resume
-     // #
-     // #
      // #
      // ##remove temp files
      // #rm All_20180418_GRCh38.chrpos.bed
