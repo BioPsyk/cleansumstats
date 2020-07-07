@@ -322,16 +322,38 @@ if (params.generateMetafile){
   
   //to_stream_sumstat_dir.into { ch_to_stream_sumstat_dir1; ch_to_stream_sumstat_dir2 }
 
-
-  process check_most_crucial_paths_exists {
-  
+  process make_meta_file_unix_friendly {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
       tuple datasetID, mfile from ch_mfile_check
   
       output:
-      tuple datasetID, file("mfile_unix_safe"), env(spath) into ch_mfile_check_format
+      tuple datasetID, mfile, file("mfile_unix_safe") into ch_mfile_unix_safe
+      file("mfile_unix_safe2")
+  
+      script:
+      """
+      cat ${mfile} > mfile_sent_in
+      
+      # Clean meta file from windows return characters
+      awk '{ sub("\\r\$", ""); print }' ${mfile} > mfile_unix_safe2
+      
+      # Remove obviously misplaced whitespaces (i.e., any whitespace before =, and leading whitespace directly after =)
+      awk -vFS="=" -vOFS="=" '{gsub(/ */, "", \$1); print \$1, \$2}' mfile_unix_safe2 | awk -vFS="=" -vOFS="=" '{sub(/^ /, "", \$2); print \$1, \$2}' > mfile_unix_safe
+      """
+  }
+
+
+  process check_most_crucial_paths_exists {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile, mfile_unix_safe from ch_mfile_unix_safe
+  
+      output:
+      tuple datasetID, mfile_unix_safe, env(spath) into ch_mfile_check_format
       tuple datasetID, env(spath) into ch_input_sfile
       tuple datasetID, env(rpath) into ch_input_readme
       tuple datasetID, env(pmid) into ch_pmid
@@ -343,22 +365,20 @@ if (params.generateMetafile){
 
       metaDir="\$(dirname ${mfile})"
       cat ${mfile} > mfile_sent_in
-      # Clean meta file from windows return characters
-      awk '{ sub("\\r\$", ""); print }' ${mfile} > mfile_unix_safe
       
       # Check if the datasetID folder is already present, if so just increment a number to get the new outname
       #  this is because a metafile can have the same name as another even though the content might be different. 
 
       # Check if field for variable exists and if the file specified exists
-      check_meta_file_references.sh "path_sumStats" mfile_unix_safe \$metaDir > spath.txt
+      check_meta_file_references.sh "path_sumStats" $mfile_unix_safe \$metaDir > spath.txt
       spath="\$(cat spath.txt)"
-      check_meta_file_references.sh "path_readMe" mfile_unix_safe \$metaDir > rpath.txt
+      check_meta_file_references.sh "path_readMe" $mfile_unix_safe \$metaDir > rpath.txt
       rpath="\$(cat rpath.txt)"
-      check_meta_file_references.sh "path_pdf" mfile_unix_safe \$metaDir > pdfpath.txt
+      check_meta_file_references.sh "path_pdf" $mfile_unix_safe \$metaDir > pdfpath.txt
       pdfpath="\$(cat pdfpath.txt)"
-      check_meta_file_references.sh "path_supplementary" mfile_unix_safe \${metaDir} > ${datasetID}_pdf_suppfiles.txt
+      check_meta_file_references.sh "path_supplementary" $mfile_unix_safe \${metaDir} > ${datasetID}_pdf_suppfiles.txt
 
-      Px="\$(grep "^study_PMID=" mfile_unix_safe)"
+      Px="\$(grep "^study_PMID=" $mfile_unix_safe)"
       pmid="\$(echo "\${Px#*=}")"
 
       # Check library if this has been processed before
