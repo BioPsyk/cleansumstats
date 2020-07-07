@@ -1330,7 +1330,7 @@ if (params.generateMetafile){
       # match the GRCh38 build and publish it as separate file
       echo -e "0\tCHR\tPOS" > ${datasetID}_GRCh38
       awk -vOFS="\t" 'NR>1{split(\$2,out,":"); print \$1, out[1], out[2]}' $grch38 | LC_ALL=C sort -k 1 - > sorted_GRCh38
-      LC_ALL=C join -t "\$(printf '\t')" -1 1 -2 1 -o 1.1 1.2 1.3 sorted_GRCh38 ${datasetID}_${build}_cleaned > ${datasetID}_GRCh38
+      LC_ALL=C join -t "\$(printf '\t')" -1 1 -2 1 -o 1.1 1.2 1.3 sorted_GRCh38 ${datasetID}_${build}_cleaned >> ${datasetID}_GRCh38
       
       # process before and after stats
       rowsBefore="\$(wc -l $acorrected | awk '{print \$1}')"
