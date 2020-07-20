@@ -54,6 +54,11 @@ def helpMessage() {
     Auxiliaries:
       --generateMetafile            Generates a meta file template, which is one of the required inputs to the cleansumstats pipeline
 
+      --generateDbSNPreference      Generates a meta file template, which is one of the required inputs to the cleansumstats pipeline
+      --hg38ToHg19chain             chain file used for liftover (required for --generateDbSNPreference)
+      --hg19ToHg18chain             chain file used for liftover (required for --generateDbSNPreference)
+      --hg19ToHg17chain             chain file used for liftover (required for --generateDbSNPreference)
+
     Other options:
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
@@ -98,6 +103,11 @@ if (params.dbsnp36) { ch_dbsnp36 = file(params.dbsnp36, checkIfExists: true) }
 if (params.dbsnp35) { ch_dbsnp35 = file(params.dbsnp35, checkIfExists: true) } 
 if (params.dbsnpRSID) { ch_dbsnpRSID = file(params.dbsnpRSID, checkIfExists: true) } 
 ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
+
+if (params.hg38ToHg19chain) { ch_hg38ToHg19chain = file(params.hg38ToHg19chain, checkIfExists: true) }
+if (params.hg19ToHg18chain) { ch_hg19ToHg18chain = file(params.hg19ToHg18chain, checkIfExists: true) }
+if (params.hg19ToHg17chain) { ch_hg19ToHg17chain = file(params.hg19ToHg17chain, checkIfExists: true) }
+
 
 // Stage config files
 ch_multiqc_config = file(params.multiqc_config, checkIfExists: true)
@@ -206,87 +216,284 @@ if (params.generateMetafile){
   }
 }else if(params.generateDbSNPreference){
 
-  process create_dnsnp_database {
+  // ##Download from web
+  // #wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.*
 
-      publishDir "${params.outdir}", mode: 'copy', overwrite: false
+  ch_file = Channel
+    .fromPath(params.input, type: 'file')
+    .map { file -> tuple(file.baseName, file) }
+
+  dbsnpsplits = 2
+
+  process dbsnp_reference_convert_and_split {
+
+      cpus 2
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple basefilename, dbsnpvcf from ch_file
 
       output:
-      file("tmp.db") into ch_db
+      file("chunk_*") into ch_dbsnp_split
+      file("dbsnp_GRCh38")
 
       script:
-     // #1-22
-     // ##X
-     // ##Y
-     // ##MT
-     // #
-     // ##Download from web
-     // #wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.*
-     // #
-     // ##cp All_20180418.vcf.gz All_20180418_GRCh38.bed
-     // #
-     // #
-     // #module load tools
-     // #module load bcftools/1.9
-     // #
-     // #date 
-     // ##Wed Feb 26 10:11:02 CET 2020
-     // ##bcftools view All_20180418.vcf.gz -Ov | grep -v "#" | awk '{print "chr"$1, $2, $2, $3, $4, $5}' > All_20180418_GRCh38.bed
-     // #date 
-     // ##Wed Feb 26 10:48:33 CET 2020
-     // #
-     // ##Add extra chrpos column
-     // #bcftools view All_20180418.vcf.gz -Ov | grep -v "#" | awk '{print "chr"$1, $2, $2,  $1":"$2, $3, $4, $5}' > All_20180418_GRCh38.bed
-     // #
-     // ## Remove all insertions or deletions
-     // ## this will eliminate some rsids, both the ones with multiple rsids for the exact same snp, but also the ones with ref and alt switched.
-     // #awk '{if(ans=length($6)!=1 || length($7)!=1){print $0 > "rm_indels"}else{print $0}}' All_20180418_GRCh38.bed > All_20180418_GRCh38.bed.noindel
-     //
-     // # 
-     // ## Remove all duplicated positions GRCh38
-     // ## this will eliminate some rsids, both the ones with multiple rsids for the exact same snp, but also the ones with ref and alt swithed.
-     // #LC_ALL=C sort -k 4,4 --parallel 8 All_20180418_GRCh38.bed.noindel > All_20180418_GRCh38.bed.noindel.sorted
-     // #awk 'BEGIN{r0="initrowhere"} {var=$4; if(r0!=var){print $0}else{print $0 > "removed_duplicated_rows_GRCh38"}; r0=var}' All_20180418_GRCh38.bed.noindel.sorted > All_20180418_GRCh38.bed.noindel.sorted.nodup
-     // #
-     // #module load tools
-     // #module load singularity/3.5.2
-     // #
-     // ##map to GRCh37
-     // #./images/liftover-lates.img bed data/hg38ToHg19.over.chain.gz All_20180418_GRCh38.bed.noindel.sorted.nodup All_20180418_GRCh37.bed
-     // #awk '{tmp=$1; sub(/[cC][hH][rR]/, "", tmp); print $1, $2, $3, tmp":"$2, $4, $5, $6, $7}' All_20180418_GRCh37.bed > All_20180418_liftcoord_GRCh37_GRCh38.bed
-     // #
-     // #./images/liftover-lates.img bed data/hg19ToHg18.over.chain.gz All_20180418_liftcoord_GRCh37_GRCh38.bed All_20180418_liftcoord_GRCh36.bed
-     // #./images/liftover-lates.img bed data/hg19ToHg17.over.chain.gz All_20180418_liftcoord_GRCh37_GRCh38.bed All_20180418_liftcoord_GRCh35.bed
-     // #
-     // #awk '{tmp=$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"$2, $4, $5, $6, $7, $8}' All_20180418_liftcoord_GRCh36.bed > All_20180418_GRCh36_GRCh37_GRCh38.bed
-     // #awk '{tmp=$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"$2, $4, $5, $6, $7, $8}' All_20180418_liftcoord_GRCh35.bed > All_20180418_GRCh35_GRCh37_GRCh38.bed
-     // #awk '{print $4, $5, $6, $7, $8}' All_20180418_liftcoord_GRCh37_GRCh38.bed > All_20180418_GRCh37_GRCh38.bed
-     // #awk '{print $5, $4, $6, $7, $8}' All_20180418_liftcoord_GRCh37_GRCh38.bed > All_20180418_GRCh38_GRCh37.bed
-     // #
-     // #
-     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh37_GRCh38.bed > All_20180418_GRCh37_GRCh38.sorted.bed
-     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh38_GRCh37.bed > All_20180418_GRCh38_GRCh37.sorted.bed
-     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh36_GRCh37_GRCh38.bed > All_20180418_GRCh36_GRCh37_GRCh38.sorted.bed
-     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh35_GRCh37_GRCh38.bed > All_20180418_GRCh35_GRCh37_GRCh38.sorted.bed
-     // #
-     // # 
-     // #
-     // ## Make version sorted on RSID to get correct coordinates
-     // # awk '{print $3, $1, $2, $4, $5}' All_20180418_GRCh37_GRCh38.sorted.bed | LC_ALL=C sort -k 1 --parallel 8 > All_20180418_RSID_GRCh37_GRCh38.sorted.bed
-     // #
-     // ##remove temp files
-     // #rm All_20180418_GRCh38.chrpos.bed
-     // #rm All_20180418_GRCh37.chrpos.bed
-     // #rm All_20180418_GRCh36.chrpos.bed
-     // #rm All_20180418_GRCh35.chrpos.bed
-     // #rm All_20180418_GRCh37.bed
-     // #rm All_20180418_GRCh36.bed
-     // #rm All_20180418_GRCh35.bed
-     // #
       """
-      cat "hek" > tmp.db
+      ##Download from web
+      #wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.*
+      module load tools
+      module load pigz/2.3.4
+      
+      #reformat
+      pigz --decompress --stdout --processes 2 ${dbsnpvcf} | grep -v "#" > dbsnp_GRCh38 
+
+      #split into dbsnpsplit number of unix split files
+      split -dn ${dbsnpsplits} dbsnp_GRCh38 chunk_
 
       """
   }
+
+  ch_dbsnp_split
+    .flatten()
+    .map { file -> tuple(file.baseName, file) }
+    .set { ch_dbsnp_split2 }
+
+  process dbsnp_reference_reformat {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_split2
+
+      output:
+      tuple cid, file("${cid}_All_20180418_GRCh38.bed") into ch_dbsnp_preformatted
+
+      script:
+      """
+      awk '{print "chr"\$1, \$2, \$2,  \$1":"\$2, \$3, \$4, \$5}' ${dbsnp_chunk} > ${cid}_All_20180418_GRCh38.bed
+      """
+  }
+
+  process dbsnp_reference_rm_indels {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_preformatted
+
+      output:
+      tuple cid, file("${cid}_All_20180418_GRCh38.bed.noindel") into ch_dbsnp_rmd_indels
+
+      script:
+      """
+      # Remove all insertions or deletions
+      # this will eliminate some rsids, both the ones with multiple rsids for the exact same snp, but also the ones with ref and alt switched.
+      awk ' \$7 !~ /,/{if(length(\$6)!=1 || length(\$7)!=1 || \$6=="." || \$7=="."){print \$0 > "rm_indels"}else{print \$0}}; \$7 ~ /,/{if(\$7 ~ /\\w\\w/){print \$0 > "rm_indels2"}else{print \$0}} ' ${dbsnp_chunk} > ${cid}_All_20180418_GRCh38.bed.noindel
+      """
+  }
+
+  ch_dbsnp_rmd_indels.into { ch_dbsnp_rmd_indels1; ch_dbsnp_rmd_indels2 }
+
+  process dbsnp_reference_report_number_of_biallelic_multiallelics {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_indels1
+
+      output:
+      tuple cid, file("*") into ch_dbsnp_report_biallelic_mult_alleles
+
+      script:
+      """
+      ## investigate the amount of single base multi allelics left (without filtering them out from the main workflow)
+      awk ' \$7 ~ /,/{print \$0} ' ${dbsnp_chunk} > ${cid}_biallelic_multiallelics
+      """
+  }
+
+  process dbsnp_reference_rm_dup_positions_GRCh38 {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_indels2
+
+      output:
+      tuple cid, file("${cid}_All_20180418_GRCh38.bed.noindel.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh38
+      file("${cid}_All_20180418_GRCh38.bed.noindel.sorted")
+
+      script:
+      """
+      # Remove all duplicated positions GRCh38
+      # this will eliminate some rsids, both the ones with multiple rsids for the exact same snp, but also the ones with ref and alt swithed.
+      LC_ALL=C sort -k 4,4 --parallel 8 ${dbsnp_chunk} > ${cid}_All_20180418_GRCh38.bed.noindel.sorted
+      awk 'BEGIN{r0="initrowhere"} {var=\$4; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38"}; r0=var}' ${cid}_All_20180418_GRCh38.bed.noindel.sorted > ${cid}_All_20180418_GRCh38.bed.noindel.sorted.nodup
+
+      """
+  }
+
+  ch_dbsnp_rmd_dup_positions_GRCh38.into { ch_dbsnp_rmd_dup_positions_GRCh38_1; ch_dbsnp_rmd_dup_positions_GRCh38_2 }
+
+  process dbsnp_reference_liftover_GRCh37 {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh38_1
+
+      output:
+      tuple cid, file("${cid}_dbsnp_chunk_GRCh37_GRCh38") into ch_dbsnp_lifted_to_GRCh37
+      file("${cid}_dbsnp_chunk_GRCh37")
+
+      script:
+      """
+      #for some reason I have to copy the chain file to the wd for it to be found
+      cp ${ch_hg38ToHg19chain} chain2.gz
+
+      # Map to GRCh37
+      /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/liftover-lates.img bed chain2.gz ${dbsnp_chunk} ${cid}_dbsnp_chunk_GRCh37
+      awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print \$1, \$2, \$3, tmp":"\$2, \$4, \$5, \$6, \$7}' ${cid}_dbsnp_chunk_GRCh37 > ${cid}_dbsnp_chunk_GRCh37_GRCh38
+      """
+  }
+
+  process dbsnp_reference_rm_dup_positions_GRCh37 {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_lifted_to_GRCh37
+
+      output:
+      tuple cid, file("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh37
+      file("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted")
+
+      script:
+      """
+      # Remove all duplicated positions GRCh37 (as some positions might have become duplicates after the liftover)
+      LC_ALL=C sort -k 4,4 --parallel 4 ${dbsnp_chunk} > All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted
+      awk 'BEGIN{r0="initrowhere"} {var=\$4; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37"}; r0=var}' All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted > All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup
+      """
+  }
+
+  process dbsnp_reference_rm_liftover_remaining_ambigous {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh37
+
+      output:
+      tuple cid, file("${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup.chromclean") into ch_dbsnp_rmd_ambig_GRCh37_liftovers
+      file("${cid}_all_chr_types")
+
+      script:
+      """
+      #To get a list of all chromosomes types
+      awk '{gsub(":.*","",\$1); print \$1}' ${dbsnp_chunk} | awk '{ seen[\$1] += 1 } END { for (i in seen) print seen[i],i }' > ${cid}_all_chr_types
+      
+      #remove non standard chromosome names (seems like they include a "_" in the name)
+      awk '{tmp=\$1; gsub(":.*","",\$1); if(\$1 !~ /_/ ){print tmp,\$2,\$3,\$4,\$5,\$6,\$7,\$8}}' ${dbsnp_chunk} > ${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup.chromclean
+      """
+  }
+
+  ch_dbsnp_rmd_ambig_GRCh37_liftovers.into { ch_dbsnp_rmd_ambig_GRCh37_liftovers1; ch_dbsnp_rmd_ambig_GRCh37_liftovers2 }
+
+  process dbsnp_reference_liftover_GRCh36 {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_ambig_GRCh37_liftovers1
+
+      output:
+      tuple cid, file("${cid}_All_20180418_GRCh36_GRCh37_GRCh38.bed"), build into ch_dbsnp_lifted_to_GRCh36
+      file("${cid}_All_20180418_liftcoord_GRCh36.bed")
+
+      script:
+      build = "GRCh36"
+      """
+      #for some reason I have to copy the chain file to the wd for it to be found
+      cp ${ch_hg19ToHg18chain} chain2.gz
+
+      #liftover
+      /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/liftover-lates.img bed chain2.gz ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh36.bed
+      awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$4, \$5, \$6, \$7, \$8}' ${cid}_All_20180418_liftcoord_GRCh36.bed > ${cid}_All_20180418_GRCh36_GRCh37_GRCh38.bed
+      """
+  }
+
+  process dbsnp_reference_liftover_GRCh35 {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_ambig_GRCh37_liftovers2
+
+      output:
+      tuple cid, file("${cid}_All_20180418_GRCh35_GRCh37_GRCh38.bed"), build into ch_dbsnp_lifted_to_GRCh35
+      file("${cid}_All_20180418_liftcoord_GRCh35.bed")
+
+      script:
+      build = "GRCh35"
+      """
+      #for some reason I have to copy the chain file to the wd for it to be found
+      cp ${ch_hg19ToHg17chain} chain2.gz
+
+      #liftover
+      /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/liftover-lates.img bed chain2.gz ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh35.bed
+      awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$4, \$5, \$6, \$7, \$8}' ${cid}_All_20180418_liftcoord_GRCh35.bed > ${cid}_All_20180418_GRCh35_GRCh37_GRCh38.bed
+      """
+  }
+
+
+  ch_dbsnp_lifted_to_GRCh35
+    .mix(ch_dbsnp_lifted_to_GRCh36)
+    .set{ ch_dbsnp_lifted_to_GRCh3x }
+
+  process dbsnp_reference_rm_duplicates_GRCh36_GRCh35 {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk, build from ch_dbsnp_lifted_to_GRCh3x
+
+      output:
+      tuple cid, file("${cid}_All_20180418_${build}_GRCh37_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions
+      file("${cid}_All_20180418_${build}_GRCh37_GRCh38.bed.sorted")
+
+      script:
+      """
+      # Remove all duplicated positions GRCh36 (as some positions might have become duplicates after the liftover)
+      LC_ALL=C sort -k 1,1 --parallel 4 ${dbsnp_chunk} > ${cid}_All_20180418_${build}_GRCh37_GRCh38.bed.sorted
+      awk 'BEGIN{r0="initrowhere"} {var=\$1; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_\${build}"}; r0=var}' ${cid}_All_20180418_${build}_GRCh37_GRCh38.bed.sorted > ${cid}_All_20180418_${build}_GRCh37_GRCh38.bed.sorted.nodup
+      """
+  }
+
+  process dbsnp_reference_make_rsid_version_from_GRCh38 {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh38_2
+
+      output:
+      tuple cid, file("${cid}_All_20180418_RSID_GRCh38.sorted.bed") into ch_dbsnp_rsid_to_GRCh38
+
+      script:
+      """
+      # Make version sorted on RSID to get correct coordinates
+      awk '{print \$4, \$4, \$6, \$7}' ${dbsnp_chunk} | LC_ALL=C sort -k 1,1 --parallel 4 > ${cid}_All_20180418_RSID_GRCh38.sorted.bed
+      """
+  }
+
+     // #
+     // #
+     // #awk '{print $4, $5, $6, $7, $8}' All_20180418_liftcoord_GRCh37_GRCh38.bed > All_20180418_GRCh37_GRCh38.bed
+     // #awk '{print $5, $4, $6, $7, $8}' All_20180418_liftcoord_GRCh37_GRCh38.bed > All_20180418_GRCh38_GRCh37.bed
+     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh37_GRCh38.bed > All_20180418_GRCh37_GRCh38.sorted.bed
+     // #LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh38_GRCh37.bed > All_20180418_GRCh38_GRCh37.sorted.bed
+     // #
+     // # 
 
 }else {
 
