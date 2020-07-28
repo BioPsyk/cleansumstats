@@ -471,7 +471,7 @@ fi
 #  :
 #fi
 
-if [ $gzipheadertest_result == "ok" ] && [ $var_in_meta_test_result1 == "ok" ] && [ $var_in_meta_test_result2 == "ok" ] && [ $var_in_header_test_result1 == "ok" ] && [ $var_in_header_test_result2 == "ok" ] && [ $min_var_required_result1 == "ok" ] && [ ${min_var_funx_test1} == "ok" ] && [ ${min_var_funx_test2} == "ok" ] && [ ${min_var_funx_test3} == "ok" ] && [ $min_var_required_result3 == "ok" ] && [ $min_var_required_result4 == "ok" ] && [ "${var_in_meta_test_mutliline_result1}" == "ok" ] && [ "${var_in_meta_test_mutliline_result2}" == "ok" ] && [ "${tab_in_meta_test_result1}" == "ok" ] && [ "${tab_in_meta_test_result2}" == "ok" ]
+if [ "${gzipheadertest_result}" == "ok" ] && [ "${var_in_meta_test_result1}" == "ok" ] && [ "${var_in_meta_test_result2}" == "ok" ] && [ "${var_in_header_test_result1}" == "ok" ] && [ "${var_in_header_test_result2}" == "ok" ] && [ "${min_var_required_result1}" == "ok" ] && [ "${min_var_funx_test1}" == "ok" ] && [ "${min_var_funx_test2}" == "ok" ] && [ "${min_var_funx_test3}" == "ok" ] && [ "${min_var_required_result3}" == "ok" ] && [ "${min_var_required_result4}" == "ok" ] && [ "${var_in_meta_test_mutliline_result1}" == "ok" ] && [ "${var_in_meta_test_mutliline_result2}" == "ok" ] && [ "${tab_in_meta_test_result1}" == "ok" ] && [ "${tab_in_meta_test_result2}" == "ok" ]
 then
   test_set="ok"
 else
