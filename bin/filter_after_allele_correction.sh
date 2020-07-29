@@ -23,7 +23,7 @@ fi
 #loop over bash array applying each correspondinng filtering type in the samee order
 for var in ${filterArr[@]}; do
 
-  if [ "${var}" == "duplicated_chrpos_in_GRCh37" ]
+  if [ "${var}" == "duplicated_chrpos_in_GRCh38" ]
   then
 
     #sort on fourth column (to be able to detect duplicates)
@@ -31,15 +31,15 @@ for var in ${filterArr[@]}; do
 
     #Filter only on position duplicates (A very hard filter but is good enough for alpha release)
     #removes all but the first encountered unique chr:pos row (seems some chrpos that mapped to more than one rsid are caught here)
-    touch removed_duplicated_rows_GRCh37_hard
-    awk 'BEGIN{r0="initrowhere"} {var=$4; if(r0!=var){print $0}else{print $0 > "removed_afterAlleleCorrection_duplicated_rows_GRCh37_hard"}; r0=var}' ac_unique_rows > ac_unique_rows2
-    awk -vOFS="\t" '{print $1,"afterAlleleCorrection_duplicated_rows_GRCh37_hard"}' removed_afterAlleleCorrection_duplicated_rows_GRCh37_hard >> removed_duplicated_rows
+    touch removed_duplicated_rows_GRCh38_hard
+    awk 'BEGIN{r0="initrowhere"} {var=$4; if(r0!=var){print $0}else{print $0 > "removed_afterAlleleCorrection_duplicated_rows_GRCh38_hard"}; r0=var}' ac_unique_rows > ac_unique_rows2
+    awk -vOFS="\t" '{print $1,"afterAlleleCorrection_duplicated_rows_GRCh38_hard"}' removed_afterAlleleCorrection_duplicated_rows_GRCh38_hard >> removed_duplicated_rows
 
     rowsBefore="$(wc -l ac_unique_rows | awk '{print $1-1}')"
     rowsAfter="$(wc -l ac_unique_rows2 | awk '{print $1-1}')"
-    echo -e "$rowsBefore\t$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh37" >> desc_removed_duplicated_rows
+    echo -e "$rowsBefore\t$rowsAfter\tRemoved duplicated rows in respect to only chr:pos, GRCh38" >> desc_removed_duplicated_rows
     mv ac_unique_rows2 ac_unique_rows
-    echo "duplicated_chrpos_in_GRCh37" >> afterAlleleCorrection_executionorder
+    echo "duplicated_chrpos_in_GRCh38" >> afterAlleleCorrection_executionorder
 
 
   fi
