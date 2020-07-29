@@ -18,7 +18,7 @@ if [ $? == 0  ]; then
  echo "gzip-check1 ok" >> ${OUT_log}
 else
  gziptest_result="fail" 
- echo "gzip-check1 fail" >> ${OUT_log}
+ echo "gzip-check1 fail ::: the sumstat gzip test (gzip -t <file>) returned a warning " >> ${OUT_log}
 fi
 
 echo "" >> ${OUT_log} 2>&1
@@ -34,7 +34,7 @@ if [ $? == 0  ]; then
  echo "tab-sep-enforce1 ok" >> ${OUT_log}
 else
  tab_sep_result1="fail" 
- echo "tab-sep-enforce1 fail" >> ${OUT_log}
+ echo "tab-sep-enforce1 fail ::: the command eforcing tab separation returned an error" >> ${OUT_log}
 fi
 
 echo "" >> ${OUT_log} 2>&1
@@ -44,7 +44,7 @@ echo "Check if the header is treated like only one field" >> ${OUT_log} 2>&1
 echo "##############################" >> ${OUT_log} 2>&1
 one_field_header_result1=$(cat ${outfile} | awk -vFS="\t" 'NR==1{
   if (rows==0){ print "ok"}
-  if (rows!=0){ print "fail"}
+  if (rows!=0){ print "fail ::: the header is seen as only one field after enforcing tab separation"}
 }') 2> /dev/null
 
 #if previous command was successful
@@ -69,7 +69,7 @@ NR==1 {comp=NF}
 NF!=comp {rows=+1}
 END {
   if (rows==0){ print "ok"}
-  if (rows!=0){ print "fail"}
+  if (rows!=0){ print "fail ::: not all rows had same number of fields after tab enforcement"}
 }') 2> /dev/null
 
 #if previous command was successful

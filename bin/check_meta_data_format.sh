@@ -244,7 +244,7 @@ var_in_meta_test_result1=$(
     if [ $(variableMissing "^${var}=" ${mefl}) == "true" ]
     then
       #echo >&2 "variable missing: ${var}="; 
-      var_in_meta_test_resultx="fail"
+      var_in_meta_test_resultx="fail ::: variable missing: ${var}="
     else
       :
     fi
@@ -283,7 +283,7 @@ var_in_meta_test_mutliline_result1=$(
         :
       else
         #echo >&2 "variable is not allowed to have multiple lines: ${var}="; 
-        var_in_meta_test_mutliline_resultx="fail"
+        var_in_meta_test_mutliline_resultx="fail ::: variable is not allowed to have multiple lines: ${var}="
       fi
     else
       :
@@ -324,8 +324,8 @@ var_in_header_test_result1=$(
       done
       if [ ${gotHit} == "false" ]
       then
-        echo >&2 "colType not found in header: ${var}=${right}"; 
-        var_in_header_test_resultx="fail"
+        #echo >&2 "colType not found in header: ${var}=${right}"; 
+        var_in_header_test_resultx="fail ::: colType not found in header: ${var}=${right}"
       else
         :
       fi
@@ -361,7 +361,7 @@ min_var_required_resultA=$(
     if [ ${right} == "missing" ]
     then
         #echo >&2 "colType cannot be set to missing: ${var}=${right}"; 
-        min_var_required_resultx="fail"
+        min_var_required_resultx="fail ::: colType cannot be set to missing: ${var}=${right}"
     else
       :
     fi
@@ -379,7 +379,7 @@ min_var_required_resultB=$(
     if [ ${right} == "missing" ]
     then
         #echo >&2 "colType cannot be set to missing: ${var}=${right}"; 
-        min_var_required_resultx="fail"
+        min_var_required_resultx="fail ::: colType cannot be set to missing: ${var}=${right}"
     else
       :
     fi
@@ -399,8 +399,8 @@ min_var_required_result1=$(
   then
     result="ok"
   else
-    echo >&2 "col_CHR and col_POS, or col_SNP cant be set to missing"; 
-    result="fail"
+    #echo >&2 "col_CHR and col_POS, or col_SNP cant be set to missing"; 
+    result="fail ::: col_CHR and col_POS, or col_SNP cant be set to missing"
   fi
   echo "${result}"
 )
@@ -426,7 +426,7 @@ min_var_required_result3=$(
     if [ ${right} == "missing" ]
     then
         #echo >&2 "colType cannot be set to missing: ${var}=${right}"; 
-        min_var_required_resultx="fail"
+        min_var_required_resultx="fail ::: colType cannot be set to missing: ${var}=${right}"
     else
       :
     fi
@@ -471,7 +471,7 @@ fi
 #  :
 #fi
 
-if [ $gzipheadertest_result == "ok" ] && [ $var_in_meta_test_result1 == "ok" ] && [ $var_in_meta_test_result2 == "ok" ] && [ $var_in_header_test_result1 == "ok" ] && [ $var_in_header_test_result2 == "ok" ] && [ $min_var_required_result1 == "ok" ] && [ ${min_var_funx_test1} == "ok" ] && [ ${min_var_funx_test2} == "ok" ] && [ ${min_var_funx_test3} == "ok" ] && [ $min_var_required_result3 == "ok" ] && [ $min_var_required_result4 == "ok" ] && [ "${var_in_meta_test_mutliline_result1}" == "ok" ] && [ "${var_in_meta_test_mutliline_result2}" == "ok" ] && [ "${tab_in_meta_test_result1}" == "ok" ] && [ "${tab_in_meta_test_result2}" == "ok" ]
+if [ "${gzipheadertest_result}" == "ok" ] && [ "${var_in_meta_test_result1}" == "ok" ] && [ "${var_in_meta_test_result2}" == "ok" ] && [ "${var_in_header_test_result1}" == "ok" ] && [ "${var_in_header_test_result2}" == "ok" ] && [ "${min_var_required_result1}" == "ok" ] && [ "${min_var_funx_test1}" == "ok" ] && [ "${min_var_funx_test2}" == "ok" ] && [ "${min_var_funx_test3}" == "ok" ] && [ "${min_var_required_result3}" == "ok" ] && [ "${min_var_required_result4}" == "ok" ] && [ "${var_in_meta_test_mutliline_result1}" == "ok" ] && [ "${var_in_meta_test_mutliline_result2}" == "ok" ] && [ "${tab_in_meta_test_result1}" == "ok" ] && [ "${tab_in_meta_test_result2}" == "ok" ]
 then
   test_set="ok"
 else
