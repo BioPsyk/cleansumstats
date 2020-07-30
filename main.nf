@@ -924,10 +924,9 @@ if (params.checkerOnly == false){
         tuple datasetID, mfile, sfile, chrposExists from ch_CHRPOS_missing
     
         output:
-        tuple datasetID, mfile, file("gb_lift_sorted") into ch_liftover_33
+        tuple datasetID, mfile, file("gb_lift") into ch_liftover_33
         tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos_rsid
         tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_1
-        file("gb_*")
   
         script:
         """
@@ -940,12 +939,12 @@ if (params.checkerOnly == false){
   
         #process before and after stats
         rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
-        rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1-1}')"
+        rowsAfter="\$(wc -l gb_lift | awk '{print \$1-1}')"
         echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
-        #
-        #process before and after stats (the -1 is to remove the header count)
-        rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
-        rowsAfter="\$(wc -l gb_lift_sorted | awk '{print \$1-1}')"
+        # Blow as dummy channel (as rsid will be automatically forced to correct annotation)
+        # Process before and after stats (the -1 is to remove the header count)
+        # RowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
+        # RowsAfter="\$(wc -l gb_lift | awk '{print \$1-1}')"
         echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
     
         """
@@ -974,7 +973,7 @@ if (params.checkerOnly == false){
     }
   
   
-    process liftover_GRCh37_and_GRCh38_and_map_to_dbsnp_rsid_version {
+    process liftover_to_GRCh38_and_map_to_dbsnp_rsid_version {
     
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
         publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
@@ -983,26 +982,28 @@ if (params.checkerOnly == false){
         tuple datasetID, mfile, fsorted from ch_liftover_3333
         
         output:
-        tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh37_and_GRCh38") into ch_liftover_49
-        tuple datasetID, file("desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA_rsid
+        tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh38") into ch_liftover_49
+        tuple datasetID, file("desc_liftover_to_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA_rsid
         tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build_rsid
         tuple datasetID, file("removed_not_matching_during_liftover_ix") into ch_not_matching_during_liftover_rsid
         file("removed_*")
          
         script:
         """
-        MakeSURENewDBSNPjoinHasrightOutput
-        LC_ALL=C join -1 1 -2 1 ${fsorted} ${ch_dbsnpRSID} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$4,\$3,\$2,\$1,\$5,\$6}'  > gb_lifted_and_mapped_to_GRCh37_and_GRCh38
+        #in gb_lifted_and_mapped_to_GRCh38, the order will be 
+        #GRCh38, GRCh37, rowIndex, RSID, REF, ALT
+        #chr:pos | inx | rsid | a1 | a2 | chr:pos2 (if available)
+        LC_ALL=C join -1 1 -2 1 ${fsorted} ${ch_dbsnp_RSID_38} | awk -vFS="[[:space:]]" -vOFS="\t" '{print \$3,\$2,\$1,\$4,\$5}'  > gb_lifted_and_mapped_to_GRCh38
   
          
         # Lines not possible to map
-        LC_ALL=C join -v 1 -1 1 -2 4 ${fsorted} gb_lifted_and_mapped_to_GRCh37_and_GRCh38 > removed_not_matching_during_liftover
+        LC_ALL=C join -v 1 -1 1 -2 3 ${fsorted} gb_lifted_and_mapped_to_GRCh38 > removed_not_matching_during_liftover
         awk -vOFS="\t" '{print \$2,"not_matching_during_liftover"}' removed_not_matching_during_liftover > removed_not_matching_during_liftover_ix
 
         # Process before and after stats
         rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
-        rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh37_and_GRCh38 | awk '{print \$1}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh37 and GRCh38 and simultaneously map to dbsnp" > desc_liftover_to_GRCh37_and_GRCh38_and_map_to_dbsnp_BA
+        rowsAfter="\$(wc -l gb_lifted_and_mapped_to_GRCh38 | awk '{print \$1}')"
+        echo -e "\$rowsBefore\t\$rowsAfter\tLiftover to GRCh38 and simultaneously map to dbsnp" > desc_liftover_to_GRCh38_and_map_to_dbsnp_BA
 
         # Make an empty stats file as we are not trying to infer genome build
         echo "No inference of build going from RSID" > ${datasetID}.stats
