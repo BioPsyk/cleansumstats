@@ -1678,25 +1678,42 @@ if (params.checkerOnly == false){
       tuple datasetID, build, mfile, acorrected, stats from ch_allele_corrected_and_outstats
       
       output:
-      tuple datasetID, build, file("${datasetID}_${build}_cleaned"), file("${datasetID}_GRCh38") into ch_cleaned_file
+      tuple datasetID, file("${datasetID}_cleaned") into ch_cleaned_file_1
       tuple datasetID, file("desc_final_merge_BA.txt") into ch_desc_final_merge_BA
   
       script:
       """
+      apply_modifier_on_stats.sh $acorrected $stats > ${datasetID}_cleaned
       
-      apply_modifier_on_stats.sh $acorrected $stats > ${datasetID}_${build}_cleaned
-      
-      # match the GRCh37 build and publish it as separate file (where all GRCh38 rows are present, and missing are NA)
-      awk -vFS="\t" '{print \$2":"\$3, \$1}' ${datasetID}_${build}_cleaned | LC_ALL=C sort -k1,1 > ${datasetID}_${build}_cleaned_chrpos_sorted
-      echo -e "0\tCHR\tPOS" > ${datasetID}_GRCh37
-      LC_ALL=C join -t "\$(printf '\t')" -1 1 -2 1 -a1 -o 1.2 2.2 ${datasetID}_${build}_cleaned_chrpos_sorted ${ch_dbsnp_38_37} >> ${datasetID}_GRCh37
-      
-      STOPP
       # process before and after stats
       rowsBefore="\$(wc -l $acorrected | awk '{print \$1}')"
-      rowsAfter="\$(wc -l ${datasetID}_${build}_cleaned | awk '{print \$1}')"
+      rowsAfter="\$(wc -l ${datasetID}_cleaned | awk '{print \$1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFrom dbsnp mapped to merged selection of stats, final step" > desc_final_merge_BA.txt
       """
+  }
+
+  process final_assembly_make_GRCh37_reference {
+
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, cleaned from ch_cleaned_file_1
+      
+      output:
+      tuple datasetID, cleaned, file("inx_chrpos_GRCh37_B") into ch_cleaned_file
+      file("cleaned_chrpos_sorted")
+      file("inx_chrpos_GRCh37")
+  
+      script:
+      """
+      # match the GRCh37 build and publish it as separate file (where all GRCh38 rows are present, and missing are NA)
+      awk -vFS="\t" '{print \$2":"\$3, \$1}' ${cleaned} | LC_ALL=C sort -k1,1 > cleaned_chrpos_sorted
+      LC_ALL=C join  -a 1 -1 1 -2 1 -o 1.2 2.2 cleaned_chrpos_sorted ${ch_dbsnp_38_37} > inx_chrpos_GRCh37
+      echo -e "0\tCHRPOS" > inx_chrpos_GRCh37_B
+      awk -vOFS="\t" '{if(\$2 ~ /:/){print \$1, \$2 }else{print \$1, "NA"}}' inx_chrpos_GRCh37 >> inx_chrpos_GRCh37_B
+
+      """
+
   }
   
     //Collect and place in corresponding stepwise order
@@ -1755,10 +1772,10 @@ if (params.checkerOnly == false){
     process gzip_outfiles {
   
         input:
-        tuple datasetID, build, sclean, scleanGRCh38, inputsfile, inputformatted, removedlines from ch_to_write_to_filelibrary2
+        tuple datasetID, sclean, scleanGRCh37, inputsfile, inputformatted, removedlines from ch_to_write_to_filelibrary2
   
         output:
-        tuple datasetID, path("sclean.gz"), path("scleanGRCh38.gz"), inputsfile, path("raw_formatted_rowindexed.gz"), path("cleanedheader"), path("removed_lines.gz") into ch_to_write_to_filelibrary3
+        tuple datasetID, path("sclean.gz"), path("scleanGRCh37.gz"), inputsfile, path("raw_formatted_rowindexed.gz"), path("cleanedheader"), path("removed_lines.gz") into ch_to_write_to_filelibrary3
         val datasetID into ch_check_avail
   
         script:
@@ -1768,7 +1785,7 @@ if (params.checkerOnly == false){
   
         # Store data in library
         gzip -c ${sclean} > sclean.gz
-        gzip -c ${scleanGRCh38} > scleanGRCh38.gz
+        gzip -c ${scleanGRCh37} > scleanGRCh37.gz
         gzip -c ${inputformatted} > raw_formatted_rowindexed.gz
         gzip -c ${removedlines} > removed_lines.gz
         """
@@ -1939,7 +1956,7 @@ if (params.checkerOnly == false){
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true, pattern: 'libprep_*'
   
         input:
-        tuple datasetID, libfolder, sclean, scleanGRCh38, inputsfile, inputformatted, cleanedheader, removedlines, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, removedlinestable, gbdetect, softv from ch_to_write_to_filelibrary7
+        tuple datasetID, libfolder, sclean, scleanGRCh37, inputsfile, inputformatted, cleanedheader, removedlines, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, removedlinestable, gbdetect, softv from ch_to_write_to_filelibrary7
         
         output:
         path("sumstat_*")
@@ -1974,8 +1991,8 @@ if (params.checkerOnly == false){
         echo "path_original_pdf=\${P}" >> libprep_changes_mfile
   
         #Add cleaned output files
-        echo "cleansumstats_cleaned_GRCh37=${libfolder}_cleaned_GRCh37.gz" >> libprep_changes_mfile
-        echo "cleansumstats_cleaned_GRCh38_coordinates=${libfolder}_cleaned_GRCh38.gz" >> libprep_changes_mfile
+        echo "cleansumstats_cleaned_GRCh38=${libfolder}_cleaned_GRCh38.gz" >> libprep_changes_mfile
+        echo "cleansumstats_cleaned_GRCh37_coordinates=${libfolder}_cleaned_GRCh37.gz" >> libprep_changes_mfile
   
         #Calcualate effective N using meta data info
         sh try_infere_Neffective.sh ${mfile} >> libprep_changes_mfile
@@ -2035,8 +2052,8 @@ if (params.checkerOnly == false){
         create_output_one_line_meta_data_file.sh libprep_new_mfile tmp_onelinemeta "${params.libdirinventory}"
   
         # Store data in library by moving
-        cp ${sclean} ${libfolder}_cleaned_GRCh37.gz
-        cp ${scleanGRCh38} ${libfolder}_cleaned_GRCh38.gz
+        cp ${sclean} ${libfolder}_cleaned_GRCh38.gz
+        cp ${scleanGRCh37} ${libfolder}_cleaned_GRCh37.gz
         cp ${removedlines} ${libfolder}_removed_lines.gz
         cp ${inputformatted} ${libfolder}_raw_formatted_rowindexed.gz
         cp $inputsfile ${libfolder}_raw.gz
