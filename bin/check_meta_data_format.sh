@@ -165,7 +165,7 @@ function colTypeNotAllowed(){
 }
 
 function existInHeader(){
-  if echo ${2} | grep -q "${1}"
+  if echo ${2} | grep -qFw "${1}"
   then
       echo true
   else
