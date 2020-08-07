@@ -1327,7 +1327,7 @@ if (params.checkerOnly == false){
         #process before and after stats (rows is -1 because of header)
         rowsBefore="\$(wc -l $liftgrs | awk '{print \$1}')"
         rowsAfter="\$(wc -l gb_multialleles_splittorows | awk '{print \$1-1}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tSplit multi-allelics to multiple rows and sort on original rowindex (Should make no diffrence because of the multi-allelic filter)" > desc_split_multi_allelics_and_sort_on_rowindex_BA.txt
+        echo -e "\$rowsBefore\t\$rowsAfter\tSplit multi-allelics to multiple rows and sort on original rowindex " > desc_split_multi_allelics_and_sort_on_rowindex_BA.txt
   
         """
     }
@@ -1408,19 +1408,19 @@ if (params.checkerOnly == false){
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
+        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels. All indels in the dbsnp reference are already filtered out" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
+        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes. Should be rare." >> desc_filtered_allele-pairs_with_dbsnp_as_reference
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
+        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on palindromes. Usually a substantial amount." >> desc_filtered_allele-pairs_with_dbsnp_as_reference
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
+        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db. Many multi-allelic sites are filtered out here" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
@@ -1483,11 +1483,11 @@ if (params.checkerOnly == false){
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_indel | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
+        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels. All indels in the dbsnp reference are already filtered out" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_hom | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
+        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on homozygotes. Should be rare." >> desc_filtered_allele-pairs_with_dbsnp_as_reference
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_palin | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
@@ -1495,7 +1495,7 @@ if (params.checkerOnly == false){
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_notPossPair | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
+        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on not possible pair combinations comparing with reference db. Many multi-allelic sites are filtered out here" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
   
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l removed_notExpA2 | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
