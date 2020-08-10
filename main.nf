@@ -327,15 +327,18 @@ if (params.generateMetafile){
   
       script:
       """
-
-
-      metaDir="\$(dirname ${mfile})"
-      cat ${mfile} > mfile_sent_in
       # Clean meta file from windows return characters
-      awk '{ sub("\\r\$", ""); print }' ${mfile} > mfile_unix_safe
+      cat ${mfile} > mfile_sent_in
+      awk '{ sub("\\r\$", ""); print }' ${mfile} > mfile_unix_safe2
+      
+      # Remove obviously misplaced whitespaces (i.e., any whitespace before =, and leading whitespace directly after =)
+      # Remove trailing whitespaces (i.e., any whitespace between the newline character and the last non whitespace character of the string)
+      awk '\$1 !~ "#" && \$1 !~ "^ *\$"{split(\$0,out,"="); gsub(/ */, "", out[1]); sub(/ */, "", out[2]); sub(/ *\$/, "", out[2]); print out[1]"="out[2]} \$1 ~ "#" || \$1 ~ "^ *\$"{print \$0}' mfile_unix_safe2  > mfile_unix_safe
+ 
       
       # Check if the datasetID folder is already present, if so just increment a number to get the new outname
       #  this is because a metafile can have the same name as another even though the content might be different. 
+      metaDir="\$(dirname ${mfile})"
 
       # Check if field for variable exists and if the file specified exists
       spath="\$(check_meta_file_references.sh "path_sumStats" mfile_unix_safe \$metaDir)"
