@@ -696,7 +696,8 @@ if (params.generateMetafile){
       awk '{ sub("\\r\$", ""); print }' ${mfile} > mfile_unix_safe2
       
       # Remove obviously misplaced whitespaces (i.e., any whitespace before =, and leading whitespace directly after =)
-      awk -vFS="=" -vOFS="=" '{gsub(/ */, "", \$1); print \$1, \$2}' mfile_unix_safe2 | awk -vFS="=" -vOFS="=" '{sub(/^ /, "", \$2); print \$1, \$2}' > mfile_unix_safe
+      # Remove trailing whitespaces (i.e., any whitespace between the newline character and the last non whitespace character of the string)
+      awk '\$1 !~ "#" && \$1 !~ "^ *\$"{split(\$0,out,"="); gsub(/ */, "", out[1]); sub(/ */, "", out[2]); sub(/ *\$/, "", out[2]); print out[1]"="out[2]} \$1 ~ "#" || \$1 ~ "^ *\$"{print \$0}' mfile_unix_safe2  > mfile_unix_safe
       """
   }
 
@@ -1391,7 +1392,7 @@ if (params.checkerOnly == false){
         colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
         colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
         cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | tail -n+2 | sstools-eallele correction -f - >> ${build}_acorrected
-        
+
         #only keep the index to prepare for the file with all removed lines
         touch removed_allele_filter_ix
         awk -vOFS="\t" '{print \$1,"notGCTA"}' removed_notGCTA >> removed_allele_filter_ix
