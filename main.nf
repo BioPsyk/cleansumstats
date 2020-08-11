@@ -666,6 +666,20 @@ if (params.generateMetafile){
       """
   }
   
+
+  process check_filter_params {
+      publishDir "${params.outdir}/pipeline_info", mode: 'symlink', overwrite: true
+
+      output:
+      file("params_check_filtername_afterLiftoverFilter.log")
+  
+      script:
+      """
+      check_filter_names.sh ${afterLiftoverFilter} ${baseDir}/assets/allowed_names_afterLiftoverFilter.txt params_check_filtername_afterLiftoverFilter.log
+
+      """
+  }
+
   
   //to_stream_sumstat_dir = Channel
   //                .fromPath(params.input, type: 'dir')
