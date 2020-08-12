@@ -104,7 +104,8 @@ cat $ACOR \
 
 
 # -z returns true if variable is unset
-if [ -z "$var_m" ] && [ -z "$var_m2" ] ; then
+if [ -z "$var_m" ] && [ -z "$var_m2" ]
+then
   #echo "hej"
   LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k
 
@@ -113,12 +114,17 @@ else
   awk -vFS="\t" -vOFS="\t" '{print $1,$8}' $ACOR > modifier
 
   #1*var
-  if [ -n "$var_m" ] ; then
+  if [ -n "$var_m" ]
+  then
     sstools-utils ad-hoc-do -f $STAT -k "0|${var_m}" -n"0,${nam_m}" | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 modifier - | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s", $1; for(i=3; i<=NF; i++){printf "%s%s", OFS, $i}; printf "%s", RS }; NR>1{printf "%s", $1; for(i=3; i<=NF; i++){printf "%s%s", OFS, $2*$i}; printf "%s", RS}' > sel_stats_m
+  else
+    :
   fi
   #1-var
   if [ -n "$var_m2" ] ; then
     sstools-utils ad-hoc-do -f $STAT -k "0|${var_m2}" -n"0,${nam_m2}" | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 modifier - | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s", $1; for(i=3; i<=NF; i++){printf "%s%s", OFS, $i}; printf "%s", RS }; NR>1{printf "%s", $1; for(i=3; i<=NF; i++){if($2=="1"){printf "%s%s", OFS, $i}else{printf "%s%s", OFS, 1-$i}}; printf "%s", RS}' > sel_stats_m2
+  else
+    :
   fi
 
   #connect it now in some clever way depending on if we have both or only one of the modified variants
@@ -128,6 +134,7 @@ else
     LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m
   else
     LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m2
+  fi
 fi
 
 
