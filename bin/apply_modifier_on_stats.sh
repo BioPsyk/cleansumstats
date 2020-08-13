@@ -70,11 +70,6 @@ function which_to_keep(){
       echo "ControlN"
       echo "ControlN" 1>&2
     fi
-   #needs special care for allele flipping
-   # if stat_exists "AFREQ" ${STAT}; then
-   #   echo "AFREQ"
-   #   echo "AFREQ" 1>&2
-   # fi
     if stat_exists "INFO" ${STAT}; then
       echo "INFO"
       echo "INFO" 1>&2
