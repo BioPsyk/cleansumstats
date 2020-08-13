@@ -1196,6 +1196,7 @@ if (params.checkerOnly == false){
         tuple datasetID, file("desc_liftover_to_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA_chrpos
         tuple datasetID, file("removed_not_matching_during_liftover_ix") into ch_not_matching_during_liftover_chrpos
         file("removed_*")
+        file("lifted_middle_step*")
     
         script:
         """
@@ -1205,7 +1206,7 @@ if (params.checkerOnly == false){
         #chr:pos | inx | rsid | a1 | a2 | chr:pos2 (if available)
         if [ "${gbmax}" == "GRCh38" ] ; then
           LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp_38} > lifted_middle_step 
-          awk -vFS="[[:space:]]" -vOFS="\t" '{print \$1,\$3,\$2,\$4,\$5}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh38
+          awk -vFS="[[:space:]]" -vOFS="\t" '{print \$1,\$2,\$3,\$4,\$5}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh38
         elif [ "${gbmax}" == "GRCh37" ] ; then
           LC_ALL=C join -1 1 -2 1 $fsorted ${ch_dbsnp_37_38} > lifted_middle_step 
           awk -vFS="[[:space:]]" -vOFS="\t" '{print \$3,\$2,\$4,\$5,\$6}' lifted_middle_step > gb_lifted_and_mapped_to_GRCh38
@@ -1218,6 +1219,7 @@ if (params.checkerOnly == false){
         else
           echo "${gbmax} is none of the available builds 35, 36, 37 or 38"
         fi
+
   
         # Lines not possible to map
         LC_ALL=C join -v 1 -1 1 -2 1 ${fsorted} lifted_middle_step > removed_not_matching_during_liftover
@@ -1445,6 +1447,7 @@ if (params.checkerOnly == false){
         rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1-1}')"
         echo -e "\$rowsBefore\t\$rowsAfter\tAllele corretion sanity check that final filtered file before and after file have same row count" >> desc_filtered_allele-pairs_with_dbsnp_as_reference
         """
+
   
     }
     
