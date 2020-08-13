@@ -1863,14 +1863,40 @@ if (params.checkerOnly == false){
         output:
         tuple datasetID, env(libfolder) into ch_assigned_sumstat_id
         file("assigned_sumstat_id")      
+        file("subjected_to_lock_file")      
   
         script:
         """
+        echo "if yes is writte on second row, then the file was subjected to lock file" >  subjected_to_lock_file
+
         if [ "${sumstatname}" == "missing" ] ; then
+          #initial random sleep to spread the jobs out in case they are equally fast
+          #random number between xx seconds
+          val=\$[ ( \$RANDOM % 1000 )  + 1 ]
+          val2="\$(echo "scale=2 ; \$val / 100" | bc)"
+          sleep \${val2}s
+
+          safetySwitch=0
+          while [ -f ${params.libdirsumstats}/LOCKFILE ]
+          do
+            val=\$[ ( \$RANDOM % 1000 )  + 1 ]
+            val2="\$(echo "scale=2 ; \$val / 100" | bc)"
+            sleep \${val2}s
+            echo "yes" >>  subjected_to_lock_file
+
+            safetySwitch=\$((\$safetySwitch+1))
+            if [ "\$safetySwitch" -gt 100 ]
+            then
+              break  # Skip entire rest of loop.
+            fi
+          done
+          touch ${params.libdirsumstats}/LOCKFILE
           # Scan for available ID and move directory there
           libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
           mkdir "\${libfolder}"
           echo "\${libfolder}" > assigned_sumstat_id 
+          rm ${params.libdirsumstats}/LOCKFILE
+
         else
           libfolder="${sumstatname}"
           mkdir "\${libfolder}"
