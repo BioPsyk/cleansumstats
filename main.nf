@@ -1869,6 +1869,9 @@ if (params.checkerOnly == false){
         """
         echo "if yes is writte on second row, then the file was subjected to lock file" >  subjected_to_lock_file
 
+        dateOfCreation="\$(date +%F-%H%M%S-%N)"
+        echo "${dateOfCreation}" >  time_entering_process_assign_sumstat_id
+
         if [ "${sumstatname}" == "missing" ] ; then
           #initial random sleep to spread the jobs out in case they are equally fast
           #random number between xx seconds
