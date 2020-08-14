@@ -1900,12 +1900,12 @@ if (params.checkerOnly == false){
          # touch ${params.libdirsumstats}/LOCKFILE
           # Scan for available ID and move directory there
           libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
-          mkdir "${params.libdirsumstats}/\${libfolder}"
+          val=\$(mkdir "${params.libdirsumstats}/\${libfolder}")
           while [ \$? != 0 ]
           do
             sleep 2
             libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
-            mkdir "${params.libdirsumstats}/\${libfolder}"
+            val=\$(mkdir "${params.libdirsumstats}/\${libfolder}")
           done
 
           echo "\${libfolder}" > assigned_sumstat_id 
