@@ -1864,13 +1864,15 @@ if (params.checkerOnly == false){
         tuple datasetID, env(libfolder) into ch_assigned_sumstat_id
         file("assigned_sumstat_id")      
         file("subjected_to_lock_file")      
+        file("time_entering_process_assign_sumstat_id")      
+        file("random_*")      
   
         script:
         """
         echo "if yes is writte on second row, then the file was subjected to lock file" >  subjected_to_lock_file
 
         dateOfCreation="\$(date +%F-%H%M%S-%N)"
-        echo "${dateOfCreation}" >  time_entering_process_assign_sumstat_id
+        echo "\${dateOfCreation}" >  time_entering_process_assign_sumstat_id
 
         if [ "${sumstatname}" == "missing" ] ; then
           #initial random sleep to spread the jobs out in case they are equally fast
@@ -1878,6 +1880,8 @@ if (params.checkerOnly == false){
           val=\$[ ( \$RANDOM % 1000 )  + 1 ]
           val2="\$(echo "scale=2 ; \$val / 100" | bc)"
           sleep \${val2}s
+
+          echo "\$val2" > random_number_assign_sumstat_id
 
           safetySwitch=0
           while [ -f ${params.libdirsumstats}/LOCKFILE ]
