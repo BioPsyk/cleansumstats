@@ -1855,7 +1855,7 @@ if (params.checkerOnly == false){
   
     process assign_sumstat_id {
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-        publishDir "${params.libdirsumstats}", mode: 'copy', overwrite: false, pattern: 'sumstat_*'
+        //publishDir "${params.libdirsumstats}", mode: 'copy', overwrite: false, pattern: 'sumstat_*'
   
         input:
         tuple datasetID, sumstatname from ch_assign_sumstat_id
@@ -1900,12 +1900,12 @@ if (params.checkerOnly == false){
          # touch ${params.libdirsumstats}/LOCKFILE
           # Scan for available ID and move directory there
           libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
-          mkdir "\${libfolder}"
+          mkdir "${params.libdirsumstats}/\${libfolder}"
           while [ \$? != 0 ]
           do
             sleep 2
             libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
-            mkdir "\${libfolder}"
+            mkdir "${params.libdirsumstats}/\${libfolder}"
           done
 
           echo "\${libfolder}" > assigned_sumstat_id 
@@ -1913,7 +1913,7 @@ if (params.checkerOnly == false){
 
         else
           libfolder="${sumstatname}"
-          mkdir "\${libfolder}"
+            mkdir "${params.libdirsumstats}/\${libfolder}"
           echo "${sumstatname}" > assigned_sumstat_id 
         fi
         """
