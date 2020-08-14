@@ -1855,7 +1855,6 @@ if (params.checkerOnly == false){
   
     process assign_sumstat_id {
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-        //publishDir "${params.libdirsumstats}", mode: 'copy', overwrite: false, pattern: 'sumstat_*'
   
         input:
         tuple datasetID, sumstatname from ch_assign_sumstat_id
@@ -1863,41 +1862,10 @@ if (params.checkerOnly == false){
         output:
         tuple datasetID, env(libfolder) into ch_assigned_sumstat_id
         file("assigned_sumstat_id")      
-        //file("subjected_to_lock_file")      
-        //file("time_entering_process_assign_sumstat_id")      
-        //file("random_*")      
   
         script:
         """
-        #echo "if yes is writte on second row, then the file was subjected to lock file" >  subjected_to_lock_file
-
-        dateOfCreation="\$(date +%F-%H%M%S-%N)"
-        echo "\${dateOfCreation}" >  time_entering_process_assign_sumstat_id
-
         if [ "${sumstatname}" == "missing" ] ; then
-          #initial random sleep to spread the jobs out in case they are equally fast
-          #random number between xx seconds
-         # val=\$[ ( \$RANDOM % 1000 )  + 1 ]
-         # val2="\$(echo "scale=2 ; \$val / 100" | bc)"
-         # sleep \${val2}s
-
-         # echo "\$val2" > random_number_assign_sumstat_id
-
-         # safetySwitch=0
-         # while [ -f ${params.libdirsumstats}/LOCKFILE ]
-         # do
-         #   val=\$[ ( \$RANDOM % 1000 )  + 1 ]
-         #   val2="\$(echo "scale=2 ; \$val / 100" | bc)"
-         #   sleep \${val2}s
-         #   echo "yes" >>  subjected_to_lock_file
-
-         #   safetySwitch=\$((\$safetySwitch+1))
-         #   if [ "\$safetySwitch" -gt 100 ]
-         #   then
-         #     break  # Skip entire rest of loop.
-         #   fi
-         # done
-         # touch ${params.libdirsumstats}/LOCKFILE
           # Scan for available ID and move directory there
           libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
           val=\$(mkdir "${params.libdirsumstats}/\${libfolder}")
@@ -1909,7 +1877,6 @@ if (params.checkerOnly == false){
           done
 
           echo "\${libfolder}" > assigned_sumstat_id 
-          #rm ${params.libdirsumstats}/LOCKFILE
 
         else
           libfolder="${sumstatname}"
