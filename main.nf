@@ -1209,29 +1209,37 @@ if (params.generateMetafile){
 
   process assign_sumstat_id {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-      publishDir "${params.libdirsumstats}", mode: 'copy', overwrite: false, pattern: 'sumstat_*'
 
       input:
       tuple datasetID, sumstatname from ch_assign_sumstat_id
 
       output:
       tuple datasetID, env(libfolder) into ch_assigned_sumstat_id
-      file("assigned_sumstat_id")      
+      file("assigned_sumstat_id")
 
       script:
       """
       if [ "${sumstatname}" == "missing" ] ; then
         # Scan for available ID and move directory there
         libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
-        mkdir "\${libfolder}"
-        echo "\${libfolder}" > assigned_sumstat_id 
+        val=\$(mkdir "${params.libdirsumstats}/\${libfolder}")
+        while [ \$? != 0 ]
+        do
+          sleep 2
+          libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
+          val=\$(mkdir "${params.libdirsumstats}/\${libfolder}")
+        done
+
+        echo "\${libfolder}" > assigned_sumstat_id
+
       else
         libfolder="${sumstatname}"
-        mkdir "\${libfolder}"
-        echo "${sumstatname}" > assigned_sumstat_id 
+          mkdir "${params.libdirsumstats}/\${libfolder}"
+        echo "${sumstatname}" > assigned_sumstat_id
       fi
       """
   }
+
 
   process check_pdf_library {
       publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
