@@ -1042,6 +1042,7 @@ if (params.checkerOnly == false){
         path("new_chr_sex_format2")
         path("new_chr_sex_format3")
         tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_2
+        tuple datasetID, env(rowsAfter) into ch_rowsAfter_number_of_lines
     
         script:
         """
@@ -1109,7 +1110,6 @@ if (params.checkerOnly == false){
     
     process infer_genome_build {
     
-        //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
     
         input:
@@ -1119,6 +1119,7 @@ if (params.checkerOnly == false){
         output:
         tuple datasetID, env(GRChmax) into ch_known_genome_build
         tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build_chrpos
+        tuple datasetID, file("GRChOther"), env(GRChmaxVal) into ch_build_stats_for_failsafe
     
         script:
         """
@@ -1127,10 +1128,53 @@ if (params.checkerOnly == false){
             cat \$gbuild >> ${datasetID}.stats
         done
         GRChmax="\$(cat ${datasetID}.stats | sort -nr -k1,1 | head -n1 | awk '{print \$2}')"
+        GRChmaxVal="\$(cat ${datasetID}.stats | sort -nr -k1,1 | head -n1 | awk '{print \$1}')"
+
+        cat ${datasetID}.stats | sort -nr -k1,1 | tail -n+2 > GRChOther
+
         """
     
     }
+
+    ch_rowsAfter_number_of_lines
+      .combine(ch_build_stats_for_failsafe, by: 0)
+      .set{ ch_failsafe }
+
+    process build_failsafe {
     
+        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+    
+        input:
+        tuple datasetID, tot, buildstat, grmax from ch_failsafe
+    
+        script:
+        """
+
+        #check that GRChmax has at least 90% hits in dbsnp
+        echo "${grmax}" | awk -vtot="${tot}" '{if( \$1/tot < 0.9){print "too few hits of the best matching build"}else{print "ok"}}' | while read t; do 
+          if [ "\$t" == "ok" ]; then
+            :
+          else
+            echo "\$t"
+            exit
+          fi
+        done
+
+        #check that the others have less than 60% hits in dbsnp
+        awk -vtot="${tot}" '{if( \$1/tot > 0.6){print "too many hits of the not selected builds"}else{print "ok"}}' ${buildstat} | while read t; do 
+          if [ "\$t" == "ok" ]; then
+            :
+          else
+            echo "\$t"
+            exit
+          fi
+        done
+
+        """
+    
+    }
+
+
     ch_liftover_2=ch_liftover.join(ch_known_genome_build)
     
     process prep_dbsnp_mapping_by_sorting_chrpos_version {
