@@ -15,7 +15,7 @@ function stat_exists(){
   infs=$2
   #could be good to rewrite this funtion to split and then process each row
   #right now we might grep the wrong thing in case another colname starts with "N"
-  head -n1 $infs | grep -q "[[:space:]]$var"
+  head -n1 $infs | grep -q "[[:space:]]$var[[:space:]]"
 }
 
 function which_to_mod(){
