@@ -340,8 +340,68 @@ if [ $? == 0  ]; then
  echo "var_in_header_test-check2 ok" >> ${OUT_log}
 else
  var_in_header_test_result2="fail"
- echo "var_in_header_test-check2 ${var_in_header_test_result1}" >> ${OUT_log}
+ echo "var_in_header_test-check1 ${var_in_header_test_result1}" >> ${OUT_log}
  echo "var_in_header_test-check2 fail" >> ${OUT_log}
+fi
+
+#If the stats methods was case control, then check if the number of cases and controls can be found
+#There can also be case control information in the sumstat file as a value to each variant
+case_control_stat_result1=$(
+  case_control_stat_resultx="ok"
+  right="$(selRightHand "$(selColRow "^stats_TraitType=" ${mefl})")"
+  if [ "${right}" == "cc" ]
+  then
+
+    #if cc is the stats_TraitType, then do we have both Ncases and Ncontrols?
+    right="$(selRightHand "$(selColRow "^stats_CaseN=" ${mefl})")"
+    if [ "${right}" == "missing" ]
+    then
+      #does it exist as header column in sumstats?
+      right="$(selRightHand "$(selColRow "^col_CaseN=" ${mefl})")"
+      if [ "${right}" == "missing" ]
+      then
+        case_control_stat_resultx1="fail"
+      else
+        case_control_stat_resultx1="ok"
+      fi
+    else
+      case_control_stat_resultx1="ok"
+    fi
+    
+    right="$(selRightHand "$(selColRow "^stats_ControlN=" ${mefl})")"
+    if [ "${right}" == "missing" ]
+    then
+      #does it exist as header column in sumstats?
+      right="$(selRightHand "$(selColRow "^col_ControlN=" ${mefl})")"
+      if [ "${right}" == "missing" ]
+      then
+        case_control_stat_resultx2="fail"
+      else
+      case_control_stat_resultx2="ok"
+      fi
+    else
+      case_control_stat_resultx2="ok"
+    fi
+  
+    if [ "$(case_control_stat_resultx1)" == "ok" ] && [ "$(case_control_stat_resultx2)" == "ok" ]; then
+      case_control_stat_resultx="ok"
+    else
+      case_control_stat_resultx="fail"
+    fi
+  else
+    #if we dont have cc then it can be set anything without a problem, and we report "ok"
+    case_control_stat_resultx="ok"
+  fi
+  echo $case_control_stat_resultx
+)
+if [ $? == 0  ]; then
+ case_control_stat_result2="ok"
+ echo "case_control_stat_result-check1 ${case_control_stat_result1}" >> ${OUT_log}
+ echo "case_control_stat_result-check2 ok" >> ${OUT_log}
+else
+ case_control_stat_result2="fail"
+ echo "case_control_stat_result-check1 ${case_control_stat_result1}" >> ${OUT_log}
+ echo "case_control_stat_result-check2 fail" >> ${OUT_log}
 fi
 
 
@@ -471,7 +531,7 @@ fi
 #  :
 #fi
 
-if [ "${gzipheadertest_result}" == "ok" ] && [ "${var_in_meta_test_result1}" == "ok" ] && [ "${var_in_meta_test_result2}" == "ok" ] && [ "${var_in_header_test_result1}" == "ok" ] && [ "${var_in_header_test_result2}" == "ok" ] && [ "${min_var_required_result1}" == "ok" ] && [ "${min_var_funx_test1}" == "ok" ] && [ "${min_var_funx_test2}" == "ok" ] && [ "${min_var_funx_test3}" == "ok" ] && [ "${min_var_required_result3}" == "ok" ] && [ "${min_var_required_result4}" == "ok" ] && [ "${var_in_meta_test_mutliline_result1}" == "ok" ] && [ "${var_in_meta_test_mutliline_result2}" == "ok" ] && [ "${tab_in_meta_test_result1}" == "ok" ] && [ "${tab_in_meta_test_result2}" == "ok" ]
+if [ "${gzipheadertest_result}" == "ok" ] && [ "${var_in_meta_test_result1}" == "ok" ] && [ "${var_in_meta_test_result2}" == "ok" ] && [ "${var_in_header_test_result1}" == "ok" ] && [ "${var_in_header_test_result2}" == "ok" ] && [ "${min_var_required_result1}" == "ok" ] && [ "${min_var_funx_test1}" == "ok" ] && [ "${min_var_funx_test2}" == "ok" ] && [ "${min_var_funx_test3}" == "ok" ] && [ "${min_var_required_result3}" == "ok" ] && [ "${min_var_required_result4}" == "ok" ] && [ "${var_in_meta_test_mutliline_result1}" == "ok" ] && [ "${var_in_meta_test_mutliline_result2}" == "ok" ] && [ "${tab_in_meta_test_result1}" == "ok" ] && [ "${tab_in_meta_test_result2}" == "ok" ] && [ "${case_control_stat_result1}" == "ok" ] && [ "${case_control_stat_result2}" == "ok" ]
 then
   test_set="ok"
 else
@@ -504,6 +564,8 @@ else
  echo "multiline-check2 ${var_in_meta_test_mutliline_result2}" >> ${OUT_log}
  echo "tab-check1 ${tab_in_meta_test_result1}" >> ${OUT_log}
  echo "tab-check2 ${tab_in_meta_test_result2}" >> ${OUT_log}
+ echo "case_control-check1 ${case_control_stat_result1}" >> ${OUT_log}
+ echo "case_control-check2 ${case_control_stat_result2}" >> ${OUT_log}
 fi
 
 if [ $test_set == "ok" ]
