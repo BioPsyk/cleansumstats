@@ -31,7 +31,8 @@ infile0=$1
 nrows=$2
 
 #create tmp dir and make an unzipped copy within
-infilex="${infile0%.gz}"
+infilex="$(basename ${infile0})"
+infilex="${infilex%.gz}"
 infilex="${infilex%.txt}"
 mkdir "tmp_${infilex}"
 infile="tmp_${infilex}/tmp_${infilex}.txt"
@@ -130,10 +131,8 @@ function detect(x){
       }
     #Here below only integers and other stuff, but no decimals
     }else if(x ~ /^[-]/){
-      #Values starting with -
       ans="DI_MINUS"
-    }else if(x ~ /^[0-26]$/){
-      #Indicator of chromosomes position
+    }else if(x >= 1 && x <= 26){
       ans="CH_CHR"
     }else if(length(x) == 3){
       ans="DI_EQ3"
@@ -220,6 +219,7 @@ done
 
 #CHROMOSOME
 chromosome="missing"
+colu="missing"
 for col in $(seq 1 1 ${nf}); do 
   col_uniques="$(awk -vcol="${col}" '{print $col }' tmp_${infilex}/tmp1)"
   fi="tmp_${infilex}/tmp_col_${col}"
@@ -232,7 +232,19 @@ for col in $(seq 1 1 ${nf}); do
     if [ ${atest} == "0" ] ; then
       i=$((col-1))
       val="${header[$i]}"
-      chromosome="${val}"
+      
+      if [ "${chromosome}" == "missing" ]; then
+        chromosome="${val}"
+        colu="${col_uniques}"
+      else
+        utest="$(echo "${col_uniques}" | awk -vcolu2="${colu}" '{if($1 > colu2){print "0"}else{print "1"}}')"
+        if [ ${utest} == "0" ] ; then
+          chromosome="${val}"
+          colu=${col_uniques}
+        else
+          :
+        fi
+      fi
     fi
   fi
 done
@@ -298,16 +310,17 @@ for col in $(seq 1 1 ${nf}); do
   elif grep -qF "DEC_MINUS" ${fi}; then
     :
   elif grep -qF "DEC_LT00001" ${fi}; then
-    perc1="$(awk '$3 == "DEC_LT1"{print $1}' $fi)"
-    perc2="$(awk '$3 == "DEC_LT09"{print $1}' $fi)"
-    perc3="$(awk '$3 == "DEC_LT08"{print $1}' $fi)"
-    perc4="$(awk '$3 == "DEC_LT07"{print $1}' $fi)"
-    atest="$(echo "${perc1} ${perc2} ${perc3} ${perc4}" | awk '{if($1 > 0.05 && $2 > 0.05 && $3 > 0.05 && $4 > 0.05){print "0"}else{print "1"}}')"
-    if [ ${atest} == "0" ] ; then
+   #because some sumstats are pre-filtered on only significatnt p-values, then the distribution check doesnt really work
+   # perc1="$(awk '$3 == "DEC_LT1"{print $1}' $fi)"
+   # perc2="$(awk '$3 == "DEC_LT09"{print $1}' $fi)"
+   # perc3="$(awk '$3 == "DEC_LT08"{print $1}' $fi)"
+   # perc4="$(awk '$3 == "DEC_LT07"{print $1}' $fi)"
+   # atest="$(echo "${perc1} ${perc2} ${perc3} ${perc4}" | awk '{if($1 > 0.05 && $2 > 0.05 && $3 > 0.05 && $4 > 0.05){print "0"}else{print "1"}}')"
+   # if [ ${atest} == "0" ] ; then
       i=$((col-1))
       val="${header[$i]}"
       pvalue=${val}
-    fi
+   # fi
   else
     :
   fi
@@ -315,12 +328,12 @@ done
 
 
 #output 
-echo "markername $markername"
-echo "chr $chromosome"
-echo "pos $position"
-echo "allele1 $allele1"
-echo "allele2 $allele2"
-echo "pvalue $pvalue"
+echo "markername=$markername"
+echo "chr=$chromosome"
+echo "pos=$position"
+echo "allele1=$allele1"
+echo "allele2=$allele2"
+echo "pvalue=$pvalue"
 
 
 
