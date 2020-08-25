@@ -220,6 +220,7 @@ done
 #CHROMOSOME
 chromosome="missing"
 colu="missing"
+
 for col in $(seq 1 1 ${nf}); do 
   col_uniques="$(awk -vcol="${col}" '{print $col }' tmp_${infilex}/tmp1)"
   fi="tmp_${infilex}/tmp_col_${col}"
@@ -232,7 +233,6 @@ for col in $(seq 1 1 ${nf}); do
     if [ ${atest} == "0" ] ; then
       i=$((col-1))
       val="${header[$i]}"
-      
       if [ "${chromosome}" == "missing" ]; then
         chromosome="${val}"
         colu="${col_uniques}"
@@ -328,12 +328,12 @@ done
 
 
 #output 
-echo "markername=$markername"
-echo "chr=$chromosome"
-echo "pos=$position"
-echo "allele1=$allele1"
-echo "allele2=$allele2"
-echo "pvalue=$pvalue"
+echo "col_SNP=$markername"
+echo "col_CHR=$chromosome"
+echo "col_POS=$position"
+echo "col_EffectAllele=$allele1"
+echo "col_OtherAllele=$allele2"
+echo "col_P=$pvalue"
 
 
 
