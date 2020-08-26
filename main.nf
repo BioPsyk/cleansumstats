@@ -2163,16 +2163,10 @@ if (params.checkerOnly == false){
         cat ${mfile} > libprep_raw_mfile
         create_output_meta_data_file.sh libprep_raw_mfile libprep_changes_mfile ${cleanedheader} > libprep_new_mfile
         
-        #I stopped using the one line summary of metadata, as it is very fast to compute when needed (2)
-        # make one_line_meta data for info file (now movbe to the inventory maker process)
-        #create_output_one_line_meta_data_file.sh libprep_new_mfile tmp_onelinemeta "${params.libdirinventory}"
-  
-        # Store data in library by moving
+        # Store data in library by copying (move is faster, but debug gets slower as input disappears)
         cp ${sclean} ${libfolder}_cleaned_GRCh38.gz
         cp ${scleanGRCh37} ${libfolder}_cleaned_GRCh37.gz
         cp ${removedlines} ${libfolder}_removed_lines.gz
-
-
         cp $softv ${libfolder}_software_versions.csv
         cp libprep_new_mfile ${libfolder}_new_meta.txt
   
