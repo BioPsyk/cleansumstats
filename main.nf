@@ -686,13 +686,13 @@ if (params.generateMetafile){
                   .fromPath(params.input, type: 'file')
                   .map { file -> tuple(file.baseName, file) }
   
-  ch_mfile_checkX.into { ch_mfile_check; ch_mfile_check2 }
+  ch_mfile_checkX.into { ch_mfile_user_1; ch_mfile_user_2 }
 
   process make_meta_file_unix_friendly {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, mfile from ch_mfile_check
+      tuple datasetID, mfile from ch_mfile_user_1
   
       output:
       tuple datasetID, mfile, file("mfile_unix_safe") into ch_mfile_unix_safe
@@ -886,7 +886,7 @@ if (params.checkerOnly == false){
         """
     }
   
-    ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5; ; ch_mfile_ok6}
+    ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5; ch_mfile_ok6; ch_mfile_rerun_7}
   
    // ch_mfile_ok7
    //  .combine(ch_sfile_on_stream0, by: 0)
@@ -1928,7 +1928,7 @@ if (params.checkerOnly == false){
     }
 
     ch_assigned_sumstat_id
-    .into { ch_assigned_sumstat_id1; ch_assigned_sumstat_id2 }
+    .into { ch_assigned_sumstat_id1; ch_assigned_sumstat_id2; ch_assigned_sumstat_id3 }
   
     process check_pdf_library {
         publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
@@ -2007,32 +2007,62 @@ if (params.checkerOnly == false){
     ch_input_pdf_stuff3
     .into { ch_input_pdf_stuff4; ch_input_pdf_stuff5 }
 
+    // Collect all metafiles and put them in a library structure
+    ch_assigned_sumstat_id3
+    .combine(ch_mfile_user_2, by: 0)
+    .combine(ch_mfile_rerun_7, by: 0)
+  // .combine(ch_mfile_cleaned_1, by: 0)
+    .set { ch_all_mfiles }
+
+    process put_in_metadata_library {
+        publishDir "${params.libdirmetadata_user}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*_user_metadata'
+        publishDir "${params.libdirmetadata_rerun}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*_rerun_metadata'
+        //publishDir "${params.libdirmetadata_cleaned}", mode: 'copyNoFollow', overwrite: false
+  
+        input:
+        //tuple datasetID, libfolder, usermfile, rerunmfile, cleanmfile from ch_all_mfiles
+        tuple datasetID, libfolder, usermfile, rerunmfile from ch_all_mfiles
+
+        output:
+        path("sumstat_*")
+  
+        script:
+        """
+        # Simply copy the files into the correct naming convention
+        cp ${usermfile} ${libfolder}_user_metadata
+        cp ${rerunmfile} ${libfolder}_rerun_metadata
+
+        """
+    }
+
     ch_input_readme
     .into { ch_input_readme1; ch_input_readme2 }
 
     ch_assigned_sumstat_id2
     .combine(ch_to_write_to_raw_library, by: 0)
     .combine(ch_input_readme2, by: 0)
-    .combine(ch_mfile_check2, by: 0)
     .combine(ch_input_pdf_stuff5, by: 0)
     .set { ch_to_write_to_raw_library2 }
+
 
     process put_in_raw_library {
         publishDir "${params.libdirraw}", mode: 'copyNoFollow', overwrite: false
   
         input:
-        tuple datasetID, libfolder, rawfile, readme, rawmfile, pmid, pdfpath, pdfsuppdir from ch_to_write_to_raw_library2
+        tuple datasetID, libfolder, rawfile, readme, pmid, pdfpath, pdfsuppdir from ch_to_write_to_raw_library2
 
         output:
         path("${libfolder}")
   
         script:
+
+        //cp ${rawmfile} ${libfolder}/${libfolder}_raw_meta.txt
+
         """
         # Make sumstat folder with corresponding ID as the cleaned one
         mkdir ${libfolder}
 
         # Copy the raw metafile (useful to get the true original, will not be possible to use to rerun from this folder )
-        cp ${rawmfile} ${libfolder}/${libfolder}_raw_meta.txt
         
         # Copy a new metafile (useful to get the new path names that follow our convention)
         # Important is that this file should not be confused with the cleaned metafile (we might want to revisit naming of the metafiles)
