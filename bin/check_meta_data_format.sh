@@ -383,7 +383,7 @@ case_control_stat_result1=$(
       case_control_stat_resultx2="ok"
     fi
   
-    if [ "$(case_control_stat_resultx1)" == "ok" ] && [ "$(case_control_stat_resultx2)" == "ok" ]; then
+    if [ "${case_control_stat_resultx1}" == "ok" ] && [ "${case_control_stat_resultx2}" == "ok" ]; then
       case_control_stat_resultx="ok"
     else
       case_control_stat_resultx="fail"

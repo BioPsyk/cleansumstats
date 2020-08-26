@@ -681,16 +681,12 @@ if (params.generateMetafile){
   }
 
   
-  //to_stream_sumstat_dir = Channel
-  //                .fromPath(params.input, type: 'dir')
-  //                .map { dir -> tuple(dir.baseName, dir) }
-
   //use metafile filename as datasetID through the pipeline
-  ch_mfile_check = Channel
+  ch_mfile_checkX = Channel
                   .fromPath(params.input, type: 'file')
                   .map { file -> tuple(file.baseName, file) }
   
-  //to_stream_sumstat_dir.into { ch_to_stream_sumstat_dir1; ch_to_stream_sumstat_dir2 }
+  ch_mfile_checkX.into { ch_mfile_check; ch_mfile_check2 }
 
   process make_meta_file_unix_friendly {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
@@ -1838,7 +1834,8 @@ if (params.checkerOnly == false){
         tuple datasetID, sclean, scleanGRCh37, inputsfile, inputformatted, removedlines from ch_to_write_to_filelibrary2
   
         output:
-        tuple datasetID, path("sclean.gz"), path("scleanGRCh37.gz"), inputsfile, path("raw_formatted_rowindexed.gz"), path("cleanedheader"), path("removed_lines.gz") into ch_to_write_to_filelibrary3
+        tuple datasetID, path("sclean.gz"), path("scleanGRCh37.gz"), path("cleanedheader"), path("removed_lines.gz") into ch_to_write_to_filelibrary3
+        tuple datasetID, inputsfile into ch_to_write_to_raw_library
         val datasetID into ch_check_avail
   
         script:
@@ -1849,7 +1846,7 @@ if (params.checkerOnly == false){
         # Store data in library
         gzip -c ${sclean} > sclean.gz
         gzip -c ${scleanGRCh37} > scleanGRCh37.gz
-        gzip -c ${inputformatted} > raw_formatted_rowindexed.gz
+        #gzip -c ${inputformatted} > raw_formatted_rowindexed.gz
         gzip -c ${removedlines} > removed_lines.gz
         """
     }
@@ -1929,6 +1926,9 @@ if (params.checkerOnly == false){
         fi
         """
     }
+
+    ch_assigned_sumstat_id
+    .into { ch_assigned_sumstat_id1; ch_assigned_sumstat_id2 }
   
     process check_pdf_library {
         publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
@@ -2003,15 +2003,60 @@ if (params.checkerOnly == false){
   
         """
     }
+
+    ch_input_pdf_stuff3
+    .into { ch_input_pdf_stuff4; ch_input_pdf_stuff5 }
+
+    ch_input_readme
+    .into { ch_input_readme1; ch_input_readme2 }
+
+    ch_assigned_sumstat_id2
+    .combine(ch_to_write_to_raw_library, by: 0)
+    .combine(ch_input_readme2, by: 0)
+    .combine(ch_mfile_check2, by: 0)
+    .combine(ch_input_pdf_stuff5, by: 0)
+    .set { ch_to_write_to_raw_library2 }
+
+    process put_in_raw_library {
+        publishDir "${params.libdirraw}", mode: 'copyNoFollow', overwrite: false
+  
+        input:
+        tuple datasetID, libfolder, rawfile, readme, rawmfile, pmid, pdfpath, pdfsuppdir from ch_to_write_to_raw_library2
+
+        output:
+        path("${libfolder}")
+  
+        script:
+        """
+        # Make sumstat folder with corresponding ID as the cleaned one
+        mkdir ${libfolder}
+
+        # Copy the raw metafile (useful to get the true original, will not be possible to use to rerun from this folder )
+        cp ${rawmfile} ${libfolder}/${libfolder}_raw_meta.txt
+        
+        # Copy a new metafile (useful to get the new path names that follow our convention)
+        # Important is that this file should not be confused with the cleaned metafile (we might want to revisit naming of the metafiles)
+        # cp newmfile libfolder/libfolder_new_meta.txt
+
+        # If raw checksum already exists then make sym link instead of copying over the file (but for now, always make physical copy)
+        cp $rawfile ${libfolder}/${libfolder}_raw.gz
+
+        if [ "${readme}" != "missing" ] ; then
+          cp $readme ${libfolder}/${libfolder}_raw_README.txt
+        fi
+
+        # Add pdf stuff as symlinks, this makes it easy to rerun raw sumstats
+        ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}/${libfolder}_pmid_${pmid}.pdf
+
+        """
+    }
   
   
-  
-    ch_assigned_sumstat_id
+    ch_assigned_sumstat_id1
      .combine(ch_to_write_to_filelibrary3, by: 0)
      .combine(ch_mfile_ok3, by: 0)
-     .combine(ch_input_readme, by: 0)
-     .combine(ch_input_pdf_stuff3, by: 0)
-     .combine(ch_one_line_metafile, by: 0)
+     .combine(ch_input_readme1, by: 0)
+     .combine(ch_input_pdf_stuff4, by: 0)
      .combine(ch_overview_workflow_steps, by: 0)
      .combine(ch_removed_lines_table, by: 0)
      .combine(ch_stats_genome_build, by: 0)
@@ -2020,18 +2065,18 @@ if (params.checkerOnly == false){
   
      //.combine(ch_collected_removed_lines2)
   
-    process put_in_library {
+    process put_in_cleaned_library {
     
         publishDir "${params.libdirsumstats}/${libfolder}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*'
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true, pattern: 'libprep_*'
   
         input:
-        tuple datasetID, libfolder, sclean, scleanGRCh37, inputsfile, inputformatted, cleanedheader, removedlines, mfile, readme, pmid, pdfpath, pdfsuppdir, onelinemeta, overviewworkflow, removedlinestable, gbdetect, softv from ch_to_write_to_filelibrary7
+        tuple datasetID, libfolder, sclean, scleanGRCh37, cleanedheader, removedlines, mfile, readme, pmid, pdfpath, pdfsuppdir, overviewworkflow, removedlinestable, gbdetect, softv from ch_to_write_to_filelibrary7
         
         output:
         path("sumstat_*")
         path("libprep_*") 
-        tuple datasetID, libfolder, mfile, file("tmp_onelinemeta") into ch_update_library_info_file
+        tuple datasetID, libfolder, mfile into ch_update_library_info_file
     
         script:
         """
@@ -2118,21 +2163,17 @@ if (params.checkerOnly == false){
         cat ${mfile} > libprep_raw_mfile
         create_output_meta_data_file.sh libprep_raw_mfile libprep_changes_mfile ${cleanedheader} > libprep_new_mfile
         
-        # make one_line_meta data for info file
-        create_output_one_line_meta_data_file.sh libprep_new_mfile tmp_onelinemeta "${params.libdirinventory}"
+        #I stopped using the one line summary of metadata, as it is very fast to compute when needed (2)
+        # make one_line_meta data for info file (now movbe to the inventory maker process)
+        #create_output_one_line_meta_data_file.sh libprep_new_mfile tmp_onelinemeta "${params.libdirinventory}"
   
         # Store data in library by moving
         cp ${sclean} ${libfolder}_cleaned_GRCh38.gz
         cp ${scleanGRCh37} ${libfolder}_cleaned_GRCh37.gz
         cp ${removedlines} ${libfolder}_removed_lines.gz
-        cp ${inputformatted} ${libfolder}_raw_formatted_rowindexed.gz
-        cp $inputsfile ${libfolder}_raw.gz
-        if [ "${readme}" != "missing" ] ; then
-          cp $readme ${libfolder}_raw_README.txt
-        fi
-        cp tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
+
+
         cp $softv ${libfolder}_software_versions.csv
-        cp libprep_raw_mfile ${libfolder}_raw_meta.txt
         cp libprep_new_mfile ${libfolder}_new_meta.txt
   
         # Make a folder with detailed data of the cleaning
@@ -2141,18 +2182,28 @@ if (params.checkerOnly == false){
         cp ${removedlinestable} ${libfolder}_cleaning_details/${libfolder}_removed_lines_per_type_table.txt
         cp $gbdetect ${libfolder}_cleaning_details/${libfolder}_genome_build_map_count_table.txt
         
-        # Add link to the pdf and supplemental material
-        #ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
         
         """
     }
+        //HERE symlink these instead of copying
+        //cp $inputsfile ${libfolder}_raw.gz
+        //if [ "${readme}" != "missing" ] ; then
+        //  cp $readme ${libfolder}_raw_README.txt
+        //fi
+        //cp libprep_raw_mfile ${libfolder}_raw_meta.txt
+
+        //I stopped using the one line summary of metadata, as it is very fast to compute when needed (2)
+        //cp tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
+        
+        //# Add link to the pdf and supplemental material
+        //ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
   
   
     process update_inventory_file {
         publishDir "${params.libdirinventory}", mode: 'copy', overwrite: false
   
         input:
-        tuple datasetID, libfolder, mfile, onelinemeta from ch_update_library_info_file
+        tuple datasetID, libfolder, mfile from ch_update_library_info_file
   
         output:
         path("*_inventory.txt")
@@ -2162,9 +2213,12 @@ if (params.checkerOnly == false){
         # This is a little risky as two parallel flows in theory could enter this process at the same time
         # An idea for the future is to use a simple dbmanager (or use a lock file)
         # Or perhaps use a smarter channeling mixing the different files
+        
+        # make one_line_meta data for info file (now movbe to the inventory maker process)
+        create_output_one_line_meta_data_file.sh mfile onelinemeta "${params.libdirinventory}"
        
         # Extract the most recent added row, except the header
-        tail -n+2 ${onelinemeta} | head -n1 > oneline
+        tail -n+2 onelinemeta | head -n1 > oneline
         dateOfCreation="\$(date +%F-%H%M%S-%N)"
   
         # Select most recent inventory file (if any exists)
@@ -2178,12 +2232,12 @@ if (params.checkerOnly == false){
             cat \${mostrecentfile} oneline > \${dateOfCreation}_inventory.txt
           else
             # Make header if the file does not exist
-            head -n1 ${onelinemeta} > \${dateOfCreation}_inventory.txt
+            head -n1 onelinemeta > \${dateOfCreation}_inventory.txt
             cat oneline >> \${dateOfCreation}_inventory.txt 
           fi
         else
           # Make header if the file does not exist
-          head -n1 ${onelinemeta} > \${dateOfCreation}_inventory.txt
+          head -n1 onelinemeta > \${dateOfCreation}_inventory.txt
           cat oneline >> \${dateOfCreation}_inventory.txt 
         fi
         """
