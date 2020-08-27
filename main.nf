@@ -1834,7 +1834,8 @@ if (params.checkerOnly == false){
         tuple datasetID, sclean, scleanGRCh37, inputsfile, inputformatted, removedlines from ch_to_write_to_filelibrary2
   
         output:
-        tuple datasetID, path("sclean.gz"), path("scleanGRCh37.gz"), path("cleanedheader"), path("removed_lines.gz") into ch_to_write_to_filelibrary3
+        tuple datasetID, path("sclean.gz"), path("scleanGRCh37.gz"), path("removed_lines.gz") into ch_to_write_to_filelibrary3
+        tuple datasetID, path("cleanedheader") into ch_cleaned_header
         tuple datasetID, inputsfile into ch_to_write_to_raw_library
         val datasetID into ch_check_avail
   
@@ -1928,7 +1929,7 @@ if (params.checkerOnly == false){
     }
 
     ch_assigned_sumstat_id
-    .into { ch_assigned_sumstat_id1; ch_assigned_sumstat_id2; ch_assigned_sumstat_id3 }
+    .into { ch_assigned_sumstat_id1; ch_assigned_sumstat_id2; ch_assigned_sumstat_id3; ch_assigned_sumstat_id4; ch_assigned_sumstat_id5 }
   
     process check_pdf_library {
         publishDir "${params.libdirpdfs}", mode: 'copy', overwrite: false, pattern: 'pmid_*'
@@ -2005,38 +2006,112 @@ if (params.checkerOnly == false){
     }
 
     ch_input_pdf_stuff3
-    .into { ch_input_pdf_stuff4; ch_input_pdf_stuff5 }
+    .into { ch_input_pdf_stuff4; ch_input_pdf_stuff5; ch_input_pdf_stuff6 }
+
+    ch_input_readme
+    .into { ch_input_readme1; ch_input_readme2; ch_input_readme3 }
+
+    ch_assigned_sumstat_id3
+      .combine(ch_mfile_rerun_7, by: 0)
+      .combine(ch_input_pdf_stuff6, by: 0)
+      .combine(ch_input_readme3, by: 0)
+      .set { ch_prepare_rerun_mfile_0 }
+
+    process prepare_rerun_metadata_file {
+        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+        input:
+        tuple datasetID, libfolder, rerunmetafile, pmid, pdfpath, pdfsuppdir, readme from ch_prepare_rerun_mfile_0
+
+        output:
+        tuple datasetID, path("prepared_rerun_metafile*") into ch_prep_rerun_mfile
+  
+        script:
+        """
+        # Latest idea is to not include stuff from input metafiles, but instead create a new file with unique information
+        # Restructure output to allow replace or extending some variables, save changes in changes_mfile
+        echo "cleansumstats_ID=${libfolder}" > libprep_changes_mfile
+  
+        # To make batch updates easier, change the path to raw files to the new name convention, but save old paths for traceability
+        echo "path_sumStats=${libfolder}_raw.gz" >> libprep_changes_mfile
+  
+        if [ "${readme}" != "missing" ] ; then
+          echo "path_readMe=${libfolder}_raw_README.txt" >> libprep_changes_mfile
+        else
+          echo "path_readMe=missing" >> libprep_changes_mfile
+        fi
+  
+        echo "path_pdf=${libfolder}_pmid_${pmid}.pdf" >> libprep_changes_mfile
+        
+        # Apply changes to make the rerun meta file ready
+        create_output_meta_data_file_rerun.sh ${rerunmetafile} libprep_changes_mfile > prepared_rerun_metafile
+  
+        """
+    }
+
+    ch_prep_rerun_mfile
+    .into { ch_prep_rerun_mfile_1; ch_prep_rerun_mfile_2 }
+
+    ch_assigned_sumstat_id4
+      .combine(ch_prep_rerun_mfile_1, by: 0)
+      .combine(ch_cleaned_header, by: 0)
+      .set { ch_mfile_cleaned_x }
+
+    process prepare_cleaned_metadata_file {
+        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+        input:
+        tuple datasetID, libfolder, rerunmfile, cleanedheader from ch_mfile_cleaned_x
+
+        output:
+        tuple datasetID, path("prepared_cleaned_metafile") into ch_mfile_cleaned_1
+  
+        script:
+        """
+  
+        #Add cleaned output lines
+        dateOfCreation="\$(date +%F-%H%M)"
+        echo "cleansumstats_date=\${dateOfCreation}" >> mfile_additions
+        echo "cleansumstats_user=\${USER}" >> mfile_additions
+        echo "cleansumstats_cleaned_GRCh38=${libfolder}_cleaned_GRCh38.gz" >> mfile_additions
+        echo "cleansumstats_cleaned_GRCh37_coordinates=${libfolder}_cleaned_GRCh37.gz" >> mfile_additions
+  
+        #Calcualate effective N using meta data info
+        sh try_infere_Neffective.sh ${rerunmfile} >> mfile_additions
+        
+        # Apply additions to make the cleaned meta file ready
+        create_output_meta_data_file_cleaned.sh mfile_additions ${cleanedheader} > prepared_cleaned_metafile
+
+        """
+    }
 
     // Collect all metafiles and put them in a library structure
-    ch_assigned_sumstat_id3
+    ch_assigned_sumstat_id5
     .combine(ch_mfile_user_2, by: 0)
-    .combine(ch_mfile_rerun_7, by: 0)
-  // .combine(ch_mfile_cleaned_1, by: 0)
+    .combine(ch_prep_rerun_mfile_2, by: 0)
+    .combine(ch_mfile_cleaned_1, by: 0)
     .set { ch_all_mfiles }
 
     process put_in_metadata_library {
-        publishDir "${params.libdirmetadata_user}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*_user_metadata'
-        publishDir "${params.libdirmetadata_rerun}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*_rerun_metadata'
-        //publishDir "${params.libdirmetadata_cleaned}", mode: 'copyNoFollow', overwrite: false
+        publishDir "${params.libdirmetadata_user}", overwrite: false, pattern: '*_user_metadata'
+        publishDir "${params.libdirmetadata_rerun}", overwrite: false, pattern: '*_rerun_metadata'
+        publishDir "${params.libdirmetadata_cleaned}", overwrite: false, pattern: '*_cleaned_metadata'
   
         input:
-        //tuple datasetID, libfolder, usermfile, rerunmfile, cleanmfile from ch_all_mfiles
-        tuple datasetID, libfolder, usermfile, rerunmfile from ch_all_mfiles
+        tuple datasetID, libfolder, usermfile, rerunmfile, cleanmfile from ch_all_mfiles
 
         output:
-        path("sumstat_*")
+        file("sumstat_*")
   
         script:
         """
         # Simply copy the files into the correct naming convention
         cp ${usermfile} ${libfolder}_user_metadata
         cp ${rerunmfile} ${libfolder}_rerun_metadata
+        cp ${cleanmfile} ${libfolder}_cleaned_metadata
 
         """
     }
-
-    ch_input_readme
-    .into { ch_input_readme1; ch_input_readme2 }
 
     ch_assigned_sumstat_id2
     .combine(ch_to_write_to_raw_library, by: 0)
@@ -2098,107 +2173,69 @@ if (params.checkerOnly == false){
     process put_in_cleaned_library {
     
         publishDir "${params.libdirsumstats}/${libfolder}", mode: 'copyNoFollow', overwrite: false, pattern: 'sumstat_*'
-        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true, pattern: 'libprep_*'
   
         input:
-        tuple datasetID, libfolder, sclean, scleanGRCh37, cleanedheader, removedlines, mfile, readme, pmid, pdfpath, pdfsuppdir, overviewworkflow, removedlinestable, gbdetect, softv from ch_to_write_to_filelibrary7
+        tuple datasetID, libfolder, sclean, scleanGRCh37, removedlines, mfile, readme, pmid, pdfpath, pdfsuppdir, overviewworkflow, removedlinestable, gbdetect, softv from ch_to_write_to_filelibrary7
         
         output:
         path("sumstat_*")
-        path("libprep_*") 
         tuple datasetID, libfolder, mfile into ch_update_library_info_file
     
         script:
+
+     //   mkdir -p ${libfolder}_pmid_${pmid}_supp
+  
+     //   if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ]
+     //   then
+     //     #Check dir if is not empty
+     //     count="\$(ls -1 ${params.libdirpdfs}/pmid_${pmid}_supp | wc -l)"
+     //     if [ "\${count}" -gt 0 ]
+     //     then
+     //       # If supplementary is already available, then use those, and do not use new from meta data file
+     //       for fil in ${params.libdirpdfs}/pmid_${pmid}_supp/*
+     //       do 
+     //         supp="\$(basename "\${fil}")" 
+     //         echo "path_supplementary=${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}" >> libprep_changes_mfile 
+     //         ln -s \${fil} ${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}
+     //         #Will be set to same if the one already in library is used (only keep basename)
+     //         echo "path_original_supplementary=\${supp}" >> libprep_changes_mfile 
+     //       done
+     //     else
+     //       # If empty then set missing (if supps exist but not in the dedicated library, then it has to be manually inserted there, and will be included in next batch update)
+     //         echo "path_supplementary=missing" >> libprep_changes_mfile
+     //         echo "path_original_supplementary=missing" >> libprep_changes_mfile
+     //     fi
+     //   else 
+     //     i=1
+     //     cat ${pdfsuppdir} | while read -r supp; do 
+     //       if [ "\${supp}" != "missing" ]
+     //       then
+     //         supp2="\$(basename "\${supp}")" 
+     //         extension="\${supp2##*.}" 
+     //         echo "path_supplementary=${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}" >> libprep_changes_mfile 
+     //         ln -s ${params.libdirpdfs}/pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension} ${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}
+     //         echo "path_original_supplementary=\$supp2" >> libprep_changes_mfile 
+     //         i=\$((i+1))
+     //       else
+     //         # Keep missing for path_supplementary and set missing to path_supplementary_original
+     //         echo "path_supplementary=missing" >> libprep_changes_mfile
+     //         echo "path_original_supplementary=missing" >> libprep_changes_mfile
+     //       fi
+     //     done
+     //   fi
+
         """
-        
-        # Restructure output to allow replace or extending some variables, save changes in changes_mfile
-        echo "cleansumstats_ID=${libfolder}" > libprep_changes_mfile
-  
-        # To make batch updates easier, change the path to raw files to the new name convention, but save old paths for traceability
-        echo "path_sumStats=${libfolder}_raw.gz" >> libprep_changes_mfile
-        Sx="\$(grep "^path_sumStats=" $mfile)"
-        S="\$(echo "\${Sx#*=}")"
-        echo "path_original_sumStats=\${S}" >> libprep_changes_mfile
-  
-        if [ "${readme}" != "missing" ] ; then
-          Rx="\$(grep "^path_readMe=" $mfile)"
-          R="\$(echo "\${Rx#*=}")"
-          echo "path_readMe=${libfolder}_raw_README.txt" >> libprep_changes_mfile
-          echo "path_original_readMe=\${R}" >> libprep_changes_mfile
-        else
-          echo "path_readMe=missing" >> libprep_changes_mfile
-          echo "path_original_readMe=missing" >> libprep_changes_mfile
-        fi
-  
-        Px="\$(grep "^path_pdf=" $mfile)"
-        P="\$(echo "\${Px#*=}")"
-        echo "path_pdf=${libfolder}_pmid_${pmid}.pdf" >> libprep_changes_mfile
-        echo "path_original_pdf=\${P}" >> libprep_changes_mfile
-  
-        #Add cleaned output files
-        echo "cleansumstats_cleaned_GRCh38=${libfolder}_cleaned_GRCh38.gz" >> libprep_changes_mfile
-        echo "cleansumstats_cleaned_GRCh37_coordinates=${libfolder}_cleaned_GRCh37.gz" >> libprep_changes_mfile
-  
-        #Calcualate effective N using meta data info
-        sh try_infere_Neffective.sh ${mfile} >> libprep_changes_mfile
         
         # copy the pdf and supplemental material if missing in pdf library
         # and prepare changes for the new mfile
         #cp ${pdfpath} pmid_${pmid}.pdf
         ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
   
-        mkdir -p ${libfolder}_pmid_${pmid}_supp
-  
-        if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ]
-        then
-          #Check dir if is not empty
-          count="\$(ls -1 ${params.libdirpdfs}/pmid_${pmid}_supp | wc -l)"
-          if [ "\${count}" -gt 0 ]
-          then
-            # If supplementary is already available, then use those, and do not use new from meta data file
-            for fil in ${params.libdirpdfs}/pmid_${pmid}_supp/*
-            do 
-              supp="\$(basename "\${fil}")" 
-              echo "path_supplementary=${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}" >> libprep_changes_mfile 
-              ln -s \${fil} ${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}
-              #Will be set to same if the one already in library is used (only keep basename)
-              echo "path_original_supplementary=\${supp}" >> libprep_changes_mfile 
-            done
-          else
-            # If empty then set missing (if supps exist but not in the dedicated library, then it has to be manually inserted there, and will be included in next batch update)
-              echo "path_supplementary=missing" >> libprep_changes_mfile
-              echo "path_original_supplementary=missing" >> libprep_changes_mfile
-          fi
-        else 
-          i=1
-          cat ${pdfsuppdir} | while read -r supp; do 
-            if [ "\${supp}" != "missing" ]
-            then
-              supp2="\$(basename "\${supp}")" 
-              extension="\${supp2##*.}" 
-              echo "path_supplementary=${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}" >> libprep_changes_mfile 
-              ln -s ${params.libdirpdfs}/pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension} ${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}
-              echo "path_original_supplementary=\$supp2" >> libprep_changes_mfile 
-              i=\$((i+1))
-            else
-              # Keep missing for path_supplementary and set missing to path_supplementary_original
-              echo "path_supplementary=missing" >> libprep_changes_mfile
-              echo "path_original_supplementary=missing" >> libprep_changes_mfile
-            fi
-          done
-        fi
-        
-  
-        # Apply changes when making the new_mfile
-        cat ${mfile} > libprep_raw_mfile
-        create_output_meta_data_file.sh libprep_raw_mfile libprep_changes_mfile ${cleanedheader} > libprep_new_mfile
-        
         # Store data in library by copying (move is faster, but debug gets slower as input disappears)
         cp ${sclean} ${libfolder}_cleaned_GRCh38.gz
         cp ${scleanGRCh37} ${libfolder}_cleaned_GRCh37.gz
         cp ${removedlines} ${libfolder}_removed_lines.gz
         cp $softv ${libfolder}_software_versions.csv
-        cp libprep_new_mfile ${libfolder}_new_meta.txt
   
         # Make a folder with detailed data of the cleaning
         mkdir ${libfolder}_cleaning_details
