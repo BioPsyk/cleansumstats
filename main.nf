@@ -1981,11 +1981,11 @@ if (params.checkerOnly == false){
         else
           :
         fi
-        
+
         #check supplementary materail folder
         if [ "${makePDFsupp}" == "true" ]
+        mkdir pmid_${pmid}_supp
         then
-          mkdir pmid_${pmid}_supp
           i=1
           cat ${pdfsuppdir} | while read -r supp; do 
             if [ "\${supp}" != "missing" ]
@@ -2027,12 +2027,14 @@ if (params.checkerOnly == false){
         tuple datasetID, path("prepared_rerun_metafile*") into ch_prep_rerun_mfile
   
         script:
+
+
         """
-        # Latest idea is to not include stuff from input metafiles, but instead create a new file with unique information
-        # Restructure output to allow replace or extending some variables, save changes in changes_mfile
+        # Set an ID which will be used when re-running
         echo "cleansumstats_ID=${libfolder}" > libprep_changes_mfile
   
-        # To make batch updates easier, change the path to raw files to the new name convention, but save old paths for traceability
+        # To make batch updates easier, change the path to raw files to the new name convention
+        # Restructure output to allow replace or extending some variables, save changes in changes_mfile
         echo "path_sumStats=${libfolder}_raw.gz" >> libprep_changes_mfile
   
         if [ "${readme}" != "missing" ] ; then
@@ -2043,6 +2045,21 @@ if (params.checkerOnly == false){
   
         echo "path_pdf=${libfolder}_pmid_${pmid}.pdf" >> libprep_changes_mfile
         
+        # Supplementary material
+        count="\$(ls -1 ${params.libdirpdfs}/pmid_${pmid}_supp | wc -l)"
+        if [ "\${count}" -gt 0 ]
+        then
+          # If supplementary is available then use those
+          for fil in ${params.libdirpdfs}/pmid_${pmid}_supp/*
+          do 
+            supp="\$(basename "\${fil}")" 
+            echo "path_supplementary=${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}" >> libprep_changes_mfile 
+          done
+        else
+          # If empty then set missing (if supps exist but not in the dedicated library, then it has to be manually inserted there, and will be included in next batch update)
+            echo "path_supplementary=missing" >> libprep_changes_mfile
+        fi
+        
         # Apply changes to make the rerun meta file ready
         create_output_meta_data_file_rerun.sh ${rerunmetafile} libprep_changes_mfile > prepared_rerun_metafile
   
@@ -2050,7 +2067,7 @@ if (params.checkerOnly == false){
     }
 
     ch_prep_rerun_mfile
-    .into { ch_prep_rerun_mfile_1; ch_prep_rerun_mfile_2 }
+    .into { ch_prep_rerun_mfile_1; ch_prep_rerun_mfile_2; ch_prep_rerun_mfile_3 }
 
     ch_assigned_sumstat_id4
       .combine(ch_prep_rerun_mfile_1, by: 0)
@@ -2093,9 +2110,9 @@ if (params.checkerOnly == false){
     .set { ch_all_mfiles }
 
     process put_in_metadata_library {
-        publishDir "${params.libdirmetadata_user}", overwrite: false, pattern: '*_user_metadata'
-        publishDir "${params.libdirmetadata_rerun}", overwrite: false, pattern: '*_rerun_metadata'
-        publishDir "${params.libdirmetadata_cleaned}", overwrite: false, pattern: '*_cleaned_metadata'
+        publishDir "${params.libdirmetadata_user}", overwrite: false, pattern: '*_user_metadata.txt'
+        publishDir "${params.libdirmetadata_rerun}", overwrite: false, pattern: '*_rerun_metadata.txt'
+        publishDir "${params.libdirmetadata_cleaned}", overwrite: false, pattern: '*_cleaned_metadata.txt'
   
         input:
         tuple datasetID, libfolder, usermfile, rerunmfile, cleanmfile from ch_all_mfiles
@@ -2106,9 +2123,9 @@ if (params.checkerOnly == false){
         script:
         """
         # Simply copy the files into the correct naming convention
-        cp ${usermfile} ${libfolder}_user_metadata
-        cp ${rerunmfile} ${libfolder}_rerun_metadata
-        cp ${cleanmfile} ${libfolder}_cleaned_metadata
+        cp ${usermfile} ${libfolder}_user_metadata.txt
+        cp ${rerunmfile} ${libfolder}_rerun_metadata.txt
+        cp ${cleanmfile} ${libfolder}_cleaned_metadata.txt
 
         """
     }
@@ -2117,6 +2134,7 @@ if (params.checkerOnly == false){
     .combine(ch_to_write_to_raw_library, by: 0)
     .combine(ch_input_readme2, by: 0)
     .combine(ch_input_pdf_stuff5, by: 0)
+    .combine(ch_prep_rerun_mfile_3, by: 0)
     .set { ch_to_write_to_raw_library2 }
 
 
@@ -2124,24 +2142,17 @@ if (params.checkerOnly == false){
         publishDir "${params.libdirraw}", mode: 'copyNoFollow', overwrite: false
   
         input:
-        tuple datasetID, libfolder, rawfile, readme, pmid, pdfpath, pdfsuppdir from ch_to_write_to_raw_library2
+        tuple datasetID, libfolder, rawfile, readme, pmid, pdfpath, pdfsuppdir, rerunmeta from ch_to_write_to_raw_library2
 
         output:
         path("${libfolder}")
   
         script:
 
-        //cp ${rawmfile} ${libfolder}/${libfolder}_raw_meta.txt
 
         """
         # Make sumstat folder with corresponding ID as the cleaned one
         mkdir ${libfolder}
-
-        # Copy the raw metafile (useful to get the true original, will not be possible to use to rerun from this folder )
-        
-        # Copy a new metafile (useful to get the new path names that follow our convention)
-        # Important is that this file should not be confused with the cleaned metafile (we might want to revisit naming of the metafiles)
-        # cp newmfile libfolder/libfolder_new_meta.txt
 
         # If raw checksum already exists then make sym link instead of copying over the file (but for now, always make physical copy)
         cp $rawfile ${libfolder}/${libfolder}_raw.gz
@@ -2150,8 +2161,9 @@ if (params.checkerOnly == false){
           cp $readme ${libfolder}/${libfolder}_raw_README.txt
         fi
 
-        # Add pdf stuff as symlinks, this makes it easy to rerun raw sumstats
+        # Add pdf and metadata stuff as symlinks, this makes it easy to rerun raw sumstats
         ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}/${libfolder}_pmid_${pmid}.pdf
+        ln -s ${rerunmeta} ${libfolder}/${libfolder}_raw_meta.txt
 
         """
     }
@@ -2183,54 +2195,9 @@ if (params.checkerOnly == false){
     
         script:
 
-     //   mkdir -p ${libfolder}_pmid_${pmid}_supp
-  
-     //   if [ -d "${params.libdirpdfs}/pmid_${pmid}_supp" ]
-     //   then
-     //     #Check dir if is not empty
-     //     count="\$(ls -1 ${params.libdirpdfs}/pmid_${pmid}_supp | wc -l)"
-     //     if [ "\${count}" -gt 0 ]
-     //     then
-     //       # If supplementary is already available, then use those, and do not use new from meta data file
-     //       for fil in ${params.libdirpdfs}/pmid_${pmid}_supp/*
-     //       do 
-     //         supp="\$(basename "\${fil}")" 
-     //         echo "path_supplementary=${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}" >> libprep_changes_mfile 
-     //         ln -s \${fil} ${libfolder}_pmid_${pmid}_supp/${libfolder}_\${supp}
-     //         #Will be set to same if the one already in library is used (only keep basename)
-     //         echo "path_original_supplementary=\${supp}" >> libprep_changes_mfile 
-     //       done
-     //     else
-     //       # If empty then set missing (if supps exist but not in the dedicated library, then it has to be manually inserted there, and will be included in next batch update)
-     //         echo "path_supplementary=missing" >> libprep_changes_mfile
-     //         echo "path_original_supplementary=missing" >> libprep_changes_mfile
-     //     fi
-     //   else 
-     //     i=1
-     //     cat ${pdfsuppdir} | while read -r supp; do 
-     //       if [ "\${supp}" != "missing" ]
-     //       then
-     //         supp2="\$(basename "\${supp}")" 
-     //         extension="\${supp2##*.}" 
-     //         echo "path_supplementary=${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}" >> libprep_changes_mfile 
-     //         ln -s ${params.libdirpdfs}/pmid_${pmid}_supp/pmid_${pmid}_supp_\${i}.\${extension} ${libfolder}_pmid_${pmid}_supp/${libfolder}_pmid_${pmid}_supp_\${i}.\${extension}
-     //         echo "path_original_supplementary=\$supp2" >> libprep_changes_mfile 
-     //         i=\$((i+1))
-     //       else
-     //         # Keep missing for path_supplementary and set missing to path_supplementary_original
-     //         echo "path_supplementary=missing" >> libprep_changes_mfile
-     //         echo "path_original_supplementary=missing" >> libprep_changes_mfile
-     //       fi
-     //     done
-     //   fi
 
         """
         
-        # copy the pdf and supplemental material if missing in pdf library
-        # and prepare changes for the new mfile
-        #cp ${pdfpath} pmid_${pmid}.pdf
-        ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
-  
         # Store data in library by copying (move is faster, but debug gets slower as input disappears)
         cp ${sclean} ${libfolder}_cleaned_GRCh38.gz
         cp ${scleanGRCh37} ${libfolder}_cleaned_GRCh37.gz
@@ -2243,21 +2210,18 @@ if (params.checkerOnly == false){
         cp ${removedlinestable} ${libfolder}_cleaning_details/${libfolder}_removed_lines_per_type_table.txt
         cp $gbdetect ${libfolder}_cleaning_details/${libfolder}_genome_build_map_count_table.txt
         
+        # copy the pdf and supplemental material if missing in pdf library
+        # and prepare changes for the new mfile
+        ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
+        ln -s ${params.libdirpdfs}/pmid_${pmid}_supp ${libfolder}_pmid_${pmid}_supp
+        mkdir ${libfolder}_medatadata
+        ln -s ${params.libdirmetadata_user}/${libfolder}_user_metadata.txt ${libfolder}_medatadata/${libfolder}_user_metadata.txt
+        ln -s ${params.libdirmetadata_rerun}/${libfolder}_rerun_metadata.txt ${libfolder}_medatadata/${libfolder}_rerun_metadata.txt
+        ln -s ${params.libdirmetadata_cleaned}/${libfolder}_cleaned_metadata.txt ${libfolder}_medatadata/${libfolder}_cleaned_metadata.txt
         
         """
     }
-        //HERE symlink these instead of copying
-        //cp $inputsfile ${libfolder}_raw.gz
-        //if [ "${readme}" != "missing" ] ; then
-        //  cp $readme ${libfolder}_raw_README.txt
-        //fi
-        //cp libprep_raw_mfile ${libfolder}_raw_meta.txt
 
-        //I stopped using the one line summary of metadata, as it is very fast to compute when needed (2)
-        //cp tmp_onelinemeta ${libfolder}_one_line_summary_of_metadata.txt
-        
-        //# Add link to the pdf and supplemental material
-        //ln -s ${params.libdirpdfs}/pmid_${pmid}.pdf ${libfolder}_pmid_${pmid}.pdf
   
   
     process update_inventory_file {
