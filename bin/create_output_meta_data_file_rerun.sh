@@ -6,6 +6,7 @@ colNeededInMetaOutfile1=(
 path_sumStats
 path_readMe
 path_pdf
+cleansumstats_metafile_checksum_user
 )
 
 # Add user input if not present in "to replace or extend"
@@ -20,9 +21,6 @@ done
 
 #for pdfSupp we only replace as it can have multiple lines
 grep -P "^path_supplementary=" ${toReplaceOrExtend} 
-
-#for original_pdfSupp we only replace as it can have multiple lines
-grep -P "^path_original_supplementary=" ${toReplaceOrExtend} 
 
 colNeededInMetaOutfile3=(
 study_PMID

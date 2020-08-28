@@ -17,7 +17,7 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/cleansumstats --infile 'gwas-sumstats.gz' -profile singularity
+    nextflow run nf-core/cleansumstats --infile 'gwas_sumstats_meta_file.txt' -profile singularity
 
     Mandatory arguments:
       --infile                      Path to tab-separated input data (must be surrounded with quotes)
@@ -686,7 +686,23 @@ if (params.generateMetafile){
                   .fromPath(params.input, type: 'file')
                   .map { file -> tuple(file.baseName, file) }
   
-  ch_mfile_checkX.into { ch_mfile_user_1; ch_mfile_user_2 }
+  ch_mfile_checkX.into { ch_mfile_user_1; ch_mfile_user_2; ch_mfile_user_3 }
+
+  process calculate_checksum_on_metafile_user {
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile from ch_mfile_user_3
+  
+      output:
+      tuple datasetID, env(usermetachecksum) into ch_usermeta_checksum
+  
+      script:
+      """
+      usermetachecksum="\$(b3sum ${mfile} | awk '{print \$1}')"
+      """
+  }
+
 
   process make_meta_file_unix_friendly {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
@@ -1491,7 +1507,6 @@ if (params.checkerOnly == false){
   
     }
     
-    
     process allele_correction_A1 {
     
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
@@ -1571,9 +1586,6 @@ if (params.checkerOnly == false){
       .mix(ch_removed_by_allele_filter_ix2)
       .set{ ch_removed_by_allele_filter_ix }
   
-   // ch_describe_allele_filter1
-   //   .mix(ch_describe_allele_filter2)
-   //   .set{ ch_describe_allele_filter }
   
     ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
       .mix(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA)
@@ -2012,6 +2024,7 @@ if (params.checkerOnly == false){
     .into { ch_input_readme1; ch_input_readme2; ch_input_readme3 }
 
     ch_assigned_sumstat_id3
+      .combine(ch_usermeta_checksum, by: 0)
       .combine(ch_mfile_rerun_7, by: 0)
       .combine(ch_input_pdf_stuff6, by: 0)
       .combine(ch_input_readme3, by: 0)
@@ -2021,7 +2034,7 @@ if (params.checkerOnly == false){
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
         input:
-        tuple datasetID, libfolder, rerunmetafile, pmid, pdfpath, pdfsuppdir, readme from ch_prepare_rerun_mfile_0
+        tuple datasetID, libfolder, usermetachecksum, rerunmetafile, pmid, pdfpath, pdfsuppdir, readme from ch_prepare_rerun_mfile_0
 
         output:
         tuple datasetID, path("prepared_rerun_metafile*") into ch_prep_rerun_mfile
@@ -2032,6 +2045,9 @@ if (params.checkerOnly == false){
         """
         # Set an ID which will be used when re-running
         echo "cleansumstats_ID=${libfolder}" > libprep_changes_mfile
+       
+        # Add the checksum for usermetadata
+        echo "cleansumstats_metafile_checksum_user=${usermetachecksum}" >> libprep_changes_mfile
   
         # To make batch updates easier, change the path to raw files to the new name convention
         # Restructure output to allow replace or extending some variables, save changes in changes_mfile
@@ -2067,10 +2083,26 @@ if (params.checkerOnly == false){
     }
 
     ch_prep_rerun_mfile
-    .into { ch_prep_rerun_mfile_1; ch_prep_rerun_mfile_2; ch_prep_rerun_mfile_3 }
+    .into { ch_prep_rerun_mfile_1; ch_prep_rerun_mfile_2; ch_prep_rerun_mfile_3; ch_prep_rerun_mfile_4 }
+
+    process calculate_checksum_on_metafile_rerun {
+        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+    
+        input:
+        tuple datasetID, mfile from ch_prep_rerun_mfile_1
+    
+        output:
+        tuple datasetID, env(usermetachecksum) into ch_rerunrmeta_checksum
+    
+        script:
+        """
+        usermetachecksum="\$(b3sum ${mfile} | awk '{print \$1}')"
+        """
+    }
 
     ch_assigned_sumstat_id4
-      .combine(ch_prep_rerun_mfile_1, by: 0)
+      .combine(ch_prep_rerun_mfile_4, by: 0)
+      .combine(ch_rerunrmeta_checksum, by: 0)
       .combine(ch_cleaned_header, by: 0)
       .set { ch_mfile_cleaned_x }
 
@@ -2078,7 +2110,7 @@ if (params.checkerOnly == false){
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
         input:
-        tuple datasetID, libfolder, rerunmfile, cleanedheader from ch_mfile_cleaned_x
+        tuple datasetID, libfolder, rerunmfile, rerunmetachecksum, cleanedheader from ch_mfile_cleaned_x
 
         output:
         tuple datasetID, path("prepared_cleaned_metafile") into ch_mfile_cleaned_1
@@ -2088,8 +2120,9 @@ if (params.checkerOnly == false){
   
         #Add cleaned output lines
         dateOfCreation="\$(date +%F-%H%M)"
-        echo "cleansumstats_date=\${dateOfCreation}" >> mfile_additions
+        echo "cleansumstats_date=\${dateOfCreation}" > mfile_additions
         echo "cleansumstats_user=\${USER}" >> mfile_additions
+        echo "cleansumstats_metafile_checksum_rerun=${rerunmetachecksum}" >> libprep_changes_mfile
         echo "cleansumstats_cleaned_GRCh38=${libfolder}_cleaned_GRCh38.gz" >> mfile_additions
         echo "cleansumstats_cleaned_GRCh37_coordinates=${libfolder}_cleaned_GRCh37.gz" >> mfile_additions
   
@@ -2110,9 +2143,9 @@ if (params.checkerOnly == false){
     .set { ch_all_mfiles }
 
     process put_in_metadata_library {
-        publishDir "${params.libdirmetadata_user}", overwrite: false, pattern: '*_user_metadata.txt'
-        publishDir "${params.libdirmetadata_rerun}", overwrite: false, pattern: '*_rerun_metadata.txt'
-        publishDir "${params.libdirmetadata_cleaned}", overwrite: false, pattern: '*_cleaned_metadata.txt'
+        publishDir "${params.libdirmetadata_user}", mode: 'copy', overwrite: false, pattern: '*_user_metadata.txt'
+        publishDir "${params.libdirmetadata_rerun}", mode: 'copy', overwrite: false, pattern: '*_rerun_metadata.txt'
+        publishDir "${params.libdirmetadata_cleaned}", mode: 'copy', overwrite: false, pattern: '*_cleaned_metadata.txt'
   
         input:
         tuple datasetID, libfolder, usermfile, rerunmfile, cleanmfile from ch_all_mfiles
