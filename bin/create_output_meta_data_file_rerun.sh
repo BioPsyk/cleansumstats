@@ -7,6 +7,7 @@ path_sumStats
 path_readMe
 path_pdf
 cleansumstats_metafile_checksum_user
+cleansumstats_sumstat_checksum_raw
 )
 
 # Add user input if not present in "to replace or extend"

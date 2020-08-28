@@ -770,6 +770,23 @@ if (params.generateMetafile){
       """
   }
 
+  ch_input_sfile.into { ch_input_sfile1; ch_input_sfile2 }
+
+  process calculate_checksum_on_raw_sumstat {
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, sfile from ch_input_sfile1
+  
+      output:
+      tuple datasetID, env(rawsumstatchecksum) into ch_rawsumstat_checksum
+  
+      script:
+      """
+      rawsumstatchecksum="\$(b3sum ${sfile} | awk '{print \$1}')"
+      """
+  }
+
   process check_mfile_format {
   
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
@@ -1835,7 +1852,7 @@ if (params.checkerOnly == false){
   
   
     ch_cleaned_file
-      .combine(ch_input_sfile, by: 0)
+      .combine(ch_input_sfile2, by: 0)
       .combine(ch_sfile_on_stream5, by: 0)
       .combine(ch_collected_removed_lines4, by: 0)
       .set{ ch_to_write_to_filelibrary2 }
@@ -2025,6 +2042,7 @@ if (params.checkerOnly == false){
 
     ch_assigned_sumstat_id3
       .combine(ch_usermeta_checksum, by: 0)
+      .combine(ch_rawsumstat_checksum, by: 0)
       .combine(ch_mfile_rerun_7, by: 0)
       .combine(ch_input_pdf_stuff6, by: 0)
       .combine(ch_input_readme3, by: 0)
@@ -2034,7 +2052,7 @@ if (params.checkerOnly == false){
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
         input:
-        tuple datasetID, libfolder, usermetachecksum, rerunmetafile, pmid, pdfpath, pdfsuppdir, readme from ch_prepare_rerun_mfile_0
+        tuple datasetID, libfolder, usermetachecksum, rawchecksum, rerunmetafile, pmid, pdfpath, pdfsuppdir, readme from ch_prepare_rerun_mfile_0
 
         output:
         tuple datasetID, path("prepared_rerun_metafile*") into ch_prep_rerun_mfile
@@ -2048,6 +2066,7 @@ if (params.checkerOnly == false){
        
         # Add the checksum for usermetadata
         echo "cleansumstats_metafile_checksum_user=${usermetachecksum}" >> libprep_changes_mfile
+        echo "cleansumstats_sumstat_checksum_raw=${rawchecksum}" >> libprep_changes_mfile
   
         # To make batch updates easier, change the path to raw files to the new name convention
         # Restructure output to allow replace or extending some variables, save changes in changes_mfile
@@ -2100,9 +2119,30 @@ if (params.checkerOnly == false){
         """
     }
 
+    ch_to_write_to_filelibrary3.into { ch_to_write_to_filelibrary3a; ch_to_write_to_filelibrary3b }
+
+    process calculate_checksum_on_cleaned_sumstat {
+        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+    
+        input:
+        tuple datasetID, sclean, scleanGRCh37, removedlines from ch_to_write_to_filelibrary3a
+    
+        output:
+        tuple datasetID, env(scleanchecksum), env(scleanGRCh37checksum), env(removedlineschecksum) into ch_cleaned_sumstat_checksums
+    
+        script:
+        """
+        scleanchecksum="\$(b3sum ${sclean} | awk '{print \$1}')"
+        scleanGRCh37checksum="\$(b3sum ${scleanGRCh37} | awk '{print \$1}')"
+        removedlineschecksum="\$(b3sum ${removedlines} | awk '{print \$1}')"
+        """
+    }
+
+
     ch_assigned_sumstat_id4
       .combine(ch_prep_rerun_mfile_4, by: 0)
       .combine(ch_rerunrmeta_checksum, by: 0)
+      .combine(ch_cleaned_sumstat_checksums, by: 0)
       .combine(ch_cleaned_header, by: 0)
       .set { ch_mfile_cleaned_x }
 
@@ -2110,7 +2150,7 @@ if (params.checkerOnly == false){
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
         input:
-        tuple datasetID, libfolder, rerunmfile, rerunmetachecksum, cleanedheader from ch_mfile_cleaned_x
+        tuple datasetID, libfolder, rerunmfile, rerunmetachecksum, scleanchecksum, scleanGRCh37checksum, removedlineschecksum, cleanedheader from ch_mfile_cleaned_x
 
         output:
         tuple datasetID, path("prepared_cleaned_metafile") into ch_mfile_cleaned_1
@@ -2122,9 +2162,13 @@ if (params.checkerOnly == false){
         dateOfCreation="\$(date +%F-%H%M)"
         echo "cleansumstats_date=\${dateOfCreation}" > mfile_additions
         echo "cleansumstats_user=\${USER}" >> mfile_additions
-        echo "cleansumstats_metafile_checksum_rerun=${rerunmetachecksum}" >> libprep_changes_mfile
+        echo "cleansumstats_metafile_checksum_rerun=${rerunmetachecksum}" >> mfile_additions
         echo "cleansumstats_cleaned_GRCh38=${libfolder}_cleaned_GRCh38.gz" >> mfile_additions
+        echo "cleansumstats_cleaned_GRCh38_checksum=${scleanchecksum}" >> mfile_additions
         echo "cleansumstats_cleaned_GRCh37_coordinates=${libfolder}_cleaned_GRCh37.gz" >> mfile_additions
+        echo "cleansumstats_cleaned_GRCh37_coordinates_checksum=${scleanGRCh37checksum}" >> mfile_additions
+        echo "cleansumstats_removed_lines=${libfolder}_removed_lines.gz" >> mfile_additions
+        echo "cleansumstats_removed_lines_checksum=${removedlineschecksum}" >> mfile_additions
   
         #Calcualate effective N using meta data info
         sh try_infere_Neffective.sh ${rerunmfile} >> mfile_additions
@@ -2203,7 +2247,7 @@ if (params.checkerOnly == false){
   
   
     ch_assigned_sumstat_id1
-     .combine(ch_to_write_to_filelibrary3, by: 0)
+     .combine(ch_to_write_to_filelibrary3b, by: 0)
      .combine(ch_mfile_ok3, by: 0)
      .combine(ch_input_readme1, by: 0)
      .combine(ch_input_pdf_stuff4, by: 0)
