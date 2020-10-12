@@ -983,7 +983,7 @@ if (params.checkerOnly == false){
         tuple datasetID, mfile, sfile, chrposExists, snpExists, pointsToDifferentCols from ch_present_markers_1
     
         output:
-        tuple datasetID, env(dID2), mfile, file("gb_lift"), snpExists into ch_liftover_33
+        tuple datasetID, mfile, file("gb_lift"), snpExists into ch_liftover_33
         tuple datasetID, env(dID2), mfile, file("gb_lift2"), snpExists into ch_liftover_snpchrpos
         //tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos_rsid
         //tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_1
@@ -1013,14 +1013,14 @@ if (params.checkerOnly == false){
   
     process remove_duplicated_rsid_before_liftover_rsid_version {
     
-        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-        publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
+        publishDir "${params.outdir}/${datasetID}/rsid", mode: 'symlink', overwrite: true
+        publishDir "${params.outdir}/${datasetID}/rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
     
         input:
-        tuple datasetID, dID2, mfile, rsidprep, snpExists from ch_liftover_33
+        tuple datasetID, mfile, rsidprep, snpExists from ch_liftover_33
         
         output:
-        tuple datasetID, dID2, mfile, file("gb_unique_rows_sorted"), snpExists into ch_liftover_3333
+        tuple datasetID, mfile, file("gb_unique_rows_sorted"), snpExists into ch_liftover_3333
         //tuple datasetID, file("desc_removed_duplicated_rows") into ch_removed_rows_before_liftover_rsids
         tuple datasetID, file("removed_duplicated_rows") into ch_removed_rows_before_liftover_ix_rsids
         file("removed_*")
@@ -1042,14 +1042,14 @@ if (params.checkerOnly == false){
   
     process liftover_to_GRCh38_and_map_to_dbsnp_rsid_version {
     
-        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-        publishDir "${params.outdir}/${datasetID}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
+        publishDir "${params.outdir}/${datasetID}/rsid", mode: 'symlink', overwrite: true
+        publishDir "${params.outdir}/${datasetID}/rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
 
         input:
-        tuple datasetID, dID2, mfile, fsorted, snpExists from ch_liftover_3333
+        tuple datasetID, mfile, fsorted, snpExists from ch_liftover_3333
         
         output:
-        tuple datasetID, dID2, mfile, file("gb_lifted_and_mapped_to_GRCh38"), snpExists into ch_liftover_49
+        tuple datasetID, mfile, file("gb_lifted_and_mapped_to_GRCh38") into ch_liftover_rsid
         //tuple datasetID, file("desc_liftover_to_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA_rsid
         //tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build_rsid
         tuple datasetID, file("removed_not_matching_during_liftover_ix") into ch_not_matching_during_liftover_rsid
@@ -1057,6 +1057,7 @@ if (params.checkerOnly == false){
          
         script:
         """
+
         if [ "${snpExists}" == "true" ]
         then
           #in gb_lifted_and_mapped_to_GRCh38, the order will be 
@@ -1398,33 +1399,37 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
     //join the chrpos and snpchrpos channels
     ch_chrpos
       .join(ch_snpchrpos, by: 0)
-      .set{ ch_combined_chrpos_snpchrpos }
+      .join(ch_liftover_rsid, by: 0)
+      .set{ ch_combined_chrpos_snpchrpos_rsid }
 
-//    ch_combined_chrpos_snpchrpos.view()
-
+    //ch_combined_chrpos_snpchrpos_rsid.view()
 
 process select_chrpos_over_snpchrpos {
   
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, dID2, mfile, liftedGRCh38, dID2SNP, mfileSNP, liftedGRCh38SNP from ch_combined_chrpos_snpchrpos
+      tuple datasetID, dID2, mfile, liftedGRCh38, dID2SNP, mfileSNP, liftedGRCh38SNP, mfileRSID, liftedGRCh38RSID from ch_combined_chrpos_snpchrpos_rsid
       
       output:
-      tuple datasetID, mfile, file("snpchrpos_unique") into ch_liftover_final
-      file("snpchrpos_unique")
+      tuple datasetID, mfile, file("combined_set_from_the_three_liftover_branches") into ch_liftover_final
       file("liftedGRCh38_sorted")
-      file("liftedGRCh38SNP_sorted")
+      file("rsid_to_add")
+      file("snpchrpos_unique")
+      file("snpchrpos_to_add")
   
       script:
       """
-      #any row inx from snpchrpos not in chrpos
+      #any row inx from rsid or snpchrpos not in chrpos
       LC_ALL=C sort -k2,2 ${liftedGRCh38} > liftedGRCh38_sorted
+      LC_ALL=C sort -k2,2 ${liftedGRCh38RSID} > liftedGRCh38RSID_sorted
       LC_ALL=C sort -k2,2 ${liftedGRCh38SNP} > liftedGRCh38SNP_sorted
-      LC_ALL=C join -v 1 -1 2 -2 2 liftedGRCh38SNP_sorted liftedGRCh38_sorted > snpchrpos_unique
+      LC_ALL=C join -v 1 -1 2 -2 2 -o 1.1 1.2 1.3 1.4 1.5 liftedGRCh38RSID_sorted liftedGRCh38_sorted > rsid_to_add
+      LC_ALL=C join -v 1 -1 2 -2 2 -o 1.1 1.2 1.3 1.4 1.5 liftedGRCh38SNP_sorted liftedGRCh38_sorted > snpchrpos_unique
+      LC_ALL=C join -v 1 -1 2 -2 2 -o 1.1 1.2 1.3 1.4 1.5 snpchrpos_unique rsid_to_add > snpchrpos_to_add
 
       #if so, then add it to the output
-      #if 
+      cat liftedGRCh38_sorted rsid_to_add snpchrpos_to_add > combined_set_from_the_three_liftover_branches
       
       """
 }
