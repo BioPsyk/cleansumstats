@@ -1217,43 +1217,34 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
     }
 
 
-  //  ch_rowsAfter_number_of_lines
-  //    .combine(ch_build_stats_for_failsafe, by: 0)
-  //    .set{ ch_failsafe }
+    ch_rowsAfter_number_of_lines
+      .combine(ch_build_stats_for_failsafe, by: 0)
+      .set{ ch_failsafe }
 
-  //  process genome_build_failsafe {
-  //  
-  //      publishDir "${params.outdir}/${datasetID}/${dID2}", mode: 'symlink', overwrite: true
-  //  
-  //      input:
-  //      tuple datasetID, dID2, tot, buildstat, grmax from ch_failsafe
-  //  
-  //      script:
-  //      """
+    process genome_build_mapping_warning {
+    
+        publishDir "${params.outdir}/${datasetID}/${dID2}", mode: 'symlink', overwrite: true
+    
+        input:
+        tuple datasetID, tot, dID2, buildstat, grmax from ch_failsafe
 
-  //      #check that GRChmax has at least 90% hits in dbsnp
-  //      echo "${grmax}" | awk -vtot="${tot}" '{if( \$1/tot < 0.9){print "too few hits of the best matching build"}else{print "ok"}}' | while read t; do 
-  //        if [ "\$t" == "ok" ]; then
-  //          :
-  //        else
-  //          echo "\$t"
-  //          exit
-  //        fi
-  //      done
+        output:
+        tuple datasetID, file("warningsFile") into ch_warning_liftover
+    
+        script:
+        """
+        #make empty warningsfile 
+        touch warningsFile
 
-  //      #check that the others have less than 60% hits in dbsnp
-  //      awk -vtot="${tot}" '{if( \$1/tot > 0.6){print "too many hits of the not selected builds"}else{print "ok"}}' ${buildstat} | while read t; do 
-  //        if [ "\$t" == "ok" ]; then
-  //          :
-  //        else
-  //          echo "\$t"
-  //          exit
-  //        fi
-  //      done
-
-  //      """
-  //  
-  //  }
+        #if tot is not 0      
+        if [ "${tot}" == "0" ]; then
+          :
+        else
+          #check if anything should be added to the warningsfile
+          warnings_liftover_percentage.sh ${grmax} ${tot} ${buildstat} ${dID2} >> warningsFile
+        fi
+        """
+    }
 
 
 //  ch_known_genome_build.view()
