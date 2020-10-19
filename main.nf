@@ -926,7 +926,7 @@ if (params.checkerOnly == false){
    //  .set { ch_sfile_on_stream00 }
   
     
-    ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5 }
+    ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5; ch_before_liftover }
     ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
     ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_liftover1; ch_liftover2; ch_stats_inference }
     
@@ -960,7 +960,7 @@ if (params.checkerOnly == false){
   
         script:
         """
-        dID2="chrpos"
+        dID2="liftover_branch_chrpos"
 
         if [ "${chrposExists}" == "true" ] && [ "${pointsToDifferentCols}" == "true" ]
         then
@@ -990,7 +990,7 @@ if (params.checkerOnly == false){
   
         script:
         """
-        dID2="snpchrpos"
+        dID2="liftover_branch_markername_chrpos"
 
         echo -e "0\tRSID" > gb_lift
         echo -e "0\tMarkername" > gb_lift2
@@ -1013,8 +1013,8 @@ if (params.checkerOnly == false){
   
     process remove_duplicated_rsid_before_liftover_rsid_version {
     
-        publishDir "${params.outdir}/${datasetID}/rsid", mode: 'symlink', overwrite: true
-        publishDir "${params.outdir}/${datasetID}/rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
+        publishDir "${params.outdir}/${datasetID}/liftover_branch_markername_rsid", mode: 'symlink', overwrite: true
+        publishDir "${params.outdir}/${datasetID}/liftover_branch_markername_rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
     
         input:
         tuple datasetID, mfile, rsidprep, snpExists from ch_liftover_33
@@ -1042,8 +1042,8 @@ if (params.checkerOnly == false){
   
     process liftover_to_GRCh38_and_map_to_dbsnp_rsid_version {
     
-        publishDir "${params.outdir}/${datasetID}/rsid", mode: 'symlink', overwrite: true
-        publishDir "${params.outdir}/${datasetID}/rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
+        publishDir "${params.outdir}/${datasetID}/liftover_branch_markername_rsid", mode: 'symlink', overwrite: true
+        publishDir "${params.outdir}/${datasetID}/liftover_branch_markername_rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
 
         input:
         tuple datasetID, mfile, fsorted, snpExists from ch_liftover_3333
@@ -1379,11 +1379,11 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
 
     //branch the chrpos and snpchrpos channels
     ch_chrpos_snp_filter=ch_liftover_44.branch { key, value, mfile, liftedGRCh38 -> 
-                    snpchrpos: value == "snpchrpos"
-                    chrpos: value == "chrpos"
+                    liftover_branch_markername_chrpos: value == "liftover_branch_markername_chrpos"
+                    liftover_branch_chrpos: value == "liftover_branch_chrpos"
                     }
-    ch_chrpos=ch_chrpos_snp_filter.chrpos
-    ch_snpchrpos=ch_chrpos_snp_filter.snpchrpos
+    ch_chrpos=ch_chrpos_snp_filter.liftover_branch_chrpos
+    ch_snpchrpos=ch_chrpos_snp_filter.liftover_branch_markername_chrpos
 
 //  ch_chrpos.view()
 
@@ -1391,6 +1391,7 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
     ch_chrpos
       .join(ch_snpchrpos, by: 0)
       .join(ch_liftover_rsid, by: 0)
+      .join(ch_before_liftover, by: 0)
       .set{ ch_combined_chrpos_snpchrpos_rsid }
 
     //ch_combined_chrpos_snpchrpos_rsid.view()
@@ -1400,43 +1401,53 @@ process select_chrpos_over_snpchrpos {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, dID2, mfile, liftedGRCh38, dID2SNP, mfileSNP, liftedGRCh38SNP, mfileRSID, liftedGRCh38RSID from ch_combined_chrpos_snpchrpos_rsid
+      tuple datasetID, dID2, mfile, liftedGRCh38, dID2SNP, mfileSNP, liftedGRCh38SNP, mfileRSID, liftedGRCh38RSID, beforeLiftover from ch_combined_chrpos_snpchrpos_rsid
       
       output:
-      tuple datasetID, mfile, file("combined_set_from_the_three_liftover_branches") into ch_liftover_final
+      tuple datasetID, mfile, file("combined_set_from_the_three_liftover_branches_sorted") into ch_liftover_final
+      tuple datasetID, file("beforeAndAfterFile") into ch_desc_combined_set_after_liftover
+      tuple datasetID, file("removed_not_possible_to_lift_over_for_combined_set_ix") into ch_removed_not_possible_to_lift_over_for_combined_set_ix
       file("liftedGRCh38_sorted")
       file("rsid_to_add")
       file("snpchrpos_unique")
       file("snpchrpos_to_add")
+      file("tmp_test")
   
       script:
       """
+      cp ${beforeLiftover} tmp_test
       #any row inx from rsid or snpchrpos not in chrpos
       LC_ALL=C sort -k2,2 ${liftedGRCh38} > liftedGRCh38_sorted
       LC_ALL=C sort -k2,2 ${liftedGRCh38RSID} > liftedGRCh38RSID_sorted
       LC_ALL=C sort -k2,2 ${liftedGRCh38SNP} > liftedGRCh38SNP_sorted
-      LC_ALL=C join -v 1 -1 2 -2 2 -o 1.1 1.2 1.3 1.4 1.5 liftedGRCh38RSID_sorted liftedGRCh38_sorted > rsid_to_add
-      LC_ALL=C join -v 1 -1 2 -2 2 -o 1.1 1.2 1.3 1.4 1.5 liftedGRCh38SNP_sorted liftedGRCh38_sorted > snpchrpos_unique
-      LC_ALL=C join -v 1 -1 2 -2 2 -o 1.1 1.2 1.3 1.4 1.5 snpchrpos_unique rsid_to_add > snpchrpos_to_add
+      LC_ALL=C join -t "\$(printf '\t')" -v 1 -1 2 -2 2 -o 1.1 1.2 1.3 1.4 1.5 liftedGRCh38RSID_sorted liftedGRCh38_sorted > rsid_to_add
+      LC_ALL=C join -t "\$(printf '\t')" -v 1 -1 2 -2 2 -o 1.1 1.2 1.3 1.4 1.5 liftedGRCh38SNP_sorted liftedGRCh38_sorted > snpchrpos_unique
+      LC_ALL=C join -t "\$(printf '\t')" -v 1 -1 2 -2 2 -o 1.1 1.2 1.3 1.4 1.5 snpchrpos_unique rsid_to_add > snpchrpos_to_add
 
       #if so, then add it to the output
       cat liftedGRCh38_sorted rsid_to_add snpchrpos_to_add > combined_set_from_the_three_liftover_branches
-      
+      LC_ALL=C sort -k2,2 combined_set_from_the_three_liftover_branches > combined_set_from_the_three_liftover_branches_sorted
+          
+      # Lines not possible to map for the combined set
+      LC_ALL=C join -t "\$(printf '\t')" -v 1 -1 2 -2 1 -o 2.1 combined_set_from_the_three_liftover_branches_sorted ${beforeLiftover} > removed_not_possible_to_lift_over_for_combined_set
+      awk -vOFS="\t" '{print \$1,"not_available_for_any_of_the_three_liftover_branches"}' removed_not_possible_to_lift_over_for_combined_set > removed_not_possible_to_lift_over_for_combined_set_ix
+        
+      #process before and after stats
+      rowsBefore="\$(wc -l ${beforeLiftover} | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l combined_set_from_the_three_liftover_branches_sorted | awk '{print \$1}')"
+      echo -e "\$rowsBefore\t\$rowsAfter\tAfter creating the combined set from the three liftover paths" > beforeAndAfterFile
       """
 }
 
 //ch_liftover_final.view()
 
-
-
-
     //branch the stats_genome_build
     ch_stats_genome_build_filter=ch_stats_genome_build_chrpos.branch { key, value, file -> 
-                    snpchrpos: value == "snpchrpos"
-                    chrpos: value == "chrpos"
+                    liftover_branch_markername_chrpos: value == "liftover_branch_markername_chrpos"
+                    liftover_branch_chrpos: value == "liftover_branch_chrpos"
                     }
-    ch_stats_chrpos_gb=ch_stats_genome_build_filter.chrpos
-    ch_stats_snpchrpos_gb=ch_stats_genome_build_filter.snpchrpos
+    ch_stats_chrpos_gb=ch_stats_genome_build_filter.liftover_branch_chrpos
+    ch_stats_snpchrpos_gb=ch_stats_genome_build_filter.liftover_branch_markername_chrpos
 
     //combine the chrpos and snpchrpos channels for genome build
     ch_stats_chrpos_gb
@@ -1446,39 +1457,6 @@ process select_chrpos_over_snpchrpos {
 
 //ch_gb_stats_combined.view()
 
-  
-    //mix the chrpos and rsid channels
-   // ch_not_matching_during_liftover_rsid
-   //   .mix(ch_not_matching_during_liftover_chrpos)
-   //   .set{ ch_not_matching_during_liftover }
-  
-   // ch_removed_rows_before_liftover_chrpos
-   //   .mix(ch_removed_rows_before_liftover_rsids)
-   //   .set{ ch_removed_rows_before_liftover }
-  
-   // ch_removed_rows_before_liftover_ix_chrpos
-   //   .mix(ch_removed_rows_before_liftover_ix_rsids)
-   //   .set{ ch_removed_rows_before_liftover_ix }
-  
-   // ch_liftover_49
-   //   .mix(ch_liftover_44)
-   //   .set{ ch_liftover_mix_X }
-  
-   // ch_desc_sex_chrom_formatting_BA_1
-   //   .mix(ch_desc_sex_chrom_formatting_BA_2)
-   //   .set{ ch_desc_sex_chrom_formatting_BA }
-  
-   // ch_stats_genome_build_rsid
-   //   .mix(ch_stats_genome_build_chrpos)
-   //   .set{ ch_stats_genome_build }
-  
-   // ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA_rsid
-   //   .mix(ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA_chrpos)
-   //   .set{ ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA }
-  
-   // ch_desc_prep_for_dbsnp_mapping_BA_chrpos_rsid
-   //   .mix(ch_desc_prep_for_dbsnp_mapping_BA_chrpos)
-   //   .set{ ch_desc_prep_for_dbsnp_mapping_BA }
   
     process remove_duplicated_chr_position_allele_rows {
      
@@ -1490,8 +1468,8 @@ process select_chrpos_over_snpchrpos {
         
         output:
         tuple datasetID, mfile, file("gb_unique_rows_sorted") into ch_liftover_4
-        tuple datasetID, file("desc_removed_duplicated_rows") into removed_rows_before_after_liftover
-        tuple datasetID, file("removed_duplicated_rows") into removed_rows_before_after_liftover_ix
+        tuple datasetID, file("desc_removed_duplicated_rows") into ch_desc_removed_duplicates_after_liftover
+        tuple datasetID, file("removed_duplicated_rows") into ch_removed_duplicates_after_liftover_ix
         file("removed_*")
         file("afterLiftoverFiltering_executionorder")
   
@@ -1947,23 +1925,16 @@ process select_chrpos_over_snpchrpos {
   }
   
     //Collect and place in corresponding stepwise order
-    //the removed lines from liftover are temporary left out from stats
-   // ch_removed_rows_before_liftover_ix
-   //  .combine(ch_not_matching_during_liftover, by: 0)
-   //  .combine(removed_rows_before_after_liftover_ix, by: 0)
-   //  .combine(ch_removed_by_allele_filter_ix, by: 0)
-   //  .combine(ch_stats_filtered_removed_ix, by: 0)
-   //  .set{ ch_collected_removed_lines }
-
-    ch_removed_by_allele_filter_ix
-     .combine(ch_stats_filtered_removed_ix, by: 0)
+    ch_removed_not_possible_to_lift_over_for_combined_set_ix
+     .join(ch_removed_by_allele_filter_ix, by: 0)
+     .join(ch_stats_filtered_removed_ix, by: 0)
      .set{ ch_collected_removed_lines }
   
     process collect_all_removed_lines {
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
         input:
-        tuple datasetID, step1, step2 from ch_collected_removed_lines
+        tuple datasetID, step1, step2, step3 from ch_collected_removed_lines
   
         output:
         tuple datasetID, file("removed_lines_collected.txt") into ch_collected_removed_lines2
@@ -1971,7 +1942,7 @@ process select_chrpos_over_snpchrpos {
         script:
         """
         echo -e "RowIndex\tExclusionReason" > removed_lines_collected.txt
-        cat ${step1} ${step2} >> removed_lines_collected.txt
+        cat ${step1} ${step2} ${step3} >> removed_lines_collected.txt
         """
     }
   
@@ -2029,28 +2000,12 @@ process select_chrpos_over_snpchrpos {
     }
     
   
-  //Do actual collection, placed in corresponding step order
- // ch_desc_prep_force_tab_sep_BA
- //  .combine(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
- //  .combine(ch_desc_sex_chrom_formatting_BA, by: 0)
- //  .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
- //  .combine(ch_removed_rows_before_liftover, by: 0)
- //  .combine(ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA, by: 0)
- //  .combine(removed_rows_before_after_liftover, by: 0)
- //  .combine(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
- //  .combine(ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
- //  .combine(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA, by: 0)
- //  .combine(ch_desc_removed_duplicated_chr_pos_rows_BA, by: 0)
- //  .combine(ch_desc_filtered_stat_rows_with_non_numbers_BA, by: 0)
- //  .combine(ch_desc_inferred_stats_if_inferred_BA, by: 0)
- //  .combine(ch_desc_from_inferred_to_joined_selection_BA, by: 0)
- //  .combine(ch_desc_from_sumstats_to_joined_selection_BA, by: 0)
- //  .combine(ch_desc_final_merge_BA, by: 0)
- //  .set{ ch_collected_workflow_stepwise_stats }
 
+  //Do actual collection, placed in corresponding step order
   ch_desc_prep_force_tab_sep_BA
    .combine(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
-   .combine(removed_rows_before_after_liftover, by: 0)
+   .combine(ch_desc_combined_set_after_liftover, by: 0)
+   .combine(ch_desc_removed_duplicates_after_liftover, by: 0)
    .combine(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
    .combine(ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
    .combine(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA, by: 0)
@@ -2062,18 +2017,24 @@ process select_chrpos_over_snpchrpos {
    .combine(ch_desc_final_merge_BA, by: 0)
    .set{ ch_collected_workflow_stepwise_stats }
 
+ //Some that now are part of the branched workflow. Unclear how to save the the stepwise branched workflow before after steps, but all info should be exported in channels. 
+ //  .combine(ch_desc_sex_chrom_formatting_BA, by: 0)
+ //  .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
+ //  .combine(ch_removed_rows_before_liftover, by: 0)
+ //  .combine(ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA, by: 0)
+
   process collect_and_prepare_stepwise_readme {
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
 
       input:
-      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10, step11, step12 from ch_collected_workflow_stepwise_stats
+      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10, step11, step12, step13 from ch_collected_workflow_stepwise_stats
 
       output:
       tuple datasetID, file("desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
 
       script:
       """
-      cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11 $step12 > all_removed_steps
+      cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11 $step12 $step13 > all_removed_steps
 
       echo -e "Steps\tBefore\tAfter\tDescription" > desc_collected_workflow_stepwise_stats.txt
       awk -vFS="\t" -vOFS="\t" '{print "Step"NR, \$1, \$2, \$3}' all_removed_steps >> desc_collected_workflow_stepwise_stats.txt
