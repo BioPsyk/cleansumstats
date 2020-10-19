@@ -926,7 +926,7 @@ if (params.checkerOnly == false){
    //  .set { ch_sfile_on_stream00 }
   
     
-    ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream3; ch_sfile_on_stream4; ch_sfile_on_stream5; ch_before_liftover }
+    ch_sfile_on_stream.into { ch_sfile_on_stream1; ch_sfile_on_stream2; ch_sfile_on_stream4; ch_sfile_on_stream5; ch_before_liftover }
     ch_mfile_and_stream=ch_mfile_ok1.join(ch_sfile_on_stream1)
     ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_liftover1; ch_liftover2; ch_stats_inference }
     
@@ -1792,13 +1792,15 @@ process select_chrpos_over_snpchrpos {
     ch_stats_filtered_remain
       .combine(ch_mfile_ok5, by: 0)
       .set{ ch_stats_filtered_remain3 }
+
+    ch_stats_filtered_remain3.into { ch_stats_filtered_remain4; ch_stats_filtered_remain5 }
   
     process infer_stats {
     
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
     
         input:
-        tuple datasetID, st_filtered, mfile from ch_stats_filtered_remain3
+        tuple datasetID, st_filtered, mfile from ch_stats_filtered_remain4
         
         output:
         tuple datasetID, mfile, file("st_inferred_stats") into ch_stats_selection
@@ -1841,7 +1843,7 @@ process select_chrpos_over_snpchrpos {
     }
     
     ch_stats_selection
-      .combine(ch_sfile_on_stream3, by: 0)
+      .join(ch_stats_filtered_remain5, by: 0)
       .set{ ch_stats_selection2 }
     
     process select_stats {
@@ -1849,7 +1851,7 @@ process select_chrpos_over_snpchrpos {
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
     
         input:
-        tuple datasetID, mfile, inferred, sfile from ch_stats_selection2
+        tuple datasetID, mfile, inferred, sfile, mfile2 from ch_stats_selection2
         
         output:
         tuple datasetID, file("st_stats_for_output") into ch_stats_for_output
