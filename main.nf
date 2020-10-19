@@ -1073,6 +1073,7 @@ if (params.checkerOnly == false){
           touch gb_lifted_and_mapped_to_GRCh38
           touch removed_not_matching_during_liftover_ix
         fi
+        
 
         # Process before and after stats
         rowsBefore="\$(wc -l ${fsorted} | awk '{print \$1-1}')"
