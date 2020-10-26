@@ -121,6 +121,8 @@ if (params.hg38ToHg19chain) { ch_hg38ToHg19chain = file(params.hg38ToHg19chain, 
 if (params.hg19ToHg18chain) { ch_hg19ToHg18chain = file(params.hg19ToHg18chain, checkIfExists: true) }
 if (params.hg19ToHg17chain) { ch_hg19ToHg17chain = file(params.hg19ToHg17chain, checkIfExists: true) }
 
+if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
+
 
 // Stage config files
 ch_multiqc_config = file(params.multiqc_config, checkIfExists: true)
@@ -1759,7 +1761,53 @@ process select_chrpos_over_snpchrpos {
         """
     }
     ch_allele_corrected_mix_Y
-      .into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2 }
+      .into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2; ch_allele_corrected_mix3 }
+
+    process prepare_allele_frequency_stats {
+    
+        publishDir "${params.outdir}/${datasetID}/g1kaf_stats_branch", mode: 'symlink', overwrite: true
+    
+        input:
+        tuple datasetID, build, mfile, sfile from ch_allele_corrected_mix3
+        
+        output:
+        tuple datasetID, env(avail), file("1kg_af_ref.sorted.joined_sorted_on_inx"),env(af_branch) into ch_prep_ref_allele_frequency
+        file("sfile.sorted")
+        file("1kg_af_ref.sorted.joined")
+    
+        script:
+        """
+        af_branch="g1kaf_stats_branch"
+
+        # Check if the ancestry is one of the ones we have frequencies for (EAS, EUR, AFR, AMR, SAS)
+        Ax="\$(grep "^study_Ancestry=" $mfile)"
+        A="\$(echo "\${Ax#*=}")"
+
+        avail="false"
+        count=0
+        #important that this order is the same as in the allele frequency file
+        for anc in EAS EUR AFR AMR SAS; do
+          if [ "\${anc}" == "\${A}" ]; then
+            avail="true"
+          fi
+          count=\$((count+1))
+        done
+
+        # If we don't have variant specific Ns, but we have an available ancestry reference frequency
+        if [ \${avail} == "true" ]; then
+          # Join with AF table using chrpos column (keep only rowindex and allele frequency, merge later)
+          awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$2"-"\$3, \$1}' ${sfile} | C_ALL=C sort -t "\$(printf '\t')" -k 1,1 > sfile.sorted
+          awk -vFS="\t" -vOFS="\t" -vcount=\${count} '{print \$1"-"\$2"-"\$3,\$count}' ${ch_kg1000AFGRCh38} | LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" -o 2.2 1.2 - sfile.sorted > 1kg_af_ref.sorted.joined
+          echo -e "0\tAF_1KG_CS" > 1kg_af_ref.sorted.joined_sorted_on_inx
+          LC_ALL=C sort -k 1,1 1kg_af_ref.sorted.joined >> 1kg_af_ref.sorted.joined_sorted_on_inx
+        else
+          touch sfile.sorted
+          touch 1kg_af_ref.sorted.joined
+          touch 1kg_af_ref.sorted.joined_sorted_on_inx
+        fi
+        
+        """
+    }
   
     process filter_stats {
     
@@ -1770,13 +1818,14 @@ process select_chrpos_over_snpchrpos {
         tuple datasetID, mfile, sfile from ch_stats_inference
         
         output:
-        tuple datasetID, file("st_filtered_remains") into ch_stats_filtered_remain
+        tuple datasetID, env(af_branch), file("st_filtered_remains") into ch_stats_filtered_remain
         tuple datasetID, file("removed_stat_non_numeric_in_awk")
         tuple datasetID, file("removed_stat_non_numeric_in_awk_ix") into ch_stats_filtered_removed_ix
         tuple datasetID, file("desc_filtered_stat_rows_with_non_numbers_BA.txt") into ch_desc_filtered_stat_rows_with_non_numbers_BA
     
         script:
         """
+        af_branch="default_stats_branch"
         touch removed_stat_non_numeric_in_awk 
         touch removed_stat_non_numeric_in_awk_ix
         filter_stat_values.sh $mfile $sfile > st_filtered_remains 2> removed_stat_non_numeric_in_awk
@@ -1788,22 +1837,57 @@ process select_chrpos_over_snpchrpos {
         echo -e "\$rowsBefore\t\$rowsAfter\tFiltered out rows with stats impossible to do calculations from" > desc_filtered_stat_rows_with_non_numbers_BA.txt
         """
     }
-    
+
     ch_stats_filtered_remain
-      .combine(ch_mfile_ok5, by: 0)
+      .join(ch_mfile_ok5, by: 0)
       .set{ ch_stats_filtered_remain3 }
 
-    ch_stats_filtered_remain3.into { ch_stats_filtered_remain4; ch_stats_filtered_remain5 }
+
+    ch_stats_filtered_remain3.into { ch_stats_filtered_remain4; ch_stats_filtered_remain5; ch_stats_filtered_remain6 }
+
+    ch_stats_filtered_remain4
+    .join(ch_prep_ref_allele_frequency, by: 0)
+    .set { ch_add_ref_freq }
+
+
+    //if available, add allele_frequency
+    process add_allele_frequency_stats {
+    
+        publishDir "${params.outdir}/${datasetID}/${af_branch}", mode: 'symlink', overwrite: true
+    
+        input:
+        tuple datasetID, branch, st_filtered, mfile, availAF, afFreqs, af_branch from ch_add_ref_freq
+        
+        output:
+        tuple datasetID, af_branch, file("added_1kg_ref"), mfile into ch_added_ref_allele_frequency
+    
+        script:
+        """
+        # If we don't have variant specific Ns, but we have an available ancestry reference frequency
+        if [ "${availAF}" == "true" ]; then
+          # Join with AF table using chrpos column 
+          LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" ${st_filtered} ${afFreqs} > added_1kg_ref
+        else
+          head -n1 ${st_filtered} > added_1kg_ref
+        fi
+        
+        """
+    }
+
+    //mix and run inference for 1kg-AF version and for a version without
+    ch_added_ref_allele_frequency
+      .mix(ch_stats_filtered_remain5)
+      .set{ ch_stats_to_infer }
   
     process infer_stats {
     
-        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+        publishDir "${params.outdir}/${datasetID}/${af_branch}", mode: 'symlink', overwrite: true
     
         input:
-        tuple datasetID, st_filtered, mfile from ch_stats_filtered_remain4
+        tuple datasetID, af_branch, st_filtered, mfile from ch_stats_to_infer
         
         output:
-        tuple datasetID, mfile, file("st_inferred_stats") into ch_stats_selection
+        tuple datasetID, af_branch, mfile, file("st_inferred_stats") into ch_stats_selection
         file("st_which_to_do") into out_st_which_to_do
         tuple datasetID, file("desc_inferred_stats_if_inferred_BA.txt") into ch_desc_inferred_stats_if_inferred_BA
     
@@ -1842,8 +1926,45 @@ process select_chrpos_over_snpchrpos {
         """
     }
     
-    ch_stats_selection
-      .join(ch_stats_filtered_remain5, by: 0)
+
+    //branch the stats_genome_build
+    ch_stats_selection_filter=ch_stats_selection.branch { key, value, file1, file2 -> 
+                    g1kaf_stats_branch: value == "g1kaf_stats_branch"
+                    default_stats_branch: value == "default_stats_branch"
+                    }
+    g1kaf_stats_branch=ch_stats_selection_filter.g1kaf_stats_branch
+    default_stats_branch=ch_stats_selection_filter.default_stats_branch
+
+//    //combine the chrpos and snpchrpos channels for genome build
+//    g1kaf_stats_branch
+//      .join(default_stats_branch, by: 0)
+//      .map { key, val, mfile, file, val2, mfile2, file2 -> tuple(key, mfile, file, file2) }
+//      .set{ ch_gb_stats_combined }
+//
+//    process select_chrpos_over_snpchrpos {
+//      
+//      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+//      
+//      input:
+//      tuple datasetID, mfile, k1gversion, defaultfile from ch_gb_stats_combined
+//      
+//      output:
+//      tuple datasetID, mfile, file("combined_set_") into ch_liftover_final
+//      
+//      script:
+//      """
+//
+//      """
+//    }
+    
+    //ch_liftover_final.view()
+
+
+
+
+    //ch_stats_selection_only_contains_inferred_variables
+    default_stats_branch
+      .join(ch_stats_filtered_remain6, by: 0)
       .set{ ch_stats_selection2 }
     
     process select_stats {
@@ -1851,7 +1972,7 @@ process select_chrpos_over_snpchrpos {
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
     
         input:
-        tuple datasetID, mfile, inferred, sfile, mfile2 from ch_stats_selection2
+        tuple datasetID, stats_branch, mfile, inferred, stats_branch2, sfile, mfile2 from ch_stats_selection2
         
         output:
         tuple datasetID, file("st_stats_for_output") into ch_stats_for_output
@@ -2425,9 +2546,9 @@ process select_chrpos_over_snpchrpos {
         
         """
     }
-//
-//  
-//  
+
+  
+  
 //    process update_inventory_file {
 //        publishDir "${params.libdirinventory}", mode: 'copy', overwrite: false
 //  
