@@ -8,3 +8,4 @@ regexp	CHR	BP	EffectAllele	AlternativeAllele
 ^[c|C][h|H][r|R]\d{1,2}[:_]\d+[:_]\D[:_]\D+$	funx_chrCHR_BP_EA_AA_2_CHR	funx_chrCHR_BP_EA_AA_2_BP	funx_chrCHR_BP_EA_AA_2_EA	funx_chrCHR_BP_EA_AA_2_AA
 ^\D+$	funx_default	funx_default	funx_default	funx_default
 ^\d+$	funx_default	funx_default	funx_default	funx_default
+^<.*>$ funx_default    funx_default    funx_default    funx_default
