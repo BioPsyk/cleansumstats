@@ -820,6 +820,8 @@ if (params.generateMetafile){
       tuple datasetID, build, mfile, file("${build}_acorrected") into ch_A2_exists2
       tuple datasetID, file("disc_indel"), file("disc_notGCTA"), file("disc_notPossPair"), file("disc_palin") into ch_describe_allele_filter1
       tuple datasetID, file("desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
+      file("tmp_A1_col")
+      file("tmp_A2_col")
 
       script:
       """
@@ -830,12 +832,15 @@ if (params.generateMetafile){
 
       colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
       colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
+      echo "\$colA1" > tmp_A1_col
+      echo "\$colA2" > tmp_A2_col
       cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | sstools-eallele correction -f - >> ${build}_acorrected
 
       #process before and after stats
       rowsBefore="\$(wc -l ${mapped} | awk '{print \$1}')"
       rowsAfter="\$(wc -l ${build}_acorrected | awk '{print \$1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tFiltered rows on indels and allele-pair matching to dbsnp for palindroms, impossible match and nonGTAC characters" > desc_filtered_allele-pairs_with_dbsnp_as_reference_BA.txt
+
       """
   }
   
