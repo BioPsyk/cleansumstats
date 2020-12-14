@@ -10,7 +10,6 @@ study_PMID
 study_Year
 study_PhenoDesc
 study_PhenoCode
-study_PhenoMod
 study_FileURL
 study_FilePortal
 study_AccessDate

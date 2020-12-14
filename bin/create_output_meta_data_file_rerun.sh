@@ -21,14 +21,13 @@ for var in ${colNeededInMetaOutfile1[@]}; do
 done
 
 #for pdfSupp we only replace as it can have multiple lines
-grep -P "^path_supplementary=" ${toReplaceOrExtend} 
+grep -P "^path_supplementary=" ${toReplaceOrExtend}
 
 colNeededInMetaOutfile3=(
 study_PMID
 study_Year
 study_PhenoDesc
 study_PhenoCode
-study_PhenoMod
 study_FilePortal
 study_FileURL
 study_AccessDate
@@ -84,4 +83,3 @@ for var in ${colNeededInMetaOutfile3[@]}; do
      grep -P "^${var}=" ${oldMefl}
    fi
 done
-

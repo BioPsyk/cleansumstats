@@ -1,25 +1,25 @@
 ########################################################################
-# 
+#
 #     A critical part of our GWAS sumstats cleaning pipeline is accurate meta-data
 #  for each study.  This meta-data gives critical input to the cleaning pipeline,
 #  allows us to annotate and organize studies, and collects information that is
 #  critical for down stream uses of the cleaned sum stats.
-# 
-#     It is critical the information is filled out accurately and completely.  There 
+#
+#     It is critical the information is filled out accurately and completely.  There
 #  are some automated checks, but it is not possible to computationally validate all
 #  pieces of info, so please fill out with care!
-# 
+#
 #     In addition to this meta data, we need the actual sum stats file, any associated
-#  readme files, and a pdf of the publication (and potentially relevant supplementary 
+#  readme files, and a pdf of the publication (and potentially relevant supplementary
 #  information as well).
 #
 #     The template generator tool assists this process by providing a "blank" meta-data
-#  for the study you are interested in.  It will check our in house library to see if the 
+#  for the study you are interested in.  It will check our in house library to see if the
 #  stats have already been processed to save time, and stamp this template with version
 #  and date.
 #
 #     Two resources are/may be necessary to assist in the completiong of this data:
-#       Our in house ontologies which provides standard codes for certain variables.  
+#       Our in house ontologies which provides standard codes for certain variables.
 #       Note: we use the GWAS Atlas phenotype coding system (https://atlas.ctglab.nl/)
 #           https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
 #       An external data base that can be referenced to save some time:
@@ -34,7 +34,7 @@ cleansumstats_version=1.0.0-alpha
 ########################################################################
 
 cleansumstats_metafile_user=
-# Specify your name.  
+# Specify your name.
 # Will be autofilled by template generator in next release.
 # options: <character string>
 # example: cleansumstats_metafile_user=Andrew Schork
@@ -46,7 +46,7 @@ cleansumstats_metafile_date=
 # example: cleansumstats_metafile_date=2020-04-27
 
 path_sumStats=
-# Specify the path to the sumstats to be cleaned.  
+# Specify the path to the sumstats to be cleaned.
 # Needs to be gzipped
 # Full path needed, unless sum stats and metaData in same folder
 # options: <file path>
@@ -65,11 +65,11 @@ path_pdf=
 # example: path_sumStats=/home/anscho/data/sumstats/SCZ_108Loci.pdf
 
 path_supplementary=
-# Specify the path to the supplementary information associated with the PDF corresponding to 
+# Specify the path to the supplementary information associated with the PDF corresponding to
 # the sumstats as referenced in study PMID below.  This will not often be necessary.
 # If the files are not PDFs, convert them to PDFs.  Except for Excel files, or .txt files.
 # If multiple Supplements, one line per supplement can be supplied.
-# example: 
+# example:
 #   path_supplementary=file1.txt
 #   path_supplementary=file2.txt
 # Full path needed, unless sum stats and metaData in same folder
@@ -80,29 +80,36 @@ path_supplementary=
 #  Meta data section 1 - Study Descriptors
 ########################################################################
 
+study_Title=
+# Title of the PMID'd publication associated with the stats. Should be one line (no new line characters) and no tabs. All other characters are acceptable.
+# options: <character string>
+# example: study_Title=Biological insights from 108 schizophrenia-associated genetic loci
+# example: study_Title=Biological insights from 108 schizophrenia-associated genetic loci
+
 study_PMID=
 # Pubmed id of associated publication.  If based on a preprint such as biorXiv, provide the DOI link.
 # Will be autofilled by template generator and used to check for redundancy.
 # If missing, record extra data in study_Use, study_Controller, study_Contact, study_Restrictions.
-# options: <number>, <preprint server link> 
+# options: <number>, <preprint server link>
 # example: study_PMID=30323354
 # example: study_PMID=https://doi.org/10.1101/288662
 
 study_Year=
 # Year of publication.
-# options: <number> 
+# options: <number>
 # example: study_Year=2018
 
 study_PhenoDesc=
-# Phenotype description.  Should be as faithful to the name of the phenotype used in the publication.  This
-# will not be standardized, but should aim to be more inclusive, informative and complete.  Can be a full sentence.
-# Consider checking external inventories for the PMID to see if this has already been coded and you agree with 
-# the description.
+# Phenotype description. Should be as faithful to the name of the phenotype used in the publication. This
+# will not be standardized, is free text ,and should aim to be inclusive, informative, and complete. Can be a full sentence. Please also add clarifying context among multiple stats with the same phenoCode and PMID, for example, different models, ancestries, genders, covariates, study inclusions, etc.  A detailed description of the ancestry if it is non-standard could alos be appropriate
+# Consider checking external inventories for the PMID to see if this has already been coded and you agree with the description, augmenting additional info where necessary.
 # external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-# options: <character string>
+# options:
+# example: Height
 # example: Parental proxy diagnosis or clinically defined Alzheimer's Disease
-# example: Schiziphrenia
+# example: Schiziphrenia, excluding iPSYCH samples
 # example: Education attainment, measured in years of schooling
+# example: Body Mass index, adjusted for waist hip ratio, Europeans only, males only
 
 study_PhenoCode=
 # Standard, in house trait identifier.  Must be in the in ontology (PhenoCode column) or error will be thrown.
@@ -111,17 +118,6 @@ study_PhenoCode=
 # ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
 # external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 # options: <character string from ontology>
-# example:
-
-study_PhenoMod=
-# Standard IBP phenotype modifier codes that are used to identify different versions of the same
-# phenotype/PMID combination.  This will always be in contrast to some "base stats" that have the 
-# same PMID and PhenoCode. It might be more common with non-public stats or collaborations.
-# This is relevant when, for example, sum stats are recomputed excluding iPSYCH, in males only, or with/without specific 
-# covariates.
-# Code must be in the in-house ontology.
-# ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
-# options: <character string from ontology>, missing
 # example:
 
 study_FilePortal=
@@ -141,9 +137,10 @@ study_AccessDate=
 # example:2020_04_16
 
 study_Use=
-# Can these sumstats be used by the general public or are they private/with some restrictions?
-# options: public, private, preprint
-# study_Use=public
+# Are these studies for open use or do they have some restrictions?  If they are restricted, please provide a details description of the restrictions in study_Notes.  study_Notes might include proprietary data, permissions to publish, preprint embargo dates, limited analysis permissions, etc, and if a person is a key contact, include their contact info there.
+# options: open, restricted
+# study_Use=open
+# study_Use=restricted
 
 study_Controller=
 # If private, Name of person responsible for sum stats.  Use "missing" if "public".
@@ -155,7 +152,7 @@ study_Controller=
 study_Contact=
 # If private, email address of person responsible for sum stats.  Use "missing" if "public".
 # options: <email address>, missing
-# example: study_Contact=Andrew.Schork@regionh.dk 
+# example: study_Contact=Andrew.Schork@regionh.dk
 # example: study_Contact=missing
 
 study_Restrictions=
@@ -166,8 +163,8 @@ study_Restrictions=
 
 
 study_inHouseData=
-# If iPSYCH data, UKBiobank, or some other in house data set that we analyze, is in this study, 
-# then this is very important to mark.  
+# If iPSYCH data, UKBiobank, or some other in house data set that we analyze, is in this study,
+# then this is very important to mark.
 # Consider checking PMID in external inventories.
 # List of studies to watch out for is provided in the ontology doc.
 # ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
@@ -176,9 +173,9 @@ study_inHouseData=
 # example: study_inHouseData=iPSYCH
 
 study_Ancestry=
-# It is important to note the genetic ancestry of the subjects in the study. 
-# An ontology of populations is provided, but this includes the 1000 genomes coding scheme: African (AFR), 
-# Native North or South American (AMR), East asian (EAS), European (EUR), or South asian (SAS).  If a 
+# It is important to note the genetic ancestry of the subjects in the study.
+# An ontology of populations is provided, but this includes the 1000 genomes coding scheme: African (AFR),
+# Native North or South American (AMR), East asian (EAS), European (EUR), or South asian (SAS).  If a
 # particular isolate or population does not fit, consider describing it and adding to ontology (e.g., Greenlanders)
 # Consider checking PMID in external inventories.
 # ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
@@ -195,14 +192,14 @@ study_Gender=
 study_PhasePanel=
 # ***NOTE*** If a meta-analysis with multiple approaches, just note "meta".
 # What data set was used to assist phasing.
-# options: <character string>, HapMap2, HapMap2, 1KGP_pilot, 1KGP_phase1, 1KGP_phase2, 1KGP_phase3, 
+# options: <character string>, HapMap2, HapMap2, 1KGP_pilot, 1KGP_phase1, 1KGP_phase2, 1KGP_phase3,
 #                               1KGP_phase4, 1KGP_phase5, TOPMED, HRC, meta, missing
 # example: study_PhasePanel=HRC
 
 study_PhaseSoftware=
 # ***NOTE*** If a meta-analysis with multiple approaches, just note "meta".
 # What software were use to phase and impute, comma separate values?
-# options: <character string>, plink, impute, impute2, impute3, shapeIt, shapeIt2, shapeIt3, shapeIt4, shapeIt5, 
+# options: <character string>, plink, impute, impute2, impute3, shapeIt, shapeIt2, shapeIt3, shapeIt4, shapeIt5,
 #                                MaCH, Beagle, Beagle1.0, meta, missing
 # example: study_PhaseSoftware=meta
 # example: study_PhaseSoftware=Impute2
@@ -216,7 +213,7 @@ study_ImputePanel=
 study_ImputeSoftware=
 # ***NOTE*** If a meta-analysis with multiple approaches, just note "meta".
 # What software were use to phase and impute, comma separate values?
-# options: <character string>, plink, impute, impute2, impute3, shapeIt, shapeIt2, shapeIt3, shapeIt4, shapeIt5, 
+# options: <character string>, plink, impute, impute2, impute3, shapeIt, shapeIt2, shapeIt3, shapeIt4, shapeIt5,
 #                                MaCH, Beagle, Beagle1.0, meta, missing
 # example: study_ImputeSoftware=meta
 # example: study_ImputeSoftware=Impute2
@@ -244,14 +241,14 @@ stats_TraitType=
 # example: stats_traitType=qt
 
 stats_Model=
-# What model was used to generate the sum stats? logistic (log), linear (lin), 
+# What model was used to generate the sum stats? logistic (log), linear (lin),
 # linear mixed model (linMM), logistic mixed model (logMM), others?
 # options: log, lin, linMM, logMM
 # example: stats_Model=logMM
 
 
 stats_TotalN=
-# Total sample size (cases and controls).  
+# Total sample size (cases and controls).
 # ***USE CARE*** This number may not be the one in the abstract/methods.  Check
 # sum stats readme files and supplementary notes describing data release as sometimes public sum stats
 # data is censored and only a subset of the data used in the printed paper. Very tricky! Use Care!
@@ -302,15 +299,15 @@ stats_Notes=
 ########################################################################
 
 col_CHR=
-# Column where the chromosome information is in. It is ok if it comes embedded in a joined 
-# position vector like 1:2444, 1_1244 or 1_234:a:t. An internal algorithm will split 
-# out the correct value. 
+# Column where the chromosome information is in. It is ok if it comes embedded in a joined
+# position vector like 1:2444, 1_1244 or 1_234:a:t. An internal algorithm will split
+# out the correct value.
 # options: <character string>, missing
 # example: col_CHR=CHR
 
 col_POS=
-# Base pair positions. It is ok if it comes embedded in a joined 
-# position vector like 1:2444, 1_1244 or 1_234:a:t. An internal algorithm will split 
+# Base pair positions. It is ok if it comes embedded in a joined
+# position vector like 1:2444, 1_1244 or 1_234:a:t. An internal algorithm will split
 # out the correct value.
 # options: <character string>, missing
 # example:
@@ -322,15 +319,15 @@ col_SNP=
 # example: col_SNP=SNP
 
 col_EffectAllele=
-# The effect allele. It is ok if it comes embedded in a joined 
-# position vector like 1_234:a:t. An internal algorithm will split 
+# The effect allele. It is ok if it comes embedded in a joined
+# position vector like 1_234:a:t. An internal algorithm will split
 # out the correct value. Do NOT assume A1=EffectAllele.  Check carefully.
 # options: <character string>, missing
 # example: col_OtherAllele=A1
 
 col_OtherAllele=
-# The non effect allele. It is ok if it comes embedded in a joined 
-# position vector like 1_234:a:t. An internal algorithm will split 
+# The non effect allele. It is ok if it comes embedded in a joined
+# position vector like 1_234:a:t. An internal algorithm will split
 # out the correct value.  Do NOT assume A2=OtherAllele.  Check carefully.
 # options: <character string>, missing
 # example: col_OtherAllele=A2
@@ -341,7 +338,7 @@ col_BETA=
 # example: col_BETA=B
 
 col_SE=
-# The standard error of the beta column.  Sometimes an SE is given with an OR - this is typically on the ln(OR) 
+# The standard error of the beta column.  Sometimes an SE is given with an OR - this is typically on the ln(OR)
 # scale, and should be reported here.  Check carefully.
 # options: <character string>, missing
 # example: col_SE=SE
@@ -397,15 +394,15 @@ col_AFREQ=
 # example: col_AFREQ=A1_FRQ
 
 col_INFO=
-# The specific info-score for this variant.  INFO scores reflect imputation quality.  
+# The specific info-score for this variant.  INFO scores reflect imputation quality.
 # Do not use "minimum INFO" for meta-analysis.  Include only if it reflects
-# the INFO for all data points (for a meta, this could be an INFO score derived post hoc from individual 
+# the INFO for all data points (for a meta, this could be an INFO score derived post hoc from individual
 # study INFO scores.
 # options: <character string>, missing
 # example: col_INFO=INFO
 
 col_Direction=
-# This is to specify a column that describes effects across contributing studies to 
+# This is to specify a column that describes effects across contributing studies to
 # meta-analyses.  It often looks like a series of +, -, or ? (e.g., +-++---? )
 # options: <character string>, missing
 # example: col_Direction=direction

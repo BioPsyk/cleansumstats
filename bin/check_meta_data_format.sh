@@ -32,7 +32,6 @@ study_PMID
 study_Year
 study_PhenoDesc
 study_PhenoCode
-study_PhenoMod
 study_FilePortal
 study_FileURL
 study_AccessDate
@@ -211,14 +210,14 @@ if [[ $hfile =~ \.gz$ ]]; then
   function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
   function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
   function trim(s)  { return rtrim(ltrim(s)); }
-  
+
   NR==1{tr=trim($0); print tr}'))
-else 
+else
   header=($(awk '
   function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
   function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
   function trim(s)  { return rtrim(ltrim(s)); }
-  
+
   NR==1{tr=trim($0); print tr}' $hfile))
 fi
 
@@ -243,7 +242,7 @@ var_in_meta_test_result1=$(
   for var in ${colNeededInMeta[@]}; do
     if [ $(variableMissing "^${var}=" ${mefl}) == "true" ]
     then
-      #echo >&2 "variable missing: ${var}="; 
+      #echo >&2 "variable missing: ${var}=";
       var_in_meta_test_resultx="fail ::: variable missing: ${var}="
     else
       :
@@ -276,13 +275,13 @@ var_in_meta_test_mutliline_result1=$(
         else
           :
         fi
-      done 
+      done
 
       if ${exception}
       then
         :
       else
-        #echo >&2 "variable is not allowed to have multiple lines: ${var}="; 
+        #echo >&2 "variable is not allowed to have multiple lines: ${var}=";
         var_in_meta_test_mutliline_resultx="fail ::: variable is not allowed to have multiple lines: ${var}="
       fi
     else
@@ -324,7 +323,7 @@ var_in_header_test_result1=$(
       done
       if [ ${gotHit} == "false" ]
       then
-        #echo >&2 "colType not found in header: ${var}=${right}"; 
+        #echo >&2 "colType not found in header: ${var}=${right}";
         var_in_header_test_resultx="fail ::: colType not found in header: ${var}=${right}"
       else
         :
@@ -367,7 +366,7 @@ case_control_stat_result1=$(
     else
       case_control_stat_resultx1="ok"
     fi
-    
+
     right="$(selRightHand "$(selColRow "^stats_ControlN=" ${mefl})")"
     if [ "${right}" == "missing" ]
     then
@@ -382,7 +381,7 @@ case_control_stat_result1=$(
     else
       case_control_stat_resultx2="ok"
     fi
-  
+
     if [ "${case_control_stat_resultx1}" == "ok" ] && [ "${case_control_stat_resultx2}" == "ok" ]; then
       case_control_stat_resultx="ok"
     else
@@ -420,7 +419,7 @@ min_var_required_resultA=$(
     right="$(selRightHand "$(selColRow "^${var}=" ${mefl})")"
     if [ ${right} == "missing" ]
     then
-        #echo >&2 "colType cannot be set to missing: ${var}=${right}"; 
+        #echo >&2 "colType cannot be set to missing: ${var}=${right}";
         min_var_required_resultx="fail ::: colType cannot be set to missing: ${var}=${right}"
     else
       :
@@ -438,7 +437,7 @@ min_var_required_resultB=$(
     right="$(selRightHand "$(selColRow "^${var}=" ${mefl})")"
     if [ ${right} == "missing" ]
     then
-        #echo >&2 "colType cannot be set to missing: ${var}=${right}"; 
+        #echo >&2 "colType cannot be set to missing: ${var}=${right}";
         min_var_required_resultx="fail ::: colType cannot be set to missing: ${var}=${right}"
     else
       :
@@ -459,7 +458,7 @@ min_var_required_result1=$(
   then
     result="ok"
   else
-    #echo >&2 "col_CHR and col_POS, or col_SNP cant be set to missing"; 
+    #echo >&2 "col_CHR and col_POS, or col_SNP cant be set to missing";
     result="fail ::: col_CHR and col_POS, or col_SNP cant be set to missing"
   fi
   echo "${result}"
@@ -485,7 +484,7 @@ min_var_required_result3=$(
     right="$(selRightHand "$(selColRow "^${var}=" ${mefl})")"
     if [ ${right} == "missing" ]
     then
-        #echo >&2 "colType cannot be set to missing: ${var}=${right}"; 
+        #echo >&2 "colType cannot be set to missing: ${var}=${right}";
         min_var_required_resultx="fail ::: colType cannot be set to missing: ${var}=${right}"
     else
       :
@@ -512,8 +511,8 @@ fi
 #
 #gotHit="false"
 #for var in ${statsColsNeeded[@]}; do
-#  one="${var#*,}" 
-#  two="${var%,*}" 
+#  one="${var#*,}"
+#  two="${var%,*}"
 #  right1="$(selRightHand "$(selColRow "^${one}=" ${mefl})")"
 #  right2="$(selRightHand "$(selColRow "^${two}=" ${mefl})")"
 #  if [ ${right1} == "missing" ] || [ ${right2} == "missing" ]
@@ -525,7 +524,7 @@ fi
 #done
 #if [ ${gotHit} == "false" ]
 #then
-#  echo >&2 "at least 1 of the req. stat pairs has to be non-missing in metafile"; 
+#  echo >&2 "at least 1 of the req. stat pairs has to be non-missing in metafile";
 #  noError=false
 #else
 #  :
