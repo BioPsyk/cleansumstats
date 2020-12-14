@@ -137,9 +137,10 @@ study_AccessDate=
 # example:2020_04_16
 
 study_Use=
-# Can these sumstats be used by the general public or are they private/with some restrictions?
-# options: public, private, preprint
-# study_Use=public
+# Are these studies for open use or do they have some restrictions?  If they are restricted, please provide a details description of the restrictions in study_Notes.  study_Notes might include proprietary data, permissions to publish, preprint embargo dates, limited analysis permissions, etc, and if a person is a key contact, include their contact info there.
+# options: open, restricted
+# study_Use=open
+# study_Use=restricted
 
 study_Controller=
 # If private, Name of person responsible for sum stats.  Use "missing" if "public".
