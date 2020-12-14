@@ -94,15 +94,16 @@ study_Year=
 # example: study_Year=2018
 
 study_PhenoDesc=
-# Phenotype description.  Should be as faithful to the name of the phenotype used in the publication.  This
-# will not be standardized, but should aim to be more inclusive, informative and complete.  Can be a full sentence.
-# Consider checking external inventories for the PMID to see if this has already been coded and you agree with 
-# the description.
+# Phenotype description. Should be as faithful to the name of the phenotype used in the publication. This
+# will not be standardized, is free text ,and should aim to be inclusive, informative, and complete. Can be a full sentence. Please also add clarifying context among multiple stats with the same phenoCode and PMID, for example, different models, ancestries, genders, covariates, study inclusions, etc.  A detailed description of the ancestry if it is non-standard could alos be appropriate
+# Consider checking external inventories for the PMID to see if this has already been coded and you agree with the description, augmenting additional info where necessary.
 # external inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-# options: <character string>
+# options:
+# example: Height
 # example: Parental proxy diagnosis or clinically defined Alzheimer's Disease
-# example: Schiziphrenia
+# example: Schiziphrenia, excluding iPSYCH samples
 # example: Education attainment, measured in years of schooling
+# example: Body Mass index, adjusted for waist hip ratio, Europeans only, males only
 
 study_PhenoCode=
 # Standard, in house trait identifier.  Must be in the in ontology (PhenoCode column) or error will be thrown.
