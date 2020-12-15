@@ -1736,7 +1736,7 @@ process select_chrpos_over_snpchrpos {
     ch_A2_exists2
       .mix(ch_A2_missing2)
       .set{ ch_allele_corrected_mix_X }
-    
+
     process remove_duplicated_chr_position_rows {
     
         //if(params.keepIntermediateFiles){ publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true }
