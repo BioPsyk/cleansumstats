@@ -1793,7 +1793,7 @@ process select_chrpos_over_snpchrpos {
           count=\$((count+1))
         done
 
-        # If we don't have variant specific Ns, but we have an available ancestry reference frequency
+        # If we have an available ancestry reference frequency
         if [ \${avail} == "true" ]; then
           # Join with AF table using chrpos column (keep only rowindex and allele frequency, merge later)
           awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$2"-"\$3, \$1}' ${sfile} | C_ALL=C sort -t "\$(printf '\t')" -k 1,1 > sfile.sorted
