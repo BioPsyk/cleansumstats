@@ -66,23 +66,43 @@ function which_to_select(){
   if [ ${tfB} == "true" ]; then
     echo -e "${B}"
     echo "B" 1>&2
+  else
+    if specfunx_exists "beta_from_zscore_se" ${inferred}; then
+      echo "beta_from_zscore_se"
+      echo "B" 1>&2
+    elif specfunx_exists "beta_from_zscore_N_af" ${inferred}; then
+      echo "beta_from_zscore_N_af"
+      echo "B" 1>&2
+    else
+      :
+    fi
   fi
   if [ ${tfSE} == "true" ]; then
     echo -e "${SE}"
     echo "SE" 1>&2
+  else
+    if specfunx_exists "se_from_zscore_beta" ${inferred}; then
+      echo "se_from_zscore_beta"
+      echo "SE" 1>&2
+    elif specfunx_exists "se_from_zscore_N_af" ${inferred}; then
+      echo "se_from_zscore_N_af"
+      echo "SE" 1>&2
+    else
+      :
+    fi
   fi
   if [ ${tfZ} == "true" ]; then
     echo -e "${Z}"
     echo "Z" 1>&2
   else
-    if specfunx_exists "Z_fr_B_SE" ${inferred}; then
-      echo "Z_fr_B_SE"
+    if specfunx_exists "zscore_from_beta_se" ${inferred}; then
+      echo "zscore_from_beta_se"
       echo "Z" 1>&2
-    elif specfunx_exists "Z_fr_OR_SE" ${inferred}; then
-      echo "Z_fr_OR_SE"
+    elif specfunx_exists "zscore_from_pval_beta" ${inferred}; then
+      echo "zscore_from_pval_beta"
       echo "Z" 1>&2
-    elif specfunx_exists "Z_fr_OR_P" ${inferred}; then
-      echo "Z_fr_OR_P"
+    elif specfunx_exists "zscore_from_pval_beta_N" ${inferred}; then
+      echo "zscore_from_pval_beta_N"
       echo "Z" 1>&2
     else
       :
@@ -91,6 +111,16 @@ function which_to_select(){
   if [ ${tfP} == "true" ]; then
     echo -e "${P}"
     echo "P" 1>&2
+  else
+    if specfunx_exists "pval_from_zscore_N" ${inferred}; then
+      echo "pval_from_zscore_N"
+      echo "P" 1>&2
+    elif specfunx_exists "pval_from_zscore" ${inferred}; then
+      echo "pval_from_zscore"
+      echo "P" 1>&2
+    else
+      :
+    fi
   fi
   if [ ${tfOR} == "true" ]; then
     echo -e "${OR}"
@@ -108,6 +138,12 @@ function which_to_select(){
   if [ ${tfN} == "true" ]; then
     echo -e "${N}"
     echo "N" 1>&2
+    if specfunx_exists "N_from_zscore_beta_af" ${inferred}; then
+      echo "N_from_zscore_beta_af"
+      echo "N" 1>&2
+    else
+      :
+    fi
   fi
   if [ ${tfCaseN} == "true" ]; then
     echo -e "${CaseN}"

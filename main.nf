@@ -1890,35 +1890,29 @@ process select_chrpos_over_snpchrpos {
         tuple datasetID, af_branch, mfile, file("st_inferred_stats") into ch_stats_selection
         file("st_which_to_do") into out_st_which_to_do
         tuple datasetID, file("desc_inferred_stats_if_inferred_BA.txt") into ch_desc_inferred_stats_if_inferred_BA
+        file("colfields")
+        file("colnames")
+        file("colpositions")
     
         script:
         """
-        check_stat_inference.sh $mfile > st_which_to_do
+        check_stat_inference_functionfile.sh ${mfile} > st_which_to_do
+        check_stat_inference_avail.sh $mfile colfields colnames colpositions
+
+        cf="\$(cat colfields)"
+        cn="\$(cat colnames)"
+        cp="\$(cat colpositions)"
     
         if [ -s st_which_to_do ]; then
-          if grep -q "Z_fr_OR_P" st_which_to_do; then
     
-            Px="\$(grep "^col_P=" $mfile)"
-            P="\$(echo "\${Px#*=}")"
+        thisdir="\$(pwd)"
+
+        cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${cf}" -n"\${cn}" | singularity run --bind \${thisdir}:/mnt /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/2020-12-17-ubuntu-2004_stat_r_in_c.simg stat_r_in_c --functionfile  /mnt/st_which_to_do --skiplines 1 \${cp} --statmodel lin > st_inferred_stats
     
-            echo -e "QNORM" > prepared_qnorm_vals
-            cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${P}" -n"\${P}" | awk 'NR>1{print \$1/2}' | /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/2020-04-11-ubuntu-1804_stat_r_in_c.simg stat_r_in_c qnorm >> prepared_qnorm_vals
-            cut -f 1 $st_filtered | paste - prepared_qnorm_vals > prepared_qnorm_vals2
-            LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" $st_filtered prepared_qnorm_vals2 > st_filtered2
-    
-            nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
-            nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
-            cat st_filtered2 | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
-    
-          else
-            nh="\$(awk '{printf "%s,", \$1}' st_which_to_do | sed 's/,\$//' )"
-            nf="\$(awk '{printf "%s|", \$2}' st_which_to_do | sed 's/|\$//' )"
-            cat $st_filtered | sstools-utils ad-hoc-do -f - -k "0|\${nf}" -n"0,\${nh}" > st_inferred_stats
-          fi
         else
           touch st_inferred_stats
         fi
-        
+
         #process before and after stats
         rowsBefore="\$(wc -l ${st_filtered} | awk '{print \$1}')"
         rowsAfter="\$(wc -l st_inferred_stats | awk '{print \$1}')"
@@ -1967,6 +1961,7 @@ process select_chrpos_over_snpchrpos {
       .join(ch_stats_filtered_remain6, by: 0)
       .set{ ch_stats_selection2 }
     
+
     process select_stats {
     
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
@@ -1996,7 +1991,6 @@ process select_chrpos_over_snpchrpos {
     }
   
   
-    
     
     ch_allele_corrected_mix1
       .combine(ch_stats_for_output, by: 0)
@@ -2549,49 +2543,49 @@ process select_chrpos_over_snpchrpos {
 
   
   
-//    process update_inventory_file {
-//        publishDir "${params.libdirinventory}", mode: 'copy', overwrite: false
-//  
-//        input:
-//        tuple datasetID, libfolder, mfile from ch_update_library_info_file
-//  
-//        output:
-//        path("*_inventory.txt")
-//  
-//        script:
-//        """
-//        # This is a little risky as two parallel flows in theory could enter this process at the same time
-//        # An idea for the future is to use a simple dbmanager (or use a lock file)
-//        # Or perhaps use a smarter channeling mixing the different files
-//        
-//        # make one_line_meta data for info file (now movbe to the inventory maker process)
-//        create_output_one_line_meta_data_file.sh mfile onelinemeta "${params.libdirinventory}"
-//       
-//        # Extract the most recent added row, except the header
-//        tail -n+2 onelinemeta | head -n1 > oneline
-//        dateOfCreation="\$(date +%F-%H%M%S-%N)"
-//  
-//        # Select most recent inventory file (if any exists)
-//        if [ -d "${params.libdirinventory}" ]
-//        then
-//          count="\$(ls -1 ${params.libdirinventory} | wc -l)"
-//          if [ "\${count}" -gt 0 ]
-//          then
-//            ls -1 ${params.libdirinventory}/*_inventory.txt | awk '{old=\$1; sub(".*/","",\$1); gsub("-","",\$1); print \$1, old}' | sort -rn -k1.1,1.23 | awk '{print \$2}' > libprep_sorted_inventory_files
-//            mostrecentfile="\$(head -n1 libprep_sorted_inventory_files)"
-//            cat \${mostrecentfile} oneline > \${dateOfCreation}_inventory.txt
-//          else
-//            # Make header if the file does not exist
-//            head -n1 onelinemeta > \${dateOfCreation}_inventory.txt
-//            cat oneline >> \${dateOfCreation}_inventory.txt 
-//          fi
-//        else
-//          # Make header if the file does not exist
-//          head -n1 onelinemeta > \${dateOfCreation}_inventory.txt
-//          cat oneline >> \${dateOfCreation}_inventory.txt 
-//        fi
-//        """
-//    }
+    process update_inventory_file {
+        publishDir "${params.libdirinventory}", mode: 'copy', overwrite: false
+  
+        input:
+        tuple datasetID, libfolder, mfile from ch_update_library_info_file
+  
+        output:
+        path("*_inventory.txt")
+  
+        script:
+        """
+        # This is a little risky as two parallel flows in theory could enter this process at the same time
+        # An idea for the future is to use a simple dbmanager (or use a lock file)
+        # Or perhaps use a smarter channeling mixing the different files
+        
+        # make one_line_meta data for info file (now movbe to the inventory maker process)
+        create_output_one_line_meta_data_file.sh mfile onelinemeta "${params.libdirinventory}"
+       
+        # Extract the most recent added row, except the header
+        tail -n+2 onelinemeta | head -n1 > oneline
+        dateOfCreation="\$(date +%F-%H%M%S-%N)"
+  
+        # Select most recent inventory file (if any exists)
+        if [ -d "${params.libdirinventory}" ]
+        then
+          count="\$(ls -1 ${params.libdirinventory} | wc -l)"
+          if [ "\${count}" -gt 0 ]
+          then
+            ls -1 ${params.libdirinventory}/*_inventory.txt | awk '{old=\$1; sub(".*/","",\$1); gsub("-","",\$1); print \$1, old}' | sort -rn -k1.1,1.23 | awk '{print \$2}' > libprep_sorted_inventory_files
+            mostrecentfile="\$(head -n1 libprep_sorted_inventory_files)"
+            cat \${mostrecentfile} oneline > \${dateOfCreation}_inventory.txt
+          else
+            # Make header if the file does not exist
+            head -n1 onelinemeta > \${dateOfCreation}_inventory.txt
+            cat oneline >> \${dateOfCreation}_inventory.txt 
+          fi
+        else
+          # Make header if the file does not exist
+          head -n1 onelinemeta > \${dateOfCreation}_inventory.txt
+          cat oneline >> \${dateOfCreation}_inventory.txt 
+        fi
+        """
+    }
   }
 }
 
