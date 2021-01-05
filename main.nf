@@ -122,6 +122,10 @@ if (params.hg19ToHg18chain) { ch_hg19ToHg18chain = file(params.hg19ToHg18chain, 
 if (params.hg19ToHg17chain) { ch_hg19ToHg17chain = file(params.hg19ToHg17chain, checkIfExists: true) }
 
 if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
+if (params.pipelineimages) { ch_pipelineimages = file(params.pipelineimages, checkIfExists: true) }
+
+if (params.dbrun) { dbrun = file(params.dbrun, checkIfExists: true) }
+if (params.dbfuncs) { dbfuncs = file(params.dbfuncs, checkIfExists: true) }
 
 
 // Stage config files
@@ -367,7 +371,7 @@ if (params.generateMetafile){
       cp ${ch_hg38ToHg19chain} chain2.gz
 
       # Map to GRCh37
-      /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/liftover-lates.img bed chain2.gz ${dbsnp_chunk} ${cid}_dbsnp_chunk_GRCh37
+      ${ch_pipelineimages}/liftover-lates.img bed chain2.gz ${dbsnp_chunk} ${cid}_dbsnp_chunk_GRCh37
       awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print \$1, \$2, \$3, tmp":"\$2, \$4, \$5, \$6, \$7}' ${cid}_dbsnp_chunk_GRCh37 > ${cid}_dbsnp_chunk_GRCh37_GRCh38
       """
   }
@@ -431,7 +435,7 @@ if (params.generateMetafile){
       cp ${ch_hg19ToHg18chain} chain2.gz
 
       #liftover
-      /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/liftover-lates.img bed chain2.gz ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh36.bed
+      ${ch_pipelineimages}/liftover-lates.img bed chain2.gz ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh36.bed
       """
   }
 
@@ -452,7 +456,7 @@ if (params.generateMetafile){
       cp ${ch_hg19ToHg17chain} chain2.gz
 
       #liftover
-      /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/liftover-lates.img bed chain2.gz ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh35.bed
+      ${ch_pipelineimages}/liftover-lates.img bed chain2.gz ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh35.bed
       """
   }
 
@@ -781,13 +785,14 @@ if (params.generateMetafile){
       tuple datasetID, sfile from ch_input_sfile1
   
       output:
-      tuple datasetID, env(rawsumstatchecksum) into ch_rawsumstat_checksum
+      tuple datasetID, env(rawsumstatchecksum) into ch_rawsumstat_checksumX
   
       script:
       """
       rawsumstatchecksum="\$(b3sum ${sfile} | awk '{print \$1}')"
       """
   }
+  ch_rawsumstat_checksumX.into { ch_rawsumstat_checksum1; ch_rawsumstat_checksum2 }
 
   process check_mfile_format {
   
@@ -811,65 +816,13 @@ if (params.generateMetafile){
 
   }
 
-  process check_preassigned_libraryID {
-  
-      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-  
-      input:
-      tuple datasetID, mfile, sfilePath from ch_mfile_check_libID
-  
-      output:
-      tuple datasetID, mfile, sfilePath into ch_check_if_already_in_library
-      tuple datasetID, env(sumstatID) into ch_preassigned_sumstat_id
-
-      script:
-      """
-      
-      #Check if new sumstatname should be assigned
-      if grep -Pq "^cleansumstats_ID=" ${mfile}
-      then
-        SIDx="\$(grep "^cleansumstats_ID=" ${mfile})"
-        sumstatID="\$(echo "\${SIDx#*=}")"
-      else
-        sumstatID="missing"
-      fi
-
-      """
-  }
-
-  process check_if_already_in_library {
-     
-      // This functionality is inactive right now, as it is not exactly clear what info to look for 
-
-      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-  
-      input:
-      tuple datasetID, mfile, sfilePath from ch_check_if_already_in_library
-  
-      output:
-      tuple datasetID, mfile, sfilePath into ch_check_and_force_sumstat_format
-      tuple datasetID, file("${datasetID}_one_line_summary_of_metadata.txt") into ch_one_line_metafile
-
-      script:
-      """
-      
-      # Make a one line metafile to use for the inventory file and test if dataset is already in library
-      cat ${baseDir}/assets/columns_for_one_line_summary.txt | while read -r varx; do 
-        Px="\$(grep "^\${varx}=" ${mfile})"
-        var="\$(echo "\${Px#*=}")"
-        printf "\t%s" "\${var}" >> one_line_summary
-      done
-      printf "\\n" >> one_line_summary
-      cat one_line_summary | sed -e 's/^[\t]//' > ${datasetID}_one_line_summary_of_metadata.txt
-      """
-  }
 
   process check_and_force_basic_sumstat_format {
   
       publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
       input:
-      tuple datasetID, mfile, sfilePath from ch_check_and_force_sumstat_format
+      tuple datasetID, mfile, sfilePath from ch_mfile_check_libID
   
       output:
       tuple datasetID, mfile into ch_mfile_ok
@@ -921,7 +874,7 @@ if (params.checkerOnly == false){
         """
     }
   
-    ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5; ch_mfile_ok6; ch_mfile_rerun_7}
+    ch_mfile_ok.into { ch_mfile_ok1; ch_mfile_ok2; ch_mfile_ok3; ch_mfile_ok4; ch_mfile_ok5; ch_mfile_ok6; ch_mfile_rerun_7; ch_mfile_ok_8}
   
    // ch_mfile_ok7
    //  .combine(ch_sfile_on_stream0, by: 0)
@@ -1907,7 +1860,7 @@ process select_chrpos_over_snpchrpos {
     
         thisdir="\$(pwd)"
 
-        cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${cf}" -n"\${cn}" | singularity run --bind \${thisdir}:/mnt /home/projects/ip_10000/IBP_pipelines/cleansumstats/cleansumstats_dev/cleansumstats_images/2020-12-17-ubuntu-2004_stat_r_in_c.simg stat_r_in_c --functionfile  /mnt/st_which_to_do --skiplines 1 \${cp} --statmodel lin > st_inferred_stats
+        cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${cf}" -n"\${cn}" | singularity run --bind \${thisdir}:/mnt ${ch_pipelineimages}/2020-12-17-ubuntu-2004_stat_r_in_c.simg stat_r_in_c --functionfile  /mnt/st_which_to_do --skiplines 1 \${cp} --statmodel lin > st_inferred_stats
     
         else
           touch st_inferred_stats
@@ -2027,17 +1980,17 @@ process select_chrpos_over_snpchrpos {
       
       output:
       tuple datasetID, cleaned, file("inx_chrpos_GRCh37_B") into ch_cleaned_file
-      file("cleaned_chrpos_sorted")
-      file("inx_chrpos_GRCh37")
+      //file("cleaned_chrpos_sorted")
+      //file("inx_chrpos_GRCh37")
   
       script:
+     // # match the GRCh37 build and publish it as separate file (where all GRCh38 rows are present, and missing are NA)
+     // awk -vFS="\t" '{print \$2":"\$3, \$1}' ${cleaned} | LC_ALL=C sort -k1,1 > cleaned_chrpos_sorted
+     // LC_ALL=C join  -a 1 -1 1 -2 1 -o 1.2 2.2 cleaned_chrpos_sorted ${ch_dbsnp_38_37} > inx_chrpos_GRCh37
+     // echo -e "0\tCHRPOS" > inx_chrpos_GRCh37_B
+     // awk -vOFS="\t" '{if(\$2 ~ /:/){print \$1, \$2 }else{print \$1, "NA"}}' inx_chrpos_GRCh37 >> inx_chrpos_GRCh37_B
       """
-      # match the GRCh37 build and publish it as separate file (where all GRCh38 rows are present, and missing are NA)
-      awk -vFS="\t" '{print \$2":"\$3, \$1}' ${cleaned} | LC_ALL=C sort -k1,1 > cleaned_chrpos_sorted
-      LC_ALL=C join  -a 1 -1 1 -2 1 -o 1.2 2.2 cleaned_chrpos_sorted ${ch_dbsnp_38_37} > inx_chrpos_GRCh37
-      echo -e "0\tCHRPOS" > inx_chrpos_GRCh37_B
-      awk -vOFS="\t" '{if(\$2 ~ /:/){print \$1, \$2 }else{print \$1, "NA"}}' inx_chrpos_GRCh37 >> inx_chrpos_GRCh37_B
-
+      echo "tempfile while waiting for a fix using NAs for missing positions" > inx_chrpos_GRCh37_B
       """
 
   }
@@ -2117,6 +2070,26 @@ process select_chrpos_over_snpchrpos {
         """
     }
     
+    ch_to_write_to_filelibrary3.into { ch_to_write_to_filelibrary3a; ch_to_write_to_filelibrary3b }
+
+    process calculate_checksum_on_cleaned_sumstat {
+        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+    
+        input:
+        tuple datasetID, sclean, scleanGRCh37, removedlines from ch_to_write_to_filelibrary3a
+    
+        output:
+        tuple datasetID, env(scleanchecksum), env(scleanGRCh37checksum), env(removedlineschecksum) into ch_cleaned_sumstat_checksums
+    
+        script:
+        """
+        scleanchecksum="\$(b3sum ${sclean} | awk '{print \$1}')"
+        scleanGRCh37checksum="\$(b3sum ${scleanGRCh37} | awk '{print \$1}')"
+        removedlineschecksum="\$(b3sum ${removedlines} | awk '{print \$1}')"
+        """
+    }
+
+  ch_cleaned_sumstat_checksums.into { ch_cleaned_sumstat_checksums1; ch_cleaned_sumstat_checksums2 }
   
 
   //Do actual collection, placed in corresponding step order
@@ -2159,41 +2132,107 @@ process select_chrpos_over_snpchrpos {
 
       """
   }
+
   
+  // Add raw sumstat checksum to the channel
+  ch_mfile_ok_8
+    .combine(ch_rawsumstat_checksum1, by: 0)
+    .combine(ch_cleaned_sumstat_checksums1, by: 0)
+    .set{ check_preassigned_id }
+
+  process check_preassigned_libraryID {
+  
+      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+  
+      input:
+      tuple datasetID, mfile, rawsumstatchecksum, scleanchecksum, scleanGRCh37checksum, removedlineschecksum from check_preassigned_id
+
+      output:
+      tuple datasetID, mfile, env(library_study_id), env(library_revision_id), env(library_raw_sumstat_id), env(library_cleaned_sumstat_id), rawsumstatchecksum, scleanchecksum into ch_preassigned_sumstat_id
+
+      script:
+      """
+      #Check if study_id should be assigned
+      if grep -Pq "^library_study_id=" ${mfile}
+      then
+        SIDx="\$(grep "^library_study_id=" ${mfile})"
+        library_study_id="\$(echo "\${SIDx#*=}")"
+      else
+        library_study_id="missing"
+      fi
+      
+      #Check if study_id should be assigned
+      if grep -Pq "^library_revision_id=" ${mfile}
+      then
+        SIDx="\$(grep "^library_revision_id=" ${mfile})"
+        library_revision_id="\$(echo "\${SIDx#*=}")"
+      else
+        library_revision_id="missing"
+      fi
+ 
+      #Check if study_id should be assigned
+      if grep -Pq "^library_raw_sumstat_id=missing=" ${mfile}
+      then
+        SIDx="\$(grep "^library_raw_sumstat_id=" ${mfile})"
+        library_raw_sumstat_id="\$(echo "\${SIDx#*=}")"
+      else
+        library_raw_sumstat_id="missing"
+      fi
+      
+      #Check if study_id should be assigned
+      if grep -Pq "^library_cleaned_sumstat_id=" ${mfile}
+      then
+        SIDx="\$(grep "^library_cleaned_sumstat_id=" ${mfile})"
+        library_cleaned_sumstat_id="\$(echo "\${SIDx#*=}")"
+      else
+        library_cleaned_sumstat_id="missing"
+      fi
+
+      """
+  }
+  
+    //combine to force the assignment to wait for ch_check_avail channel to open before proceeding
+    //This is done when all files have been gzipped successfully
     ch_preassigned_sumstat_id
      .combine(ch_check_avail, by: 0)
-     .set{ ch_assign_sumstat_id }
+     .set{ ch_assign_sumstat_ids }
   
+
+    // Here we can add a process which compares checksums to make sure that the version stored in the database matches the one we are creating
+
+    // When this below works, do the check for preexisting ids in the process just above, as it will be part of the initial checks
+    // if things actually are ok
     process assign_sumstat_id {
         publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
   
         input:
-        tuple datasetID, sumstatname from ch_assign_sumstat_id
+        tuple datasetID, mfile, study_id, revision_id, raw_sumstat_id, cleaned_sumstat_id, raw_sumstat_checksum, clean_sumstat_checksum from ch_assign_sumstat_ids
   
         output:
         tuple datasetID, env(libfolder) into ch_assigned_sumstat_id
-        file("assigned_sumstat_id")      
+        file("assigned_sumstat_meta")      
   
         script:
         """
-        if [ "${sumstatname}" == "missing" ] ; then
-          # Scan for available ID and move directory there
-          libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
-          val=\$(mkdir "${params.libdirsumstats}/\${libfolder}")
-          while [ \$? != 0 ]
-          do
-            sleep 2
-            libfolder="\$(assign_folder_id.sh ${params.libdirsumstats})"
-            val=\$(mkdir "${params.libdirsumstats}/\${libfolder}")
-          done
+        #load all dbconnect functions
+        source db_function.sh
 
-          echo "\${libfolder}" > assigned_sumstat_id 
+        #exchange information from the database
+        db_communicate.sh \
+        $dbfuncs \
+        $dbrun \
+        $mfile \
+        $study_id \
+        $revision_id \
+        $raw_sumstat_id \
+        $cleaned_sumstat_id \
+        $raw_sumstat_checksum \
+        $clean_sumstat_checksum > assigned_sumstat_meta 
 
-        else
-          libfolder="${sumstatname}"
-            mkdir "${params.libdirsumstats}/\${libfolder}"
-          echo "${sumstatname}" > assigned_sumstat_id 
-        fi
+        csi=\$(awk -vFS="\t" '\$1=="cleaned_sumstat_id"{print \$2}' assigned_sumstat_meta)
+        libfolder="sumstat_\${csi}"
+        mkdir "${params.libdirsumstats}/\${libfolder}"
+
         """
     }
 
@@ -2282,7 +2321,7 @@ process select_chrpos_over_snpchrpos {
 
     ch_assigned_sumstat_id3
       .combine(ch_usermeta_checksum, by: 0)
-      .combine(ch_rawsumstat_checksum, by: 0)
+      .combine(ch_rawsumstat_checksum2, by: 0)
       .combine(ch_mfile_rerun_7, by: 0)
       .combine(ch_input_pdf_stuff6, by: 0)
       .combine(ch_input_readme3, by: 0)
@@ -2359,30 +2398,12 @@ process select_chrpos_over_snpchrpos {
         """
     }
 
-    ch_to_write_to_filelibrary3.into { ch_to_write_to_filelibrary3a; ch_to_write_to_filelibrary3b }
-
-    process calculate_checksum_on_cleaned_sumstat {
-        publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
-    
-        input:
-        tuple datasetID, sclean, scleanGRCh37, removedlines from ch_to_write_to_filelibrary3a
-    
-        output:
-        tuple datasetID, env(scleanchecksum), env(scleanGRCh37checksum), env(removedlineschecksum) into ch_cleaned_sumstat_checksums
-    
-        script:
-        """
-        scleanchecksum="\$(b3sum ${sclean} | awk '{print \$1}')"
-        scleanGRCh37checksum="\$(b3sum ${scleanGRCh37} | awk '{print \$1}')"
-        removedlineschecksum="\$(b3sum ${removedlines} | awk '{print \$1}')"
-        """
-    }
 
 
     ch_assigned_sumstat_id4
       .combine(ch_prep_rerun_mfile_4, by: 0)
       .combine(ch_rerunrmeta_checksum, by: 0)
-      .combine(ch_cleaned_sumstat_checksums, by: 0)
+      .combine(ch_cleaned_sumstat_checksums2, by: 0)
       .combine(ch_cleaned_header, by: 0)
       .set { ch_mfile_cleaned_x }
 
