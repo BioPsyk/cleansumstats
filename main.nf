@@ -88,10 +88,12 @@ if (params.help) {
  * SET UP CONFIGURATION VARIABLES
  */
 
-// Check if genome exists in the config file
-//if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
-//    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(", ")}"
-//}
+// checker only
+if(params.checkonly){
+  doCompleteCleaningWorkflow = false
+}else{
+  doCompleteCleaningWorkflow = true
+}
 
 // check filter
 beforeLiftoverFilter = params.beforeLiftoverFilter
@@ -208,6 +210,23 @@ ${summary.collect { k,v -> "            <dt>$k</dt><dd><samp>${v ?: '<span style
 }
 
 
+process get_software_versions {
+    publishDir "${params.outdir}/pipeline_info", mode: 'copy', overwrite: true, pattern: '*.csv'
+
+    output:
+    file 'software_versions_mqc.yaml' into software_versions_yaml
+    file "software_versions.csv" into ch_software_versions
+
+
+    script:
+    """
+    echo $workflow.manifest.version > v_pipeline.txt
+    echo $workflow.nextflow.version > v_nextflow.txt
+    #sstools-version > v_sumstattools.txt
+    scrape_software_versions.py &> software_versions_mqc.yaml
+    """
+}
+  
 
 if (params.generateMetafile){
   ch_metatemplate = file("${baseDir}/assets/meta_data_readMe_v4.txt")
@@ -217,9 +236,7 @@ if (params.generateMetafile){
 
   process create_meta_data_template {
   
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'copy', overwrite: false
-      }
+      publishDir "${params.outdir}", mode: 'copy', overwrite: false, enabled: params.dev
   
       input:
       tuple basefilename, sfilename from ch_sumstat_file
@@ -247,9 +264,7 @@ if (params.generateMetafile){
 
       cpus 2
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple basefilename, dbsnpvcf from ch_file
@@ -281,9 +296,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_reformat {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_split2
@@ -299,9 +312,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_indels {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_preformatted
@@ -321,9 +332,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_report_number_of_biallelic_multiallelics {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_indels1
@@ -340,9 +349,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_dup_positions_GRCh38 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_indels2
@@ -365,9 +372,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_liftover_GRCh37 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh38_1
@@ -389,9 +394,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_dup_positions_GRCh37 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_lifted_to_GRCh37
@@ -410,9 +413,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_liftover_remaining_ambigous_GRCh37 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh37
@@ -435,9 +436,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_liftover_GRCh36 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_ambig_GRCh37_liftovers1
@@ -458,9 +457,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_liftover_GRCh35 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }     
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_ambig_GRCh37_liftovers2
@@ -485,9 +482,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_duplicates_GRCh36_GRCh35 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk, build from ch_dbsnp_lifted_to_GRCh3x
@@ -506,9 +501,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_liftover_remaining_ambigous_GRCh36_GRCh35 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple build, cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh3x
@@ -529,9 +522,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_make_rsid_version_from_GRCh38 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh38_2
@@ -548,9 +539,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_RSID {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false
-      }
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, enabled: params.dev
 
       input:
       file dbsnp_chunks from ch_dbsnp_rsid_to_GRCh38.collect()
@@ -578,9 +567,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh38 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false
-      }
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, enabled: params.dev
 
       input:
       file dbsnp_chunks from ch_dbsnp_rmd_dup_positions_GRCh38_3.collect()
@@ -605,10 +592,8 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh38_GRCh37 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false
-        publishDir "${params.outdir}", mode: 'symlink', overwrite: true, pattern: '*.map'
-      }
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, enabled: params.dev
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true, pattern: '*.map', enabled: params.dev
 
       input:
       file dbsnp_chunks from ch_dbsnp_rmd_ambig_GRCh37_liftovers3.collect()
@@ -642,10 +627,8 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh3x_GRCh38 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/intermediates", mode: 'symlink', overwrite: true, pattern: '*.map'
-        publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
-      }
+      publishDir "${params.outdir}/intermediates", mode: 'symlink', overwrite: true, pattern: '*.map', enabled: params.dev
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed', enabled: params.dev
 
       input:
       tuple build, cid, file(dbsnp_chunks) from ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped
@@ -674,41 +657,6 @@ if (params.generateMetafile){
 
 }else {
 
-  process get_software_versions {
-      if(params.keepIntermediateFiles == true){ publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true 
-          saveAs: { filename ->
-              if (filename.indexOf(".csv") > 0) filename
-              else null
-          }
-      }
-  
-      output:
-      file 'software_versions_mqc.yaml' into software_versions_yaml
-      file "software_versions.csv" into ch_software_versions
-
-  
-      script:
-      """
-      echo $workflow.manifest.version > v_pipeline.txt
-      echo $workflow.nextflow.version > v_nextflow.txt
-      #sstools-version > v_sumstattools.txt
-      scrape_software_versions.py &> software_versions_mqc.yaml
-      """
-  }
-  
-
-  process check_filter_params {
-      if(params.keepIntermediateFiles == true){ publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true }
-
-      output:
-      file("params_check_filtername_afterLiftoverFilter.log")
-  
-      script:
-      """
-      check_filter_names.sh ${afterLiftoverFilter} ${baseDir}/assets/allowed_names_afterLiftoverFilter.txt params_check_filtername_afterLiftoverFilter.log
-
-      """
-  }
 
   
   //use metafile filename as datasetID through the pipeline
@@ -718,24 +666,44 @@ if (params.generateMetafile){
   
   ch_mfile_checkX.into { ch_mfile_user_1; ch_mfile_user_2; ch_mfile_user_3 }
 
-  process calculate_checksum_on_metafile_user {
-      if(params.keepIntermediateFiles == true){ publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true }
-  
+  process check_filter_params {
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+
       input:
       tuple datasetID, mfile from ch_mfile_user_3
-  
+
       output:
-      tuple datasetID, env(usermetachecksum) into ch_usermeta_checksum
+      file("params_check_filtername_afterLiftoverFilter.log")
+      tuple datasetID, mfile into ch_mfile_user_3x
   
       script:
       """
-      usermetachecksum="\$(b3sum ${mfile} | awk '{print \$1}')"
+      check_filter_names.sh ${afterLiftoverFilter} ${baseDir}/assets/allowed_names_afterLiftoverFilter.txt params_check_filtername_afterLiftoverFilter.log
+
+      """
+  }
+
+
+  process calculate_checksum_on_metafile_user {
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+  
+      input:
+      tuple datasetID, mfile from ch_mfile_user_3x
+  
+      output:
+      tuple datasetID, env(usermetachecksum) into ch_usermeta_checksum
+      file("usermetachecksum.txt")
+  
+      script:
+      """
+      b3sum ${mfile} | awk '{print \$1}' > usermetachecksum.txt
+      usermetachecksum="\$(cat usermetachecksum.txt)"
       """
   }
 
 
   process make_meta_file_unix_friendly {
-      if(params.keepIntermediateFiles == true){ publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
       input:
       tuple datasetID, mfile from ch_mfile_user_1
@@ -760,7 +728,7 @@ if (params.generateMetafile){
 
   process check_most_crucial_paths_exists {
   
-      if(params.keepIntermediateFiles == true){ publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
       input:
       tuple datasetID, mfile, mfile_unix_safe from ch_mfile_unix_safe
@@ -803,7 +771,7 @@ if (params.generateMetafile){
   ch_input_sfile.into { ch_input_sfile1; ch_input_sfile2 }
 
   process calculate_checksum_on_raw_sumstat {
-      if(params.keepIntermediateFiles == true){ publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
       input:
       tuple datasetID, sfile from ch_input_sfile1
@@ -820,7 +788,7 @@ if (params.generateMetafile){
 
   process check_mfile_format {
   
-      if(params.keepIntermediateFiles == true){ publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
       input:
       tuple datasetID, mfile, sfilePath from ch_mfile_check_format
@@ -843,7 +811,7 @@ if (params.generateMetafile){
 
   process check_and_force_basic_sumstat_format {
   
-      if(params.keepIntermediateFiles == true){ publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
       input:
       tuple datasetID, mfile, sfilePath from ch_mfile_check_libID
@@ -873,14 +841,14 @@ if (params.generateMetafile){
       """
   }
 
-if (params.checkerOnly == false){
+if (doCompleteCleaningWorkflow){
 
     process add_sorted_index_sumstat {
     
         input:
         tuple datasetID, sfile from ch_sfile_ok
   
-        if(params.keepIntermediateFiles == true){ publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
     
         output:
         tuple datasetID, file("prep_sfile_added_rowindex") into ch_sfile_on_stream
@@ -929,9 +897,7 @@ if (params.checkerOnly == false){
    
     process check_if_chrpos_col_is_different_from_snp_and_assign_dID2 {
 
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
 
         input:
         tuple datasetID, mfile, sfile, chrposExists, snpExists, pointsToDifferentCols from ch_present_markers_2
@@ -958,9 +924,7 @@ if (params.checkerOnly == false){
   
     process prep_dbsnp_mapping_for_rsid {
     
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, mfile, sfile, chrposExists, snpExists, pointsToDifferentCols from ch_present_markers_1
@@ -996,10 +960,8 @@ if (params.checkerOnly == false){
   
     process remove_duplicated_rsid_before_liftover_rsid_version {
     
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid", mode: 'symlink', overwrite: true
-        publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid", mode: 'symlink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
     
         input:
         tuple datasetID, mfile, rsidprep, snpExists from ch_liftover_33
@@ -1027,10 +989,8 @@ if (params.checkerOnly == false){
   
     process liftover_to_GRCh38_and_map_to_dbsnp_rsid_version {
     
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid", mode: 'symlink', overwrite: true
-        publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid", mode: 'symlink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
         input:
         tuple datasetID, mfile, fsorted, snpExists from ch_liftover_3333
@@ -1080,9 +1040,7 @@ if (params.checkerOnly == false){
   
     process reformat_X_Y_XY_and_MT_and_remove_noninterpretables {
     
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true, enabled: params.dev
   
         input:
         tuple datasetID, dID2, mfile, sfile, chrposexist from ch_liftover_snpchrpos_chrpos_mixed
@@ -1138,9 +1096,7 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
     
     process genome_build_stats {
     
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, dID2, mfile, sfile from ch_chromosome_fixed1
@@ -1181,9 +1137,7 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
     
     process infer_genome_build {
     
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, dID2, file(ujoins) from ch_genome_build_stats_grouped
@@ -1217,9 +1171,7 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
 
     process genome_build_mapping_warning {
     
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, tot, dID2, buildstat, grmax from ch_failsafe
@@ -1252,9 +1204,7 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
 //  ch_liftover_2.view()
     
     process prep_dbsnp_mapping_by_sorting_chrpos_version {
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, dID2, gbmax, mfile, sfile from ch_liftover_2
@@ -1283,10 +1233,8 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
   
     process remove_duplicated_chr_position_before_liftover {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true
-          publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
     
         input:
         tuple datasetID, dID2, mfile, chrposprep, gbmax from ch_liftover_3
@@ -1309,10 +1257,8 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
     
   process liftover_to_GRCh38_and_map_to_dbsnp_chrpos_version {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true
-          publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'symlink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
     
         input:
         tuple datasetID, dID2, mfile, fsorted, gbmax from ch_liftover_333
@@ -1400,9 +1346,7 @@ ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
 
 process select_chrpos_over_snpchrpos {
   
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
       input:
       tuple datasetID, dID2, mfile, liftedGRCh38, dID2SNP, mfileSNP, liftedGRCh38SNP, mfileRSID, liftedGRCh38RSID, beforeLiftover from ch_combined_chrpos_snpchrpos_rsid
@@ -1464,10 +1408,8 @@ process select_chrpos_over_snpchrpos {
   
     process remove_duplicated_chr_position_allele_rows {
      
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-          publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
     
         input:
         tuple datasetID, mfile, liftedandmapped from ch_liftover_final
@@ -1488,9 +1430,7 @@ process select_chrpos_over_snpchrpos {
   
   
     process split_off_GRCh38 {
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, mfile, liftedandmapped from ch_liftover_4
@@ -1526,9 +1466,7 @@ process select_chrpos_over_snpchrpos {
   
     process split_multiallelics_and_resort_index {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, build, mfile, liftgrs from ch_mapped_GRCh38
@@ -1585,10 +1523,8 @@ process select_chrpos_over_snpchrpos {
     
     process allele_correction_A1_A2 {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-          publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
     
         input:
         tuple datasetID, build, mfile, mapped, sfile, A2exists from ch_A2_exists
@@ -1658,10 +1594,8 @@ process select_chrpos_over_snpchrpos {
     
     process allele_correction_A1 {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-          publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
     
         input:
         tuple datasetID, build, mfile, mapped, sfile, A2missing from ch_A2_missing
@@ -1750,9 +1684,7 @@ process select_chrpos_over_snpchrpos {
 
     process remove_duplicated_chr_position_rows {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, build, mfile, acorrected from ch_allele_corrected_mix_X
@@ -1777,9 +1709,7 @@ process select_chrpos_over_snpchrpos {
 
     process prepare_allele_frequency_stats {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates/g1kaf_stats_branch", mode: 'symlink', overwrite: true
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates/g1kaf_stats_branch", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, build, mfile, sfile from ch_allele_corrected_mix3
@@ -1825,10 +1755,8 @@ process select_chrpos_over_snpchrpos {
   
     process filter_stats {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-          publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*'
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
     
         input:
         tuple datasetID, mfile, sfile from ch_stats_inference
@@ -1869,9 +1797,7 @@ process select_chrpos_over_snpchrpos {
     //if available, add allele_frequency
     process add_allele_frequency_stats {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates/${af_branch}", mode: 'symlink', overwrite: true
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates/${af_branch}", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, branch, st_filtered, mfile, availAF, afFreqs, af_branch from ch_add_ref_freq
@@ -1899,9 +1825,7 @@ process select_chrpos_over_snpchrpos {
   
     process infer_stats {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates/${af_branch}", mode: 'symlink', overwrite: true
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates/${af_branch}", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, af_branch, st_filtered, mfile from ch_stats_to_infer
@@ -1957,7 +1881,7 @@ process select_chrpos_over_snpchrpos {
 //
 //    process select_chrpos_over_snpchrpos {
 //      
-//      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true
+//      publishDir "${params.outdir}/${datasetID}", mode: 'symlink', overwrite: true, enabled: params.dev
 //      
 //      input:
 //      tuple datasetID, mfile, k1gversion, defaultfile from ch_gb_stats_combined
@@ -1984,9 +1908,7 @@ process select_chrpos_over_snpchrpos {
 
     process select_stats {
     
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, stats_branch, mfile, inferred, stats_branch2, sfile, mfile2 from ch_stats_selection2
@@ -2020,9 +1942,7 @@ process select_chrpos_over_snpchrpos {
     
   process final_assembly {
   
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
       input:
       tuple datasetID, build, mfile, acorrected, stats from ch_allele_corrected_and_outstats
@@ -2044,9 +1964,7 @@ process select_chrpos_over_snpchrpos {
 
   process final_assembly_make_GRCh37_reference {
   
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
       input:
       tuple datasetID, cleaned from ch_cleaned_file_1
@@ -2075,9 +1993,7 @@ process select_chrpos_over_snpchrpos {
      .set{ ch_collected_removed_lines }
   
     process collect_all_removed_lines {
-        if(params.keepIntermediateFiles == true){ 
-          publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-        }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
         input:
         tuple datasetID, step1, step2, step3 from ch_collected_removed_lines
@@ -2097,9 +2013,7 @@ process select_chrpos_over_snpchrpos {
   
     process describe_removed_lines_as_table {
     
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, filtered_stats_removed from ch_collected_removed_lines3
@@ -2124,9 +2038,7 @@ process select_chrpos_over_snpchrpos {
       .set{ ch_to_write_to_filelibrary2 }
   
     process gzip_outfiles {
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
         input:
         tuple datasetID, sclean, scleanGRCh37, inputsfile, inputformatted, removedlines from ch_to_write_to_filelibrary2
@@ -2153,9 +2065,7 @@ process select_chrpos_over_snpchrpos {
     ch_to_write_to_filelibrary3.into { ch_to_write_to_filelibrary3a; ch_to_write_to_filelibrary3b }
 
     process calculate_checksum_on_cleaned_sumstat {
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
     
         input:
         tuple datasetID, sclean, scleanGRCh37, removedlines from ch_to_write_to_filelibrary3a
@@ -2197,9 +2107,7 @@ process select_chrpos_over_snpchrpos {
  //  .combine(ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA, by: 0)
 
   process collect_and_prepare_stepwise_readme {
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
 
       input:
       tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10, step11, step12, step13 from ch_collected_workflow_stepwise_stats
@@ -2223,9 +2131,7 @@ process select_chrpos_over_snpchrpos {
       .set { ch_mfile_cleaned_x }
 
     process prepare_cleaned_metadata_file {
-      if(params.keepIntermediateFiles == true){ 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true
-      }
+      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
         input:
         tuple datasetID, mfile, scleanchecksum, scleanGRCh37checksum, removedlineschecksum, cleanedheader from ch_mfile_cleaned_x
@@ -2256,25 +2162,22 @@ process select_chrpos_over_snpchrpos {
         """
     }
 
-    ch_to_write_to_raw_library
-    .set { ch_to_write_to_raw_library2 }
-
+    
     // Collect all metafiles in one channel
-    ch_mfile_user_2
-    .combine(ch_mfile_cleaned_1, by: 0)
-    .set { ch_all_mfiles }
+     ch_mfile_user_2
+     .combine(ch_mfile_cleaned_1, by: 0)
+     .set { ch_all_mfiles }
   
      ch_to_write_to_filelibrary3b
-     .combine(ch_mfile_ok3, by: 0)
-     .combine(ch_input_readme, by: 0)
-     .combine(ch_overview_workflow_steps, by: 0)
-     .combine(ch_removed_lines_table, by: 0)
-     .combine(ch_software_versions)
-     .combine(ch_gb_stats_combined, by: 0)
-     .combine(ch_all_mfiles, by: 0)
-     .combine(ch_to_write_to_raw_library2, by: 0)
-     .combine(ch_input_pdf_stuff, by: 0)
-     .set{ ch_to_write_to_filelibrary7 }
+      .join(ch_input_readme, by: 0)
+      .join(ch_overview_workflow_steps, by: 0)
+      .join(ch_removed_lines_table, by: 0)
+      .join(ch_gb_stats_combined, by: 0)
+      .join(ch_all_mfiles, by: 0)
+      .join(ch_to_write_to_raw_library, by: 0)
+      .join(ch_input_pdf_stuff, by: 0)
+      .set{ ch_to_write_to_filelibrary7 }
+
   
      //.combine(ch_collected_removed_lines2)
   
@@ -2283,7 +2186,7 @@ process select_chrpos_over_snpchrpos {
         publishDir "${params.outdir}/${datasetID}", mode: 'copy', overwrite: true
   
         input:
-        tuple datasetID, sclean, scleanGRCh37, removedlines, mfile, readme, overviewworkflow, removedlinestable, softv, gbdetectCHRPOS, gbdetectSNPCHRPOS, usermfile, cleanmfile, rawfile, pmid, pdfpath, pdfsuppdir from ch_to_write_to_filelibrary7
+        tuple datasetID, sclean, scleanGRCh37, removedlines, readme, overviewworkflow, removedlinestable, gbdetectCHRPOS, gbdetectSNPCHRPOS, usermfile, cleanmfile, rawfile, pmid, pdfpath, pdfsuppdir from ch_to_write_to_filelibrary7
         
         output:
         path("*")
@@ -2291,11 +2194,9 @@ process select_chrpos_over_snpchrpos {
         script:
 
         """
-        
         # Store data in library by copying (move is faster, but debug gets slower as input disappears)
         cp ${sclean} cleaned_GRCh38.gz
         cp ${scleanGRCh37} cleaned_GRCh37.gz
-        cp ${cleanmfile} cleaned_metadata.txt
   
         # Make a folder with detailed data of the cleaning
         mkdir details
@@ -2303,14 +2204,14 @@ process select_chrpos_over_snpchrpos {
         cp ${removedlinestable} details/removed_lines_per_type_table.txt
         cp $gbdetectCHRPOS details/genome_build_map_count_table_chrpos.txt
         cp $gbdetectSNPCHRPOS details/genome_build_map_count_table_markername.txt
-        cp $softv details/software_versions.csv
         cp ${removedlines} details/removed_lines.gz
-        
+        cp ${cleanmfile} cleaned_metadata.txt
+
         # copy all raw stuff into raw
         mkdir raw
         cp ${rawfile} raw/.
         cp ${usermfile} raw/.
-        
+
         #reference material
         mkdir raw/reference
         mkdir raw/reference/supplemental_material
@@ -2323,7 +2224,6 @@ process select_chrpos_over_snpchrpos {
              :
            fi
         done
-        
         """
     }
   }
