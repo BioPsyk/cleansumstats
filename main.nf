@@ -654,6 +654,97 @@ if (params.generateMetafile){
 
       """
   }
+}else if(params.generate1KgAfSNPreference){
+
+  // ##Download from web
+  // ##Download readme describing the new mapping directly to GRCh38
+  // ##wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/20190312_biallelic_SNV_and_INDEL_README.txt
+  // ##
+  // ###then download the datasets from this website portal
+  // ##wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz
+  // ##wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz.tbi
+  // ##
+
+  ch_file = Channel
+    .fromPath(params.input, type: 'file')
+    .map { file -> tuple(file.baseName, file) }
+
+  process extract_frequency_data {
+
+      publishDir "${params.outdir}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+
+      input:
+      tuple basefilename, af1kgvcf from ch_file
+
+      output:
+      tuple basefilename, file("1kg_af_ref") into ch_1kg_af_ref
+
+      script:
+      """
+      module load tools
+      module load bcftools/1.11
+      gendb_1kaf_extract_freq_data.sh ${af1kgvcf} > 1kg_af_ref
+
+      """
+  }
+
+  // As 1KG by default shows alternative allele frequency, we flip to follow our default on showing effect allele frequency, which in our system will be the reference allele frequency.
+  process flip_frequency_data {
+
+      publishDir "${params.outdir}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+
+      input:
+      tuple basefilename, ref1kg from ch_1kg_af_ref
+
+      output:
+      tuple basefilename, file("1kg_af_ref.flipped") into ch_1kg_af_ref_tosort
+
+      script:
+      """
+      #sort 1kg af reference on position
+      awk '{print \$1, \$2, \$3, 1-\$4, 1-\$5, 1-\$6, 1-\$7, 1-\$8}' ${ref1kg} > 1kg_af_ref.flipped
+      """
+  }
+
+  process sort_frequency_data {
+
+      cpus 4
+
+      publishDir "${params.outdir}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+
+      input:
+      tuple basefilename, ref1kg from ch_1kg_af_ref_tosort
+
+      output:
+      tuple basefilename, file("1kg_af_ref.sorted") into ch_1kg_af_ref_sorted
+
+      script:
+      """
+      #sort 1kg af reference on position
+      LC_ALL=C sort -k 1,1 --parallel 4 ${ref1kg} > 1kg_af_ref.sorted
+      """
+  }
+
+  process join_frequency_data_on_dbsnp_reference {
+
+      publishDir "${params.outdir}", mode: 'symlink', overwrite: true
+
+      input:
+      tuple basefilename, ref1kgsorted from ch_1kg_af_ref_sorted
+
+      output:
+      tuple basefilename, file("1kg_af_ref.sorted.joined")
+
+      script:
+      """
+      #join the two datasets
+      LC_ALL=C join -1 1 -2 1 ${ref1kgsorted} ${ch_dbsnp_38} > 1kg_af_ref.sorted.joined
+
+      """
+  }
+      //#check for not agreeing ref alleles and alt alleles
+      // awk '{if($2!=$10){print $0}}' 1kg_af_ref.sorted.joined | head
+      // awk '{if($3!=$11){print $0}}' 1kg_af_ref.sorted.joined | head
 
 }else {
 
