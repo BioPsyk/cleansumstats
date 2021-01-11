@@ -30,7 +30,8 @@ Z="$(selRightHand "$(selColRow "^col_Z=" $mefl)")"
 P="$(selRightHand "$(selColRow "^col_P=" $mefl)")"
 OR="$(selRightHand "$(selColRow "^col_OR=" $mefl)")"
 N="$(selRightHand "$(selColRow "^col_N=" $mefl)")"
-AF="$(selRightHand "$(selColRow "^col_AFREQ=" $mefl)")"
+EAF="$(selRightHand "$(selColRow "^col_EAF=" $mefl)")"
+OAF="$(selRightHand "$(selColRow "^col_OAF=" $mefl)")"
 
 #true or false (exists or not)
 tfB="$(recode_to_tf $B)"
@@ -39,7 +40,17 @@ tfZ="$(recode_to_tf $Z)"
 tfP="$(recode_to_tf $P)"
 tfOR="$(recode_to_tf $OR)"
 tfN="$(recode_to_tf $P)"
-tfAF="$(recode_to_tf $OR)"
+tfEAF="$(recode_to_tf $EAF)"
+tfOAF="$(recode_to_tf $OAF)"
+
+#Check if either EAF or OAF is specified in meta, if so, use the new variable with fixed name: EAF
+if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
+  EAF2="EAF"
+  tfEAF2="true"
+else
+  EAF2="missing"
+  tfEAF2="false"
+fi
 
 #which variables to infer
 if [ ${STATM} == "lin" ]; then
@@ -61,16 +72,16 @@ if [ ${STATM} == "lin" ]; then
   if [ ${tfZ} == "true" ] && [ ${tfSE} == "true" ]; then
     echo -e "beta_from_zscore_se"
   fi
-  if [ ${tfZ} == "true" ] && [ ${tfN} == "true" ] && [ ${tfAF} == "true" ]; then
+  if [ ${tfZ} == "true" ] && [ ${tfN} == "true" ] && [ ${tfEAF2} == "true" ]; then
     echo -e "beta_from_zscore_N_af"
   fi
   if [ ${tfZ} == "true" ] && [ ${tfB} == "true" ]; then
     echo -e "se_from_zscore_beta"
   fi
-  if [ ${tfZ} == "true" ] && [ ${tfN} == "true" ] && [ ${tfAF} == "true" ]; then
+  if [ ${tfZ} == "true" ] && [ ${tfN} == "true" ] && [ ${tfEAF2} == "true" ]; then
     echo -e "se_from_zscore_N_af"
   fi
-  if [ ${tfZ} == "true" ] && [ ${tfB} == "true" ] && [ ${tfAF} == "true" ]; then
+  if [ ${tfZ} == "true" ] && [ ${tfB} == "true" ] && [ ${tfEAF2} == "true" ]; then
     echo -e "N_from_zscore_beta_af"
   fi
 fi

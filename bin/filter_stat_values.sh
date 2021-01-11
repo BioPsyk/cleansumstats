@@ -32,7 +32,8 @@ ORU95="$(selRightHand "$(selColRow "^col_ORU95=" $mefl)")"
 N="$(selRightHand "$(selColRow "^col_N=" $mefl)")"
 CaseN="$(selRightHand "$(selColRow "^col_CaseN=" $mefl)")"
 ControlN="$(selRightHand "$(selColRow "^col_ControlN=" $mefl)")"
-AFREQ="$(selRightHand "$(selColRow "^col_AFREQ=" $mefl)")"
+EAF="$(selRightHand "$(selColRow "^col_EAF=" $mefl)")"
+OAF="$(selRightHand "$(selColRow "^col_OAF=" $mefl)")"
 INFO="$(selRightHand "$(selColRow "^col_INFO=" $mefl)")"
 
 
@@ -47,7 +48,8 @@ tfORU95="$(recode_to_tf $ORU95)"
 tfN="$(recode_to_tf $N)"
 tfCaseN="$(recode_to_tf $CaseN)"
 tfControlN="$(recode_to_tf $ControlN)"
-tfAFREQ="$(recode_to_tf $AFREQ)"
+tfEAF="$(recode_to_tf $EAF)"
+tfOAF="$(recode_to_tf $OAF)"
 tfINFO="$(recode_to_tf $INFO)"
 
 #which variables to filter
@@ -82,8 +84,11 @@ function which_to_filter(){
   if [ ${tfControlN} == "true" ]; then
     echo -e "${ControlN}"
   fi
-  if [ ${tfAFREQ} == "true" ]; then
-    echo -e "${AFREQ}"
+  if [ ${tfEAF} == "true" ]; then
+    echo -e "${EAF}"
+  fi
+  if [ ${tfOAF} == "true" ]; then
+    echo -e "${OAF}"
   fi
   if [ ${tfINFO} == "true" ]; then
     echo -e "${INFO}"
@@ -130,7 +135,10 @@ fi
 if [ ${tfControlN} == "true" ]; then
   ((i++))
 fi
-if [ ${tfAFREQ} == "true" ]; then
+if [ ${tfEAF} == "true" ]; then
+  ((i++))
+fi
+if [ ${tfOAF} == "true" ]; then
   ((i++))
 fi
 if [ ${tfINFO} == "true" ]; then

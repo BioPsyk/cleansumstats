@@ -68,7 +68,7 @@ col_P
 col_N
 col_CaseN
 col_ControlN
-col_AFREQ
+col_EAF
 col_INFO
 col_Direction
 col_Notes

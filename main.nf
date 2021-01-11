@@ -1707,6 +1707,64 @@ process select_chrpos_over_snpchrpos {
     ch_allele_corrected_mix_Y
       .into{ ch_allele_corrected_mix1; ch_allele_corrected_mix2; ch_allele_corrected_mix3 }
 
+    process filter_stats_on_interpretable_values {
+    
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+    
+        input:
+        tuple datasetID, mfile, sfile from ch_stats_inference
+        
+        output:
+        tuple datasetID, mfile, file("st_filtered_remains") into ch_stats_filtered_remain00
+        tuple datasetID, file("removed_stat_non_numeric_in_awk")
+        tuple datasetID, file("removed_stat_non_numeric_in_awk_ix") into ch_stats_filtered_removed_ix
+        tuple datasetID, file("desc_filtered_stat_rows_with_non_numbers_BA.txt") into ch_desc_filtered_stat_rows_with_non_numbers_BA
+    
+        script:
+        """
+        touch removed_stat_non_numeric_in_awk 
+        touch removed_stat_non_numeric_in_awk_ix
+        filter_stat_values.sh $mfile $sfile > st_filtered_remains 2> removed_stat_non_numeric_in_awk
+        awk -vOFS="\t" '{print \$1,"stat_non_numeric_in_awk"}' removed_stat_non_numeric_in_awk > removed_stat_non_numeric_in_awk_ix
+        
+        #process before and after stats
+        rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
+        rowsAfter="\$(wc -l st_filtered_remains | awk '{print \$1}')"
+        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered out rows with stats impossible to do calculations from" > desc_filtered_stat_rows_with_non_numbers_BA.txt
+        """
+    }
+  
+    process force_effect_allele_frequency {
+    
+        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
+    
+        input:
+        tuple datasetID, mfile, sfile from ch_stats_filtered_remain00
+        
+        output:
+        tuple datasetID, env(af_branch), file("forced_eaf") into ch_stats_filtered_remain
+        tuple datasetID, file("desc_forced_eaf_BA.txt") into ch_desc_forced_eaf_BA
+    
+        script:
+        """
+        af_branch="default_stats_branch"
+        force_effect_allele_frequency.sh $mfile $sfile > forced_eaf
+        
+        #process before and after stats
+        rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
+        rowsAfter="\$(wc -l forced_eaf | awk '{print \$1}')"
+        echo -e "\$rowsBefore\t\$rowsAfter\tForced Effect Allele Frequency" > desc_forced_eaf_BA.txt
+        """
+    }
+
+    ch_stats_filtered_remain
+      .join(ch_mfile_ok5, by: 0)
+      .set{ ch_stats_filtered_remain3 }
+
+
+    ch_stats_filtered_remain3.into { ch_stats_filtered_remain4; ch_stats_filtered_remain5; ch_stats_filtered_remain6 }
+
     process prepare_allele_frequency_stats {
     
         publishDir "${params.outdir}/${datasetID}/intermediates/g1kaf_stats_branch", mode: 'symlink', overwrite: true, enabled: params.dev
@@ -1752,42 +1810,6 @@ process select_chrpos_over_snpchrpos {
         
         """
     }
-  
-    process filter_stats {
-    
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
-        publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'symlink', overwrite: true, pattern: 'removed_*', enabled: params.dev
-    
-        input:
-        tuple datasetID, mfile, sfile from ch_stats_inference
-        
-        output:
-        tuple datasetID, env(af_branch), file("st_filtered_remains") into ch_stats_filtered_remain
-        tuple datasetID, file("removed_stat_non_numeric_in_awk")
-        tuple datasetID, file("removed_stat_non_numeric_in_awk_ix") into ch_stats_filtered_removed_ix
-        tuple datasetID, file("desc_filtered_stat_rows_with_non_numbers_BA.txt") into ch_desc_filtered_stat_rows_with_non_numbers_BA
-    
-        script:
-        """
-        af_branch="default_stats_branch"
-        touch removed_stat_non_numeric_in_awk 
-        touch removed_stat_non_numeric_in_awk_ix
-        filter_stat_values.sh $mfile $sfile > st_filtered_remains 2> removed_stat_non_numeric_in_awk
-        awk -vOFS="\t" '{print \$1,"stat_non_numeric_in_awk"}' removed_stat_non_numeric_in_awk > removed_stat_non_numeric_in_awk_ix
-        
-        #process before and after stats
-        rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
-        rowsAfter="\$(wc -l st_filtered_remains | awk '{print \$1}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tFiltered out rows with stats impossible to do calculations from" > desc_filtered_stat_rows_with_non_numbers_BA.txt
-        """
-    }
-
-    ch_stats_filtered_remain
-      .join(ch_mfile_ok5, by: 0)
-      .set{ ch_stats_filtered_remain3 }
-
-
-    ch_stats_filtered_remain3.into { ch_stats_filtered_remain4; ch_stats_filtered_remain5; ch_stats_filtered_remain6 }
 
     ch_stats_filtered_remain4
     .join(ch_prep_ref_allele_frequency, by: 0)

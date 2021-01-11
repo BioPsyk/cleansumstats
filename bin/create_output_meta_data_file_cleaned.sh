@@ -25,7 +25,7 @@ colNeededInMetaOutfile4=(
   cleansumstats_col_N=N
   cleansumstats_col_CaseN=CaseN
   cleansumstats_col_ControlN=ControlN
-  cleansumstats_col_AFREQ=AFREQ
+  cleansumstats_col_EAF=EAF
   cleansumstats_col_INFO=INFO
   cleansumstats_col_Direction=Direction
 )

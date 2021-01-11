@@ -35,9 +35,9 @@ function which_to_mod(){
 }
 
 function which_to_mod2(){
-    if stat_exists "AFREQ" ${STAT}; then
-      echo "AFREQ"
-      echo "AFREQ" 1>&2
+    if stat_exists "EAF" ${STAT}; then
+      echo "EAF"
+      echo "EAF" 1>&2
     fi
 }
 
