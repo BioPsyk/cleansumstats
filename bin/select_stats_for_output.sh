@@ -26,7 +26,7 @@ function recode_to_tf(){
 function specfunx_exists(){
   var=$1
   infs=$2
-  head -n1 $infs | grep -q "$var"
+  head -n1 $infs | awk '{print $0" "}'1 | grep -q "[[:space:]]$var[[:space:]]"
 }
 
 #what is colname according to meta data file
@@ -62,6 +62,14 @@ tfOAF="$(recode_to_tf $OAF)"
 tfINFO="$(recode_to_tf $INFO)"
 tfDIRECTION="$(recode_to_tf $DIRECTION)"
 
+if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
+  EAF2="EAF"
+  tfEAF2="true"
+else
+  EAF2="missing"
+  tfEAF2="false"
+fi
+
 
 #which variables to filter
 function which_to_select(){
@@ -74,6 +82,12 @@ function which_to_select(){
       echo "B" 1>&2
     elif specfunx_exists "beta_from_zscore_N_af" ${inferred}; then
       echo "beta_from_zscore_N_af"
+      echo "B" 1>&2
+    elif specfunx_exists "beta_from_zscore_se_1KG" ${inferred}; then
+      echo "beta_from_zscore_se_1KG"
+      echo "B" 1>&2
+    elif specfunx_exists "beta_from_zscore_N_af_1KG" ${inferred}; then
+      echo "beta_from_zscore_N_af_1KG"
       echo "B" 1>&2
     else
       :
@@ -88,6 +102,12 @@ function which_to_select(){
       echo "SE" 1>&2
     elif specfunx_exists "se_from_zscore_N_af" ${inferred}; then
       echo "se_from_zscore_N_af"
+      echo "SE" 1>&2
+    elif specfunx_exists "se_from_zscore_beta_1KG" ${inferred}; then
+      echo "se_from_zscore_beta_1KG"
+      echo "SE" 1>&2
+    elif specfunx_exists "se_from_zscore_N_af_1KG" ${inferred}; then
+      echo "se_from_zscore_N_af_1KG"
       echo "SE" 1>&2
     else
       :
@@ -106,6 +126,15 @@ function which_to_select(){
     elif specfunx_exists "zscore_from_pval_beta_N" ${inferred}; then
       echo "zscore_from_pval_beta_N"
       echo "Z" 1>&2
+    elif specfunx_exists "zscore_from_beta_se_1KG" ${inferred}; then
+      echo "zscore_from_beta_se_1KG"
+      echo "Z" 1>&2
+    elif specfunx_exists "zscore_from_pval_beta_1KG" ${inferred}; then
+      echo "zscore_from_pval_beta_1KG"
+      echo "Z" 1>&2
+    elif specfunx_exists "zscore_from_pval_beta_N_1KG" ${inferred}; then
+      echo "zscore_from_pval_beta_N_1KG"
+      echo "Z" 1>&2
     else
       :
     fi
@@ -119,6 +148,12 @@ function which_to_select(){
       echo "P" 1>&2
     elif specfunx_exists "pval_from_zscore" ${inferred}; then
       echo "pval_from_zscore"
+      echo "P" 1>&2
+    elif specfunx_exists "pval_from_zscore_N_1KG" ${inferred}; then
+      echo "pval_from_zscore_N_1KG"
+      echo "P" 1>&2
+    elif specfunx_exists "pval_from_zscore_1KG" ${inferred}; then
+      echo "pval_from_zscore_1KG"
       echo "P" 1>&2
     else
       :
@@ -143,6 +178,9 @@ function which_to_select(){
     if specfunx_exists "N_from_zscore_beta_af" ${inferred}; then
       echo "N_from_zscore_beta_af"
       echo "N" 1>&2
+    elif specfunx_exists "N_from_zscore_beta_af_1KG" ${inferred}; then
+      echo "N_from_zscore_beta_af_1KG"
+      echo "N" 1>&2
     else
       :
     fi
@@ -155,9 +193,13 @@ function which_to_select(){
     echo -e "${ControlN}"
     echo "ControlN" 1>&2
   fi
-  if [ ${tfEAF} == "true" ] || [ ${tfOAF} == "true" ]; then
-    echo -e "${EAF}"
+  if [ ${tfEAF2} == "true" ]; then
+    echo -e "${EAF2}"
     echo "EAF" 1>&2
+  fi
+  if specfunx_exists "AF_1KG_CS" ${stdin}; then
+    echo -e "AF_1KG_CS"
+    echo "EAF_1KG" 1>&2
   fi
   if [ ${tfINFO} == "true" ]; then
     echo -e "${INFO}"

@@ -2,6 +2,7 @@
 
 #meta file
 mefl=${1}
+af_branch=${2}
 
 #helpers
 function selRightHand(){
@@ -44,12 +45,18 @@ tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
 
 #Check if either EAF or OAF is specified in meta, if so, use the new variable with fixed name: EAF
-if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
-  EAF2="EAF"
-  tfEAF2="true"
+if [ "$af_branch" == "g1kaf_stats_branch" ]; then
+    EAF2="AF_1KG_CS"
+    tfEAF2="true"
 else
-  EAF2="missing"
-  tfEAF2="false"
+  if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
+    EAF2="EAF"
+    tfEAF2="true"
+  else
+    EAF2="missing"
+    tfEAF2="false"
+  fi
+  
 fi
 
 #which variables to infer
