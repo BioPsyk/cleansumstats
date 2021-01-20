@@ -102,6 +102,10 @@ afterAlleleCorrectionFilter = params.afterAlleleCorrectionFilter
 
 // Set channels
 if (params.generateDbSNPreference) {
+  if (params.hg38ToHg19chain) { ch_hg38ToHg19chain = file(params.hg38ToHg19chain, checkIfExists: true) }
+  if (params.hg19ToHg18chain) { ch_hg19ToHg18chain = file(params.hg19ToHg18chain, checkIfExists: true) }
+  if (params.hg19ToHg17chain) { ch_hg19ToHg17chain = file(params.hg19ToHg17chain, checkIfExists: true) }
+
   if (params.dbsnp_38) { ch_dbsnp_38 = file(params.dbsnp_38) }
   if (params.dbsnp_38_37) { ch_dbsnp_38_37 = file(params.dbsnp_38_37) }
   if (params.dbsnp_37_38) { ch_dbsnp_37_38 = file(params.dbsnp_37_38) }
@@ -119,9 +123,6 @@ if (params.generateDbSNPreference) {
 
 ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
 
-if (params.hg38ToHg19chain) { ch_hg38ToHg19chain = file(params.hg38ToHg19chain, checkIfExists: true) }
-if (params.hg19ToHg18chain) { ch_hg19ToHg18chain = file(params.hg19ToHg18chain, checkIfExists: true) }
-if (params.hg19ToHg17chain) { ch_hg19ToHg17chain = file(params.hg19ToHg17chain, checkIfExists: true) }
 
 if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
 if (params.pipelineimages) { ch_pipelineimages = file(params.pipelineimages, checkIfExists: true) }
