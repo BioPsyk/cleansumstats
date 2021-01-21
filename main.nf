@@ -1966,7 +1966,7 @@ process select_chrpos_over_snpchrpos {
     
         thisdir="\$(pwd)"
 
-        cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${cf}" -n"\${cn}" | singularity run --bind \${thisdir}:/mnt ${ch_pipelineimages}/2020-12-17-ubuntu-2004_stat_r_in_c.simg stat_r_in_c --functionfile  /mnt/st_which_to_infer --skiplines 1 \${cp} --statmodel lin > st_inferred_stats
+        cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${cf}" -n"\${cn}" | singularity run --bind \${thisdir}:/mnt ${ch_pipelineimages}/2021-01-20-ubuntu-2004_r-stats-c-streamer.simg r-stats-c-streamer --functionfile  /mnt/st_which_to_infer --skiplines 1 \${cp} --statmodel lin --allelefreqswitch > st_inferred_stats
     
         else
           touch st_inferred_stats
