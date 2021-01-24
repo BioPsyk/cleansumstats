@@ -2069,12 +2069,16 @@ process select_chrpos_over_snpchrpos {
       tuple datasetID, build, mfile, acorrected, stats from ch_allele_corrected_and_outstats
       
       output:
-      tuple datasetID, file("${datasetID}_cleaned") into ch_cleaned_file_1
+      tuple datasetID, file("${datasetID}_cleaned"), file("header") into ch_cleaned_file_1
       tuple datasetID, file("desc_final_merge_BA.txt") into ch_desc_final_merge_BA
   
       script:
       """
-      apply_modifier_on_stats.sh $acorrected $stats > ${datasetID}_cleaned
+      apply_modifier_on_stats.sh $acorrected $stats > cleaned
+      
+      #sort on chrpos (which will make header not on top, so lift that out, and prepare order for next process)
+      head -n1 cleaned | awk -vFS="\t" -vOFS="\t" '{printf "%s%s%s%s%s%s", \$2, OFS, \$3, OFS, \$1, OFS; for(i=4; i<=NF-1; i++){printf "%s%s", \$i, OFS}; print \$NF}' > header
+      awk -vFS="\t" -vOFS="\t" 'NR>1{printf "%s%s%s%s", \$2":"\$3, OFS, \$1, OFS; for(i=4; i<=NF-1; i++){printf "%s%s", \$i, OFS}; print \$NF}' cleaned | LC_ALL=C sort -k1,1 > ${datasetID}_cleaned
       
       # process before and after stats
       rowsBefore="\$(wc -l $acorrected | awk '{print \$1}')"
@@ -2088,21 +2092,20 @@ process select_chrpos_over_snpchrpos {
       publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
   
       input:
-      tuple datasetID, cleaned from ch_cleaned_file_1
+      tuple datasetID, cleaned_chrpos_sorted, header from ch_cleaned_file_1
       
       output:
-      tuple datasetID, cleaned, file("inx_chrpos_GRCh37_B") into ch_cleaned_file
+      tuple datasetID, file("cleaned_chrpos_sorted_header"), file("cleaned_GRCh37") into ch_cleaned_file
       //file("cleaned_chrpos_sorted")
       //file("inx_chrpos_GRCh37")
   
       script:
-     // # match the GRCh37 build and publish it as separate file (where all GRCh38 rows are present, and missing are NA)
-     // awk -vFS="\t" '{print \$2":"\$3, \$1}' ${cleaned} | LC_ALL=C sort -k1,1 > cleaned_chrpos_sorted
-     // LC_ALL=C join  -a 1 -1 1 -2 1 -o 1.2 2.2 cleaned_chrpos_sorted ${ch_dbsnp_38_37} > inx_chrpos_GRCh37
-     // echo -e "0\tCHRPOS" > inx_chrpos_GRCh37_B
-     // awk -vOFS="\t" '{if(\$2 ~ /:/){print \$1, \$2 }else{print \$1, "NA"}}' inx_chrpos_GRCh37 >> inx_chrpos_GRCh37_B
+
       """
-      echo "tempfile while waiting for a fix using NAs for missing positions" > inx_chrpos_GRCh37_B
+      echo -e "CHR\tPOS\tRSID" > cleaned_GRCh37
+      LC_ALL=C join -e "NA" -a1 -1 1 -2 1 -o 2.1 2.2 2.3 ${cleaned_chrpos_sorted} ${ch_dbsnp_38_37} | awk -vOFS="\t" '{split(\$2,out,":"); print out[1], out[2],\$3 }' >> cleaned_GRCh37
+      cat $header > cleaned_chrpos_sorted_header
+      awk -vFS="\t" -vOFS="\t" '{split(\$1,out,":");printf "%s%s%s%s", out[1], OFS, out[2], OFS; for(i=2; i<=NF-1; i++){printf "%s%s", \$i, OFS}; print \$NF}' $cleaned_chrpos_sorted >> cleaned_chrpos_sorted_header
       """
 
   }
