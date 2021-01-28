@@ -19,20 +19,18 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/cleansumstats --infile 'gwas_sumstats_meta_file.txt' -profile singularity
+    nextflow run cleansumstats --input 'gwas_sumstats_meta_file.txt' -profile singularity
 
     Mandatory arguments:
-      --infile                      Path to tab-separated input data (must be surrounded with quotes)
-      -profile                      Configuration profile to use. Can use multiple (comma separated)
-                                    Available: conda, docker, singularity, awsbatch, test and more.
+      --input                       Path to metadata file in YAML format
 
-    References:                     If not specified in the configuration file or you wish to overwrite any of the references. Has to be sorted on chr:pos as first column using LC_ALL=C.
-      --dbsnp_38                    Path to dbsnp GRCh38 reference.
-      --dbsnp_38_37                 Path to dbsnp GRCh38 to GRCh37 map reference.
-      --dbsnp_37_38                 Path to dbsnp GRCh37 to GRCh38 map reference.
-      --dbsnp_36_38                 Path to dbsnp GRCh36 to GRCh38 map reference.
-      --dbsnp_35_38                 Path to dbsnp GRCh35 to GRCh38 map reference.
-      --dbsnp_RSID_38               Path to dbsnp RSID to GRCh38 map reference.
+    References:                     If not set here, it has to be specified in the configuration file 
+      --dbsnp_38                    Path to dbsnp GRCh38 reference
+      --dbsnp_38_37                 Path to dbsnp GRCh38 to GRCh37 map reference
+      --dbsnp_37_38                 Path to dbsnp GRCh37 to GRCh38 map reference
+      --dbsnp_36_38                 Path to dbsnp GRCh36 to GRCh38 map reference
+      --dbsnp_35_38                 Path to dbsnp GRCh35 to GRCh38 map reference
+      --dbsnp_RSID_38               Path to dbsnp RSID to GRCh38 map reference
 
     Options:
       --placeholderOption           Generates a meta file template, which is one of the required inputs to the cleansumstats pipeline

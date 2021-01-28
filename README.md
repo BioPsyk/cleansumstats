@@ -11,7 +11,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 ## Quick Start
 
-i. Install singularity (link to how to)
+i. Make sure singularity is installed, see [singularity installation](docs/singularity-installation.md) 
 
 ii. Download our container image containing all software and code needed
 ```bash
@@ -25,13 +25,15 @@ iii. Run the singularity image using the provided test data
 nextflow run nf-core/cleansumstats -profile test,<docker/singularity/conda>
 ```
 
+## Use your own data
+
 iv. Prepare reference data
 ```bash
 #this takes time, but only has to be done one time.
 
 ```
 
-v. Prepare meta data for each sumstat file to process:w
+v. Prepare meta data for each sumstat file to process
 ```bash
 #this takes time, but only has to be done one time.
 

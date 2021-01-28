@@ -1,45 +1,40 @@
 # nf-core/cleansumstats: Usage
 
 ## Table of contents
-
-<!-- Install Atom plugin markdown-toc-auto for this ToC to auto-update on save -->
-<!-- TOC START min:2 max:3 link:true asterisk:true update:true -->
-* [Table of contents](#table-of-contents)
-* [Introduction](#introduction)
-* [Running the pipeline](#running-the-pipeline)
-  * [Updating the pipeline](#updating-the-pipeline)
-  * [Reproducibility](#reproducibility)
-* [Main arguments](#main-arguments)
-  * [`-profile`](#-profile)
-  * [`--reads`](#--reads)
-  * [`--singleEnd`](#--singleend)
-* [Reference genomes](#reference-genomes)
-  * [`--genome` (using iGenomes)](#--genome-using-igenomes)
-  * [`--fasta`](#--fasta)
-  * [`--igenomesIgnore`](#--igenomesignore)
-* [Job resources](#job-resources)
-  * [Automatic resubmission](#automatic-resubmission)
-  * [Custom resource requests](#custom-resource-requests)
-* [AWS Batch specific parameters](#aws-batch-specific-parameters)
-  * [`--awsqueue`](#--awsqueue)
-  * [`--awsregion`](#--awsregion)
-* [Other command line parameters](#other-command-line-parameters)
-  * [`--outdir`](#--outdir)
-  * [`--email`](#--email)
-  * [`--email_on_fail`](#--email_on_fail)
-  * [`-name`](#-name)
-  * [`-resume`](#-resume)
-  * [`-c`](#-c)
-  * [`--custom_config_version`](#--custom_config_version)
-  * [`--custom_config_base`](#--custom_config_base)
-  * [`--max_memory`](#--max_memory)
-  * [`--max_time`](#--max_time)
-  * [`--max_cpus`](#--max_cpus)
-  * [`--plaintext_email`](#--plaintext_email)
-  * [`--monochrome_logs`](#--monochrome_logs)
-  * [`--multiqc_config`](#--multiqc_config)
+<!-- TOC START min:1 max:3 link:true asterisk:false update:true -->
+- [nf-core/cleansumstats: Usage](#nf-corecleansumstats-usage)
+  - [Table of contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Running the pipeline](#running-the-pipeline)
+    - [Reproducibility](#reproducibility)
+  - [Main arguments](#main-arguments)
+    - [`--input`](#--input)
+    - [`--outdir`](#--outdir)
+  - [dbSNP reference](#dbsnp-reference)
+    - [`--generateDbSNPreference`](#--generatedbsnpreference)
+    - [`--libdirdbsnp`](#--libdirdbsnp)
+  - [Allele frequency reference](#allele-frequency-reference)
+    - [`--generate1KgAfSNPreference`](#--generate1kgafsnpreference)
+    - [`--libdir1kaf`](#--libdir1kaf)
+    - [`--kg1000AFGRCh38`](#--kg1000afgrch38)
+  - [Chain files](#chain-files)
+  - [Filters](#filters)
+    - [`--beforeLiftoverFilter`](#--beforeliftoverfilter)
+    - [`--afterLiftoverFilter`](#--afterliftoverfilter)
+    - [`--afterAlleleCorrectionFilter`](#--afterallelecorrectionfilter)
+  - [Job management and resources](#job-management-and-resources)
+    - [Automatic resubmission](#automatic-resubmission)
+    - [`--email`](#--email)
+    - [`--email_on_fail`](#--email_on_fail)
+    - [`-name`](#-name)
+    - [`-resume`](#-resume)
+    - [`--max_memory`](#--max_memory)
+    - [`--max_time`](#--max_time)
+    - [`--max_cpus`](#--max_cpus)
+    - [`--plaintext_email`](#--plaintext_email)
+    - [`--monochrome_logs`](#--monochrome_logs)
+    - [`--dev`](#--dev)
 <!-- TOC END -->
-
 
 ## Introduction
 Nextflow handles job submissions on SLURM or other environments, and supervises running the jobs. Thus the Nextflow process must run until the pipeline is finished. We recommend that you put the process running in the background through `screen` / `tmux` or similar tool. Alternatively you can run nextflow within a cluster job submitted your job scheduler.
@@ -50,16 +45,12 @@ It is recommended to limit the Nextflow Java virtual machines memory. We recomme
 NXF_OPTS='-Xms1g -Xmx4g'
 ```
 
-<!-- TODO nf-core: Document required command line parameters to run the pipeline-->
-
 ## Running the pipeline
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run nf-core/cleansumstats --reads '*_R{1,2}.fastq.gz' -profile docker
+nextflow run cleansumstats --input metadatafile --outdir results
 ```
-
-This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
 
 Note that the pipeline will create the following files in your working directory:
 
@@ -70,144 +61,135 @@ results         # Finished results (configurable, see below)
 # Other nextflow hidden files, eg. history of pipeline runs and old logs.
 ```
 
-### Updating the pipeline
-When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
-
-```bash
-nextflow pull nf-core/cleansumstats
-```
-
 ### Reproducibility
-It's a good idea to specify a pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
+The pipeline version is indicated in the file name of the downloaded image. There are two ways of accessing version information of the included software.
 
-First, go to the [nf-core/cleansumstats releases page](https://github.com/nf-core/cleansumstats/releases) and find the latest version number - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`.
+1. Studying the software version file from the output after running the pipeline on your data.
+2. Enter the image and test each included softwares version:
+```
+#Code to do so
 
-This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future.
-
+```
 
 ## Main arguments
 
-### `-profile`
-Use this parameter to choose a configuration profile. Profiles can give configuration presets for different compute environments. Note that multiple profiles can be loaded, for example: `-profile docker` - the order of arguments is important!
-
-If `-profile` is not specified at all the pipeline will be run locally and expects all software to be installed and available on the `PATH`.
-
-* `awsbatch`
-  * A generic configuration profile to be used with AWS Batch.
-* `conda`
-  * A generic configuration profile to be used with [conda](https://conda.io/docs/)
-  * Pulls most software from [Bioconda](https://bioconda.github.io/)
-* `docker`
-  * A generic configuration profile to be used with [Docker](http://docker.com/)
-  * Pulls software from dockerhub: [`nfcore/cleansumstats`](http://hub.docker.com/r/nfcore/cleansumstats/)
-* `singularity`
-  * A generic configuration profile to be used with [Singularity](http://singularity.lbl.gov/)
-  * Pulls software from DockerHub: [`nfcore/cleansumstats`](http://hub.docker.com/r/nfcore/cleansumstats/)
-* `test`
-  * A profile with a complete configuration for automated testing
-  * Includes links to test data so needs no other parameters
-
-<!-- TODO nf-core: Document required command line parameters -->
-
-### `--reads`
-Use this to specify the location of your input FastQ files. For example:
+### `--input`
+Use this to specify the location of your metadata file. For example:
 
 ```bash
---reads 'path/to/data/sample_*_{1,2}.fastq'
+#single file
+--input 'path/to/data/metadatafile1'
+
+#multiple files using asterix(*)
+--input 'path/to/data/metadatafile*'
 ```
-
-Please note the following requirements:
-
-1. The path must be enclosed in quotes
-2. The path must have at least one `*` wildcard character
-3. When using the pipeline with paired end data, the path must use `{1,2}` notation to specify read pairs.
-
-If left unspecified, a default pattern is used: `data/*{1,2}.fastq.gz`
-
-### `--singleEnd`
-By default, the pipeline expects paired-end data. If you have single-end data, you need to specify `--singleEnd` on the command line when you launch the pipeline. A normal glob pattern, enclosed in quotation marks, can then be used for `--reads`. For example:
-
-```bash
---singleEnd --reads '*.fastq'
-```
-
-It is not possible to run a mixture of single-end and paired-end files in one run.
-
-
-## Reference genomes
-
-The pipeline config files come bundled with paths to the illumina iGenomes reference index files. If running with docker or AWS, the configuration is set up to use the [AWS-iGenomes](https://ewels.github.io/AWS-iGenomes/) resource.
-
-### `--genome` (using iGenomes)
-There are 31 different species supported in the iGenomes references. To run the pipeline, you must specify which to use with the `--genome` flag.
-
-You can find the keys to specify the genomes in the [iGenomes config file](../conf/igenomes.config). Common genomes that are supported are:
-
-* Human
-  * `--genome GRCh37`
-* Mouse
-  * `--genome GRCm38`
-* _Drosophila_
-  * `--genome BDGP6`
-* _S. cerevisiae_
-  * `--genome 'R64-1-1'`
-
-> There are numerous others - check the config file for more.
-
-Note that you can use the same configuration setup to save sets of reference files for your own use, even if they are not part of the iGenomes resource. See the [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html) for instructions on where to save such a file.
-
-The syntax for this reference configuration is as follows:
-
-<!-- TODO nf-core: Update reference genome example according to what is needed -->
-
-```nextflow
-params {
-  genomes {
-    'GRCh37' {
-      fasta   = '<path to the genome fasta file>' // Used if no star index given
-    }
-    // Any number of additional genomes, key is used with --genome
-  }
-}
-```
-
-<!-- TODO nf-core: Describe reference path flags -->
-### `--fasta`
-If you prefer, you can specify the full path to your reference genome when you run the pipeline:
-
-```bash
---fasta '[path to Fasta reference]'
-```
-
-### `--igenomesIgnore`
-Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`.
-
-## Job resources
-### Automatic resubmission
-Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the steps in the pipeline, if the job exits with an error code of `143` (exceeded requested resources) it will automatically resubmit with higher requests (2 x original, then 3 x original). If it still fails after three times then the pipeline is stopped.
-
-### Custom resource requests
-Wherever process-specific requirements are set in the pipeline, the default value can be changed by creating a custom config file. See the files hosted at [`nf-core/configs`](https://github.com/nf-core/configs/tree/master/conf) for examples.
-
-If you are likely to be running `nf-core` pipelines regularly it may be a good idea to request that your custom config file is uploaded to the `nf-core/configs` git repository. Before you do this please can you test that the config file works with your pipeline of choice using the `-c` parameter (see definition below). You can then create a pull request to the `nf-core/configs` repository with the addition of your config file, associated documentation file (see examples in [`nf-core/configs/docs`](https://github.com/nf-core/configs/tree/master/docs)), and amending [`nfcore_custom.config`](https://github.com/nf-core/configs/blob/master/nfcore_custom.config) to include your custom profile.
-
-If you have any questions or issues please send us a message on [Slack](https://nf-co.re/join/slack/).
-
-## AWS Batch specific parameters
-Running the pipeline on AWS Batch requires a couple of specific parameters to be set according to your AWS Batch configuration. Please use the `-awsbatch` profile and then specify all of the following parameters.
-### `--awsqueue`
-The JobQueue that you intend to use on AWS Batch.
-### `--awsregion`
-The AWS region to run your job in. Default is set to `eu-west-1` but can be adjusted to your needs.
-
-Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a S3 storage bucket of your choice - you'll get an error message notifying you if you didn't.
-
-## Other command line parameters
-
-<!-- TODO nf-core: Describe any other command line flags here -->
 
 ### `--outdir`
 The output directory where the results will be saved.
+
+Please note the following requirements for multi-file input:
+
+1. The path must be enclosed in quotes
+2. The path must have at least one `*` wildcard character
+
+## dbSNP reference
+The pipeline requires a reference like dbsnp to map rsid and positions to. In cleansumstats the dbsnp information on which allele is the ref allele is also used to flipe the effect allele, so that the ref allele always is the effect allele. Additionally, we require a prepared dbsnp reference that contains build information.
+### `--generateDbSNPreference`
+To produce this reference, download the dbsnp database, and run the following script.
+
+```bash
+# Download dbsnp database
+# wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.*
+
+--generateDbSNPreference --input path/to/All_20180418.vcf.gz
+```
+
+### `--libdirdbsnp`
+The reformatted database files will be stored in the default directory, specified in the nextflow.config script. But can be specified on the command line using this parameter.
+
+```bash
+--libdirdbsnp /path/to/dbSNPreferenceFolder
+```
+Each individuals database file can be set using these flags
+```bash
+--dbsnp_38 /path/to/file
+--dbsnp_38_37 /path/to/file
+--dbsnp_37_38 /path/to/file
+--dbsnp_36_38 /path/to/file
+--dbsnp_35_38 /path/to/file
+--dbsnp_RSID_38 /path/to/file
+
+```
+
+
+## Allele frequency reference
+For allele frequency we use 1000 genomes data for the main groups AFR, EAS, EUR, AMR and SAS. Similar to dbsnp, this data also needs to be preprocessed before we use it in the pipeline. It can be downloaded from 1000 genomes ftp portal.
+
+```bash
+# download README describing the new mapping directly to GRCh38
+wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/20190312_biallelic_SNV_and_INDEL_README.txt
+
+# Download the data (.gz and .gz.tbi)
+wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz*
+
+```
+
+### `--generate1KgAfSNPreference`
+
+```bash
+--generate1KgAfSNPreference --input path/to/vcffile.gz
+```
+
+### `--libdir1kaf`
+To set output directory of the allele frequency reference to use. When running pipeline the same parameter is used to indicate where the allele frequency reference directory is located.
+
+```bash
+--libdir1kaf path/to/dir/
+```
+
+### `--kg1000AFGRCh38`
+To set output path of the allele frequency reference file to use. When running pipeline the same parameter is used to set the allele frequency reference file.
+
+```bash
+--kg1000AFGRCh38 path/to/file/
+```
+
+## Chain files
+Chain files used in the preparation of the liftover reference
+
+```bash
+--hg38ToHg19chain = path/to/file
+--hg19ToHg18chain = path/to/file
+--hg19ToHg17chain = path/to/file
+```
+
+## Filters
+Commma separated arguments, which filter the data in different ways
+
+### `--beforeLiftoverFilter`
+By default this filters on duplicated keys, which means either the chr:pos, or rsid key used to match dbsnp entries(aka the liftover step).
+
+```bash
+--beforeLiftoverFilter = "duplicated_keys"
+```
+
+### `--afterLiftoverFilter`
+By default this filters lines which are duplicated either by chr:pos and ref:alt, or rsid
+
+```bash
+--afterLiftoverFilter = "duplicated_chrpos_refalt_in_GRCh38,multiple_rsids_in_dbsnp"
+```
+
+### `--afterAlleleCorrectionFilter`
+This filter has no set default, and is therefore set to "".
+```bash
+--afterAlleleCorrectionFilter = ""
+```
+
+
+## Job management and resources
+### Automatic resubmission
+Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the steps in the pipeline, if the job exits with an error code of `143` (exceeded requested resources) it will automatically resubmit with higher requests (2 x original, then 3 x original). If it still fails after three times then the pipeline is stopped. (Feature not implemented yet)
 
 ### `--email`
 Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.
@@ -218,51 +200,8 @@ This works exactly as with `--email`, except emails are only sent if the workflo
 ### `-name`
 Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
 
-This is used in the MultiQC report (if not default) and in the summary HTML / e-mail (always).
-
-**NB:** Single hyphen (core Nextflow option)
-
 ### `-resume`
 Specify this when restarting a pipeline. Nextflow will used cached results from any pipeline steps where the inputs are the same, continuing from where it got to previously.
-
-You can also supply a run name to resume a specific run: `-resume [run-name]`. Use the `nextflow log` command to show previous run names.
-
-**NB:** Single hyphen (core Nextflow option)
-
-### `-c`
-Specify the path to a specific config file (this is a core NextFlow command).
-
-**NB:** Single hyphen (core Nextflow option)
-
-Note - you can use this to override pipeline defaults.
-
-### `--custom_config_version`
-Provide git commit id for custom Institutional configs hosted at `nf-core/configs`. This was implemented for reproducibility purposes. Default is set to `master`.
-
-```bash
-## Download and use config file with following git commid id
---custom_config_version d52db660777c4bf36546ddb188ec530c3ada1b96
-```
-
-### `--custom_config_base`
-If you're running offline, nextflow will not be able to fetch the institutional config files
-from the internet. If you don't need them, then this is not a problem. If you do need them,
-you should download the files from the repo and tell nextflow where to find them with the
-`custom_config_base` option. For example:
-
-```bash
-## Download and unzip the config files
-cd /path/to/my/configs
-wget https://github.com/nf-core/configs/archive/master.zip
-unzip master.zip
-
-## Run the pipeline
-cd /path/to/my/data
-nextflow run /path/to/pipeline/ --custom_config_base /path/to/my/configs/configs-master/
-```
-
-> Note that the nf-core/tools helper package has a `download` command to download all required pipeline
-> files + singularity containers + institutional configs in one go for you, to make this process easier.
 
 ### `--max_memory`
 Use to set a top-limit for the default memory requirement for each process.
@@ -282,5 +221,8 @@ Set to receive plain-text e-mails instead of HTML formatted.
 ### `--monochrome_logs`
 Set to disable colourful command line output and live life in monochrome.
 
-### `--multiqc_config`
-Specify a path to a custom MultiQC configuration file.
+### `--dev`
+Use the dev flag to indicate that you want all intermediate files in the output
+```bash
+--dev
+```
