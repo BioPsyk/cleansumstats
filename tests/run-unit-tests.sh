@@ -17,7 +17,9 @@ function cleanup()
 
 trap cleanup EXIT
 
-echo ">> Running unit tests in: ${tmp_dir}"
+echo "==================================================================="
+echo "| Running unit tests in: ${tmp_dir}"
+echo "==================================================================="
 cd "${tmp_dir}"
 
 for test_file in "${test_dir}/unit/"test_*.sh

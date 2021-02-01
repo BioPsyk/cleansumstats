@@ -14,4 +14,4 @@ exec singularity shell \
      --contain \
      --cleanenv \
      ${mount_flags} \
-     docker-daemon:ibp-cleansumstats:latest
+     docker-daemon:"${image_tag}"

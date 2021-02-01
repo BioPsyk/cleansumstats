@@ -1,0 +1,13 @@
+--- a/modules/nextflow/build.gradle
++++ b/modules/nextflow/build.gradle
+@@ -41,6 +41,10 @@
+     compile 'jline:jline:2.9'
+     compile 'org.pf4j:pf4j:3.4.1'
+
++    // JSON-schema validator for metadata files
++    compile(group: "com.networknt", name: "json-schema-validator", version: "1.0.47");
++    compile(group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-yaml", version: "2.10.1");
++
+     testImplementation 'org.subethamail:subethasmtp:3.1.7'
+
+     // test configuration

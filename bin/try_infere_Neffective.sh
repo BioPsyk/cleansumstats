@@ -5,7 +5,7 @@ mefl=${1}
 
 #helpers
 function selRightHand(){
-  echo "${1#*=}"
+  echo "${1#*: }"
 }
 function selColRow(){
   grep ${1} ${2}
@@ -21,10 +21,10 @@ function recode_to_tf(){
 }
 
 #what is colname according to meta data file
-TraitType="$(selRightHand "$(selColRow "^stats_TraitType=" $mefl)")"
-TotalN="$(selRightHand "$(selColRow "^stats_TotalN=" $mefl)")"
-CaseN="$(selRightHand "$(selColRow "^stats_CaseN=" $mefl)")"
-ControlN="$(selRightHand "$(selColRow "^stats_ControlN=" $mefl)")"
+TraitType="$(selRightHand "$(selColRow "^stats_TraitType:" $mefl)")"
+TotalN="$(selRightHand "$(selColRow "^stats_TotalN:" $mefl)")"
+CaseN="$(selRightHand "$(selColRow "^stats_CaseN:" $mefl)")"
+ControlN="$(selRightHand "$(selColRow "^stats_ControlN:" $mefl)")"
 
 
 #true or false (exists or not)
@@ -59,6 +59,4 @@ then
 fi
 
 #return complete meat file field
-echo stats_EffectiveN=${stats_EffectiveN}
-
-
+echo "stats_EffectiveN: ${stats_EffectiveN}"

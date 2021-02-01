@@ -14,6 +14,11 @@ function format_mount_flags() {
 
 cd "${project_dir}"
 
-mounts=("docs" "assets" "bin" "conf" "environment.yml" "main.nf" "nextflow.config" "tests" "tmp")
+mounts=(
+  "docs" "assets" "bin" "conf" "environment.yml"
+  "main.nf" "nextflow.config" "tests" "tmp" "lib"
+)
+
+image_tag="ibp-cleansumstats:"$(cat "docker/VERSION")
 
 mkdir -p tmp

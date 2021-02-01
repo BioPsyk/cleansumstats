@@ -29,16 +29,16 @@
 MEFL=${1}
 
 function selRightHand(){
-  echo "${1#*=}"
+  echo "${1#*: }"
 }
 
 function selColRow(){
   grep ${1} ${2}
 }
 
-colCHR="$(selRightHand "$(selColRow "^col_CHR=" ${MEFL})")"
-colPOS="$(selRightHand "$(selColRow "^col_POS=" ${MEFL})")"
-colSNP="$(selRightHand "$(selColRow "^col_SNP=" ${MEFL})")"
+colCHR="$(selRightHand "$(selColRow "^col_CHR:" ${MEFL})")"
+colPOS="$(selRightHand "$(selColRow "^col_POS:" ${MEFL})")"
+colSNP="$(selRightHand "$(selColRow "^col_SNP:" ${MEFL})")"
 
 
 pointsToDifferent="true"
@@ -59,10 +59,7 @@ then
   SNPexists="false"
 fi
 
-#return 
+#return
 echo "pointsToDifferent=${pointsToDifferent}"
 echo "CHRPOSexists=${CHRPOSexists}"
 echo "SNPexists=${SNPexists}"
-
-
-

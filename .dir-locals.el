@@ -15,6 +15,11 @@
             (shell-command (format "tmux clear-history -t %s" resolved-pane))
             (shell-command (mapconcat 'identity cmd-parts " "))))
 
+        (defun get-file-in-project (filename)
+          "Gets absolute path to file inside the project"
+          (interactive "P")
+          (expand-file-name filename (projectile-project-root)))
+
         (defun ibp/docker-build ()
           "Builds the docker container with all dependencies"
           (interactive)
@@ -30,14 +35,21 @@
           (interactive)
           (ibp/tmux-pane-cmd "0.0" "(clear && ./scripts/docker-shell.sh)"))
 
+        (defun ibp/kill-nextflow ()
+          "Starts a docker shell"
+          (interactive)
+          (shell-command (get-file-in-project "scripts/kill-nextflow.sh")))
+
         (defun ibp/run-scratch-buffer ()
           "Runs the scratch buffer"
           (interactive)
-          (ibp/tmux-pane-cmd "0.0" "(clear && ./scratch-buffer.sh)"))
+          (ibp/tmux-pane-cmd "0.0"
+            (format "(clear && %s)" (get-file-in-project "scratch-buffer.sh"))))
 
         (global-set-key (kbd "<f1>") 'ibp/docker-build)
         (global-set-key (kbd "<f2>") 'ibp/docker-run-tests)
         (global-set-key (kbd "<f3>") 'ibp/docker-shell)
+        (global-set-key (kbd "<f4>") 'ibp/kill-nextflow)
         (global-set-key (kbd "<f5>") 'ibp/run-scratch-buffer)
 
         )))))

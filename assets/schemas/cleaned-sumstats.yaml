@@ -1,0 +1,54 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+$id: "https://biopsyk.dk/schemas/cleansumstats/cleaned-sumstats/0.1.0.yaml"
+title: "Cleaned sumstats"
+definitions:
+  nucleotide:
+    type: string
+    enum: ["A", "T", "G", "C"]
+type: array
+items:
+  type: object
+  properties:
+    "0":
+      type: integer
+    CHR:
+      type: integer
+      minimum: 1
+      maximum: 22
+    POS:
+      type: integer
+      minimum: 1
+    RSID:
+      type: string
+      pattern: "^rs[0-9]+$"
+    EffectAllele:
+      $ref: "#/definitions/nucleotide"
+    OtherAllele:
+      $ref: "#/definitions/nucleotide"
+    P:
+      type: number
+    SE:
+      type: number
+    ORL95:
+      type: number
+    ORU95:
+      type: number
+    N:
+      type: number
+    CaseN:
+      type: number
+    ControlN:
+      type: number
+    INFO:
+      type: number
+    Direction:
+      type: number
+    B:
+      type: number
+    Z:
+      type: number
+    EAF:
+      type: number
+    EAF_1KG:
+      type: number
+  required: ["CHR", "POS", "RSID"]

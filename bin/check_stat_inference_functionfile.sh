@@ -6,7 +6,7 @@ af_branch=${2}
 
 #helpers
 function selRightHand(){
-  echo "${1#*=}"
+  echo "${1#*: }"
 }
 function selColRow(){
   grep ${1} ${2}
@@ -22,17 +22,17 @@ function recode_to_tf(){
 }
 
 #what is statmethod according to meta data file
-STATM="$(selRightHand "$(selColRow "^stats_Model=" $mefl)")"
+STATM="$(selRightHand "$(selColRow "^stats_Model:" $mefl)")"
 
 #what is colname according to meta data file
-B="$(selRightHand "$(selColRow "^col_BETA=" $mefl)")"
-SE="$(selRightHand "$(selColRow "^col_SE=" $mefl)")"
-Z="$(selRightHand "$(selColRow "^col_Z=" $mefl)")"
-P="$(selRightHand "$(selColRow "^col_P=" $mefl)")"
-OR="$(selRightHand "$(selColRow "^col_OR=" $mefl)")"
-N="$(selRightHand "$(selColRow "^col_N=" $mefl)")"
-EAF="$(selRightHand "$(selColRow "^col_EAF=" $mefl)")"
-OAF="$(selRightHand "$(selColRow "^col_OAF=" $mefl)")"
+B="$(selRightHand "$(selColRow "^col_BETA:" $mefl)")"
+SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
+Z="$(selRightHand "$(selColRow "^col_Z:" $mefl)")"
+P="$(selRightHand "$(selColRow "^col_P:" $mefl)")"
+OR="$(selRightHand "$(selColRow "^col_OR:" $mefl)")"
+N="$(selRightHand "$(selColRow "^col_N:" $mefl)")"
+EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
+OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
 
 #true or false (exists or not)
 tfB="$(recode_to_tf $B)"
@@ -56,7 +56,7 @@ else
     EAF2="missing"
     tfEAF2="false"
   fi
-  
+
 fi
 
 #which variables to infer
@@ -92,4 +92,3 @@ if [ ${STATM} == "lin" ]; then
     echo -e "N_from_zscore_beta_af"
   fi
 fi
-

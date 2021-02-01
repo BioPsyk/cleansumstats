@@ -8,7 +8,7 @@ argn=$4
 
 #helpers
 function selRightHand(){
-  echo "${1#*=}"
+  echo "${1#*: }"
 }
 function selColRow(){
   grep ${1} ${2}
@@ -24,14 +24,14 @@ function recode_to_tf(){
 }
 
 #what is colname according to meta data file
-B="$(selRightHand "$(selColRow "^col_BETA=" $mefl)")"
-SE="$(selRightHand "$(selColRow "^col_SE=" $mefl)")"
-Z="$(selRightHand "$(selColRow "^col_Z=" $mefl)")"
-P="$(selRightHand "$(selColRow "^col_P=" $mefl)")"
-OR="$(selRightHand "$(selColRow "^col_OR=" $mefl)")"
-N="$(selRightHand "$(selColRow "^col_N=" $mefl)")"
-EAF="$(selRightHand "$(selColRow "^col_EAF=" $mefl)")"
-OAF="$(selRightHand "$(selColRow "^col_OAF=" $mefl)")"
+B="$(selRightHand "$(selColRow "^col_BETA:" $mefl)")"
+SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
+Z="$(selRightHand "$(selColRow "^col_Z:" $mefl)")"
+P="$(selRightHand "$(selColRow "^col_P:" $mefl)")"
+OR="$(selRightHand "$(selColRow "^col_OR:" $mefl)")"
+N="$(selRightHand "$(selColRow "^col_N:" $mefl)")"
+EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
+OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
 
 #true or false (exists or not)
 tfB="$(recode_to_tf $B)"
@@ -55,7 +55,7 @@ else
     EAF2="missing"
     tfEAF2="false"
   fi
-  
+
 fi
 
 #which args to use
@@ -83,5 +83,3 @@ done
 printf "\n" >> ${coln}
 printf "\n" >> ${colf}
 printf "\n" >> ${argn}
-
-
