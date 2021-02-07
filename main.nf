@@ -867,14 +867,13 @@ if (params.generateMetafile){
       tuple datasetID, sfile from ch_input_sfile1
 
       output:
-      tuple datasetID, env(rawsumstatchecksum) into ch_rawsumstat_checksumX
+      tuple datasetID, env(rawsumstatchecksum) into ch_rawsumstat_checksum
 
       script:
       """
       rawsumstatchecksum="\$(b3sum ${sfile} | awk '{print \$1}')"
       """
   }
-  ch_rawsumstat_checksumX.into { ch_rawsumstat_checksum1; ch_rawsumstat_checksum2 }
 
   process check_mfile_format {
 
@@ -2248,6 +2247,8 @@ process select_chrpos_over_snpchrpos {
   }
 
       ch_mfile_ok4
+      .combine(ch_usermeta_checksum, by: 0)
+      .combine(ch_rawsumstat_checksum, by: 0)
       .combine(ch_cleaned_sumstat_checksums2, by: 0)
       .combine(ch_cleaned_header, by: 0)
       .set { ch_mfile_cleaned_x }
@@ -2256,7 +2257,7 @@ process select_chrpos_over_snpchrpos {
       publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'symlink', overwrite: true, enabled: params.dev
 
         input:
-        tuple datasetID, mfile, scleanchecksum, scleanGRCh37checksum, removedlineschecksum, cleanedheader from ch_mfile_cleaned_x
+        tuple datasetID, mfile, usermetachecksum, rawsumstatchecksum, scleanchecksum, scleanGRCh37checksum, removedlineschecksum, cleanedheader from ch_mfile_cleaned_x
 
         output:
         tuple datasetID, path("prepared_cleaned_metafile") into ch_mfile_cleaned_1
@@ -2274,6 +2275,8 @@ process select_chrpos_over_snpchrpos {
         echo "cleansumstats_cleaned_GRCh37_coordinates_checksum=${scleanGRCh37checksum}" >> mfile_additions
         echo "cleansumstats_removed_lines=sumstat_removed_lines.gz" >> mfile_additions
         echo "cleansumstats_removed_lines_checksum=${removedlineschecksum}" >> mfile_additions
+        echo "cleansumstats_metafile_user_checksum=${usermetachecksum}" >> mfile_additions
+        echo "cleansumstats_sumstat_raw_checksum=${rawsumstatchecksum}" >> mfile_additions
 
         #Calcualate effective N using meta data info
         try_infere_Neffective.sh ${mfile} >> mfile_additions
