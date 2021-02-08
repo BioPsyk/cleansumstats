@@ -17,6 +17,11 @@ RUN wget "https://github.com/nextflow-io/nextflow/archive/${NEXTFLOW_REVISION}.z
  rm nextflow.zip
 
 WORKDIR /cleansumstats/nextflow
+
+RUN apt-get install -y patch
+COPY patches/json-schema-dependency.patch json-schema-dependency.patch
+RUN patch -p1 < json-schema-dependency.patch
+
 RUN gradle --daemon && BUILD_PACK=1 gradle compile packAll
 
 WORKDIR /cleansumstats
@@ -49,7 +54,7 @@ RUN rm -rf rmath
 #---------------------------------------------------------------------------------
 # Installing r-stats-c-streamer
 
-ARG R_STATS_C_STREAMER_REVISION="8daf7c4f70f9584b8ceabac03b8c08f40b188945"
+ARG R_STATS_C_STREAMER_REVISION="044f967f4d95ecdcff7fa20216342af8dd58f3c1"
 
 RUN wget "https://github.com/pappewaio/r-stats-c-streamer/archive/${R_STATS_C_STREAMER_REVISION}.zip" \
  --quiet -O r-stats-c-streamer.zip && \
@@ -113,11 +118,13 @@ RUN mv nextflow/build/releases/nextflow-20.10.0-all /usr/bin/nextflow && \
 RUN rm -rf /cleansumstats/* && chown root:users /cleansumstats && chmod g+s /cleansumstats
 
 RUN apt-get update --fix-missing && \
- apt-get install python3-pip -y && \
+ apt-get install python3 python3-pip -y && \
  pip3 install CrossMap && \
+ pip3 install jsonschema && \
+ pip3 install pyyaml && \
  apt-get remove --purge python3-pip -y
 
-RUN apt-get install python gawk -y
+RUN apt-get install python gawk graphviz dos2unix -y
 
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
 

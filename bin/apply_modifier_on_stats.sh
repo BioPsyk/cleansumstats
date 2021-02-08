@@ -4,7 +4,7 @@ ACOR=${1}
 STAT=${2}
 
 function selRightHand(){
-  echo "${1#*=}"
+  echo "${1#*: }"
 }
 function selColRow(){
   grep ${1} ${2}
@@ -134,6 +134,3 @@ else
     LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m2
   fi
 fi
-
-
-

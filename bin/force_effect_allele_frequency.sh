@@ -3,7 +3,7 @@ sfile=$2
 
 #helpers
 function selRightHand(){
-  echo "${1#*=}"
+  echo "${1#*: }"
 }
 function selColRow(){
   grep ${1} ${2}
@@ -21,8 +21,8 @@ function recode_to_tf(){
 
 
 #check if EAF or OAF is specified in metadatafile
-EAF="$(selRightHand "$(selColRow "^col_EAF=" $mefl)")"
-OAF="$(selRightHand "$(selColRow "^col_OAF=" $mefl)")"
+EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
+OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
 tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
 
@@ -41,4 +41,3 @@ elif [ ${tfOAF} == "true" ]; then
 else
   cat $sfile
 fi
-

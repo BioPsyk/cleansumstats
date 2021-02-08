@@ -70,14 +70,14 @@ printf "%s\n" "${var}" >> ${outFile}
 
 # Add all variable values in same order as above
 for var in ${colForOneLineMetaFile[@]}; do
-   Px="$(grep "^${var}=" $newMefl)"
-   P="$(echo "${Px#*=}")"
+   Px="$(grep "^${var}: " $newMefl)"
+   P="$(echo "${Px#*: }")"
    printf "%s\t" "${P}" >> ${outFile}
 done
 
 # Let the last element end with newline
 Px="$(grep "^cleansumstats_user=" $newMefl)"
-P="$(echo "${Px#*=}")"
+P="$(echo "${Px#*: }")"
 printf "%s\n" "${P}" >> ${outFile}
 
 #BETTER TO NOT DO IT LIKE THIS, we should just get one line, that is best

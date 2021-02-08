@@ -12,16 +12,16 @@ cleansumstats_sumstat_checksum_raw
 
 # Add user input if not present in "to replace or extend"
 for var in ${colNeededInMetaOutfile1[@]}; do
-   if grep -Pq "^${var}=" ${toReplaceOrExtend}
+   if grep -Pq "^${var}: " ${toReplaceOrExtend}
    then
-     grep -P "^${var}=" ${toReplaceOrExtend}
+     grep -P "^${var}: " ${toReplaceOrExtend}
    else
-     grep -P "^${var}=" ${oldMefl}
+     grep -P "^${var}: " ${oldMefl}
    fi
 done
 
 #for pdfSupp we only replace as it can have multiple lines
-grep -P "^path_supplementary=" ${toReplaceOrExtend}
+grep -P "^path_supplementary: " ${toReplaceOrExtend}
 
 colNeededInMetaOutfile3=(
 study_PMID
@@ -76,10 +76,10 @@ col_Notes
 
 # Add user input if not present in "to replace or extend"
 for var in ${colNeededInMetaOutfile3[@]}; do
-   if grep -Pq "^${var}=" ${toReplaceOrExtend}
+   if grep -Pq "^${var}: " ${toReplaceOrExtend}
    then
-     grep -P "^${var}=" ${toReplaceOrExtend}
+     grep -P "^${var}: " ${toReplaceOrExtend}
    else
-     grep -P "^${var}=" ${oldMefl}
+     grep -P "^${var}: " ${oldMefl}
    fi
 done

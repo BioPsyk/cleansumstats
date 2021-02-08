@@ -7,7 +7,7 @@ inferred=${3}
 
 #helpers
 function selRightHand(){
-  echo "${1#*=}"
+  echo "${1#*: }"
 }
 function selColRow(){
   grep ${1} ${2}
@@ -30,20 +30,20 @@ function specfunx_exists(){
 }
 
 #what is colname according to meta data file
-B="$(selRightHand "$(selColRow "^col_BETA=" $mefl)")"
-SE="$(selRightHand "$(selColRow "^col_SE=" $mefl)")"
-Z="$(selRightHand "$(selColRow "^col_Z=" $mefl)")"
-P="$(selRightHand "$(selColRow "^col_P=" $mefl)")"
-OR="$(selRightHand "$(selColRow "^col_OR=" $mefl)")"
-ORL95="$(selRightHand "$(selColRow "^col_ORL95=" $mefl)")"
-ORU95="$(selRightHand "$(selColRow "^col_ORU95=" $mefl)")"
-N="$(selRightHand "$(selColRow "^col_N=" $mefl)")"
-CaseN="$(selRightHand "$(selColRow "^col_CaseN=" $mefl)")"
-ControlN="$(selRightHand "$(selColRow "^col_ControlN=" $mefl)")"
-EAF="$(selRightHand "$(selColRow "^col_EAF=" $mefl)")"
-OAF="$(selRightHand "$(selColRow "^col_OAF=" $mefl)")"
-INFO="$(selRightHand "$(selColRow "^col_INFO=" $mefl)")"
-DIRECTION="$(selRightHand "$(selColRow "^col_Direction=" $mefl)")"
+B="$(selRightHand "$(selColRow "^col_BETA:" $mefl)")"
+SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
+Z="$(selRightHand "$(selColRow "^col_Z:" $mefl)")"
+P="$(selRightHand "$(selColRow "^col_P:" $mefl)")"
+OR="$(selRightHand "$(selColRow "^col_OR:" $mefl)")"
+ORL95="$(selRightHand "$(selColRow "^col_ORL95:" $mefl)")"
+ORU95="$(selRightHand "$(selColRow "^col_ORU95:" $mefl)")"
+N="$(selRightHand "$(selColRow "^col_N:" $mefl)")"
+CaseN="$(selRightHand "$(selColRow "^col_CaseN:" $mefl)")"
+ControlN="$(selRightHand "$(selColRow "^col_ControlN:" $mefl)")"
+EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
+OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
+INFO="$(selRightHand "$(selColRow "^col_INFO:" $mefl)")"
+DIRECTION="$(selRightHand "$(selColRow "^col_Direction:" $mefl)")"
 
 
 #true or false (exists or not)
@@ -214,12 +214,11 @@ function which_to_select(){
 var=$(which_to_select 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
 nam=$(which_to_select 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
 
-#cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
+#cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"
 if [ -s $inferred ]; then
-  LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $inferred $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
+  LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $inferred $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"
 else
-  cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}" 
+  cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"
 fi
 
-#cat $inferred | sstools-utils ad-hoc-do -f - -k "0|${Z_fr_B_SE}" -n"0,${Z}" 
-
+#cat $inferred | sstools-utils ad-hoc-do -f - -k "0|${Z_fr_B_SE}" -n"0,${Z}"

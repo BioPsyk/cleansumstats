@@ -6,4 +6,4 @@ source "${script_dir}/init-containerization.sh"
 
 mount_flags=$(format_mount_flags "-v")
 
-exec docker run -it ${mount_flags} ibp-cleansumstats:latest /bin/bash
+exec docker run --rm -it ${mount_flags} "${image_tag}" /bin/bash
