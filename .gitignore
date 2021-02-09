@@ -1,8 +1,8 @@
 __pycache__
 .nextflow*
-work/
-data/
-results/
+/work
+/data
+/results
 .DS_Store
 tests/test_data
 *.pyc
