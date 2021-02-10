@@ -60,7 +60,7 @@ else
 fi
 
 #which variables to infer
-if [ ${STATM} == "lin" ]; then
+if [ ${STATM} == "linear" ]; then
   if [ ${tfB} == "true" ] && [ ${tfSE} == "true" ]; then
     echo -e "zscore_from_beta_se"
   fi

@@ -229,7 +229,7 @@ class Metadata {
    * @returns List of r-stat-c-streamer inference functions that can be used.
    */
   public def get_inference_functions(Map stat_fields) {
-    if (this.stats_Model != "lin") {
+    if (this.stats_Model != "linear") {
       return []
     }
 

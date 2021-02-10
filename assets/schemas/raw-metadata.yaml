@@ -336,14 +336,26 @@ properties:
 
   stats_Model:
     description: |
-      What model was used to generate the sum stats? logistic (log), linear (lin),
-      linear mixed model (linMM), logistic mixed model (logMM), others?
+      What model was used to generate the sum stats?
+
+      - "linear"               = Simple linear regression
+      - "logistic"             = Simple logistic regression
+      - "ordinal"              = Ordinal regression
+      - "linear mixed-model"   = Linear mixed effects model (i.e., controlling for a kinship matrix)
+      - "logistic mixed-model" = Logistic mixed effects model (i.e., controlling for a kinship matrix)
+      - "cox"                  = Used to model survival times
+      - "other"                = Some other model, should be described in `stats_Notes`
+
+      When the model could not be resolved, this field should be excluded.
     type: "string"
     enum:
-      - "log"
-      - "lin"
-      - "linMM"
-      - "logMM"
+      - "linear"
+      - "logistic"
+      - "ordinal"
+      - "linear mixed-model"
+      - "logistic mixed-model"
+      - "cox"
+      - "other"
 
   stats_TotalN:
     description: |
@@ -590,5 +602,4 @@ required:
   - "study_Gender"
   - "study_Array"
   - "stats_TraitType"
-  - "stats_Model"
   - "stats_TotalN"
