@@ -26,5 +26,5 @@ study_Ancestry: EUR
 study_Gender: mixed
 study_Array: meta
 stats_TraitType: qt
-stats_Model: lin
+stats_Model: linear
 stats_TotalN: 1000
