@@ -110,7 +110,7 @@ properties:
       Pubmed id of associated publication, or if based on a preprint such as biorXiv,
       provide the DOI link.
 
-      If missing, record extra data in study_Use, study_Controller, study_Contact, study_Restrictions.
+      If missing, record extra data in study_Use.
     oneOf:
       - type: "string"
         format: "uri"
@@ -180,25 +180,6 @@ properties:
     enum:
       - "open"
       - "restricted"
-
-  study_Controller:
-    description: |
-      Name of person responsible for sum stats if the study is private,
-      otherwise use null.
-    type: "string"
-
-  study_Contact:
-    description: |
-      Email address of person responsible for sum stats if the study is private,
-      otherwise use null.
-    type: "string"
-    format: "email"
-
-  study_Restrictions:
-    description: |
-      Terms of usage if the study is private,
-      otherwise use null.
-    type: "string"
 
   study_inHouseData:
     description: |
