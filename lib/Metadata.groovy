@@ -41,7 +41,7 @@ class Metadata {
   String study_Controller = null
   String study_Contact = null
   String study_Restrictions = null
-  String study_inHouseData = null
+  String study_includedCohorts = null
   String study_Ancestry = null
   String study_Gender = null
   String study_PhasePanel = null

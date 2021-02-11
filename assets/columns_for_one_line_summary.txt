@@ -9,7 +9,7 @@ study_Use
 study_Controller
 study_Contact
 study_Restrictions
-study_inHouseData
+study_includedCohorts
 study_Ancestry
 study_Gender
 study_PhasePanel

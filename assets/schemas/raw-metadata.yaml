@@ -181,7 +181,7 @@ properties:
       - "open"
       - "restricted"
 
-  study_inHouseData:
+  study_includedCohorts:
     description: |
       If iPSYCH data, UKBiobank, or some other in house data set that we analyze,
       is in this study then this is very important to mark.
