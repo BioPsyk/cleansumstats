@@ -25,6 +25,6 @@ study_Use: open
 study_Ancestry: EUR
 study_Gender: mixed
 study_Array: meta
-stats_TraitType: qt
+stats_TraitType: quantitative
 stats_Model: linear
 stats_TotalN: 1000

@@ -36,15 +36,15 @@ tfControlN="$(recode_to_tf $ControlN)"
 #which variables to infer
 if [ ${tfTraitType} == "true" ] && [ ${tfTotalN} == "true" ]
 then
-  if [ ${TraitType} == "qt" ]
+  if [ ${TraitType} == "quantitative" ]
   then
     #effective N is total N
     stats_EffectiveN=${TotalN}
-  elif [ ${TraitType} == "ord" ]
+  elif [ ${TraitType} == "ordinal" ]
   then
     #effective N is total N
     stats_EffectiveN=${TotalN}
-  elif [ ${TraitType} == "cc" ]
+  elif [ ${TraitType} == "case-control" ]
   then
     if [ ${tfTraitType} == "true" ] && [ ${tfTotalN} == "true" ]
     then

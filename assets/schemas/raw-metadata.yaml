@@ -327,12 +327,23 @@ properties:
 
   stats_TraitType:
     description: |
-      Is the trait quantitative (qt), ordinal (ord), or case-control (cc), something else?
+      "quantitative" =  Quantitative trait (e.g., Height, BMI)
+      "case-control" = Case-control trait (e.g., schizophrenia)
+      "binary"       = Binary trait (e.g., left handed)
+      "ordinal"      = Ordered trait with ranking (e.g., educational level: gradeschool, highschool, college, graduate ).
+                       May be coded as numbers, but the numbers are not on a constant scale
+                       (e.g., income level: 0 ( <35,000 ), 1 (35 to 50,000), 2 ( > 50,000),
+                       where the numbers are rankings, but "2" is not "twice 1").
+      "survival"     = Survival times (e.g., from cox PH models)
+      "other"        = Something else.  describe in stats_Notes
     type: "string"
     enum:
-      - "qt"
-      - "ord"
-      - "cc"
+      - "quantitative"
+      - "case-control"
+      - "binary"
+      - "ordinal"
+      - "survival"
+      - "other"
 
   stats_Model:
     description: |
