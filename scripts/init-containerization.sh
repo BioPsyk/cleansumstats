@@ -19,6 +19,7 @@ mounts=(
   "main.nf" "nextflow.config" "tests" "tmp" "lib"
 )
 
-image_tag="ibp-cleansumstats:"$(cat "docker/VERSION")
+image_tag="ibp-cleansumstats-base:"$(cat "docker/VERSION")
+deploy_image_tag="ibp-cleansumstats:"$(cat "docker/VERSION")
 
 mkdir -p tmp

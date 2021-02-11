@@ -3,27 +3,35 @@
 set -euo pipefail
 
 e2e_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-tests_dir=$(dirname "${e2e_dir}")
-project_dir=$(dirname "${tests_dir}")
-tmp_dir="${project_dir}/tmp/e2e"
-reports_dir="${project_dir}/tmp/reports"
-schemas_dir="${project_dir}/assets/schemas"
+test_dir=$(dirname "${e2e_dir}")
+tmp_dir=$(dirname "${test_dir}")/tmp/e2e
+reports_dir=$(dirname "${test_dir}")/tmp/reports
+schemas_dir=$(dirname "${test_dir}")/assets/schemas
 
+rm -rf "${reports_dir}"
+mkdir "${reports_dir}"
+
+rm -rf "${tmp_dir}"
 mkdir "${tmp_dir}"
+
+echo "==================================================================="
+echo "| Running e2e tests in: ${tmp_dir}"
+echo "==================================================================="
+
 cd "${tmp_dir}"
 
-for case_path in "${tests_dir}/e2e/cases/"*
+for case_path in "${test_dir}/e2e/cases/"*
 do
   if [[ -d "${case_path}" ]]
   then
     case_name=$(basename "${case_path}")
     case_dir="${tmp_dir}/${case_name}"
 
-    echo ">> Test case '${case_name}'"
+    echo ">> Test ${case_name}"
 
     cp "${case_path}" "${case_dir}" -R
-    mkdir -p "${case_dir}/lib"
-    mkdir -p "${case_dir}/out"
+    mkdir "${case_dir}/lib"
+    mkdir "${case_dir}/out"
 
     cd "${case_dir}"
 
@@ -38,8 +46,8 @@ do
          --input '*.yaml' \
          --outdir "./out" \
          --libdir "./lib" \
-         --libdirdbsnp "${tests_dir}/e2e/data/dbsnp" \
-         --libdir1kaf "${tests_dir}/e2e/data/1kaf"
+         --libdirdbsnp "${test_dir}/e2e/data/dbsnp" \
+         --libdir1kaf "${test_dir}/e2e/data/1kaf"
 
     if [[ $? != 0 ]]
     then
@@ -51,14 +59,14 @@ do
 
     for f in ./out/**/cleaned_metadata.yaml
     do
-      "${tests_dir}/validators/validate-cleaned-metadata.py" \
+      "${test_dir}/validators/validate-cleaned-metadata.py" \
         "${schemas_dir}/cleaned-metadata.yaml" "${f}"
     done
 
     for f in ./out/**/*.gz
     do
       gzip --decompress "${f}"
-      "${tests_dir}/validators/validate-cleaned-sumstats.py" \
+      "${test_dir}/validators/validate-cleaned-sumstats.py" \
         "${schemas_dir}/cleaned-sumstats.yaml" "${f%.gz}"
     done
 

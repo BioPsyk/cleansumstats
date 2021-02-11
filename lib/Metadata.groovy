@@ -113,16 +113,15 @@ class Metadata {
    * @throws Exception When the file does not exist or is not readable.
    */
   private def assert_readable_file_exists(String field_key, String file_path) {
-    // TODO: Derive absolute path using metadata file path if relative path was given
     def absolute_path = get_absolute_path(file_path)
     def file = new File(absolute_path)
 
     if (!file.exists()) {
-      throw Exception("File ${file_path} (from metadata field '${field_key}') does not exist")
+      throw new Exception("File ${file_path} (from metadata field '${field_key}') does not exist")
     }
 
     if (!file.canRead()) {
-      throw Exception("File ${file_path} (from metadata field '${field_key}') is not readable")
+      throw new Exception("File ${file_path} (from metadata field '${field_key}') is not readable")
     }
 
     return absolute_path
