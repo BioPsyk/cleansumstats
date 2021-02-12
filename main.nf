@@ -227,40 +227,17 @@ process get_software_versions {
     """
 }
 
-import java.nio.file.FileSystems
-import java.nio.file.Paths
-
-def metadata_schema = new MetadataSchema("$baseDir/assets/schemas/raw-metadata.yaml")
-def metadata_paths = []
-
-if (params.input.contains("*")) {
-  def matcher = FileSystems.getDefault().getPathMatcher("glob:${params.input}");
-  def metadata_directory = "."
-
-  new File(".").traverse(type: groovy.io.FileType.FILES, maxDepth: 0) {
-    def metadata_path = Paths.get(it.name)
-
-    if(!matcher.matches(metadata_path)) return
-
-    metadata_paths.add(metadata_path.toAbsolutePath())
-  }
-} else {
-  metadata_paths.add(
-    Paths.get(params.input).toAbsolutePath()
-  )
-}
-
-def metadata_instances = [:]
+def session = new PipelineSession(baseDir, workflow.workDir, params.input)
 
 if (params.generateMetafile){
-  metadata_paths.each {
+  session.metadata_paths.each {
     log.info "Writing metadata template"
 
     def metadata_id = it.getBaseName().toString()
 
     def template_file = new File("${params.outdir}/${metadata_id}.template.yaml")
     template_file.write(
-      metadata_schema.generate_metadata_template()
+      session.metadata_schema.generate_metadata_template()
     )
 
     log.info "Metadata template written to ${params.outdir}/${metadata_id}.template.yaml"
@@ -270,7 +247,7 @@ if (params.generateMetafile){
 
   def class_file = new File("${params.outdir}/Metadata.groovy")
   class_file.write(
-    metadata_schema.generate_metadata_groovy_class()
+    session.metadata_schema.generate_metadata_groovy_class()
   )
 
   log.info "Metadata class written to ${params.outdir}/Metadata.groovy"
@@ -777,35 +754,11 @@ if (params.generateMetafile){
   // Pre-execution validation
   //=================================================================================
 
-  log.info "Running pre-execution validation"
+  log.info("Reading metadata files")
 
-  metadata_paths.each {
-    def metadata = null
-
-    try {
-      metadata = metadata_schema.read_metadata_file(it)
-      metadata.validate_paths()
-
-      metadata_instances[it.getBaseName().toString()] = metadata
-    } catch(Exception e) {
-      log.error("Failed to read/validate metadata file ${it}: ${e.message}")
-      exit 1
-    }
-
-    def sumstat_header = new SumstatHeader(metadata.path_sumStats)
-
-    try {
-      metadata.validate_sumstat_header(sumstat_header)
-    } catch (Exception e) {
-      log.error("Sumstat '${metadata.path_sumStats}' header validation failed: ${e.message}")
-      exit 1
-    }
-
-    log.info("Successfully read/validated metadata file '${it}'")
-  }
+  session.read_metadata_files()
 
   log.info("All metadata files read")
-
   log.info("Validating pipeline parameters")
 
   ParametersValidator.validate_filters_allowed(
@@ -880,7 +833,7 @@ if (params.generateMetafile){
     file("mfile_sent_in")
 
     script:
-    def metadata = metadata_instances[datasetID]
+    def metadata = session.get_metadata(datasetID)
     def supplementary_echoes = metadata.path_supplementary.collect {
       "echo '${it}' >> '${datasetID}_pdf_suppfiles.txt'"
     }
@@ -1011,7 +964,7 @@ if (doCompleteCleaningWorkflow){
       tuple datasetID, env(CHRPOSexists),env(SNPexists),env(pointsToDifferent) into ch_present_markers
 
       script:
-      def metadata = metadata_instances[datasetID]
+      def metadata = session.get_metadata(datasetID)
 
       """
       pointsToDifferent=${!metadata.chrpos_points_to_snp()}
@@ -1183,7 +1136,7 @@ if (doCompleteCleaningWorkflow){
       tuple datasetID, env(rowsAfter) into ch_rowsAfter_number_of_lines
 
       script:
-      def metadata = metadata_instances[datasetID]
+      def metadata = session.get_metadata(datasetID)
 
       """
       colCHR="${metadata.col_CHR ?: "missing"}"
@@ -1851,7 +1804,7 @@ process select_chrpos_over_snpchrpos {
       tuple datasetID, file("desc_filtered_stat_rows_with_non_numbers_BA.txt") into ch_desc_filtered_stat_rows_with_non_numbers_BA
 
       script:
-      def metadata = metadata_instances[datasetID]
+      def metadata = session.get_metadata(datasetID)
       Map stat_fields = metadata.resolve_stat_fields()
       int se_column_id = -1
 
