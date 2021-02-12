@@ -926,7 +926,7 @@ if (params.generateMetafile){
       output:
       tuple datasetID, mfile into ch_mfile_ok
       tuple datasetID, file("check_sumstat_format__sumstat_file") into ch_sfile_ok
-      tuple datasetID, file("desc_force_tab_sep_BA.txt") into ch_desc_prep_force_tab_sep_BA
+      tuple datasetID, file("check_sumstat_format__desc_force_tab_sep_BA.txt") into ch_desc_prep_force_tab_sep_BA
       path("check_sumstat_format__sumstat_1000_rows")
       path("check_sumstat_format__sumstat_1000_rows_formatted")
       path("*.log")
@@ -943,7 +943,7 @@ if (params.generateMetafile){
       # Process before and after stats (the -1 is to remove the header count)
       rowsBefore="\$(zcat ${sfilePath} | wc -l | awk '{print \$1-1}')"
       rowsAfter="\$(wc -l check_sumstat_format__sumstat_file | awk '{print \$1-1}')"
-      echo -e "\$rowsBefore\t\$rowsAfter\tForce tab separation" > desc_force_tab_sep_BA.txt
+      echo -e "\$rowsBefore\t\$rowsAfter\tForce tab separation" > check_sumstat_format__desc_force_tab_sep_BA.txt
       """
   }
 
@@ -1491,7 +1491,7 @@ process select_chrpos_or_snpchrpos {
       .set{ ch_gb_stats_combined }
 
 
-    process remove_duplicated_chr_position_allele_rows {
+    process rm_dup_chrpos_allele_rows {
 
         publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
         publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
@@ -1500,15 +1500,15 @@ process select_chrpos_or_snpchrpos {
         tuple datasetID, mfile, liftedandmapped from ch_liftover_final
 
         output:
-        tuple datasetID, mfile, file("gb_unique_rows_sorted") into ch_liftover_4
-        tuple datasetID, file("desc_removed_duplicated_rows") into ch_desc_removed_duplicates_after_liftover
-        tuple datasetID, file("removed_duplicated_rows") into ch_removed_duplicates_after_liftover_ix
-        file("removed_*")
-        file("afterLiftoverFiltering_executionorder")
+        tuple datasetID, mfile, file("rm_dup_chrpos_allele_rows__gb_unique_rows_sorted") into ch_liftover_4
+        tuple datasetID, file("rm_dup_chrpos_allele_rows__desc_removed_duplicated_rows") into ch_desc_removed_duplicates_after_liftover
+        tuple datasetID, file("rm_dup_chrpos_allele_rows__removed_duplicated_rows") into ch_removed_duplicates_after_liftover_ix
+        //file("removed_*")
+        //file("afterLiftoverFiltering_executionorder")
 
         script:
         """
-        filter_after_liftover.sh $liftedandmapped ${afterLiftoverFilter} "remove_duplicated_chr_position_allele_rows"
+        filter_after_liftover.sh $liftedandmapped "${afterLiftoverFilter} " "rm_dup_chrpos_allele_rows__"
 
         """
     }
@@ -2094,7 +2094,7 @@ process select_chrpos_or_snpchrpos {
       tuple datasetID, build, mfile, acorrected, stats from ch_allele_corrected_and_outstats
 
       output:
-      tuple datasetID, file("final_assembly__cleaned2"), file("header") into ch_cleaned_file_1
+      tuple datasetID, file("final_assembly__cleaned2"), file("final_assembly__header") into ch_cleaned_file_1
       tuple datasetID, file("final_assembly__desc_final_merge_BA.txt") into ch_desc_final_merge_BA
 
       script:
@@ -2102,7 +2102,7 @@ process select_chrpos_or_snpchrpos {
       apply_modifier_on_stats.sh $acorrected $stats > final_assembly__cleaned
 
       #sort on chrpos (which will make header not on top, so lift that out, and prepare order for next process)
-      head -n1 final_assembly__cleaned | awk -vFS="\t" -vOFS="\t" '{printf "%s%s%s%s%s%s", \$2, OFS, \$3, OFS, \$1, OFS; for(i=4; i<=NF-1; i++){printf "%s%s", \$i, OFS}; print \$NF}' > header
+      head -n1 final_assembly__cleaned | awk -vFS="\t" -vOFS="\t" '{printf "%s%s%s%s%s%s", \$2, OFS, \$3, OFS, \$1, OFS; for(i=4; i<=NF-1; i++){printf "%s%s", \$i, OFS}; print \$NF}' > final_assembly__header
       awk -vFS="\t" -vOFS="\t" 'NR>1{printf "%s%s%s%s", \$2":"\$3, OFS, \$1, OFS; for(i=4; i<=NF-1; i++){printf "%s%s", \$i, OFS}; print \$NF}' final_assembly__cleaned | LC_ALL=C sort -k1,1 > final_assembly__cleaned2
 
       # process before and after stats
