@@ -833,7 +833,7 @@ if (params.generateMetafile){
 
   ch_mfile_checkX.into { ch_mfile_user_1; ch_mfile_user_2; ch_mfile_user_3; }
 
-  process calculate_checksum_on_metafile_user {
+  process calculate_checksum_on_metafile_input {
       publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
       input:
@@ -841,31 +841,31 @@ if (params.generateMetafile){
 
       output:
       tuple datasetID, env(usermetachecksum) into ch_usermeta_checksum
-      file("usermetachecksum.txt")
+      file("calculate_checksum_on_metafile_input__input_meta_checksum.txt")
 
       script:
       """
-      b3sum ${mfile} | awk '{print \$1}' > usermetachecksum.txt
-      usermetachecksum="\$(cat usermetachecksum.txt)"
+      b3sum ${mfile} | awk '{print \$1}' > calculate_checksum_on_metafile_input__input_meta_checksum.txt
+      usermetachecksum="\$(cat calculate_checksum_on_metafile_input__input_meta_checksum.txt)"
       """
   }
 
-  process make_meta_file_unix_friendly {
+  process make_metafile_unix_friendly {
       publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
       input:
       tuple datasetID, mfile from ch_mfile_user_1
 
       output:
-      tuple datasetID, mfile, file("mfile_unix_safe") into ch_mfile_unix_safe
+      tuple datasetID, mfile, file("make_metafile_unix_friendly__mfile_unix_safe") into ch_mfile_unix_safe
 
       script:
       """
-      dos2unix -n ${mfile} mfile_unix_safe
+      dos2unix -n ${mfile} make_metafile_unix_friendly__mfile_unix_safe
       """
   }
 
-  process check_most_crucial_paths_exists {
+  process check_crucial_paths {
     publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
@@ -876,32 +876,29 @@ if (params.generateMetafile){
     tuple datasetID, env(spath) into ch_input_sfile
     tuple datasetID, env(rpath) into ch_input_readme
     tuple datasetID, env(pmid) into ch_pmid
-    tuple datasetID, env(pmid), env(pdfpath), file("${datasetID}_pdf_suppfiles.txt") into ch_input_pdf_stuff
-    file("mfile_sent_in")
+    tuple datasetID, env(pmid), env(pdfpath), file("check_crucial_paths__pdf_suppfiles.txt") into ch_input_pdf_stuff
 
     script:
     def metadata = metadata_instances[datasetID]
     def supplementary_echoes = metadata.path_supplementary.collect {
-      "echo '${it}' >> '${datasetID}_pdf_suppfiles.txt'"
+      "echo '${it}' >> 'check_crucial_paths__pdf_suppfiles.txt'"
     }
 
     """
-    metaDir="\$(dirname ${mfile})"
-    cat ${mfile} > mfile_sent_in
 
     spath="${metadata.path_sumStats}"
     rpath="${metadata.path_readMe == null ? "missing" : metadata.path_readMe}"
     pdfpath="${metadata.path_pdf == null ? "missing" : metadata.path_pdf}"
     pmid="${metadata.study_PMID}"
 
-    touch ${datasetID}_pdf_suppfiles.txt
+    touch check_crucial_paths__pdf_suppfiles.txt
     ${supplementary_echoes.join("\n")}
     """
   }
 
   ch_input_sfile.into { ch_input_sfile1; ch_input_sfile2 }
 
-  process calculate_checksum_on_raw_sumstat {
+  process calculate_checksum_on_sumstat_input {
       publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
       input:
@@ -909,14 +906,17 @@ if (params.generateMetafile){
 
       output:
       tuple datasetID, env(rawsumstatchecksum) into ch_rawsumstat_checksum
+      path("calculate_checksum_on_sumstat_input__input_sumstat_checksum")
 
       script:
       """
-      rawsumstatchecksum="\$(b3sum ${sfile} | awk '{print \$1}')"
+      b3sum ${sfile} | awk '{print \$1}' > calculate_checksum_on_sumstat_input__input_sumstat_checksum
+      rawsumstatchecksum="\$(cat 'calculate_checksum_on_sumstat_input__input_sumstat_checksum')"
       """
   }
 
-  process check_mfile_format {
+  // Force into the right format if possible
+  process check_sumstat_format {
 
       publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
@@ -924,45 +924,25 @@ if (params.generateMetafile){
       tuple datasetID, mfile, sfilePath from ch_mfile_check_format
 
       output:
-      tuple datasetID, mfile, sfilePath into ch_mfile_check_libID
-      file("${datasetID}_header")
-
-      script:
-      """
-      # Make complete metafile check
-      echo "\$(head -n 1 < <(zcat ${sfilePath}))" > ${datasetID}_header
-      """
-  }
-
-
-  process check_and_force_basic_sumstat_format {
-
-      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-
-      input:
-      tuple datasetID, mfile, sfilePath from ch_mfile_check_libID
-
-      output:
       tuple datasetID, mfile into ch_mfile_ok
-      tuple datasetID, file("${datasetID}_sfile") into ch_sfile_ok
+      tuple datasetID, file("check_sumstat_format__sumstat_file") into ch_sfile_ok
       tuple datasetID, file("desc_force_tab_sep_BA.txt") into ch_desc_prep_force_tab_sep_BA
-      file("${datasetID}_sfile_1000")
-      file("${datasetID}_sfile_1000_formatted")
-      file("*.log")
+      path("check_sumstat_format__sumstat_1000_rows")
+      path("check_sumstat_format__sumstat_1000_rows_formatted")
+      path("*.log")
 
       script:
       """
       # Sumstat file check on first 1000 lines
-      echo "\$(head -n 1000 < <(zcat ${sfilePath}))" | gzip -c > ${datasetID}_sfile_1000
-      check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile_1000_formatted ${datasetID}_sfile_1000_format.log
+      echo "\$(head -n 1000 < <(zcat ${sfilePath}))" | gzip -c > check_sumstat_format__sumstat_1000_rows
+      check_and_format_sfile.sh check_sumstat_format__sumstat_1000_rows check_sumstat_format__sumstat_1000_rows_formatted check_sumstat_format__sumstat_1000_rows_formatted.log
 
       # Make second sumstat file check on all lines
-      check_and_format_sfile.sh ${sfilePath} ${datasetID}_sfile ${datasetID}_sfile_format.log
-      #check_and_format_sfile.sh ${datasetID}_sfile_1000 ${datasetID}_sfile ${datasetID}_sfile_format.log
+      check_and_format_sfile.sh ${sfilePath} check_sumstat_format__sumstat_file check_sumstat_format__sumstat_file.log
 
-      #process before and after stats (the -1 is to remove the header count)
+      # Process before and after stats (the -1 is to remove the header count)
       rowsBefore="\$(zcat ${sfilePath} | wc -l | awk '{print \$1-1}')"
-      rowsAfter="\$(wc -l ${datasetID}_sfile | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l check_sumstat_format__sumstat_file | awk '{print \$1-1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tForce tab separation" > desc_force_tab_sep_BA.txt
       """
   }
