@@ -6,5 +6,6 @@ source "${script_dir}/init-containerization.sh"
 
 cd "${project_dir}"
 
-echo ">> Building docker container"
+echo ">> Building base docker image"
+
 docker build ./docker -t "${image_tag}"

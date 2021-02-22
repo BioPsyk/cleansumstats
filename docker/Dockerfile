@@ -115,8 +115,6 @@ RUN mv sumstat-tools /usr/lib/ && \
 RUN mv nextflow/build/releases/nextflow-20.10.0-all /usr/bin/nextflow && \
  chmod +x /usr/bin/nextflow
 
-RUN rm -rf /cleansumstats/* && chown root:users /cleansumstats && chmod g+s /cleansumstats
-
 RUN apt-get update --fix-missing && \
  apt-get install python3 python3-pip -y && \
  pip3 install CrossMap && \
@@ -127,6 +125,8 @@ RUN apt-get update --fix-missing && \
 RUN apt-get install python gawk graphviz dos2unix -y
 
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
+
+RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
 
 WORKDIR /home/nextflow
 
