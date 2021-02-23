@@ -13,10 +13,11 @@ see [Singularity instructions](singularity.md) for details.
 
 ## Building the Docker image
 
-There are 2 internal tools that are included in the Docker image:
+There are 2 internal tools/libraries that are included in the Docker image:
 
 - [r-stats-c-streamer](https://github.com/pappewaio/r-stats-c-streamer)
 - [sumstat-tools](https://github.com/BioPsyk/sumstat-tools)
+- [ibp-pipeline-lib](https://github.com/BioPsyk/ibp-pipeline-lib)
 
 `r-stats-c-streamer` is kept in a public GitHub repository, so it can be automatically
 downloaded and built inside the Docker image. `sumstat-tools` however, is kept in a
@@ -26,6 +27,13 @@ save it in the `docker/` directory of this repository before building the Docker
 Here's a direct link to the zip-archive:
 [sumstat-tools.zip](https://github.com/BioPsyk/sumstat-tools/archive/6667f58010f3f083c83bf0126b582e9246fe4a42.zip).
 Download that file and save it with the file name `docker/sumstat-tools.zip` in this
+repository.
+
+The library `ibp-pipeline-lib` is also kept in a private repository and to use it
+one must download the built JAR-file of the library. Here's a direct link to the
+latest release of the library JAR-file:
+[ibp-pipeline-lib-0.1.0.zip](https://github.com/BioPsyk/ibp-pipeline-lib/releases/download/0.1.0/ibp-pipeline-lib-0.1.0.jar).
+Download that file and save it with the file name `docker/ibp-pipeline-lib.jar` in this
 repository.
 
 After doing that you can start the Docker image build:
