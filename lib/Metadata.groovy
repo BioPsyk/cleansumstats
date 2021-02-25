@@ -64,7 +64,6 @@ class Metadata extends BaseMetadata {
   String col_N = null
   String col_CaseN = null
   String col_ControlN = null
-  String col_AFREQ = null
   String col_INFO = null
   String col_EAF = null
   String col_OAF = null

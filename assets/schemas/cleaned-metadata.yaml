@@ -188,13 +188,6 @@ properties:
       Column for the number of used individuals as controls for this variant.
     type: "string"
 
-  cleansumstats_col_AFREQ:
-    description: |
-      Column for the allele frequency of the used individuals for the test of this variant.
-
-      Do not include reference data allele frequencies, only if the actual study sample frequencies are presented.
-    type: "string"
-
   cleansumstats_col_INFO:
     description: |
       Column for the specific info-score for this variant. INFO scores reflect imputation quality.

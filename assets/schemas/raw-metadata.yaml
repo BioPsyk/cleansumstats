@@ -23,10 +23,6 @@ description: |
   Two resources are/may be necessary to assist in the completiong of this data:
   Our in house ontologies which provides standard codes for certain variables.
 
-  Note: we use the GWAS Atlas phenotype coding system (https://atlas.ctglab.nl/)
-
-  https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
-
   An external data base that can be referenced to save some time:
   https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
 type: "object"
@@ -42,7 +38,7 @@ properties:
 
   cleansumstats_metafile_user:
     description: |
-      Name of the person that created this metadata file.
+      First and last of the person that created this metadata file.
     type: "string"
     pattern: "^[a-zA-Z0-9_. -]+?$"
 
@@ -56,74 +52,84 @@ properties:
   # path properties
 
   path_sumStats:
+    title: "GWAS sumstats"
     description: |
-      Path to the sumstats file to clean, provided as either an absolute or relative path.
-
-      When the sumstats file is in the same directory as the metadata file, use relative path,
-      otherwise use absolute path.
-
-      The file must be gzipped and have the file extension `.gz`.
+      Name of the sumstats file to clean that is in the same directory as the
+      metadata file. This file must be located in the same directory as the
+      metadata file, be gzipped and have the file extensio `.gz`.
     type: "string"
+    pattern: "^[a-zA-Z0-9][a-zA-Z0-9_.-]+\\.gz$"
 
   path_readMe:
+    title: "Sumstats documentation"
     description: |
-      Path to the sumstats documentation provided by authors or hosts,
-      given as either an absolute or relative path.
-
-      When the readme file is in the same directory as the metadata file, use relative path,
-      otherwise use absolute path.
+      Name of the sumstats documentation file provided by authors or hosts.
+      This file must be located in the same directory as the metadata file.
     type: "string"
+    pattern: "^[a-zA-Z0-9][a-zA-Z0-9_.-]+$"
 
   path_pdf:
+    title: "Publication PDF"
     description: |
-      Path to the study PDF as referenced in the `study_PMID` field,
-      given as either an absolute or relative path.
-
-      When the PDF file is in the same directory as the metadata file, use relative path,
-      otherwise use absolute path.
+      Name to the study PDF as referenced in the `study_PMID` field.
+      This file must be located in the same directory as the metadata file.
     type: "string"
+    pattern: "^[a-zA-Z0-9][a-zA-Z0-9_.-]+\\.pdf$"
+    examples:
+      - "Gadin_bioinf2018.pdf"
 
   path_supplementary:
+    title: "Publication supplementary information"
     description: |
-      Paths the supplementary files associated with the PDF as referenced in the `path_pdf` field,
-      given as either an absolute or relative paths.
-
-      When the supplementary files are in the same directory as the metadata file, use relative paths,
-      otherwise use absolute paths.
+      List of supplementary file names associated with the PDF as referenced in
+      the `path_pdf` field. These files must be located in the same directory
+      as the metadata file.
     type: "array"
     items:
       type: "string"
+      pattern: "^[a-zA-Z0-9][a-zA-Z0-9_.-]+$"
 
   #---------------------------------------------------------------------------------
   # study properties
 
   study_Title:
+    title: "Publication title"
     description: |
       Title of the PMID'd publication associated with the stats.
       Should be one line (no new line characters) and no tabs.
       All other characters are acceptable.
     type: "string"
     pattern: "^[^\n\t]+$"
+    examples:
+      - "A genome-wide association study of shared risk across psychiatric disorders implicates gene regulation during fetal neurodevelopment"
 
   study_PMID:
+    title: "Publication ID"
     description: |
       Pubmed id of associated publication, or if based on a preprint such as biorXiv,
       provide the DOI link.
 
       If missing, record extra data in study_Use.
     oneOf:
-      - type: "string"
-        format: "uri"
-      - type: "integer"
+      - title: "Pubmed ID"
+        type: "integer"
         minimum: 0
+      - title: "DOI link"
+        type: "string"
+        format: "uri"
+      - title: "Internal reference"
+        type: "string"
+        pattern: "^[a-zA-Z0-9_-]{3,}$"
 
   study_Year:
+    title: "Publication year"
     description: |
       Year of publication, given as YYYY.
     type: "integer"
     minimum: 2005
 
   study_PhenoDesc:
+    title: "Free description of the trait associated with the GWAS sumstats"
     description: |
       Phenotype description. Should be as faithful to the name of the phenotype used in the publication.
       This will not be standardized, is free text, and should aim to be inclusive, informative, and complete.
@@ -140,8 +146,9 @@ properties:
     type: "string"
 
   study_PhenoCode:
+    title: "Standardized phenotype code"
     description: |
-      List of phenotypes in the format of [EOF](https://www.ebi.ac.uk/efo/) codes:
+      List of phenotypes in the format of [EFO](https://www.ebi.ac.uk/efo/) codes:
 
       > Experimental Factor Ontology (EFO) provides a systematic description of many experimental
       > variables available in EBI databases, and for projects such as the GWAS catalog.
@@ -158,28 +165,36 @@ properties:
       pattern: "^EFO:[0-9]{7}$"
 
   study_FilePortal:
+    title: "URL for GWAS sumstats repository"
     description: |
-      URL to site that hosts stats. Maybe in GWAS atlas reference.
+      URL to site that hosts stats.
     type: "string"
     format: "uri"
+    examples:
+      - "https://msk.hugeamp.org/downloads.html"
 
   study_FileURL:
+    title: "URL for direct download"
     description: |
-      URL to sumstats file. Maybe in GWAS atlas reference.
+      URL to sumstats file.
       May not be possible if request forms are required
     type: "string"
     format: "uri"
+    examples:
+      - "http://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/GCST90007001-GCST90008000/GCST90007526/GCST90007526_buildGRCh37.tsv.gz"
 
   study_AccessDate:
+    title: "Date of download"
     description: |
-      Date when the sumstats file was accessed, in ISO-8601 format (YYYY-MM-DD).
+      Date when the sumstats file was accessed.
     type: "string"
     format: "date"
 
   study_Use:
+    title: "Are the GWAS sumstats publicly shared?"
     description: |
       Are these studies for open use or do they have some restrictions?
-      If they are restricted, please provide a details description of the restrictions in study_Notes.
+      If they are restricted, please provide a detailed description of the restrictions in study_Notes.
 
       study_Notes might include proprietary data, permissions to publish, preprint embargo dates,
       limited analysis permissions, etc, and if a person is a key contact, include their contact info there.
@@ -189,24 +204,22 @@ properties:
       - "restricted"
 
   study_includedCohorts:
+    title: "Contributing GWAS cohorts"
     description: |
       If iPSYCH data, UKBiobank, or some other in house data set that we analyze,
       is in this study then this is very important to mark.
-
-      Consider checking PMID in external inventories.
-      List of studies to watch out for is provided in the ontology doc.
-
-      - Ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
-      - External inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-    type: "string"
-    enum:
-      - "none"
-      - "iPSYCH2012"
-      - "iPSYCH2015"
-      - "UKB"
-      - "GEMS"
+    type: "array"
+    uniqueItems: true
+    items:
+      type: "string"
+      enum:
+        - "iPSYCH2012"
+        - "iPSYCH2015"
+        - "UKB"
+        - "GEMS"
 
   study_Ancestry:
+    title: "Ancestry of GWAS cohorts"
     description: |
       It is important to note the genetic ancestry of the subjects in the study.
 
@@ -230,6 +243,7 @@ properties:
       - "SAS"
 
   study_Gender:
+    title: "Gender of GWAS cohorts"
     description: |
       What is the gender composition of the study?
     type: "string"
@@ -239,6 +253,7 @@ properties:
       - "mixed"
 
   study_PhasePanel:
+    title: "Phasing reference panel"
     description: |
       What data set was used to assist phasing.
       NOTE: If a meta-analysis with multiple approaches, use "meta".
@@ -253,6 +268,7 @@ properties:
       - "meta"
 
   study_PhaseSoftware:
+    title: "Phasing software"
     description: |
       What software were use to phase.
       NOTE: If a meta-analysis with multiple approaches, use "meta".
@@ -273,6 +289,7 @@ properties:
       - "meta"
 
   study_ImputePanel:
+    title: "Imputation reference panel"
     description: |
       What data set was this study imputed to?
       NOTE: If a meta-analysis with multiple approaches, use "meta".
@@ -287,6 +304,7 @@ properties:
       - "meta"
 
   study_ImputeSoftware:
+    title: "Imputation software"
     description: |
       What software were use to impute.
       NOTE: If a meta-analysis with multiple approaches, use "meta".
@@ -307,6 +325,7 @@ properties:
       - "meta"
 
   study_Array:
+    title: "Genotyping array"
     description: |
       What array was used for genotyping?
 
@@ -317,14 +336,17 @@ properties:
       - "meta"
 
   study_Notes:
+    title: "Special considerations and notes"
     description: |
       If there are special notes that you feel need to be included, please add them here.
+      If for example a dataset has restriction, add important restriction info here.
     type: "string"
 
   #---------------------------------------------------------------------------------
   # stats properties
 
   stats_TraitType:
+    title: "GWAS trait type"
     description: |
       "quantitative" =  Quantitative trait (e.g., Height, BMI)
       "case-control" = Case-control trait (e.g., schizophrenia)
@@ -345,6 +367,7 @@ properties:
       - "other"
 
   stats_Model:
+    title: "GWAS statistical model"
     description: |
       What model was used to generate the sum stats?
 
@@ -368,6 +391,7 @@ properties:
       - "other"
 
   stats_TotalN:
+    title: "Total sample size"
     description: |
       Total sample size (cases and controls).
 
@@ -385,6 +409,7 @@ properties:
     minimum: 0
 
   stats_CaseN:
+    title: "Case sample size"
     description: |
       Total number of cases in study. Will be missing for quantiative and ordinal traits.
 
@@ -402,6 +427,7 @@ properties:
     minimum: 0
 
   stats_ControlN:
+    title: "Control sample size"
     description: |
       Total number of controls in study. Will be missing for quantiative and ordinal traits.
 
@@ -419,6 +445,7 @@ properties:
     minimum: 0
 
   stats_GCMethod:
+    title: "Approach to genomic inflation correction (GC)"
     description: |
       Were stats adjusted post-hoc by some version of Genomic Control?
 
@@ -430,12 +457,14 @@ properties:
       - "unknown"
 
   stats_GCValue:
+    title: "GC adjustment factor"
     description: |
       If GCMethod is known, what was the adjustment factor?
     type: "number"
     minimum: 0
 
   stats_Notes:
+    title: "Special considerations and notes"
     description: |
       If there are special notes that you feel need to be included, please add them here.
     type: "string"
@@ -444,6 +473,7 @@ properties:
   # col properties
 
   col_CHR:
+    title: "Chromosome"
     description: |
       Column where the chromosome information is in.
 
@@ -453,6 +483,7 @@ properties:
     type: "string"
 
   col_POS:
+    title: "Position"
     description: |
       Column where the base pair positions is in.
 
@@ -462,11 +493,13 @@ properties:
     type: "string"
 
   col_SNP:
+    title: "SNP identifier"
     description: |
       Column for the RSID identifiers if available, otherwise the column for the unique SNP identifier.
     type: "string"
 
   col_EffectAllele:
+    title: "Statistical effect reference allele (EA)"
     description: |
       Column for the effect allele.
 
@@ -477,6 +510,7 @@ properties:
     type: "string"
 
   col_OtherAllele:
+    title: "Other allele (OA)"
     description: |
       Column for the non effect allele.
 
@@ -488,6 +522,7 @@ properties:
     type: "string"
 
   col_BETA:
+    title: "Per allele effect (i.e., regression coefficient, beta)"
     description: |
       Column for the beta estimate (per allele effect).
 
@@ -495,6 +530,7 @@ properties:
     type: "string"
 
   col_SE:
+    title: "Standard error of beta"
     description: |
       Column for the standard error of the beta column.
 
@@ -504,11 +540,13 @@ properties:
     type: "string"
 
   col_OR:
+    title: "Odds ratio (OR)"
     description: |
       Column for the odds ratio.
     type: "string"
 
   col_ORL95:
+    title: "Upper 95% confidence bound of OR"
     description: |
       Column for the odds ratio lower 95th percentile of confidence interval.
 
@@ -519,6 +557,7 @@ properties:
     type: "string"
 
   col_ORU95:
+    title: "Lower 95% confidence bound of OR"
     description: |
       Column for the odds ratio upper 95th percentile of confidence interval.
 
@@ -529,43 +568,41 @@ properties:
     type: "string"
 
   col_Z:
+    title: "Hypothesis test statistic (e.g., Z, Wald, t)"
     description: |
       Column for the Z-score, also called "wild", "t-statistic" or "stat".
     type: "string"
 
   col_P:
+    title: "P-value"
     description: |
       Column for the P-value.
     type: "string"
 
   stats_neglog10P:
-    description: |
-      set to 'true' if P-value -log10 transformed
+    title: "Is p-value -log10 transformed?"
     type: "boolean"
 
   col_N:
+    title: "Per SNP total sample size"
     description: |
       Column for the per variant number of individuals. Sometimes referred to as number non-missing.
     type: "string"
 
   col_CaseN:
+    title: "Per SNP case sample size"
     description: |
       Column for the number of used individuals as cases for this variant.
     type: "string"
 
   col_ControlN:
+    title: "Per SNP control sample size"
     description: |
       Column for the number of used individuals as controls for this variant.
     type: "string"
 
-  col_AFREQ:
-    description: |
-      Column for the allele frequency of the used individuals for the test of this variant.
-
-      Do not include reference data allele frequencies, only if the actual study sample frequencies are presented.
-    type: "string"
-
   col_INFO:
+    title: "Imputation quality score"
     description: |
       Column for the specific info-score for this variant. INFO scores reflect imputation quality.
       Do not use 'minimum INFO' for meta-analysis.
@@ -575,16 +612,19 @@ properties:
     type: "string"
 
   col_EAF:
+    title: "EA frequency in the GWAS cohorts"
     description: |
       Description needed
     type: "string"
 
   col_OAF:
+    title: "OA frequency in the GWAS cohorts"
     description: |
       Description needed
     type: "string"
 
   col_Direction:
+    title: "Cohort effect directions"
     description: |
       Column that describes effects across contributing studies to meta-analyses.
 
@@ -592,6 +632,7 @@ properties:
     type: "string"
 
   col_Notes:
+    title: "Special considerations and notes"
     description: |
       If there are special notes that you feel need to be included, please add them here.
       If preprocessing was require due to a really strange format, describe the issue and
@@ -602,7 +643,8 @@ properties:
 
 additionalProperties: false
 dependencies:
-    col_P: ["stats_neglog10P"]
+    col_P:
+      required: ["stats_neglog10P"]
 required:
   - "cleansumstats_version"
   - "cleansumstats_metafile_user"
@@ -617,6 +659,5 @@ required:
   - "study_Use"
   - "study_Ancestry"
   - "study_Gender"
-  - "study_Array"
   - "stats_TraitType"
   - "stats_TotalN"

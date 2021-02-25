@@ -41,6 +41,5 @@ col_P
 col_N
 col_CaseN
 col_ControlN
-col_AFREQ
 col_INFO
 col_Notes

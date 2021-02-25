@@ -162,6 +162,15 @@ def convert_enums(metadata):
 
         metadata[key] = results[0] if len(results) == 1 else results
 
+def convert_paths(metadata):
+    for key, item in metadata.items():
+        if not key.startswith('path_'):
+            continue
+
+        if isinstance(item, list):
+            metadata[key] = list(map(os.path.basename, item))
+        else:
+            metadata[key] = os.path.basename(item)
 
 def perform_specific_conversions(input_directory, schema, metadata):
     allowed_properties = schema['properties'].keys()
@@ -194,6 +203,7 @@ def perform_specific_conversions(input_directory, schema, metadata):
     convert_to_iso_date(results, 'study_AccessDate')
     convert_to_list(results, 'path_supplementary')
     convert_enums(results)
+    convert_paths(results)
 
     return results
 
@@ -234,10 +244,6 @@ def main(args):
             metadata[key].append(value)
 
     metadata = perform_specific_conversions(input_directory, schema, metadata)
-
-# From merge conflict
-#    print(json.dumps(metadata, indent=2))
-
 
     try:
         jsonschema.validate(instance=metadata, schema=schema)
