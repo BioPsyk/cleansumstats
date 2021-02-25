@@ -382,7 +382,7 @@ properties:
       Consider checking PMID in external inventories, but only if download file is identicai! Use Care!
 
       External inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-    type: "number"
+    type: "integer"
     minimum: 0
 
   stats_CaseN:
@@ -399,7 +399,7 @@ properties:
       Consider checking PMID in external inventories, but only if download file is identicai! Use Care!
 
       External inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-    type: "number"
+    type: "integer"
     minimum: 0
 
   stats_ControlN:
@@ -416,7 +416,7 @@ properties:
       Consider checking PMID in external inventories, but only if download file is identicai! Use Care!
 
       External inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-    type: "number"
+    type: "integer"
     minimum: 0
 
   stats_GCMethod:

@@ -45,9 +45,9 @@ class Metadata extends BaseMetadata {
   String study_Notes = null
   String stats_TraitType = null
   String stats_Model = null
-  float stats_TotalN = 0.0
-  float stats_CaseN = 0.0
-  float stats_ControlN = 0.0
+  int stats_TotalN = 0
+  int stats_CaseN = 0
+  int stats_ControlN = 0
   String stats_GCMethod = null
   float stats_GCValue = 0.0
   String stats_Notes = null
