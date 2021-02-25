@@ -141,14 +141,21 @@ properties:
 
   study_PhenoCode:
     description: |
-      Standard, in house trait identifier. Must be in the in ontology (PhenoCode column) or error will be thrown.
+      List of phenotypes in the format of [EOF](https://www.ebi.ac.uk/efo/) codes:
 
-      Checking external inventories for the PMID/preprint link to see if a PhenoCode for exists for this PhenoDesc,
-      else select the best fit from ontology, or for inspiration via related traits.
+      > Experimental Factor Ontology (EFO) provides a systematic description of many experimental
+      > variables available in EBI databases, and for projects such as the GWAS catalog.
 
-      - Ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
-      - External inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-    type: "string"
+      EFO has codes for specific traits, diseases and for all the different levels in the
+      hierarchy.
+    type: "array"
+    examples:
+      - ["EFO:0000692"]
+      - ["EFO:0000289", "EFO:0009963"]
+    minItems: 1
+    items:
+      type: "string"
+      pattern: "^EFO:[0-9]{7}$"
 
   study_FilePortal:
     description: |
