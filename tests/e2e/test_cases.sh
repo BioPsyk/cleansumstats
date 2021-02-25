@@ -45,7 +45,6 @@ do
          --dev true \
          --input '*.yaml' \
          --outdir "./out" \
-         --libdir "./lib" \
          --libdirdbsnp "${test_dir}/e2e/data/dbsnp" \
          --libdir1kaf "${test_dir}/e2e/data/1kaf"
 

@@ -26,7 +26,6 @@ time nextflow -q run -offline \
      --dev true \
      --input "${work_dir}/${case_name}/*.yaml" \
      --outdir "./out" \
-     --libdir "./lib" \
      --libdirdbsnp "${e2e_dir}/data/dbsnp" \
      --libdir1kaf "${e2e_dir}/data/1kaf"
 

@@ -227,7 +227,14 @@ process get_software_versions {
     """
 }
 
-def session = new PipelineSession(baseDir, workflow.workDir, params.input)
+import dk.biopsyk.PipelineSession
+
+def session = new PipelineSession<Metadata>(
+  Metadata.class,
+  baseDir,
+  workflow.workDir,
+  params.input
+)
 
 if (params.generateMetafile){
   session.metadata_paths.each {

@@ -130,4 +130,8 @@ RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s 
 
 WORKDIR /home/nextflow
 
+COPY ibp-pipeline-lib.jar /cleansumstats/ipb-pipeline-lib.jar
+
+ENV NXF_CLASSPATH="/cleansumstats/ipb-pipeline-lib.jar"
+
 USER nextflow
