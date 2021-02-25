@@ -21,12 +21,12 @@ class Metadata extends BaseMetadata {
   String path_sumStats = null
   String path_readMe = null
   String path_pdf = null
-  List path_supplementary = []
+  List<String> path_supplementary = []
   String study_Title = null
   String study_PMID = null
   int study_Year = 0
   String study_PhenoDesc = null
-  String study_PhenoCode = null
+  List<String> study_PhenoCode = []
   String study_FilePortal = null
   String study_FileURL = null
   String study_AccessDate = null

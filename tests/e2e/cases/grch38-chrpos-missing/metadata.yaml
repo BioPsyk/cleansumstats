@@ -14,9 +14,10 @@ col_SNP: snp
 path_sumStats: sumstats.txt.gz
 
 study_Title: Test study
-study_PMID: https://doi.org/10.1038/s41586-020-03160-0
+study_PMID: "https://doi.org/10.1038/s41586-020-03160-0"
 study_Year: 2021
-study_PhenoCode: Facial attractiveness
+study_PhenoCode:
+  - "EFO:0000692"
 study_PhenoDesc: blabla
 study_AccessDate: 2021-01-21
 study_Use: open
