@@ -50,28 +50,42 @@ vi. Start running the cleaning of your own sumstat files!
 
 ```
 
-## Build docker image
-Build the ibp-pipeline-lib-0.1.1.jar file accroding to instructions at: https://github.com/BioPsyk/ibp-pipeline-lib, Then place it inside the docker/ directory in the cleansumstats repository to be accessible by the docker build script. Then build your image,
+## Using images
+
+### Pre-requisites
+
+Docker and singularity has to be installed to create an image executable at a HPC
+- docker-install-instructions(todo)
+- [singularity installation](docs/singularity-installation.md) 
+
+### build images
+
+We have decided to build a docker image first to facilitate how it uses layers to speed up development. From that docker image, it is simple and easy to create a singularity image when deploying the pipeline. The created singulariy image goes to the 'tmp/' folder.
 
 ```bash
+# Build docker image (tied to your system)
 ./scripts/docker-build.sh
+
+# Build singularity image (movable to other systems)
+./scripts/singularity-build.sh
 ```
 
-## Run tests using the docker image
-We have implemented several tests to ensure that the pipeline is doing what we expect. These can be run using the following command,
+### Use docker image
+
+Run tests using the docker image. We have implemented several tests to ensure that the pipeline is doing what we expect. They should all return ok.
 
 ```bash
+# using docker
 ./scripts/docker-run.sh /cleansumstats/tests/run-tests.sh
-```
 
-```bash
-./scripts/docker-build.sh
+# using singularity
+./scripts/singularity-run.sh /cleansumstats/tests/run-tests.sh
 ```
-
 
 ## More documentation
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 See [Output and how to interpret the results](docs/output.md) for the output structure and how to interpret the results.
+See [Developer instructions](docs/developers.md) only for developers
 
 ## Credits
 

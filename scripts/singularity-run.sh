@@ -14,5 +14,5 @@ exec singularity run \
      --contain \
      --cleanenv \
      ${mount_flags} \
-     docker-daemon:"${image_tag}" \
+     "tmp/${singularity_image_tag}" \
      "$@"
