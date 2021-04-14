@@ -20,7 +20,7 @@ function _setup {
 }
 
 function _run_script {
-  "${test_script}.py" ./metadata.txt
+  "${test_script}.py" "$1"
 
   echo "- [OK] ${curr_case}"
 
@@ -34,36 +34,10 @@ echo ">> Test ${test_script}"
 #=================================================================================
 
 #---------------------------------------------------------------------------------
-# Using a simple metadata file
+# Using example_data/sumstat_1
 
-_setup "simple_valid"
+_setup "sumstat_1"
 
-cat <<EOF > ./metadata.txt
-cleansumstats_metafile_date=2021-01-21
-cleansumstats_metafile_user=riczet
-cleansumstats_version=1.0.0-dev
-col_CHR=chr
-col_EffectAllele=a1
-col_BETA=beta
-col_N=n
-col_OR=or
-col_OtherAllele=a2
-col_P=p
-col_POS=bp
-col_SE=se
-path_sumStats=sumstats.txt.gz
-study_Title=Test study
-study_PMID=https://doi.org/10.1038/s41586-020-03160-0
-study_Year=2021
-study_PhenoDesc=blabla
-study_AccessDate=2021-01-21
-study_Use=open
-study_Ancestry=EUR
-study_Gender=mixed
-study_Array=meta
-stats_TraitType=quantitative
-stats_Model=linear
-stats_TotalN=1000
-EOF
+cp "${PROJECT_DIR}/tests/example_data/sumstat_1" ./data -R
 
-_run_script
+_run_script ./data/sumstat_1_raw_meta.txt

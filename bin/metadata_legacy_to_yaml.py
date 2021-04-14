@@ -90,6 +90,8 @@ def main(args):
 
     perform_specific_conversions(metadata)
 
+    print(json.dumps(metadata, indent=2))
+    return
     validate(instance=metadata, schema=schema)
     logger.info('Metadata file was successfully converted, writing results to stdout')
     print(yaml.dump(metadata))
