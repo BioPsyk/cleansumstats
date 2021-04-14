@@ -10,36 +10,55 @@
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
 ## Quick Start
-
-i. Make sure singularity is installed, see [singularity installation](docs/singularity-installation.md) 
-
-ii. Download our container image containing all software and code needed
-```bash
-#code to download from the IBP image repository
-
-```
-
-iii. Run the singularity image using the provided test data
+To run a quick test using provided example and test data
 
 ```bash
-nextflow run nf-core/cleansumstats -profile test,<docker/singularity/conda>
+# i. Make sure singularity is installed, see [singularity installation](docs/singularity-installation.md) 
+
+# ii. Download our container image containing all software and code needed
+
+# iii. Run the singularity image using the provided test data
+./scripts/singularity-run.sh /cleansumstats/tests/run-tests.sh
+
+# iv. Run the singularity image using a subset of real worl example data (example data is to be generated)
+#./scripts/singularity-run.sh --input /cleansumstats/tests/example_data
+
 ```
 
 ## Use your own data
 
-iv. Prepare reference data
+Prepare a complete dbsnp reference. This takes some time, but only has to be done once, and can be reused for all sumstats that needs cleaning. 
+
+```bash
+# i. Download the dbsnp reference: size 15GB (and the readme, etc for future reference)
+mkdir -p source_data
+wget -P source_data ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/README.txt
+wget -P source_data ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.md5
+wget -P source_data ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.tbi
+wget -P source_data ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz
+
+# ii. Download the chain files for liftover: size 3MB
+mkdir -p sumstat_reference/liftover_chains
+wget -P sumstat_reference/liftover_chains http://hgdownload.cse.ucsc.edu/goldenpath/hg38/liftOver/hg38ToHg19.over.chain.gz
+wget -P sumstat_reference/liftover_chains http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg17.over.chain.gz
+wget -P sumstat_reference/liftover_chains http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg18.over.chain.gz
+
+# iii. If you are on a HPC Start your interactive session (cpus =< 40) and simply run the following
+srun --mem=80g --ntasks 20 --cpus-per-task 1 --time=10:00:00 --pty /bin/bash
+./scripts/singularity-run.sh nextflow run /cleansumstats \
+  --generateDbSNPreference \
+  --input source_data/All_20180418.vcf.gz 
+  --outdir ./out
+
+```
+
+ii. Prepare meta data for each sumstat file to process
 ```bash
 #this takes time, but only has to be done one time.
 
 ```
 
-v. Prepare meta data for each sumstat file to process
-```bash
-#this takes time, but only has to be done one time.
-
-```
-
-vi. Start running the cleaning of your own sumstat files!
+iii. Start running the cleaning of your own sumstat files!
 
 ```bash
 #point to metadatafile
