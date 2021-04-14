@@ -113,6 +113,8 @@ if (params.generateDbSNPreference) {
   if (params.dbsnp_35_38) { ch_dbsnp_35_38 = file(params.dbsnp_35_38) }
   if (params.dbsnp_RSID_38) { ch_dbsnp_RSID_38 = file(params.dbsnp_RSID_38) }
 }else {
+  if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
+
   if (params.dbsnp_38) { ch_dbsnp_38 = file(params.dbsnp_38, checkIfExists: true) }
   if (params.dbsnp_38_37) { ch_dbsnp_38_37 = file(params.dbsnp_38_37, checkIfExists: true) }
   if (params.dbsnp_37_38) { ch_dbsnp_37_38 = file(params.dbsnp_37_38, checkIfExists: true) }
@@ -124,7 +126,6 @@ if (params.generateDbSNPreference) {
 ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
 
 
-if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
 
 
 // Stage config files

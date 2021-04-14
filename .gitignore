@@ -11,3 +11,6 @@ tests/test_data
 *.sif
 scratch-buffer.sh
 /tmp
+source_data
+sumstat_reference
+

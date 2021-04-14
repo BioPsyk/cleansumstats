@@ -17,9 +17,13 @@ cd "${project_dir}"
 mounts=(
   "docs" "assets" "bin" "conf" "environment.yml"
   "main.nf" "nextflow.config" "tests" "tmp" "lib"
+  "sumstat_reference"
 )
 
 image_tag="ibp-cleansumstats-base:"$(cat "docker/VERSION")
 deploy_image_tag="ibp-cleansumstats:"$(cat "docker/VERSION")
+
+#singularity build
+singularity_image_tag="ibp-cleansumstats-base_version-$(cat "docker/VERSION").simg"
 
 mkdir -p tmp
