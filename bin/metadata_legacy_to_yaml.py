@@ -52,6 +52,30 @@ def try_type_cast(value):
 
     return value
 
+def convert_to_iso_date(metadata, key):
+    if key not in metadata:
+        return
+
+    value = str(metadata[key])
+    regexp = re.compile('^([0-9]{4})_?([0-9]{2})_?([0-9]{2})$')
+    match = regexp.match(value)
+
+    if match is None:
+        logger.error(
+            'Attribute "%s" could not be converted to ISO date: %s',
+            key,
+            value
+        )
+        sys.exit(1)
+
+    metadata[key] = '%s-%s-%s' % match.groups()
+
+def convert_to_list(metadata, key):
+    if key not in metadata:
+        return
+
+    metadata[key] = [metadata[key]]
+
 def perform_specific_conversions(input_directory, schema, metadata):
     allowed_properties = schema['properties'].keys()
 
@@ -61,11 +85,23 @@ def perform_specific_conversions(input_directory, schema, metadata):
         if key in allowed_properties:
             results[key] = value
 
-    if 'study_PhenoCode' not in results:
-        results['study_PhenoCode'] = ['EFO:0000000']
-
     if 'study_Title' not in results:
         results['study_Title'] = input_directory
+
+    convert_to_iso_date(results, 'cleansumstats_metafile_date')
+    convert_to_iso_date(results, 'study_AccessDate')
+    convert_to_list(results, 'path_supplementary')
+
+    if 'study_PhenoCode' in results:
+        results['study_PhenoDesc'] = ':'.join([
+            results['study_PhenoDesc'],
+            results['study_PhenoCode']
+        ])
+
+    results['study_PhenoCode'] = ['EFO:0000000']
+
+    if 'study_Use' in results:
+        results['study_Use'] = 'open' if results['study_Use'] == 'public' else 'restricted'
 
     return results
 
@@ -107,12 +143,11 @@ def main(args):
 
     metadata = perform_specific_conversions(input_directory, schema, metadata)
 
-    print(json.dumps(metadata, indent=2))
-
     try:
         jsonschema.validate(instance=metadata, schema=schema)
     except jsonschema.exceptions.ValidationError as e:
         logger.error('json-schema validation failed with: %s', e.message)
+        raise e
         sys.exit(1)
 
     logger.info('Metadata file was successfully converted, writing results to stdout')
