@@ -124,6 +124,12 @@ RUN apt-get update --fix-missing && \
 
 RUN apt-get install python gawk graphviz dos2unix -y
 
+RUN apt-get install pigz -y
+
+#---------------------------------------------------------------------------------
+# Fix final permissions etc
+
+
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
 
 RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
