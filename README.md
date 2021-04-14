@@ -83,9 +83,9 @@ Run tests using the docker image. We have implemented several tests to ensure th
 ```
 
 ## More documentation
-See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
-See [Output and how to interpret the results](docs/output.md) for the output structure and how to interpret the results.
-See [Developer instructions](docs/developers.md) only for developers
+- See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
+- See [Output and how to interpret the results](docs/output.md) for the output structure and how to interpret the results.
+- See [Developer instructions](docs/developers.md) only for developers
 
 ## Credits
 
