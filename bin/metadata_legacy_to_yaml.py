@@ -76,6 +76,33 @@ def convert_to_list(metadata, key):
 
     metadata[key] = [metadata[key]]
 
+def convert_enums(metadata):
+    conversion_table = {
+        'study_ImputePanel': {
+            'HapMap2_CEU_r22': 'HapMap2'
+        },
+        'study_Use': {
+            'public': 'open'
+        }
+    }
+
+    for key, matrix in conversion_table.items():
+        if key not in metadata:
+            continue
+
+        value = metadata[key]
+
+        if value not in matrix:
+            logger.error(
+                'Could not translate attribute "%s" with the value "%s" using the matrix: %s',
+                key,
+                value,
+                matrix
+            )
+            sys.exit(1)
+
+        metadata[key] = matrix[value]
+
 def perform_specific_conversions(input_directory, schema, metadata):
     allowed_properties = schema['properties'].keys()
 
@@ -88,10 +115,6 @@ def perform_specific_conversions(input_directory, schema, metadata):
     if 'study_Title' not in results:
         results['study_Title'] = input_directory
 
-    convert_to_iso_date(results, 'cleansumstats_metafile_date')
-    convert_to_iso_date(results, 'study_AccessDate')
-    convert_to_list(results, 'path_supplementary')
-
     if 'study_PhenoCode' in results:
         results['study_PhenoDesc'] = ':'.join([
             results['study_PhenoDesc'],
@@ -100,8 +123,10 @@ def perform_specific_conversions(input_directory, schema, metadata):
 
     results['study_PhenoCode'] = ['EFO:0000000']
 
-    if 'study_Use' in results:
-        results['study_Use'] = 'open' if results['study_Use'] == 'public' else 'restricted'
+    convert_to_iso_date(results, 'cleansumstats_metafile_date')
+    convert_to_iso_date(results, 'study_AccessDate')
+    convert_to_list(results, 'path_supplementary')
+    convert_enums(results)
 
     return results
 
