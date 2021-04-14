@@ -285,11 +285,6 @@ if (params.generateMetafile){
 
       script:
       """
-      ##Download from web
-      #wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.*
-      module load tools
-      module load pigz/2.3.4
-
       #reformat
       pigz --decompress --stdout --processes 2 ${dbsnpvcf} | grep -v "#" > dbsnp_GRCh38
 
