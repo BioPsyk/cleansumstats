@@ -22,6 +22,10 @@ echo "| Running unit tests in: ${tmp_dir}"
 echo "==================================================================="
 cd "${tmp_dir}"
 
+"${test_dir}/unit/test_metadata_legacy_to_yaml.sh"
+
+exit 0
+
 for test_file in "${test_dir}/unit/"test_*.sh
 do
   "${test_file}"
