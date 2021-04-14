@@ -79,10 +79,20 @@ def convert_to_list(metadata, key):
 def convert_enums(metadata):
     conversion_table = {
         'study_ImputePanel': {
-            'HapMap2_CEU_r22': 'HapMap2'
+            'HapMap2_CEU_r22': 'HapMap2',
+            '1KGP': '1KGP'
         },
         'study_Use': {
-            'public': 'open'
+            'public': 'open',
+            'private': 'restricted'
+        },
+        'stats_TraitType': {
+            'qt': 'quantitative',
+            'cc': 'case-control'
+        },
+        'stats_Model': {
+            'lin': 'linear',
+            'log': 'logistic'
         }
     }
 
@@ -109,7 +119,7 @@ def perform_specific_conversions(input_directory, schema, metadata):
     results = {}
 
     for key, value in metadata.items():
-        if key in allowed_properties:
+        if key in allowed_properties and value != "missing":
             results[key] = value
 
     if 'study_Title' not in results:
