@@ -33,11 +33,12 @@ echo ">> Test ${test_script}"
 # Cases
 #=================================================================================
 
-#---------------------------------------------------------------------------------
-# Using example_data/sumstat_1
+for example_data in "${PROJECT_DIR}/tests/example_data/"sumstat_*
+do
+  name=$(basename "${example_data}")
+  _setup "${name}"
 
-_setup "sumstat_1"
+  cp "${example_data}" ./data -R
 
-cp "${PROJECT_DIR}/tests/example_data/sumstat_1" ./data -R
-
-_run_script ./data/sumstat_1_raw_meta.txt
+  _run_script "./data/${name}_raw_meta.txt"
+done

@@ -5,8 +5,9 @@ import re
 import os
 import logging
 import argparse
+import json
 import yaml
-from jsonschema import validate
+import jsonschema
 
 #-------------------------------------------------------------------------------
 # Constants
@@ -51,10 +52,18 @@ def try_type_cast(value):
 
     return value
 
-def perform_specific_conversions(metadata):
-    pass
+def perform_specific_conversions(schema, metadata):
+    allowed_properties = schema['properties'].keys()
+
+    results = {}
+
+    for key, value in metadata.items():
+        if key in allowed_properties:
+            results[key] = value
     #if 'study_PhenoCode' not in metadata:
     #    metadata['study_PhenoCode'] = ['EFO:0000000']
+
+    return results
 
 def main(args):
     regexp = re.compile('^([a-zA-Z0-9_]+)=(.*)$')
@@ -83,16 +92,22 @@ def main(args):
                 metadata[key] = value
                 continue
 
+            # Creates a list for attributes that appear multiple times
             if not isinstance(metadata[key], list):
                 metadata[key] = [metadata[key]]
 
             metadata[key].append(value)
 
-    perform_specific_conversions(metadata)
+    metadata = perform_specific_conversions(schema, metadata)
 
     print(json.dumps(metadata, indent=2))
-    return
-    validate(instance=metadata, schema=schema)
+
+    try:
+        jsonschema.validate(instance=metadata, schema=schema)
+    except jsonschema.exceptions.ValidationError as e:
+        logger.error('json-schema validation failed with: %s', e.message)
+        sys.exit(1)
+
     logger.info('Metadata file was successfully converted, writing results to stdout')
     print(yaml.dump(metadata))
 
