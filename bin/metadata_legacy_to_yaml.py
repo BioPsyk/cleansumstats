@@ -52,7 +52,7 @@ def try_type_cast(value):
 
     return value
 
-def perform_specific_conversions(schema, metadata):
+def perform_specific_conversions(input_directory, schema, metadata):
     allowed_properties = schema['properties'].keys()
 
     results = {}
@@ -60,8 +60,12 @@ def perform_specific_conversions(schema, metadata):
     for key, value in metadata.items():
         if key in allowed_properties:
             results[key] = value
-    #if 'study_PhenoCode' not in metadata:
-    #    metadata['study_PhenoCode'] = ['EFO:0000000']
+
+    if 'study_PhenoCode' not in results:
+        results['study_PhenoCode'] = ['EFO:0000000']
+
+    if 'study_Title' not in results:
+        results['study_Title'] = input_directory
 
     return results
 
@@ -69,6 +73,9 @@ def main(args):
     regexp = re.compile('^([a-zA-Z0-9_]+)=(.*)$')
     metadata = {}
     schema = None
+    input_directory = os.path.basename(
+        os.path.dirname(args.input_file)
+    )
 
     logger.info('Reading schema file %s', SCHEMA_PATH)
 
@@ -98,7 +105,7 @@ def main(args):
 
             metadata[key].append(value)
 
-    metadata = perform_specific_conversions(schema, metadata)
+    metadata = perform_specific_conversions(input_directory, schema, metadata)
 
     print(json.dumps(metadata, indent=2))
 

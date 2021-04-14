@@ -38,7 +38,7 @@ do
   name=$(basename "${example_data}")
   _setup "${name}"
 
-  cp "${example_data}" ./data -R
+  cp "${example_data}" "./${name}" -R
 
-  _run_script "./data/${name}_raw_meta.txt"
+  _run_script "$(pwd)/${name}/${name}_raw_meta.txt"
 done
