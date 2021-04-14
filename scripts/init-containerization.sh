@@ -17,6 +17,7 @@ cd "${project_dir}"
 mounts=(
   "docs" "assets" "bin" "conf" "environment.yml"
   "main.nf" "nextflow.config" "tests" "tmp" "lib"
+  "sumstat_reference"
 )
 
 image_tag="ibp-cleansumstats-base:"$(cat "docker/VERSION")
