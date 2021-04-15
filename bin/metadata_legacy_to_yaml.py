@@ -20,6 +20,25 @@ SCHEMA_PATH = os.path.join(
     PROJECT_DIR, "assets", "schemas", "raw-metadata.yaml"
 )
 
+CONVERSION_TABLE = {
+    'study_ImputePanel': {
+        'HapMap2_CEU_r22': 'HapMap2',
+        '1KGP': '1KGP'
+    },
+    'study_Use': {
+        'public': 'open',
+        'private': 'restricted'
+    },
+    'stats_TraitType': {
+        'qt': 'quantitative',
+        'cc': 'case-control'
+    },
+    'stats_Model': {
+        'lin': 'linear',
+        'log': 'logistic'
+    }
+}
+
 #-------------------------------------------------------------------------------
 # Logger setup
 
@@ -76,42 +95,38 @@ def convert_to_list(metadata, key):
 
     metadata[key] = [metadata[key]]
 
-def convert_enums(metadata):
-    conversion_table = {
-        'study_ImputePanel': {
-            'HapMap2_CEU_r22': 'HapMap2',
-            '1KGP': '1KGP'
-        },
-        'study_Use': {
-            'public': 'open',
-            'private': 'restricted'
-        },
-        'stats_TraitType': {
-            'qt': 'quantitative',
-            'cc': 'case-control'
-        },
-        'stats_Model': {
-            'lin': 'linear',
-            'log': 'logistic'
-        }
-    }
+def convert_enum_item(key, value):
+    if key not in CONVERSION_TABLE:
+        return None
 
-    for key, matrix in conversion_table.items():
+    matrix = CONVERSION_TABLE[key]
+
+    if value not in matrix:
+        logger.error(
+            'Could not translate attribute "%s" with the value "%s" using the matrix: %s',
+            key,
+            value,
+            matrix
+        )
+        sys.exit(1)
+
+    return matrix[value]
+
+def convert_enums(metadata):
+    for key, matrix in CONVERSION_TABLE.items():
         if key not in metadata:
             continue
 
-        value = metadata[key]
+        values = metadata[key].split(',')
+        results = []
 
-        if value not in matrix:
-            logger.error(
-                'Could not translate attribute "%s" with the value "%s" using the matrix: %s',
-                key,
-                value,
-                matrix
-            )
-            sys.exit(1)
+        for value in values:
+            converted = convert_enum_item(key, value)
 
-        metadata[key] = matrix[value]
+            if converted is not None:
+                results.append(converted)
+
+        metadata[key] = results[0] if len(results) == 1 else results
 
 def perform_specific_conversions(input_directory, schema, metadata):
     allowed_properties = schema['properties'].keys()
@@ -132,6 +147,9 @@ def perform_specific_conversions(input_directory, schema, metadata):
         ])
 
     results['study_PhenoCode'] = ['EFO:0000000']
+
+    if 'study_Ancestry' in results:
+        results['study_Ancestry'] = results['study_Ancestry'].split(',')
 
     convert_to_iso_date(results, 'cleansumstats_metafile_date')
     convert_to_iso_date(results, 'study_AccessDate')
