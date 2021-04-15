@@ -20,6 +20,7 @@ SCHEMA_PATH = os.path.join(
     PROJECT_DIR, "assets", "schemas", "raw-metadata.yaml"
 )
 
+
 STUDY_PANELS = {
     '^HapMap.*': 'HapMap',
     '^HapMap2.*': 'HapMap2',
@@ -66,6 +67,7 @@ CONVERSION_TABLE = {
     }
 }
 
+
 #-------------------------------------------------------------------------------
 # Logger setup
 
@@ -97,6 +99,7 @@ def try_type_cast(value):
         pass
 
     return value
+
 
 def convert_to_iso_date(metadata, key):
     if key not in metadata:
@@ -158,6 +161,7 @@ def convert_enums(metadata):
                 results.append(converted)
 
         metadata[key] = results[0] if len(results) == 1 else results
+
 
 def perform_specific_conversions(input_directory, schema, metadata):
     allowed_properties = schema['properties'].keys()
@@ -228,10 +232,15 @@ def main(args):
 
     metadata = perform_specific_conversions(input_directory, schema, metadata)
 
+# From merge conflict
+#    print(json.dumps(metadata, indent=2))
+
+
     try:
         jsonschema.validate(instance=metadata, schema=schema)
     except jsonschema.exceptions.ValidationError as e:
         logger.error('json-schema validation failed with: %s', e.message)
+
         raise e
         sys.exit(1)
 
