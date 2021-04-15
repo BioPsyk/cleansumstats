@@ -180,7 +180,8 @@ def perform_specific_conversions(input_directory, schema, metadata):
     results['study_PhenoCode'] = ['EFO:0000000']
 
     if 'study_Ancestry' in results:
-        results['study_Ancestry'] = results['study_Ancestry'].split(',')
+        # Picks the first ancestry when multiple given
+        results['study_Ancestry'] = results['study_Ancestry'].split(',')[0]
 
     convert_to_iso_date(results, 'cleansumstats_metafile_date')
     convert_to_iso_date(results, 'study_AccessDate')
