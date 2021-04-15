@@ -20,7 +20,7 @@ function _setup {
 }
 
 function _run_script {
-  "${test_script}.py" "$1"
+  "${test_script}.py" "$1" > /dev/null 2>&1
 
   echo "- [OK] ${curr_case}"
 
@@ -40,5 +40,5 @@ do
 
   cp "${example_data}" "./${name}" -R
 
-  _run_script "$(pwd)/${name}/${name}_raw_meta.txt"
+  _run_script "$(pwd)/${name}/${name}_raw_meta_v1.0.0-alpha.txt"
 done
