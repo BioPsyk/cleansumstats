@@ -113,6 +113,8 @@ if (params.generateDbSNPreference) {
   if (params.dbsnp_35_38) { ch_dbsnp_35_38 = file(params.dbsnp_35_38) }
   if (params.dbsnp_RSID_38) { ch_dbsnp_RSID_38 = file(params.dbsnp_RSID_38) }
 }else {
+  if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
+
   if (params.dbsnp_38) { ch_dbsnp_38 = file(params.dbsnp_38, checkIfExists: true) }
   if (params.dbsnp_38_37) { ch_dbsnp_38_37 = file(params.dbsnp_38_37, checkIfExists: true) }
   if (params.dbsnp_37_38) { ch_dbsnp_37_38 = file(params.dbsnp_37_38, checkIfExists: true) }
@@ -124,7 +126,6 @@ if (params.generateDbSNPreference) {
 ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
 
 
-if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
 
 
 // Stage config files
@@ -284,16 +285,11 @@ if (params.generateMetafile){
 
       script:
       """
-      ##Download from web
-      #wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.*
-      module load tools
-      module load pigz/2.3.4
-
       #reformat
       pigz --decompress --stdout --processes 2 ${dbsnpvcf} | grep -v "#" > dbsnp_GRCh38
 
       #split into dbsnpsplit number of unix split files
-      split -dn ${dbsnpsplits} dbsnp_GRCh38 chunk_
+      split -d -n l/${dbsnpsplits} dbsnp_GRCh38 chunk_
 
       """
   }

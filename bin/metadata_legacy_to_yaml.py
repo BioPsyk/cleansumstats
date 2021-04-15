@@ -20,6 +20,54 @@ SCHEMA_PATH = os.path.join(
     PROJECT_DIR, "assets", "schemas", "raw-metadata.yaml"
 )
 
+
+STUDY_PANELS = {
+    '^HapMap.*': 'HapMap',
+    '^HapMap2.*': 'HapMap2',
+    '^HapMap3.*': 'HapMap3',
+    '^1KGP.*': '1KGP',
+    '^TOPMED.*': 'TOPMED',
+    '^HRC.*': 'HRC',
+    '^meta.*': 'meta'
+}
+
+STUDY_SOFTWARES = {
+    '^plink.*': 'plink',
+    '^impute.*': 'impute',
+    '^impute2.*': 'impute2',
+    '^impute3.*': 'impute3',
+    '^shapeIt.*': 'shapeIt',
+    '^shapeIt2.*': 'shapeIt2',
+    '^shapeIt3.*': 'shapeIt3',
+    '^shapeIt4.*': 'shapeIt4',
+    '^shapeIt5.*': 'shapeIt5',
+    '^MaCH.*': 'MaCH',
+    '^Bealge.*': 'Beagle',
+    '^Beagle.*': 'Beagle',
+    '^Beagle1\.0.*': 'Beagle1.0',
+    '^meta.*': 'meta'
+}
+
+CONVERSION_TABLE = {
+    'study_ImputePanel': STUDY_PANELS,
+    'study_ImputeSoftware': STUDY_SOFTWARES,
+    'study_PhasePanel': STUDY_PANELS,
+    'study_PhaseSoftware': STUDY_SOFTWARES,
+    'study_Use': {
+        'public': 'open',
+        'private': 'restricted'
+    },
+    'stats_TraitType': {
+        'qt': 'quantitative',
+        'cc': 'case-control'
+    },
+    'stats_Model': {
+        'lin': 'linear',
+        'log': 'logistic'
+    }
+}
+
+
 #-------------------------------------------------------------------------------
 # Logger setup
 
@@ -52,20 +100,97 @@ def try_type_cast(value):
 
     return value
 
+
+def convert_to_iso_date(metadata, key):
+    if key not in metadata:
+        return
+
+    value = str(metadata[key])
+    regexp = re.compile('^([0-9]{4})_?([0-9]{2})_?([0-9]{2})$')
+    match = regexp.match(value)
+
+    if match is None:
+        logger.error(
+            'Attribute "%s" could not be converted to ISO date: %s',
+            key,
+            value
+        )
+        sys.exit(1)
+
+    metadata[key] = '%s-%s-%s' % match.groups()
+
+def convert_to_list(metadata, key):
+    if key not in metadata:
+        return
+
+    if not isinstance(metadata[key], list):
+        metadata[key] = [metadata[key]]
+
+def convert_enum_item(key, value):
+    if key not in CONVERSION_TABLE:
+        return None
+
+    matrix = CONVERSION_TABLE[key]
+
+    for regexp, replacement in matrix.items():
+        match = re.compile(regexp).match(value)
+
+        if match is not None:
+            return replacement
+
+    logger.error(
+        'Could not translate attribute "%s" with the value "%s" using the matrix: %s',
+        key,
+        value,
+        matrix
+    )
+    sys.exit(1)
+
+def convert_enums(metadata):
+    for key, matrix in CONVERSION_TABLE.items():
+        if key not in metadata:
+            continue
+
+        values = metadata[key].split(',')
+        results = []
+
+        for value in values:
+            converted = convert_enum_item(key, value)
+
+            if converted is not None:
+                results.append(converted)
+
+        metadata[key] = results[0] if len(results) == 1 else results
+
+
 def perform_specific_conversions(input_directory, schema, metadata):
     allowed_properties = schema['properties'].keys()
 
     results = {}
 
     for key, value in metadata.items():
-        if key in allowed_properties:
+        if key in allowed_properties and value != "missing":
             results[key] = value
-
-    if 'study_PhenoCode' not in results:
-        results['study_PhenoCode'] = ['EFO:0000000']
 
     if 'study_Title' not in results:
         results['study_Title'] = input_directory
+
+    if 'study_PhenoCode' in results:
+        results['study_PhenoDesc'] = '%s (old phenocode: %s)' % (
+            results['study_PhenoDesc'],
+            results['study_PhenoCode']
+        )
+
+    results['study_PhenoCode'] = ['EFO:0000000']
+
+    if 'study_Ancestry' in results:
+        # Picks the first ancestry when multiple given
+        results['study_Ancestry'] = results['study_Ancestry'].split(',')[0]
+
+    convert_to_iso_date(results, 'cleansumstats_metafile_date')
+    convert_to_iso_date(results, 'study_AccessDate')
+    convert_to_list(results, 'path_supplementary')
+    convert_enums(results)
 
     return results
 
@@ -107,12 +232,16 @@ def main(args):
 
     metadata = perform_specific_conversions(input_directory, schema, metadata)
 
-    print(json.dumps(metadata, indent=2))
+# From merge conflict
+#    print(json.dumps(metadata, indent=2))
+
 
     try:
         jsonschema.validate(instance=metadata, schema=schema)
     except jsonschema.exceptions.ValidationError as e:
         logger.error('json-schema validation failed with: %s', e.message)
+
+        raise e
         sys.exit(1)
 
     logger.info('Metadata file was successfully converted, writing results to stdout')

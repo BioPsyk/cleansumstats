@@ -124,13 +124,19 @@ RUN apt-get update --fix-missing && \
 
 RUN apt-get install python gawk graphviz dos2unix -y
 
+RUN apt-get install pigz -y
+
+#---------------------------------------------------------------------------------
+# Fix final permissions etc
+
+
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
 
 RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
 
 WORKDIR /home/nextflow
 
-COPY ibp-pipeline-lib.jar /cleansumstats/ipb-pipeline-lib.jar
+COPY ibp-pipeline-lib-0.1.1.jar /cleansumstats/ipb-pipeline-lib.jar
 
 ENV NXF_CLASSPATH="/cleansumstats/ipb-pipeline-lib.jar"
 
