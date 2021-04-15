@@ -221,13 +221,16 @@ properties:
 
       - Ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
       - External inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-    type: "string"
-    enum:
-      - "AFR"
-      - "AMR"
-      - "EAS"
-      - "EUR"
-      - "SAS"
+    type: "array"
+    minItems: 1
+    items:
+      type: "string"
+      enum:
+        - "AFR"
+        - "AMR"
+        - "EAS"
+        - "EUR"
+        - "SAS"
 
   study_Gender:
     description: |
