@@ -120,7 +120,8 @@ def convert_to_list(metadata, key):
     if key not in metadata:
         return
 
-    metadata[key] = [metadata[key]]
+    if not isinstance(metadata[key], list):
+        metadata[key] = [metadata[key]]
 
 def convert_enum_item(key, value):
     if key not in CONVERSION_TABLE:
