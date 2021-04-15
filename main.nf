@@ -289,7 +289,7 @@ if (params.generateMetafile){
       pigz --decompress --stdout --processes 2 ${dbsnpvcf} | grep -v "#" > dbsnp_GRCh38
 
       #split into dbsnpsplit number of unix split files
-      split -dn ${dbsnpsplits} dbsnp_GRCh38 chunk_
+      split -d -n l/${dbsnpsplits} dbsnp_GRCh38 chunk_
 
       """
   }
