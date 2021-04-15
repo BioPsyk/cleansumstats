@@ -1,8 +1,11 @@
 # Take everything in metafile from alpha library
 
 sslib="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_library"
-sspdfs="~/home/jesgaaopen/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
-sspdfs="~/home/jesgaaopen/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
+sspdfs="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
+dbsnp38="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
+dbsnp37="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
+dbsnp36="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
+dbsnp35="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
 out="out"
 
 seedval=1337
@@ -39,6 +42,4 @@ for id in {1..5}; do
  done
 
 done
-
-
 
