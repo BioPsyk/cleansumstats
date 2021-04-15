@@ -20,11 +20,38 @@ SCHEMA_PATH = os.path.join(
     PROJECT_DIR, "assets", "schemas", "raw-metadata.yaml"
 )
 
+STUDY_PANELS = {
+    '^HapMap.*': 'HapMap',
+    '^HapMap2.*': 'HapMap2',
+    '^HapMap3.*': 'HapMap3',
+    '^1KGP.*': '1KGP',
+    '^TOPMED.*': 'TOPMED',
+    '^HRC.*': 'HRC',
+    '^meta.*': 'meta'
+}
+
+STUDY_SOFTWARES = {
+    '^plink.*': 'plink',
+    '^impute.*': 'impute',
+    '^impute2.*': 'impute2',
+    '^impute3.*': 'impute3',
+    '^shapeIt.*': 'shapeIt',
+    '^shapeIt2.*': 'shapeIt2',
+    '^shapeIt3.*': 'shapeIt3',
+    '^shapeIt4.*': 'shapeIt4',
+    '^shapeIt5.*': 'shapeIt5',
+    '^MaCH.*': 'MaCH',
+    '^Bealge.*': 'Beagle',
+    '^Beagle.*': 'Beagle',
+    '^Beagle1\.0.*': 'Beagle1.0',
+    '^meta.*': 'meta'
+}
+
 CONVERSION_TABLE = {
-    'study_ImputePanel': {
-        'HapMap2_CEU_r22': 'HapMap2',
-        '1KGP': '1KGP'
-    },
+    'study_ImputePanel': STUDY_PANELS,
+    'study_ImputeSoftware': STUDY_SOFTWARES,
+    'study_PhasePanel': STUDY_PANELS,
+    'study_PhaseSoftware': STUDY_SOFTWARES,
     'study_Use': {
         'public': 'open',
         'private': 'restricted'
@@ -101,16 +128,19 @@ def convert_enum_item(key, value):
 
     matrix = CONVERSION_TABLE[key]
 
-    if value not in matrix:
-        logger.error(
-            'Could not translate attribute "%s" with the value "%s" using the matrix: %s',
-            key,
-            value,
-            matrix
-        )
-        sys.exit(1)
+    for regexp, replacement in matrix.items():
+        match = re.compile(regexp).match(value)
 
-    return matrix[value]
+        if match is not None:
+            return replacement
+
+    logger.error(
+        'Could not translate attribute "%s" with the value "%s" using the matrix: %s',
+        key,
+        value,
+        matrix
+    )
+    sys.exit(1)
 
 def convert_enums(metadata):
     for key, matrix in CONVERSION_TABLE.items():
@@ -141,10 +171,10 @@ def perform_specific_conversions(input_directory, schema, metadata):
         results['study_Title'] = input_directory
 
     if 'study_PhenoCode' in results:
-        results['study_PhenoDesc'] = ':'.join([
+        results['study_PhenoDesc'] = '%s (old phenocode: %s)' % (
             results['study_PhenoDesc'],
             results['study_PhenoCode']
-        ])
+        )
 
     results['study_PhenoCode'] = ['EFO:0000000']
 

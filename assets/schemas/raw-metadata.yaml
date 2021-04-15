@@ -255,15 +255,6 @@ properties:
       - "HRC"
       - "meta"
 
-      # - "HapMap2"
-      # - "HapMap3"
-      # - "1KGP_pilot"
-      # - "1KGP_phase1"
-      # - "1KGP_phase2"
-      # - "1KGP_phase3"
-      # - "1KGP_phase4"
-      # - "1KGP_phase5"
-
   study_PhaseSoftware:
     description: |
       What software were use to phase.
