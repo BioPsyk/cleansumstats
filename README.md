@@ -47,10 +47,12 @@ wget -P sumstat_reference/liftover_chains http://hgdownload.cse.ucsc.edu/goldenp
 wget -P sumstat_reference/liftover_chains http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg18.over.chain.gz
 
 # iii. If you are on a HPC Start your interactive session (cpus =< 40) and simply run the following
-srun --mem=80g --ntasks 20 --cpus-per-task 1 --time=10:00:00 --pty /bin/bash
+# srun --mem=80g --ntasks 20 --cpus-per-task 1 --time=10:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
+# NOTE: right now you have move the source data to tmp/fake-home/ for it to be accessible (to be fixed)
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generateDbSNPreference \
   --input source_data/All_20180418.vcf.gz \
+  --dev
   --outdir ./out
 
 ```
