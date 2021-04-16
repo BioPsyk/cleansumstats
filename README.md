@@ -47,7 +47,7 @@ srun --mem=80g --ntasks 20 --cpus-per-task 1 --time=10:00:00 --pty /bin/bash
   --input source_data/All_20180418_example_data.vcf.gz \
   --outdir ./out
 
- ## --input source_data/All_20180418.vcf.gz \
+## --input source_data/All_20180418.vcf.gz \
 
 ```
 
