@@ -8,4 +8,4 @@ cd "${project_dir}"
 
 echo ">> Building base docker image"
 
-docker build ./docker -t "${image_tag}"
+docker build ./docker -t "${image_tag}" "$@"
