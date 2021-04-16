@@ -86,12 +86,15 @@ RUN unzip -q sumstat-tools.zip && \
  rm sumstat-tools.zip
 
 #---------------------------------------------------------------------------------
-# Add chain files for liftover/crossover
+# Add chain files for liftover/crossover (put in tmp to be lifted back later)
+WORKDIR /cleansumstats_external_data
 
 RUN mkdir -p chain_files && \
 wget -P chain_files "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/liftOver/hg38ToHg19.over.chain.gz" && \
 wget -P chain_files "http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg17.over.chain.gz" && \
 wget -P chain_files "http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg18.over.chain.gz"
+
+RUN ls -la /cleansumstats_external_data
 
 #---------------------------------------------------------------------------------
 # Compiling b3sum since it is not packaged for debian
@@ -136,14 +139,12 @@ RUN apt-get install pigz -y
 
 
 #---------------------------------------------------------------------------------
-# Fix final permissions etc
+# Fix final permissions etc (and wipe out the /cleansumstats folder)
 
 
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
 
 RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
-
-WORKDIR /home/nextflow
 
 COPY ibp-pipeline-lib-0.1.1.jar /cleansumstats/ipb-pipeline-lib.jar
 
