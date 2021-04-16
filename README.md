@@ -40,15 +40,14 @@ wget -P source_data ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRC
 wget -P source_data ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.tbi
 wget -P source_data ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz
 
-# ii. Download the chain files for liftover: size 3MB
-mkdir -p sumstat_reference/liftover_chains
-
-# iii. If you are on a HPC Start your interactive session (cpus =< 40) and simply run the following
+# ii. If you are on a HPC Start your interactive session (cpus =< 40) and simply run the following
 srun --mem=80g --ntasks 20 --cpus-per-task 1 --time=10:00:00 --pty /bin/bash
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generateDbSNPreference \
-  --input source_data/All_20180418.vcf.gz \
+  --input source_data/All_20180418_example_data.vcf.gz \
   --outdir ./out
+
+ ## --input source_data/All_20180418.vcf.gz \
 
 ```
 
