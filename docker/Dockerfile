@@ -11,10 +11,10 @@ ARG NEXTFLOW_REVISION="539a22b68c114c94eaf4a88ea8d26b7bfe2d0c39"
 WORKDIR /cleansumstats
 
 RUN wget "https://github.com/nextflow-io/nextflow/archive/${NEXTFLOW_REVISION}.zip" \
- --quiet -O nextflow.zip && \
- unzip -q nextflow.zip && \
- mv "nextflow-${NEXTFLOW_REVISION}" "nextflow" && \
- rm nextflow.zip
+  --quiet -O nextflow.zip && \
+  unzip -q nextflow.zip && \
+  mv "nextflow-${NEXTFLOW_REVISION}" "nextflow" && \
+  rm nextflow.zip
 
 WORKDIR /cleansumstats/nextflow
 
@@ -34,18 +34,18 @@ RUN apt-get install -y cmake build-essential
 ARG RMATH_REVISION="d816ef8d1719810288afd848e18b2a8d00c2ccd2"
 
 RUN wget "https://github.com/statslabs/rmath/archive/${RMATH_REVISION}.zip" \
- --quiet -O rmath.zip && \
- unzip -q rmath.zip && \
- mv "rmath-${RMATH_REVISION}" "rmath" && \
- rm rmath.zip
+  --quiet -O rmath.zip && \
+  unzip -q rmath.zip && \
+  mv "rmath-${RMATH_REVISION}" "rmath" && \
+  rm rmath.zip
 
 WORKDIR /cleansumstats/rmath
 
 RUN mkdir -p build && \
- cd build && \
- cmake .. && \
- make && \
- make install
+  cd build && \
+  cmake .. && \
+  make && \
+  make install
 
 WORKDIR /cleansumstats
 
@@ -57,17 +57,17 @@ RUN rm -rf rmath
 ARG R_STATS_C_STREAMER_REVISION="044f967f4d95ecdcff7fa20216342af8dd58f3c1"
 
 RUN wget "https://github.com/pappewaio/r-stats-c-streamer/archive/${R_STATS_C_STREAMER_REVISION}.zip" \
- --quiet -O r-stats-c-streamer.zip && \
- unzip -q r-stats-c-streamer.zip && \
- mv "r-stats-c-streamer-${R_STATS_C_STREAMER_REVISION}" "r-stats-c-streamer" && \
- rm r-stats-c-streamer.zip
+  --quiet -O r-stats-c-streamer.zip && \
+  unzip -q r-stats-c-streamer.zip && \
+  mv "r-stats-c-streamer-${R_STATS_C_STREAMER_REVISION}" "r-stats-c-streamer" && \
+  rm r-stats-c-streamer.zip
 
 WORKDIR /cleansumstats/r-stats-c-streamer
 
 RUN mkdir -p build && \
- cd build && \
- cmake .. && \
- make
+  cd build && \
+  cmake .. && \
+  make
 
 WORKDIR /cleansumstats
 
@@ -82,19 +82,26 @@ COPY sumstat-tools.zip .
 #RUN wget "https://github.com/BioPsyk/sumstat-tools/archive/${SUMSTAT_TOOLS_REVISION}.zip" \
 # --quiet -O sumstat-tools.zip && \
 RUN unzip -q sumstat-tools.zip && \
- mv "sumstat-tools-${SUMSTAT_TOOLS_REVISION}" sumstat-tools && \
- rm sumstat-tools.zip
+  mv "sumstat-tools-${SUMSTAT_TOOLS_REVISION}" sumstat-tools && \
+  rm sumstat-tools.zip
 
 #---------------------------------------------------------------------------------
-# Add chain files for liftover/crossover (put in tmp to be lifted back later)
-WORKDIR /cleansumstats_external_data
+# Downloading liftOver chain files
 
-RUN mkdir -p chain_files && \
-wget -P chain_files "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/liftOver/hg38ToHg19.over.chain.gz" && \
-wget -P chain_files "http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg17.over.chain.gz" && \
-wget -P chain_files "http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg18.over.chain.gz"
+ENV HG_URL "https://hgdownload.cse.ucsc.edu/goldenpath"
+ENV HG_38_19_CHECKSUM "14a712e8e147d9fc8e9d87d51977b46f6f8ddb93efbe5d0843d86b6205f587b1"
+ENV HG_19_17_CHECKSUM "8cf79945bf5d65342568ee1007bcb427fe7fc7b6fe0168401d452a82d5e129a2"
+ENV HG_19_18_CHECKSUM "fc312e924e970dee936a69972768c6f84591d3a6daddbe598e49321c5fb1d253"
 
-RUN ls -la /cleansumstats_external_data
+RUN mkdir -p external_data/chain_files && \
+  cd external_data && \
+  wget -P chain_files "${HG_URL}/hg38/liftOver/hg38ToHg19.over.chain.gz" && \
+  wget -P chain_files "${HG_URL}/hg19/liftOver/hg19ToHg17.over.chain.gz" && \
+  wget -P chain_files "${HG_URL}/hg19/liftOver/hg19ToHg18.over.chain.gz" && \
+  cd chain_files && \
+  echo "${HG_38_19_CHECKSUM}  hg38ToHg19.over.chain.gz" | sha256sum -c && \
+  echo "${HG_19_17_CHECKSUM}  hg19ToHg17.over.chain.gz" | sha256sum -c && \
+  echo "${HG_19_18_CHECKSUM}  hg19ToHg18.over.chain.gz" | sha256sum -c
 
 #---------------------------------------------------------------------------------
 # Compiling b3sum since it is not packaged for debian
@@ -116,7 +123,7 @@ COPY --from=rust_builder /usr/local/cargo/bin/b3sum /usr/bin/b3sum
 WORKDIR /cleansumstats
 
 RUN mv r-stats-c-streamer/build/r-stats-c-streamer /usr/bin/ && \
- rm -rf r-stats-c-streamer
+  rm -rf r-stats-c-streamer
 
 COPY install-sumstat-tools.sh .
 
@@ -124,30 +131,23 @@ RUN mv sumstat-tools /usr/lib/ && \
   ./install-sumstat-tools.sh /usr/lib/sumstat-tools/bin /usr/bin
 
 RUN mv nextflow/build/releases/nextflow-20.10.0-all /usr/bin/nextflow && \
- chmod +x /usr/bin/nextflow
+  chmod +x /usr/bin/nextflow
 
 RUN apt-get update --fix-missing && \
- apt-get install python3 python3-pip -y && \
- pip3 install CrossMap && \
- pip3 install jsonschema && \
- pip3 install pyyaml && \
- apt-get remove --purge python3-pip -y
-
-RUN apt-get install python gawk graphviz dos2unix -y
-
-RUN apt-get install pigz -y
-
-
-#---------------------------------------------------------------------------------
-# Fix final permissions etc (and wipe out the /cleansumstats folder)
-
+  apt-get install python3 python3-pip python gawk graphviz dos2unix pigz -y && \
+  pip3 install CrossMap && \
+  pip3 install jsonschema && \
+  pip3 install pyyaml && \
+  apt-get remove --purge python3-pip -y
 
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
-
 RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
 
 COPY ibp-pipeline-lib-0.1.1.jar /cleansumstats/ipb-pipeline-lib.jar
 
 ENV NXF_CLASSPATH="/cleansumstats/ipb-pipeline-lib.jar"
+
+COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
+RUN chown nextflow:users /cleansumstats/external_data -R
 
 USER nextflow
