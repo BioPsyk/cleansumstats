@@ -42,9 +42,6 @@ wget -P source_data ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRC
 
 # ii. Download the chain files for liftover: size 3MB
 mkdir -p sumstat_reference/liftover_chains
-wget -P sumstat_reference/liftover_chains http://hgdownload.cse.ucsc.edu/goldenpath/hg38/liftOver/hg38ToHg19.over.chain.gz
-wget -P sumstat_reference/liftover_chains http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg17.over.chain.gz
-wget -P sumstat_reference/liftover_chains http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg18.over.chain.gz
 
 # iii. If you are on a HPC Start your interactive session (cpus =< 40) and simply run the following
 srun --mem=80g --ntasks 20 --cpus-per-task 1 --time=10:00:00 --pty /bin/bash

@@ -86,6 +86,14 @@ RUN unzip -q sumstat-tools.zip && \
  rm sumstat-tools.zip
 
 #---------------------------------------------------------------------------------
+# Add chain files for liftover/crossover
+
+RUN mkdir -p chain_files && \
+wget -P chain_files "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/liftOver/hg38ToHg19.over.chain.gz" && \
+wget -P chain_files "http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg17.over.chain.gz" && \
+wget -P chain_files "http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg18.over.chain.gz"
+
+#---------------------------------------------------------------------------------
 # Compiling b3sum since it is not packaged for debian
 
 # Represents docker.io/library/rust:1.49.0-slim at 2021-01-21
@@ -125,6 +133,7 @@ RUN apt-get update --fix-missing && \
 RUN apt-get install python gawk graphviz dos2unix -y
 
 RUN apt-get install pigz -y
+
 
 #---------------------------------------------------------------------------------
 # Fix final permissions etc
