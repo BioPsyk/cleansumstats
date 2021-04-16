@@ -14,19 +14,10 @@ function format_mount_flags() {
 
 cd "${project_dir}"
 
-if [ -d "sumstat_reference" ];
-then
-  mounts=(
-    "docs" "assets" "bin" "conf" "environment.yml"
-    "main.nf" "nextflow.config" "tests" "tmp" "lib"
-    "sumstat_reference"
-  )
-else
-  mounts=(
-    "docs" "assets" "bin" "conf" "environment.yml"
-    "main.nf" "nextflow.config" "tests" "tmp" "lib"
-  )
-fi
+mounts=(
+  "docs" "assets" "bin" "conf" "environment.yml"
+  "main.nf" "nextflow.config" "tests" "tmp" "lib"
+)
 
 image_tag="ibp-cleansumstats-base:"$(cat "docker/VERSION")
 deploy_image_tag="ibp-cleansumstats:"$(cat "docker/VERSION")
