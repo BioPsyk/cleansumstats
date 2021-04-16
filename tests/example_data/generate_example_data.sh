@@ -1,10 +1,19 @@
-# Take a few metafiles from alpha library
-sslib="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_library"
-sspdfs="~/home/jesgaaopen/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
-out="out"
+# Prepare dbsnp reference example data
 
+## Download from web
+#wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf
+zcat All_20180418.vcf.gz | head -n10000 | grep "#" > All_20180418_example_data.vcf
 seedval=1337
 openssl enc -aes-256-ctr -pass pass:"$seedval" -nosalt </dev/zero 2>/dev/null | head -10000 > random_seed_file_source
+zcat All_20180418.vcf.gz | grep -v "#" | sort -R --random-source=random_seed_file_source | head -n 1000 >> "All_20180418_example_data.vcf"
+
+
+
+# Take a few uncleaned metafiles from a sumstat library (and make sure one of the dbsnpbuilds aligns well)
+sslib="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_library"
+sspdfs="~/home/jesgaaopen/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
+dbsnplib="~/home/jesgaaopen/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
+out="out"
 
 for id in {1..5}; do
  mkdir -p "out/sumstat_${id}"
@@ -33,7 +42,6 @@ for id in {1..5}; do
 done
 
 # Make corresponding dbsnp data sets of small size
-dbsnplib="~/home/jesgaaopen/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
 
 
 # Make corresponding 1kgp data set of small size
