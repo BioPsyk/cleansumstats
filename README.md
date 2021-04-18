@@ -42,6 +42,7 @@ wget -P source_data ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRC
 
 # ii. If you are on a HPC Start your interactive session (cpus =< 40) and simply run the following
 srun --mem=80g --ntasks 20 --cpus-per-task 1 --time=10:00:00 --pty /bin/bash
+srun --mem=40g --ntasks 10 --cpus-per-task 1 --time=3:00:00 --pty /bin/bash
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generateDbSNPreference \
   --input source_data/All_20180418_example_data.vcf.gz \
