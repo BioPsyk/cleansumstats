@@ -1,0 +1,41 @@
+cleansumstats_metafile_date: '2020-04-28'
+cleansumstats_metafile_user: Andrew Schork
+cleansumstats_version: 1.0.0-alpha
+col_CHR: hg19chrc
+col_EffectAllele: a1
+col_INFO: info
+col_OR: or
+col_OtherAllele: a2
+col_P: p
+col_POS: bp
+col_SE: se
+col_SNP: snpid
+path_pdf: sumstat_2_pmid_25056061.pdf
+path_readMe: sumstat_2_raw_README.txt
+path_sumStats: sumstat_2_raw.gz
+path_supplementary:
+- sumstat_2_pmid_25056061_supp/sumstat_2_pmid_25056061_supp_1.pdf
+stats_CaseN: 36989
+stats_ControlN: 113075
+stats_GCMethod: none
+stats_Model: logistic
+stats_TotalN: 150064
+stats_TraitType: case-control
+study_AccessDate: '2020-04-28'
+study_Ancestry: EUR
+study_Array: meta
+study_FilePortal: https://www.med.unc.edu/pgc/download-results/scz/
+study_Gender: mixed
+study_ImputePanel: 1KGP
+study_ImputeSoftware: meta
+study_Notes: PGC SCZ2
+study_PMID: 25056061
+study_PhasePanel: meta
+study_PhaseSoftware: meta
+study_PhenoCode:
+- EFO:0000000
+study_PhenoDesc: 'Schizophrenia (old phenocode: Schizophrenia)'
+study_Title: sumstat_2
+study_Use: open
+study_Year: 2014
+
