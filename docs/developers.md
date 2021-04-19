@@ -1,10 +1,37 @@
 # Developer instructions
-Here we collect developer specific documentation, which never should be of interest of a user
+Here we collect developer specific documentation, which never should be expected to be readby a user. Note: in the code there are proposed settings for HPC slurm jobs when the preparations may need parallelization.
 
 ## Creating the ibp-pipeline-lib .jar file
 Build the ibp-pipeline-lib-x.x.x.jar file accroding to instructions at: https://github.com/BioPsyk/ibp-pipeline-lib, Then place it inside the docker/ directory in the cleansumstats repository to be accessible by the docker build script. To facilitate development and because of the small size of the image, we have decided to store the correct version for this repo in the docker/ directory. If in the future this file becomes too large we might exclude it from the repo.
 
 ## Creating "real-life" example data
+The purpose of integrating a example data set from real-life data is to make it easy for the user to quickly get familiar with the software by running and inspecting all necessary data. It is also important for the developer to quickly be able to inspect intermediate files when debugging or developing tests or rerouting channels in the workflow. In this section we describe how to do make smaller data sets of all necessary source data:
+- sumstats with meta information and files
+- dbsnp
+- 1000 genome project
+
+### Make variant selection file from sumstats
+create a file of common snps on GRCh38 from a set of sumstats also intended to be used as example data
+
+```
+sslib="${HOME}/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_library"
+
+# create workdir
+mkdir -p variant_union
+
+# if using alpha library, convert each sumstat to GRCh38
+for id in {1..5}; do
+  # Save only GRCh38 positions and sort them
+  LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" <(echo -e "0\tCHR_GRCh38\tPOS_GRCh38\n"; zcat ${sslib}/sumstat_${id}/sumstat_${id}_cleaned_GRCh38.gz) <(zcat ${sslib}/sumstat_${id}/sumstat_${id}_cleaned_GRCh37.gz) | awk -vFS="\t" 'NR>1{print $2":"$3}' | LC_ALL=C sort -k 1,1 --parallel 8 > variant_union/sumstat_${id}_GRCh38_chrpos_sorted
+done
+
+# join the files
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" variant_union/sumstat_1_GRCh38_chrpos_sorted variant_union/sumstat_2_GRCh38_chrpos_sorted | \
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" - variant_union/sumstat_3_GRCh38_chrpos_sorted | \
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" - variant_union/sumstat_4_GRCh38_chrpos_sorted | \
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" - variant_union/sumstat_5_GRCh38_chrpos_sorted > \
+variant_union/sumstat_1-5_GRCh38_chrpos_sorted_union
+```
 
 ### Shrink the dbsnp vcf source
 The real life example data is created with start from the dbsnp vcf file, by making it small enough to run e2e tests and for quick-start purposes, or simply for easy debugging.
@@ -16,33 +43,32 @@ wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_2
 # Prepare header by capturing all lines with #
 zcat All_20180418.vcf.gz | head -n10000 | grep "#" > All_20180418_example_data.vcf
 
-# Make a random selection to captura all chromosomes and more disperse regions
+# decompress and add a column with sorted chrpos information
+pigz --decompress --stdout --processes 2 All_20180418.vcf.gz | grep -v "#" | awk -vOFS="\t" 'NR>1{print $1":"$2, $0}' > All_20180418.vcf.chrpos
+
+
+# The multi-thread sort takes around 30 min with the resources specified below
+srun --mem=200g --ntasks 1 --cpus-per-task 10 --time=4:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
+LC_ALL=C sort -k 1,1 --parallel 8 All_20180418.vcf.chrpos > All_20180418.vcf.chrpos_sorted
+
+# Join to the union of variants from the selected set of sumstats (remove chrpos index)
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" ../../variant_union/sumstat_1-5_GRCh38_chrpos_sorted_union All_20180418.vcf.chrpos_sorted | cut -d$'\t' --complement -f1 > All_20180418.vcf.chrpos_sorted_joined
+
+# Make a random selection to capture variants from all across the genome, generate random seed source file
 seedval=1337
-openssl enc -aes-256-ctr -pass pass:"$seedval" -nosalt </dev/zero 2>/dev/null | head -10000 > random_seed_file_source
-# To save a lot of time, split the data to process in parallel.
-pigz --decompress --stdout --processes 2 All_20180418.vcf.gz | grep -v "#" > All_20180418.vcf
-mkdir -p chunks
-split -d -n l/20 All_20180418.vcf chunks/chunk_
+openssl enc -aes-256-ctr -pass pass:"${seedval}" -nosalt </dev/zero 2>/dev/null | head -10000 > random_seed_file_source
 
-# start an interactive node with many cores, and then execute the job
-srun --mem=500g --ntasks 20 --cpus-per-task 3 --time=4:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
-for chunk in chunks/chunk_*; do \
- ( \
- echo "$chunk starting ..."; \
-  sort -R --random-source=random_seed_file_source --parallel=3 --buffer-size=20G ${chunk} | head -n 100 > "${chunk}_rset"
- echo "$chunk done ..."; \
- ) & \
-done
-
-# merge the result into one file
+# Make the random selection of 1000 variants using seed source file
 zcat All_20180418.vcf.gz | head -n1000 | grep "#" > All_20180418_example_data.vcf
-cat chunks/*_rset >> All_20180418_example_data.vcf
+sort -R --random-source=random_seed_file_source --parallel=2 --buffer-size=10G All_20180418.vcf.chrpos_sorted_joined | head -n 1000 >> All_20180418_example_data.vcf
+
+# gzip the result with best compression (=9)
 gzip -9 All_20180418_example_data.vcf
 
 # clean all intermediate files (save the random seed for future reference)
-rm All_20180418.vcf
-rm chunks/*
-rmdir chunks
+rm All_20180418.vcf.chrpos
+rm All_20180418.vcf.chrpos_sorted
+rm All_20180418.vcf.chrpos_sorted_joined
 
 # Place the example data in the 'tests/example_data/dbsnp/' folder (the automatic tests will look for it there)
 mv "All_20180418_example_data.vcf.gz" tests/example_data/dbsnp/
@@ -57,6 +83,7 @@ This is the same script as used for the full size dbsnp vcf data
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generateDbSNPreference \
   --input /cleansumstats/tests/example_data/dbsnp/All_20180418_example_data.vcf.gz \
+  --dev \
   --outdir ./out
 
 # Move the generated reference files into 'tests/example_data/dbsnp/generated_reference/'
@@ -70,7 +97,84 @@ mv ${results}/All_20180418_GRCh38.sorted.bed tests/example_data/dbsnp/generated_
 
 ```
 
-### Shrink the 1kg reference source (use same set of variants as in dbsnp example reference)
+### Create sumstat example data from the alpha repository
+
+This will be the most sophisticated example data generation, as it will rely on the positions in the example dbsnp databases. It is important that the alignment to dbsnp happens for the right build. Therefore we need to first get that from the results of the alpha pipeline.
+
+```
+sslib="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_library"
+sspdfs="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
+
+for id in {1..5}; do
+
+ # Get detected build from results file
+
+ mkdir -p "out/sumstat_${id}"
+ zcat ${sslib}/sumstat_${id}/sumstat_${id}_raw.gz | sort -R --random-source=${random_seed_file_source} | head -n 1000 | gzip -c > out/sumstat_${id}/sumstat_${id}_raw.gz
+ cp ${sslib}/sumstat_${id}/sumstat_${id}_raw_meta.txt out/sumstat_${id}/sumstat_${id}_raw_meta.txt
+
+ if [ -f "${sslib}/sumstat_${id}/sumstat_${id}_raw_README.txt" ]; then
+   cp ${sslib}/sumstat_${id}/sumstat_${id}_raw_README.txt out/sumstat_${id}/sumstat_${id}_raw_README.txt
+ fi
+
+ # Because of broken symlinks we have to use pattern matching
+ pmid="$(ls ${sslib}/sumstat_${id}/sumstat_*_pmid*pdf | awk '{gsub(/.*sumstat_.*pmid_/,"");gsub(/.pdf/,"")}1')"
+ cp ${sspdfs}/pmid_${pmid}.pdf out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_pdf
+ cp -r ${sspdfs}/pmid_${pmid}_supp out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp
+
+ # Use dummy pdfs in case needed as example data in repo
+ echo "placeholder file as a pdf is too large, and wouldnt be used by the pipelinen other than being copied" > tmp
+ mv tmp out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_pdf
+
+ # For each file in folder replace with dummy file
+ for file in $(ls -1 out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp); do
+   echo "placeholder file as a pdf is too large, and wouldnt be used by the pipeline other than being copied" > tmp
+   mv tmp out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp/${file}
+ done
+
+done
+
+```
+
+The metafiles just created will be of the old alpha format. To update them to the new format we need to run the converter script.
+
+```
+#converter code here
+```
+
+### Shrink the 1kg reference source
+Download 1000 genomes project data.
+
+```
+# Download readme describing the new mapping directly to GRCh38
+wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/20190312_biallelic_SNV_and_INDEL_README.txt
+
+# Then download the dataset from this website portal
+wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz
+wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz.tbi
+```
+
+
+Use same set of variants as in dbsnp example reference. This will automatically happen when using the built in workflow 'generate1KgAfSNPreference'. Provided that we supply the dbsnp example reference and not the full size dbsnp reference.
+
+```
+# Generate dbsnp cleansumstat reference
+./scripts/singularity-run.sh nextflow run /cleansumstats \
+  --generate1KgAfSNPreference \
+  --input tmp/fake-home/dbsnp/All_20180418_example_data.vcf.gz \
+  --libdirdbsnp /cleansumstats/tests/example_data/dbsnp/generated_reference \
+  --outdir ./out
+
+# Move the generated reference files into 'tests/example_data/dbsnp/generated_reference/'
+results="tmp/fake-home/sumstat_reference/dbsnp151/"
+
+```
 
 
 
+## Useful information
+
+- All chain files for the liftover/crossover operations have been embedded in the image. See the dockerfile for path to the web source.
+- `sort` threats a file as small if comming from a pipe, which cancel parallelization.
+- `sort` doesn't make use of more than 8 cpus according to its documentation.
+- sort `--buffer-size=20G` is useful to get better control of memory allocation.
