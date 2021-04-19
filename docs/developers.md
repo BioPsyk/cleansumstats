@@ -87,13 +87,9 @@ This is the same script as used for the full size dbsnp vcf data
   --outdir ./out
 
 # Move the generated reference files into 'tests/example_data/dbsnp/generated_reference/'
+mkdir -p tests/example_data/dbsnp/generated_reference
 results="tmp/fake-home/sumstat_reference/dbsnp151/"
-mv ${results}/All_20180418_GRCh35_GRCh38.sorted.bed tests/example_data/dbsnp/generated_reference/
-mv ${results}/All_20180418_GRCh36_GRCh38.sorted.bed tests/example_data/dbsnp/generated_reference/
-mv ${results}/All_20180418_GRCh37_GRCh38.sorted.bed tests/example_data/dbsnp/generated_reference/
-mv ${results}/All_20180418_GRCh38_GRCh37.sorted.bed tests/example_data/dbsnp/generated_reference/
-mv ${results}/All_20180418_RSID_GRCh38.sorted.bed tests/example_data/dbsnp/generated_reference/
-mv ${results}/All_20180418_GRCh38.sorted.bed tests/example_data/dbsnp/generated_reference/
+mv ${results}/* tests/example_data/dbsnp/generated_reference/
 
 ```
 
