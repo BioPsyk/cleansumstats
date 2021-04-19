@@ -10,27 +10,85 @@ The purpose of integrating a example data set from real-life data is to make it 
 - dbsnp
 - 1000 genome project
 
-### Make variant selection file from sumstats
-create a file of common snps on GRCh38 from a set of sumstats also intended to be used as example data
+### Create sumstat example data from the alpha repository
+This will be a highly advanced example data generation, as it will have to match on the positions in the example dbsnp databases. First step is to create a file of common snps on GRCh38 from a set of sumstats also intended to be used as example data. This will be the link between the two datasets making it possible to run the whole workflow using only this reduced data. 
 
 ```
 sslib="${HOME}/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_library"
+sspdfs="${HOME}/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
 
-# create workdir
-mkdir -p variant_union
+# create sumstat workdir
+mkdir -p sumstat_generation
+mkdir -p sumstat_generation/var_selection
 
-# if using alpha library, convert each sumstat to GRCh38
+# Make variant selection file from sumstats
+# We are using alpha library, therefore converting each sumstat to GRCh38
 for id in {1..5}; do
   # Save only GRCh38 positions and sort them
-  LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" <(echo -e "0\tCHR_GRCh38\tPOS_GRCh38\n"; zcat ${sslib}/sumstat_${id}/sumstat_${id}_cleaned_GRCh38.gz) <(zcat ${sslib}/sumstat_${id}/sumstat_${id}_cleaned_GRCh37.gz) | awk -vFS="\t" 'NR>1{print $2":"$3}' | LC_ALL=C sort -k 1,1 --parallel 8 > variant_union/sumstat_${id}_GRCh38_chrpos_sorted
+  LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" <(echo -e "0\tCHR_GRCh38\tPOS_GRCh38\n"; zcat ${sslib}/sumstat_${id}/sumstat_${id}_cleaned_GRCh38.gz) <(zcat ${sslib}/sumstat_${id}/sumstat_${id}_cleaned_GRCh37.gz) | awk -vFS="\t" 'NR>1{print $2":"$3}' | LC_ALL=C sort -k 1,1 > sumstat_generation/var_selection/sumstat_${id}_GRCh38_chrpos_sorted
 done
 
 # join the files
-LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" variant_union/sumstat_1_GRCh38_chrpos_sorted variant_union/sumstat_2_GRCh38_chrpos_sorted | \
-LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" - variant_union/sumstat_3_GRCh38_chrpos_sorted | \
-LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" - variant_union/sumstat_4_GRCh38_chrpos_sorted | \
-LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" - variant_union/sumstat_5_GRCh38_chrpos_sorted > \
-variant_union/sumstat_1-5_GRCh38_chrpos_sorted_union
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" sumstat_generation/var_selection/sumstat_1_GRCh38_chrpos_sorted sumstat_generation/var_selection/sumstat_2_GRCh38_chrpos_sorted | \
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" - sumstat_generation/var_selection/sumstat_3_GRCh38_chrpos_sorted | \
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" - sumstat_generation/var_selection/sumstat_4_GRCh38_chrpos_sorted | \
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" - sumstat_generation/var_selection/sumstat_5_GRCh38_chrpos_sorted > \
+sumstat_generation/var_selection/sumstat_1-5_GRCh38_chrpos_sorted_union
+
+# Create a ready subset using the index
+for id in {1..5}; do
+  mkdir -p sumstat_generation/sumstat_${id}
+  LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" <(echo -e "0\tCHR_GRCh38\tPOS_GRCh38\n"; zcat ${sslib}/sumstat_${id}/sumstat_${id}_cleaned_GRCh38.gz) <(zcat ${sslib}/sumstat_${id}/sumstat_${id}_cleaned_GRCh37.gz) | awk -vFS="\t" 'NR>1{print $2":"$3, $1}' | LC_ALL=C sort -k 1,1 | LC_ALL=C join -1 1 -2 1 - sumstat_generation/var_selection/sumstat_1-5_GRCh38_chrpos_sorted_union | awk '{print $2}' | LC_ALL=C sort -k 1,1 > sumstat_generation/sumstat_${id}/sumstat_${id}_union_subset_index_sorted
+  LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" <(zcat ${sslib}/sumstat_${id}/sumstat_${id}_raw_formatted_rowindexed.gz) sumstat_generation/sumstat_${id}/sumstat_${id}_union_subset_index_sorted | cut -d$'\t' --complement -f1 > sumstat_generation/sumstat_${id}/sumstat_${id}_union_subset
+  rm sumstat_generation/sumstat_${id}/sumstat_${id}_union_subset_index_sorted
+done
+
+# Prepare remaining sumstat files
+for id in {1..5}; do
+
+ # Give better name and compress
+ cp sumstat_generation/sumstat_${id}/sumstat_${id}_union_subset sumstat_generation/sumstat_${id}/sumstat_${id}_raw
+ gzip -9 -c sumstat_generation/sumstat_${id}/sumstat_${id}_raw > sumstat_generation/sumstat_${id}/sumstat_${id}_raw.gz
+ rm sumstat_generation/sumstat_${id}/sumstat_${id}_raw
+ rm sumstat_generation/sumstat_${id}/sumstat_${id}_union_subset
+
+
+ # alpha meta data
+ cp ${sslib}/sumstat_${id}/sumstat_${id}_raw_meta.txt sumstat_generation/sumstat_${id}/sumstat_${id}_raw_meta_v_1.0.0-alpha.txt
+
+ # README
+ if [ -f "${sslib}/sumstat_${id}/sumstat_${id}_raw_README.txt" ]; then
+   cp ${sslib}/sumstat_${id}/sumstat_${id}_raw_README.txt sumstat_generation/sumstat_${id}/sumstat_${id}_raw_README.txt
+ fi
+
+ # PDFs, and because of broken symlinks we have to use pattern matching
+ pmid="$(ls ${sslib}/sumstat_${id}/sumstat_*_pmid*pdf | awk '{gsub(/.*sumstat_.*pmid_/,"");gsub(/.pdf/,"")}1')"
+ #cp ${sspdfs}/pmid_${pmid}.pdf sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_pdf
+ #cp -r ${sspdfs}/pmid_${pmid}_supp sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp
+
+ # Use dummy pdfs in case needed as example data in repo
+ echo "placeholder file as a pdf is too large, and wouldnt be used by the pipelinen other than being copied" > sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_pdf
+
+ # For each file in folder replace with dummy file
+ for file in $(ls -1 ${sspdfs}/pmid_${pmid}_supp); do
+   mkdir -p sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp
+   echo "placeholder file as a pdf is too large, and wouldnt be used by the pipeline other than being copied" > sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp/${file}
+ done
+done
+
+```
+
+The metafiles just created will be of the old alpha format. To update them to the new format we need to run the converter script.
+
+```
+# Convert each sumstat alpha meta file to new format
+for id in {1..5}; do
+  ./scripts/singularity-run.sh /cleansumstats/bin/metadata_legacy_to_yaml.py sumstat_generation/sumstat_${id}/sumstat_${id}_raw_meta_v_1.0.0-alpha.txt > tmp/fake-home/sumstat_generation/sumstat_${id}/sumstat_${id}_raw_meta.txt
+done
+
+# Move all sumstat data into the example data folder
+mv tmp/fake-home/sumstat_generation/sumstat_* tests/example_data/
+
 ```
 
 ### Shrink the dbsnp vcf source
@@ -52,7 +110,7 @@ srun --mem=200g --ntasks 1 --cpus-per-task 10 --time=4:00:00 --account ibp_pipel
 LC_ALL=C sort -k 1,1 --parallel 8 All_20180418.vcf.chrpos > All_20180418.vcf.chrpos_sorted
 
 # Join to the union of variants from the selected set of sumstats (remove chrpos index)
-LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" ../../variant_union/sumstat_1-5_GRCh38_chrpos_sorted_union All_20180418.vcf.chrpos_sorted | cut -d$'\t' --complement -f1 > All_20180418.vcf.chrpos_sorted_joined
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" ../../sumstat_generation/var_selection/sumstat_1-5_GRCh38_chrpos_sorted_union All_20180418.vcf.chrpos_sorted | cut -d$'\t' --complement -f1 > All_20180418.vcf.chrpos_sorted_joined
 
 # Make a random selection to capture variants from all across the genome, generate random seed source file
 seedval=1337
@@ -93,51 +151,6 @@ mv ${results}/* tests/example_data/dbsnp/generated_reference/
 
 ```
 
-### Create sumstat example data from the alpha repository
-
-This will be the most sophisticated example data generation, as it will rely on the positions in the example dbsnp databases. It is important that the alignment to dbsnp happens for the right build. Therefore we need to first get that from the results of the alpha pipeline.
-
-```
-sslib="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_library"
-sspdfs="~/IBP_pipeline_cleansumstats_alpha/cleansumstats_v1.0.0-alpha/sumstat_pdfs"
-
-for id in {1..5}; do
-
- # Get detected build from results file
-
- mkdir -p "out/sumstat_${id}"
- zcat ${sslib}/sumstat_${id}/sumstat_${id}_raw.gz | sort -R --random-source=${random_seed_file_source} | head -n 1000 | gzip -c > out/sumstat_${id}/sumstat_${id}_raw.gz
- cp ${sslib}/sumstat_${id}/sumstat_${id}_raw_meta.txt out/sumstat_${id}/sumstat_${id}_raw_meta.txt
-
- if [ -f "${sslib}/sumstat_${id}/sumstat_${id}_raw_README.txt" ]; then
-   cp ${sslib}/sumstat_${id}/sumstat_${id}_raw_README.txt out/sumstat_${id}/sumstat_${id}_raw_README.txt
- fi
-
- # Because of broken symlinks we have to use pattern matching
- pmid="$(ls ${sslib}/sumstat_${id}/sumstat_*_pmid*pdf | awk '{gsub(/.*sumstat_.*pmid_/,"");gsub(/.pdf/,"")}1')"
- cp ${sspdfs}/pmid_${pmid}.pdf out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_pdf
- cp -r ${sspdfs}/pmid_${pmid}_supp out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp
-
- # Use dummy pdfs in case needed as example data in repo
- echo "placeholder file as a pdf is too large, and wouldnt be used by the pipelinen other than being copied" > tmp
- mv tmp out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_pdf
-
- # For each file in folder replace with dummy file
- for file in $(ls -1 out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp); do
-   echo "placeholder file as a pdf is too large, and wouldnt be used by the pipeline other than being copied" > tmp
-   mv tmp out/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp/${file}
- done
-
-done
-
-```
-
-The metafiles just created will be of the old alpha format. To update them to the new format we need to run the converter script.
-
-```
-#converter code here
-```
-
 ### Shrink the 1kg reference source
 Download 1000 genomes project data.
 
@@ -150,14 +163,32 @@ wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_pro
 wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz.tbi
 ```
 
+Use same set of variants as in dbsnp example reference. This will automatically happen when using the built in workflow 'generate1KgAfSNPreference'. Provided that we supply the dbsnp example reference and not the full size dbsnp reference. Although, to be useful to easily test the actual 1kg allele frequency reference generation, it is good to subset the data to only the variants already in the sumstat and dbsnp example data. 
 
-Use same set of variants as in dbsnp example reference. This will automatically happen when using the built in workflow 'generate1KgAfSNPreference'. Provided that we supply the dbsnp example reference and not the full size dbsnp reference.
+```
+# Prepare header by capturing all lines with #
+mkdir -p tmp_1kg
+zcat ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz | head -n10000 | grep "#" > tmp_1kg/1kg_example_data.vcf
+
+# decompress and add a column with sorted chrpos information
+pigz --decompress --stdout --processes 2 ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz | grep -v "#" | awk -vOFS="\t" 'NR>1{print $1":"$2, $0}' > tmp_1kg/1kg_example_data.vcf.chrpos
+
+# The multi-thread sort takes around 1 min with the resources specified below
+srun --mem=200g --ntasks 1 --cpus-per-task 10 --time=4:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
+LC_ALL=C sort -k 1,1 --parallel 8 tmp_1kg/1kg_example_data.vcf.chrpos > tmp_1kg/1kg_example_data.vcf.chrpos_sorted
+
+# Join to the union of variants from the selected set of sumstats (remove chrpos index)
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" ../../sumstat_generation/var_selection/sumstat_1-5_GRCh38_chrpos_sorted_union tmp_1kg/1kg_example_data.vcf.chrpos_sorted | cut -d$'\t' --complement -f1 > tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined
+
+# gzip
+gzip -9 -c tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined > tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined.gz
+```
 
 ```
 # Generate dbsnp cleansumstat reference
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generate1KgAfSNPreference \
-  --input tmp/fake-home/dbsnp/All_20180418_example_data.vcf.gz \
+  --input tmp/fake-hom/source_data/1kgp/tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined.gz \
   --libdirdbsnp /cleansumstats/tests/example_data/dbsnp/generated_reference \
   --outdir ./out
 
