@@ -112,6 +112,12 @@ FROM rust@sha256:f46e703b7a0efd836690ed488edc55f8f84f4a161aa9a2724e0cffd59646f5a
 RUN cargo install b3sum
 
 #---------------------------------------------------------------------------------
+# Get bcftools image
+
+# Represents docker.io/biocontainers/bcftools:v1.9-1-deb_cv1 at 2021-04-20
+FROM biocontainers/bcftools@sha256:ab5e68068ff56baf59b79f995b5425edba9f61cc86a5476357db87ec2670899d AS bcftools_builder
+
+#---------------------------------------------------------------------------------
 # Creating runtime image with software built in builder image
 
 # Represents docker.io/library/adoptopenjdk:11-jre-openj9 at 2021-01-14
@@ -119,6 +125,7 @@ FROM adoptopenjdk@sha256:477d0c53aca999692d2432e529af1f7abd715205fcfc36534ac9ff4
 
 COPY --from=java_builder /cleansumstats /cleansumstats
 COPY --from=rust_builder /usr/local/cargo/bin/b3sum /usr/bin/b3sum
+COPY --from=bcftools_builder /usr/bin/bcftools /usr/bin/bcftools
 
 WORKDIR /cleansumstats
 
