@@ -689,8 +689,6 @@ if (params.generateMetafile){
 
       script:
       """
-      module load tools
-      module load bcftools/1.11
       gendb_1kaf_extract_freq_data.sh ${af1kgvcf} > 1kg_af_ref
 
       """
