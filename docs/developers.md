@@ -166,30 +166,37 @@ wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_pro
 Use same set of variants as in dbsnp example reference. This will automatically happen when using the built in workflow 'generate1KgAfSNPreference'. Provided that we supply the dbsnp example reference and not the full size dbsnp reference. Although, to be useful to easily test the actual 1kg allele frequency reference generation, it is good to subset the data to only the variants already in the sumstat and dbsnp example data. 
 
 ```
-# Prepare header by capturing all lines with #
 mkdir -p tmp_1kg
-zcat ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz | head -n10000 | grep "#" > tmp_1kg/1kg_example_data.vcf
 
-# decompress and add a column with sorted chrpos information
+# Decompress and add a column with sorted chrpos information
 pigz --decompress --stdout --processes 2 ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz | grep -v "#" | awk -vOFS="\t" 'NR>1{print $1":"$2, $0}' > tmp_1kg/1kg_example_data.vcf.chrpos
 
 # The multi-thread sort takes around 1 min with the resources specified below
 srun --mem=200g --ntasks 1 --cpus-per-task 10 --time=4:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 LC_ALL=C sort -k 1,1 --parallel 8 tmp_1kg/1kg_example_data.vcf.chrpos > tmp_1kg/1kg_example_data.vcf.chrpos_sorted
 
+# Prepare header by capturing all lines with #
+zcat ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz | head -n10000 | grep "#" > tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined
+
 # Join to the union of variants from the selected set of sumstats (remove chrpos index)
-LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" ../../sumstat_generation/var_selection/sumstat_1-5_GRCh38_chrpos_sorted_union tmp_1kg/1kg_example_data.vcf.chrpos_sorted | cut -d$'\t' --complement -f1 > tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined
+LC_ALL=C join -1 1 -2 1 -t "$(printf '\t')" ../../sumstat_generation/var_selection/sumstat_1-5_GRCh38_chrpos_sorted_union tmp_1kg/1kg_example_data.vcf.chrpos_sorted | cut -d$'\t' --complement -f1 >> tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined
 
 # gzip
 gzip -9 -c tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined > tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined.gz
+
+# move to example data folder
+#mkdir -p tests/example_data/1kgp
+cp tmp/fake-home/source_data/1kgp/tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined.gz tests/example_data/1kgp/1kg_example_data.vcf.gz
+
 ```
 
 ```
 # Generate dbsnp cleansumstat reference
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generate1KgAfSNPreference \
-  --input tmp/fake-hom/source_data/1kgp/tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joined.gz \
+  --input /cleansumstats/tests/example_data/1kgp/1kg_example_data.vcf.gz \
   --libdirdbsnp /cleansumstats/tests/example_data/dbsnp/generated_reference \
+  --dev 
   --outdir ./out
 
 # Move the generated reference files into 'tests/example_data/dbsnp/generated_reference/'
@@ -204,4 +211,4 @@ results="tmp/fake-home/sumstat_reference/dbsnp151/"
 - All chain files for the liftover/crossover operations have been embedded in the image. See the dockerfile for path to the web source.
 - `sort` threats a file as small if comming from a pipe, which cancel parallelization.
 - `sort` doesn't make use of more than 8 cpus according to its documentation.
-- sort `--buffer-size=20G` is useful to get better control of memory allocation.
+- `sort` `--buffer-size=20G` is useful to get better control of memory allocation.
