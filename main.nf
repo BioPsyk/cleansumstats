@@ -112,7 +112,7 @@ if (params.generateDbSNPreference) {
   if (params.dbsnp_36_38) { ch_dbsnp_36_38 = file(params.dbsnp_36_38) }
   if (params.dbsnp_35_38) { ch_dbsnp_35_38 = file(params.dbsnp_35_38) }
   if (params.dbsnp_RSID_38) { ch_dbsnp_RSID_38 = file(params.dbsnp_RSID_38) }
-}else {
+}else if(params.generate1KgAfSNPreference){
 
   if (params.dbsnp_38) { ch_dbsnp_38 = file(params.dbsnp_38, checkIfExists: true) }
   if (params.dbsnp_38_37) { ch_dbsnp_38_37 = file(params.dbsnp_38_37, checkIfExists: true) }
@@ -120,10 +120,16 @@ if (params.generateDbSNPreference) {
   if (params.dbsnp_36_38) { ch_dbsnp_36_38 = file(params.dbsnp_36_38, checkIfExists: true) }
   if (params.dbsnp_35_38) { ch_dbsnp_35_38 = file(params.dbsnp_35_38, checkIfExists: true) }
   if (params.dbsnp_RSID_38) { ch_dbsnp_RSID_38 = file(params.dbsnp_RSID_38, checkIfExists: true) }
-}
 
-if (!(params.generate1KgAfSNPreference)) {
+}else {
+
   if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
+  if (params.dbsnp_38) { ch_dbsnp_38 = file(params.dbsnp_38, checkIfExists: true) }
+  if (params.dbsnp_38_37) { ch_dbsnp_38_37 = file(params.dbsnp_38_37, checkIfExists: true) }
+  if (params.dbsnp_37_38) { ch_dbsnp_37_38 = file(params.dbsnp_37_38, checkIfExists: true) }
+  if (params.dbsnp_36_38) { ch_dbsnp_36_38 = file(params.dbsnp_36_38, checkIfExists: true) }
+  if (params.dbsnp_35_38) { ch_dbsnp_35_38 = file(params.dbsnp_35_38, checkIfExists: true) }
+  if (params.dbsnp_RSID_38) { ch_dbsnp_RSID_38 = file(params.dbsnp_RSID_38, checkIfExists: true) }
 }
 
 ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
@@ -547,7 +553,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_RSID {
 
-      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, enabled: params.dev
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
 
       input:
       file dbsnp_chunks from ch_dbsnp_rsid_to_GRCh38.collect()
@@ -575,7 +581,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh38 {
 
-      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, enabled: params.dev
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
 
       input:
       file dbsnp_chunks from ch_dbsnp_rmd_dup_positions_GRCh38_3.collect()
@@ -600,7 +606,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh38_GRCh37 {
 
-      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, enabled: params.dev
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
       publishDir "${params.outdir}", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
 
       input:
@@ -636,7 +642,7 @@ if (params.generateMetafile){
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh3x_GRCh38 {
 
       publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
-      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed', enabled: params.dev
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
 
       input:
       tuple build, cid, file(dbsnp_chunks) from ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped
@@ -733,7 +739,7 @@ if (params.generateMetafile){
 
   process join_frequency_data_on_dbsnp_reference {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true
+      publishDir "${params.outdir}", mode: 'copy', overwrite: true
 
       input:
       tuple basefilename, ref1kgsorted from ch_1kg_af_ref_sorted
