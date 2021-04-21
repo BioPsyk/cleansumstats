@@ -46,15 +46,15 @@ done
 # Prepare remaining sumstat files
 for id in {1..5}; do
 
- # Give better name and compress
- cp sumstat_generation/sumstat_${id}/sumstat_${id}_union_subset sumstat_generation/sumstat_${id}/sumstat_${id}_raw
+ # Attach header, give better name and compress
+ zcat ${sslib}/sumstat_${id}/sumstat_${id}_raw.gz | head -n1 > sumstat_generation/sumstat_${id}/sumstat_${id}_raw
+ cat sumstat_generation/sumstat_${id}/sumstat_${id}_union_subset >> sumstat_generation/sumstat_${id}/sumstat_${id}_raw
  gzip -9 -c sumstat_generation/sumstat_${id}/sumstat_${id}_raw > sumstat_generation/sumstat_${id}/sumstat_${id}_raw.gz
  rm sumstat_generation/sumstat_${id}/sumstat_${id}_raw
  rm sumstat_generation/sumstat_${id}/sumstat_${id}_union_subset
 
-
  # alpha meta data
- cp ${sslib}/sumstat_${id}/sumstat_${id}_raw_meta.txt sumstat_generation/sumstat_${id}/sumstat_${id}_raw_meta_v_1.0.0-alpha.txt
+ cp ${sslib}/sumstat_${id}/sumstat_${id}_raw_meta.txt sumstat_generation/sumstat_${id}/sumstat_${id}_raw_meta_v1.0.0-alpha.txt
 
  # README
  if [ -f "${sslib}/sumstat_${id}/sumstat_${id}_raw_README.txt" ]; then
@@ -63,16 +63,16 @@ for id in {1..5}; do
 
  # PDFs, and because of broken symlinks we have to use pattern matching
  pmid="$(ls ${sslib}/sumstat_${id}/sumstat_*_pmid*pdf | awk '{gsub(/.*sumstat_.*pmid_/,"");gsub(/.pdf/,"")}1')"
- #cp ${sspdfs}/pmid_${pmid}.pdf sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_pdf
+ #cp ${sspdfs}/pmid_${pmid}.pdf sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}.pdf
  #cp -r ${sspdfs}/pmid_${pmid}_supp sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp
 
  # Use dummy pdfs in case needed as example data in repo
- echo "placeholder file as a pdf is too large, and wouldnt be used by the pipelinen other than being copied" > sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_pdf
+ echo "placeholder file as a pdf is too large, and wouldnt be used by the pipelinen other than being copied" > sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}.pdf
 
  # For each file in folder replace with dummy file
  for file in $(ls -1 ${sspdfs}/pmid_${pmid}_supp); do
    mkdir -p sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp
-   echo "placeholder file as a pdf is too large, and wouldnt be used by the pipeline other than being copied" > sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp/${file}
+   echo "placeholder file as a pdf is too large, and wouldnt be used by the pipeline other than being copied" > sumstat_generation/sumstat_${id}/sumstat_${id}_pmid_${pmid}_supp/sumstat_${id}_${file}
  done
 done
 
@@ -83,7 +83,7 @@ The metafiles just created will be of the old alpha format. To update them to th
 ```
 # Convert each sumstat alpha meta file to new format
 for id in {1..5}; do
-  ./scripts/singularity-run.sh /cleansumstats/bin/metadata_legacy_to_yaml.py sumstat_generation/sumstat_${id}/sumstat_${id}_raw_meta_v_1.0.0-alpha.txt > tmp/fake-home/sumstat_generation/sumstat_${id}/sumstat_${id}_raw_meta.txt
+  ./scripts/singularity-run.sh /cleansumstats/bin/metadata_legacy_to_yaml.py sumstat_generation/sumstat_${id}/sumstat_${id}_raw_meta_v1.0.0-alpha.txt > tmp/fake-home/sumstat_generation/sumstat_${id}/sumstat_${id}_raw_meta.txt
 done
 
 # Move all sumstat data into the example data folder
@@ -142,7 +142,8 @@ This is the same script as used for the full size dbsnp vcf data
   --generateDbSNPreference \
   --input /cleansumstats/tests/example_data/dbsnp/All_20180418_example_data.vcf.gz \
   --dev \
-  --outdir ./out
+  --outdir ./out_dbsnp_intermediates \
+  --libdirdbsnp ./out_dbsnp
 
 # Move the generated reference files into 'tests/example_data/dbsnp/generated_reference/'
 mkdir -p tests/example_data/dbsnp/generated_reference
@@ -196,14 +197,26 @@ cp tmp/fake-home/source_data/1kgp/tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joi
   --generate1KgAfSNPreference \
   --input /cleansumstats/tests/example_data/1kgp/1kg_example_data.vcf.gz \
   --libdirdbsnp /cleansumstats/tests/example_data/dbsnp/generated_reference \
-  --dev 
+  --dev \
   --outdir ./out
 
-# Move the generated reference files into 'tests/example_data/dbsnp/generated_reference/'
-results="tmp/fake-home/sumstat_reference/dbsnp151/"
+# Move the generated reference files into 'tests/example_data/1kgp/generated_reference/'
+mkdir -p tests/example_data/1kgp/generated_reference
+cp tmp/fake-home/out/1kg_af_ref.sorted.joined tests/example_data/1kgp/generated_reference/
 
 ```
 
+Test a complete run using all example together
+```
+# Generate dbsnp cleansumstat reference
+./scripts/singularity-run.sh nextflow run /cleansumstats \
+  --input /cleansumstats/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
+  --kg1000AFGRCh38 /cleansumstats/tests/example_data/1kgp/1kg_example_data.vcf.gz \
+  --libdirdbsnp /cleansumstats/tests/example_data/dbsnp/generated_reference \
+  --dev \
+  --outdir ./out_run
+
+```
 
 
 ## Useful information
