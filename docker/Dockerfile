@@ -104,6 +104,36 @@ RUN mkdir -p external_data/chain_files && \
   echo "${HG_19_18_CHECKSUM}  hg19ToHg18.over.chain.gz" | sha256sum -c
 
 #---------------------------------------------------------------------------------
+# Installing htslib and bcftools
+
+ARG HTSLIB_VERSION="1.9"
+ARG BCFTOOLS_VERSION="1.9"
+
+RUN apt-get install -y autoconf automake make zlib1g-dev libbz2-dev \
+  liblzma-dev libcurl4-gnutls-dev libssl-dev libncurses5-dev
+
+RUN wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2 \
+  --quiet -O htslib.tar.bz2 && \
+  tar -xjvf htslib.tar.bz2 && \
+  mv "htslib-${HTSLIB_VERSION}" "htslib" 
+
+WORKDIR /cleansumstats/htslib
+RUN make
+RUN make install
+
+WORKDIR /cleansumstats
+
+RUN wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2 \
+  --quiet -O bcftools.tar.bz2 && \
+  tar -vxjf bcftools.tar.bz2 && \
+  mv "bcftools-${BCFTOOLS_VERSION}" "bcftools" 
+
+WORKDIR /cleansumstats/bcftools
+RUN make
+
+WORKDIR /cleansumstats
+
+#---------------------------------------------------------------------------------
 # Compiling b3sum since it is not packaged for debian
 
 # Represents docker.io/library/rust:1.49.0-slim at 2021-01-21
@@ -121,6 +151,8 @@ COPY --from=java_builder /cleansumstats /cleansumstats
 COPY --from=rust_builder /usr/local/cargo/bin/b3sum /usr/bin/b3sum
 
 WORKDIR /cleansumstats
+
+RUN mv /cleansumstats/bcftools/bcftools /usr/bin/bcftools
 
 RUN mv r-stats-c-streamer/build/r-stats-c-streamer /usr/bin/ && \
   rm -rf r-stats-c-streamer

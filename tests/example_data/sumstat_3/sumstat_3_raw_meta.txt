@@ -1,0 +1,41 @@
+cleansumstats_metafile_date: '2020-04-29'
+cleansumstats_metafile_user: Andrew Schork
+cleansumstats_version: 1.0.0-alpha
+col_CHR: hg18chr
+col_EffectAllele: a1
+col_INFO: info
+col_Notes: Unclear if SE is for OR (which does not make sense) or ln(OR) (which is
+  standard).  Assuming the second.
+col_OR: or
+col_OtherAllele: a2
+col_P: pval
+col_POS: bp
+col_SE: se
+col_SNP: snpid
+path_pdf: sumstat_3_pmid_22472876.pdf
+path_readMe: sumstat_3_raw_README.txt
+path_sumStats: sumstat_3_raw.gz
+path_supplementary:
+- sumstat_3_pmid_22472876_supp/sumstat_3_pmid_22472876_supp_1.pdf
+stats_CaseN: 9240
+stats_ControlN: 9519
+stats_Model: logistic
+stats_TotalN: 18759
+stats_TraitType: case-control
+study_AccessDate: '2020-04-29'
+study_Ancestry: EUR
+study_Array: meta
+study_FilePortal: https://www.med.unc.edu/pgc/download-results/mdd/
+study_Gender: mixed
+study_ImputePanel: HapMap
+study_ImputeSoftware: Beagle
+study_Notes: ''
+study_PMID: 22472876
+study_PhaseSoftware: Beagle
+study_PhenoCode:
+- EFO:0000000
+study_PhenoDesc: 'Major Depressive Disorder (old phenocode: Major depressive disorder)'
+study_Title: sumstat_3
+study_Use: open
+study_Year: 2013
+

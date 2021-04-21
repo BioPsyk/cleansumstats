@@ -112,9 +112,18 @@ if (params.generateDbSNPreference) {
   if (params.dbsnp_36_38) { ch_dbsnp_36_38 = file(params.dbsnp_36_38) }
   if (params.dbsnp_35_38) { ch_dbsnp_35_38 = file(params.dbsnp_35_38) }
   if (params.dbsnp_RSID_38) { ch_dbsnp_RSID_38 = file(params.dbsnp_RSID_38) }
-}else {
-  if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
+}else if(params.generate1KgAfSNPreference){
 
+  if (params.dbsnp_38) { ch_dbsnp_38 = file(params.dbsnp_38, checkIfExists: true) }
+  if (params.dbsnp_38_37) { ch_dbsnp_38_37 = file(params.dbsnp_38_37, checkIfExists: true) }
+  if (params.dbsnp_37_38) { ch_dbsnp_37_38 = file(params.dbsnp_37_38, checkIfExists: true) }
+  if (params.dbsnp_36_38) { ch_dbsnp_36_38 = file(params.dbsnp_36_38, checkIfExists: true) }
+  if (params.dbsnp_35_38) { ch_dbsnp_35_38 = file(params.dbsnp_35_38, checkIfExists: true) }
+  if (params.dbsnp_RSID_38) { ch_dbsnp_RSID_38 = file(params.dbsnp_RSID_38, checkIfExists: true) }
+
+}else {
+
+  if (params.kg1000AFGRCh38) { ch_kg1000AFGRCh38 = file(params.kg1000AFGRCh38, checkIfExists: true) }
   if (params.dbsnp_38) { ch_dbsnp_38 = file(params.dbsnp_38, checkIfExists: true) }
   if (params.dbsnp_38_37) { ch_dbsnp_38_37 = file(params.dbsnp_38_37, checkIfExists: true) }
   if (params.dbsnp_37_38) { ch_dbsnp_37_38 = file(params.dbsnp_37_38, checkIfExists: true) }
@@ -544,7 +553,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_RSID {
 
-      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, enabled: params.dev
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
 
       input:
       file dbsnp_chunks from ch_dbsnp_rsid_to_GRCh38.collect()
@@ -572,7 +581,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh38 {
 
-      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, enabled: params.dev
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
 
       input:
       file dbsnp_chunks from ch_dbsnp_rmd_dup_positions_GRCh38_3.collect()
@@ -597,7 +606,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh38_GRCh37 {
 
-      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, enabled: params.dev
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
       publishDir "${params.outdir}", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
 
       input:
@@ -633,7 +642,7 @@ if (params.generateMetafile){
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh3x_GRCh38 {
 
       publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
-      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed', enabled: params.dev
+      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
 
       input:
       tuple build, cid, file(dbsnp_chunks) from ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped
@@ -686,8 +695,6 @@ if (params.generateMetafile){
 
       script:
       """
-      module load tools
-      module load bcftools/1.11
       gendb_1kaf_extract_freq_data.sh ${af1kgvcf} > 1kg_af_ref
 
       """
@@ -732,7 +739,7 @@ if (params.generateMetafile){
 
   process join_frequency_data_on_dbsnp_reference {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true
+      publishDir "${params.outdir}", mode: 'copy', overwrite: true
 
       input:
       tuple basefilename, ref1kgsorted from ch_1kg_af_ref_sorted
@@ -919,7 +926,7 @@ if (doCompleteCleaningWorkflow){
 
         script:
         """
-        cat $sfile | sstools-raw add-index > add_index_sumstat__added_rowindex_sumstat_file
+        cat $sfile | sstools-raw add-index | LC_ALL=C sort -k1,1 > add_index_sumstat__added_rowindex_sumstat_file
 
         #process before and after stats (the -1 is to remove the header count)
         rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
@@ -1400,11 +1407,11 @@ process select_chrpos_or_snpchrpos {
       tuple datasetID, mfile, file("select_chrpos_or_snpchrpos__combined_set_from_the_three_liftover_branches_sorted") into ch_liftover_final
       tuple datasetID, file("select_chrpos_or_snpchrpos__beforeAndAfterFile") into ch_desc_combined_set_after_liftover
       tuple datasetID, file("select_chrpos_or_snpchrpos__removed_not_possible_to_lift_over_for_combined_set_ix") into ch_removed_not_possible_to_lift_over_for_combined_set_ix
-     // file("liftedGRCh38_sorted")
-     // file("rsid_to_add")
-     // file("snpchrpos_unique")
-     // file("snpchrpos_to_add")
-     // file("tmp_test")
+      file("liftedGRCh38_sorted")
+      file("rsid_to_add")
+      file("snpchrpos_unique")
+      file("snpchrpos_to_add")
+      file("tmp_test")
 
       script:
       """
@@ -1863,8 +1870,8 @@ process select_chrpos_or_snpchrpos {
         # If we have an available ancestry reference frequency
         if [ \${avail} == "true" ]; then
           # Join with AF table using chrpos column (keep only rowindex and allele frequency, merge later)
-          awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$2"-"\$3, \$1}' ${sfile} | C_ALL=C sort -t "\$(printf '\t')" -k 1,1 > prep_af_stats__st_1kg_af_ref_sorted
-          awk -vFS="\t" -vOFS="\t" -vcount=\${count} '{print \$1"-"\$2"-"\$3,\$count}' ${ch_kg1000AFGRCh38} | LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" -o 2.2 1.2 - prep_af_stats__st_1kg_af_ref_sorted > prep_af_stats__st_1kg_af_ref_sorted_joined
+          awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$2"-"\$3, \$1}' ${sfile} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')" > prep_af_stats__st_1kg_af_ref_sorted
+          awk -vFS=" " -vOFS="\t" -vcount=\${count} '{print \$1"-"\$2"-"\$3,\$count}' ${ch_kg1000AFGRCh38} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')"| LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" -o 2.2 1.2 - prep_af_stats__st_1kg_af_ref_sorted > prep_af_stats__st_1kg_af_ref_sorted_joined
           echo -e "0\tAF_1KG_CS" > prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx
           LC_ALL=C sort -k 1,1 prep_af_stats__st_1kg_af_ref_sorted_joined >> prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx
         else

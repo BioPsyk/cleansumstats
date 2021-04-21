@@ -1,0 +1,41 @@
+cleansumstats_metafile_date: '2020-04-28'
+cleansumstats_metafile_user: Sonja LaBianca
+cleansumstats_version: 1.0.0-alpha
+col_BETA: Beta
+col_CHR: CHR
+col_EffectAllele: A1
+col_OtherAllele: A2
+col_P: Pval
+col_POS: POS
+col_SE: SE
+col_SNP: MarkerName
+path_pdf: sumstat_5_pmid_27089181.pdf
+path_readMe: sumstat_5_raw_README.txt
+path_sumStats: sumstat_5_raw.gz
+path_supplementary:
+- sumstat_5_pmid_27089181_supp/sumstat_5_pmid_27089181_supp_1.pdf
+- sumstat_5_pmid_27089181_supp/sumstat_5_pmid_27089181_supp_2.xlsx
+stats_Model: linear
+stats_Notes: 'Metaanalysis of 42 studies. OBS: Sample size best guess looking at ST2:
+  total N  298420 - 23andMe N 93454 = 204966'
+stats_TotalN: 204966
+stats_TraitType: quantitative
+study_AccessDate: '2020-04-16'
+study_Ancestry: EUR
+study_Array: meta
+study_FilePortal: https://www.thessgac.org/data
+study_FileURL: http://ssgac.org/documents/SWB_Full.txt.gz
+study_Gender: mixed
+study_ImputePanel: meta
+study_ImputeSoftware: meta
+study_Notes: 'Meta analysis of 29 cohorts. OBS: sumstats excl. 23andMe '
+study_PMID: 27089181
+study_PhasePanel: meta
+study_PhaseSoftware: meta
+study_PhenoCode:
+- EFO:0000000
+study_PhenoDesc: 'Subjective well being (old phenocode: Subjective well being)'
+study_Title: sumstat_5
+study_Use: open
+study_Year: 2016
+
