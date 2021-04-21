@@ -20,7 +20,7 @@ class SumstatHeader {
       "bash", "-c", "zcat ${sumstat_path} | head -n 1"
     ].execute().text
 
-    this.columns = first_line.tokenize('\t')
+    this.columns = first_line.split(/[\s]+/)
     this.sumstat_path = sumstat_path
   }
 
