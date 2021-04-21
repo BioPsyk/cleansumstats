@@ -206,9 +206,9 @@ cp tmp/fake-home/out/1kg_af_ref.sorted.joined tests/example_data/1kgp/generated_
 
 ```
 
-Test a complete run using all example together
+Test a complete run using all example data together
 ```
-# Generate dbsnp cleansumstat reference
+# Full test run
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --input /cleansumstats/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   --kg1000AFGRCh38 /cleansumstats/tests/example_data/1kgp/1kg_example_data.vcf.gz \
