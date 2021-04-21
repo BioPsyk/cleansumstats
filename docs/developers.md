@@ -192,7 +192,7 @@ cp tmp/fake-home/source_data/1kgp/tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joi
 ```
 
 ```
-# Generate dbsnp cleansumstat reference
+# Generate 1kgp cleansumstat reference
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generate1KgAfSNPreference \
   --input /cleansumstats/tests/example_data/1kgp/1kg_example_data.vcf.gz \
@@ -211,7 +211,7 @@ Test a complete run using all example data together
 # Full test run
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --input /cleansumstats/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
-  --kg1000AFGRCh38 /cleansumstats/tests/example_data/1kgp/1kg_example_data.vcf.gz \
+  --kg1000AFGRCh38 /cleansumstats/tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined \
   --libdirdbsnp /cleansumstats/tests/example_data/dbsnp/generated_reference \
   --dev \
   --outdir ./out_run

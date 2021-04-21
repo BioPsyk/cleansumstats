@@ -926,7 +926,7 @@ if (doCompleteCleaningWorkflow){
 
         script:
         """
-        cat $sfile | sstools-raw add-index > add_index_sumstat__added_rowindex_sumstat_file
+        cat $sfile | sstools-raw add-index | LC_ALL=C sort -k1,1 > add_index_sumstat__added_rowindex_sumstat_file
 
         #process before and after stats (the -1 is to remove the header count)
         rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
@@ -1407,11 +1407,11 @@ process select_chrpos_or_snpchrpos {
       tuple datasetID, mfile, file("select_chrpos_or_snpchrpos__combined_set_from_the_three_liftover_branches_sorted") into ch_liftover_final
       tuple datasetID, file("select_chrpos_or_snpchrpos__beforeAndAfterFile") into ch_desc_combined_set_after_liftover
       tuple datasetID, file("select_chrpos_or_snpchrpos__removed_not_possible_to_lift_over_for_combined_set_ix") into ch_removed_not_possible_to_lift_over_for_combined_set_ix
-     // file("liftedGRCh38_sorted")
-     // file("rsid_to_add")
-     // file("snpchrpos_unique")
-     // file("snpchrpos_to_add")
-     // file("tmp_test")
+      file("liftedGRCh38_sorted")
+      file("rsid_to_add")
+      file("snpchrpos_unique")
+      file("snpchrpos_to_add")
+      file("tmp_test")
 
       script:
       """
@@ -1870,8 +1870,8 @@ process select_chrpos_or_snpchrpos {
         # If we have an available ancestry reference frequency
         if [ \${avail} == "true" ]; then
           # Join with AF table using chrpos column (keep only rowindex and allele frequency, merge later)
-          awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$2"-"\$3, \$1}' ${sfile} | C_ALL=C sort -t "\$(printf '\t')" -k 1,1 > prep_af_stats__st_1kg_af_ref_sorted
-          awk -vFS="\t" -vOFS="\t" -vcount=\${count} '{print \$1"-"\$2"-"\$3,\$count}' ${ch_kg1000AFGRCh38} | LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" -o 2.2 1.2 - prep_af_stats__st_1kg_af_ref_sorted > prep_af_stats__st_1kg_af_ref_sorted_joined
+          awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$2"-"\$3, \$1}' ${sfile} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')" > prep_af_stats__st_1kg_af_ref_sorted
+          awk -vFS=" " -vOFS="\t" -vcount=\${count} '{print \$1"-"\$2"-"\$3,\$count}' ${ch_kg1000AFGRCh38} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')"| LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" -o 2.2 1.2 - prep_af_stats__st_1kg_af_ref_sorted > prep_af_stats__st_1kg_af_ref_sorted_joined
           echo -e "0\tAF_1KG_CS" > prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx
           LC_ALL=C sort -k 1,1 prep_af_stats__st_1kg_af_ref_sorted_joined >> prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx
         else
