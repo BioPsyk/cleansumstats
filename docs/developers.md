@@ -1,5 +1,5 @@
 # Developer instructions
-Here we collect developer specific documentation, which never should be expected to be readby a user. Note: in the code there are proposed settings for HPC slurm jobs when the preparations may need parallelization.
+Here we collect developer specific documentation, which never should be expected to be read by a user. Note: in the code there are proposed settings for HPC slurm jobs when the preparations may need parallelization.
 
 ## Creating the ibp-pipeline-lib .jar file
 Build the ibp-pipeline-lib-x.x.x.jar file accroding to instructions at: https://github.com/BioPsyk/ibp-pipeline-lib, Then place it inside the docker/ directory in the cleansumstats repository to be accessible by the docker build script. To facilitate development and because of the small size of the image, we have decided to store the correct version for this repo in the docker/ directory. If in the future this file becomes too large we might exclude it from the repo.
@@ -218,6 +218,12 @@ Test a complete run using all example data together
 
 ```
 
+## Testing
+
+```
+# Run the singularity image using the provided test data
+./scripts/singularity-run.sh /cleansumstats/tests/run-tests.sh
+```
 
 ## Useful information
 
