@@ -814,17 +814,17 @@ if (params.generateMetafile){
   }
 
   process make_metafile_unix_friendly {
-      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/${datasetID}/intermediates/make_metafile_unix_friendly", mode: 'rellink', overwrite: true, enabled: params.dev
 
       input:
-      tuple datasetID, mfile from ch_mfile_user_1
+      tuple datasetID, path("input_mfile_raw") from ch_mfile_user_1
 
       output:
-      tuple datasetID, mfile, file("make_metafile_unix_friendly__mfile_unix_safe") into ch_mfile_unix_safe
+      tuple datasetID, path("input_mfile_raw"), file("output__mfile_unix_safe") into ch_mfile_unix_safe
 
       script:
       """
-      dos2unix -n ${mfile} make_metafile_unix_friendly__mfile_unix_safe
+      make_metafile_unix_friendly.sh input_mfile_raw output__mfile_unix_safe
       """
   }
 
