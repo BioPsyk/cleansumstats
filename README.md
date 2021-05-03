@@ -6,9 +6,9 @@
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.32.0-brightgreen.svg)](https://www.nextflow.io/)
 
 ## Introduction
-The clean sumstats pipeline takes a genomic sumstat file as input(normally output from  GWAS), together with specifiers for chr, pos and available stats. 
+The clean sumstats pipeline takes a genomic sumstat file as input(normally output from  GWAS), together with specifiers for chr, pos and available stats.
 
-Briefly, the pipeline first detects genome build, then map to a dbsnp build to kepp only entries with rsids and ref/alt allele information. Secondly, using information of which allele is A1, the direction of the statistic is assesed. Lastly, an output file is assembled, which then can be directly compared to other similar studies. 
+Briefly, the pipeline first detects genome build, then map to a dbsnp build to kepp only entries with rsids and ref/alt allele information. Secondly, using information of which allele is A1, the direction of the statistic is assesed. Lastly, an output file is assembled, which then can be directly compared to other similar studies.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
@@ -16,7 +16,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 To run a quick test using provided example and test data
 
 ```bash
-# i. Make sure singularity is installed, see [singularity installation](docs/singularity-installation.md) 
+# i. Make sure singularity is installed, see [singularity installation](docs/singularity-installation.md)
 singularity --version
 
 # ii. Download our container image containing all software and code needed
@@ -29,7 +29,7 @@ singularity --version
 
 ```
 
-## SETUP: Add full size reference data
+## Add full size reference data
 In the cleaning all positions are compared to a reference to confirm or add missing annotation.
 
 ### dbsnp reference
@@ -81,7 +81,7 @@ After the reference data paths have been set in the nextflow.config file, the pi
 
 Docker and singularity has to be installed to create an image executable at a HPC
 - docker-install-instructions(todo)
-- [singularity installation](docs/singularity-installation.md) 
+- [singularity installation](docs/singularity-installation.md)
 
 ### build images
 
@@ -117,4 +117,3 @@ As an extra failsafe when updating the code, we have added unit and e2e tests, w
 ## Credits
 
 cleansumstats was originally written by Jesper R. Gådin
-
