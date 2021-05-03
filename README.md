@@ -8,7 +8,7 @@
 ## Introduction
 The clean sumstats pipeline takes a genomic sumstat file as input(normally output from  GWAS), together with specifiers for chr, pos and available stats.
 
-Briefly, the pipeline first detects genome build, then map to a dbsnp build to kepp only entries with rsids and ref/alt allele information. Secondly, using information of which allele is A1, the direction of the statistic is assesed. Lastly, an output file is assembled, which then can be directly compared to other similar studies.
+Briefly, the pipeline first detects genome build, then map to a dbsnp build to keep only entries with rsids and ref/alt allele information. Secondly, using information of which allele is A1, the direction of the statistic is assesed. Lastly, an output file is assembled, which then can be directly compared to other similar studies.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
@@ -95,7 +95,7 @@ If you are a developer or don't want to download the image from dockerhub, it is
 ./scripts/singularity-build.sh
 ```
 
-The general idea of first use docker and then singularity is to facilitate how docker uses layers to speed up development. From that docker image, it is easy to create a singularity image, often required by HPCs. The created singulariy image goes to the 'tmp/' folder.
+The general idea of first use docker and then singularity is to facilitate how docker uses layers to speed up build speed, and as a consequence of that, development is also sped up. From the created docker image, it is easy to create a singularity image, which often required by HPCs, as they usually are incompatible with the Docker deamon. The created singulariy image goes to the 'tmp/' folder.
 
 ### Use the docker or singulariy image to run the internal test suit
 
