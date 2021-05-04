@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-test_script="prepare_dbsnp_mapping_for_rsid"
+test_script="remove_duplicated_rsid_before_liftmap"
 initial_dir=$(pwd)"/${test_script}"
 curr_case=""
 
@@ -32,12 +32,13 @@ function _check_results {
 
 function _run_script {
   snpExists=$1
-  colSNP=$2
+  filterType=$2
 
-  "${test_script}.sh" ./input.tsv ${snpExists} ${colSNP} ./observed-result1.tsv ./observed-result2.tsv
+  "${test_script}.sh" ./input.tsv ${snpExists} ${filterType} ./observed-result1.tsv ./observed-result2.tsv ./observed-result3.tsv
 
   _check_results ./observed-result1.tsv ./expected-result1.tsv
   _check_results ./observed-result2.tsv ./expected-result2.tsv
+  _check_results ./observed-result3.tsv ./expected-result3.tsv
 
   echo "- [OK] ${curr_case}"
 
@@ -53,33 +54,42 @@ echo ">> Test ${test_script}"
 #---------------------------------------------------------------------------------
 # Check that the return \r characters are removed
 
-_setup "Split into rs and snpchros file"
+_setup "Keep only first occurence for each rsid key"
 
 cat <<EOF > ./input.tsv
-0	SNP	CHR	BP	A1	A2	FREQ_A1	EFFECT_A1	SE	P
-1	rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.0141	0.2648
-10	rs6463169	chr7	42980893	T	C	0.825	-0.0219	0.0171	0.2012
-100	rs6831643	chr4	99833465	T	C	0.669	-0.0321	0.0137	0.0193
-1000	chr2:29092758	chr2	29092758	A	G	0.183	-0.0189	0.0155	0.2226
-1001	chr4:100801356	chr4	100801356	T	C	0.958	0.0319	0.0264	0.2265
-1002	rs12709653	chr18	27735538	A	G	0.775	-0.0142	0.0142	0.3176
+RSID	0
+rs1000014	817
+rs1001127	710
+rs10014954	823
+rs10021082	1001
+rs10021082	1063
+rs10025483	1122
+rs1003001	1261
+rs10032088	1323
+rs10034756	1433
 EOF
 
 cat <<EOF > ./expected-result1.tsv
 RSID	0
-rs6439928	1
-rs6463169	10
-rs6831643	100
-rs12709653	1002
+rs1000014	817
+rs1001127	710
+rs10014954	823
+rs10021082	1001
+rs10025483	1122
+rs1003001	1261
+rs10032088	1323
+rs10034756	1433
 EOF
 
 cat <<EOF > ./expected-result2.tsv
-Markername	0
-chr2:29092758	1000
-chr4:100801356	1001
+1063	removed_duplicated_rows_dbsnpkeys
 EOF
 
-_run_script "true" "SNP"
+cat <<EOF > ./expected-result3.tsv
+duplicated_dbsnpkey
+EOF
+
+_run_script "true" "duplicated_keys"
 
 #---------------------------------------------------------------------------------
 # Next case

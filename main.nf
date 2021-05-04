@@ -1026,26 +1026,20 @@ if (doCompleteCleaningWorkflow){
         tuple datasetID, mfile, rsidprep, snpExists from ch_liftover_33
 
         output:
-        tuple datasetID, mfile, file("remove_duplicated_rsid_before_liftmap__gb_unique_rows"), snpExists into ch_liftover_3333
-        //tuple datasetID, file("remove_duplicated_rsid_before_liftmap__desc_removed_duplicated_rows") into ch_removed_rows_before_liftover_rsids
-        tuple datasetID, file("remove_duplicated_rsid_before_liftmap__removed_duplicated_rows") into ch_removed_rows_before_liftover_ix_rsids
-        file("remove_duplicated_rsid_before_liftmap__beforeLiftoverFiltering_executionorder")
+        tuple datasetID, mfile, file("gb_unique_rows_2"), snpExists into ch_liftover_3333
+        //tuple datasetID, file("desc_removed_duplicated_rows_2") into ch_removed_rows_before_liftover_rsids
+        tuple datasetID, file("removed_duplicated_rows_2") into ch_removed_rows_before_liftover_ix_rsids
+        file("beforeLiftoverFiltering_executionorder_2")
 
         script:
+        out1="gb_unique_rows_2"
+        out2="removed_duplicated_rows_2"
+        out3="beforeLiftoverFiltering_executionorder_2"
         """
-        if [ "${snpExists}" == "true" ]
-        then
-          filter_before_liftover.sh $rsidprep ${beforeLiftoverFilter} "remove_duplicated_rsid_before_liftmap__"
-        else
-          # Make empty file (should not have header)
-          touch remove_duplicated_rsid_before_liftmap__removed_duplicated_rows
-          touch remove_duplicated_rsid_before_liftmap__gb_unique_rows
-          touch remove_duplicated_rsid_before_liftmap__beforeLiftoverFiltering_executionorder
-        fi
+        remove_duplicated_rsid_before_liftmap.sh $rsidprep $snpExists $beforeLiftoverFilter $out1 $out2 $out3
 
         """
     }
-
 
     process maplift_dbsnp_GRCh38_rsid {
 

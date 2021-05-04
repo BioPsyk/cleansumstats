@@ -32,9 +32,9 @@ function _check_results {
 }
 
 function _run_script {
-  "${test_script}.sh" ./input.yaml > ./observed-result.yaml
+  "${test_script}.sh" ./input.tsv > ./observed-result.tsv
 
-  _check_results ./observed-result.yaml ./expected-result.yaml
+  _check_results ./observed-result.tsv ./expected-result.tsv
 
   cd "${initial_dir}"
 }
@@ -50,7 +50,7 @@ echo ">> Test ${test_script}"
 
 _setup "Add index and sort LC_ALL=C"
 
-cat <<EOF > ./input.yaml
+cat <<EOF > ./input.tsv
 SNP	CHR	BP	A1	A2	FREQ_A1	EFFECT_A1	SE	P
 rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.0141	0.2648
 rs6463169	chr7	42980893	T	C	0.825	-0.0219	0.0171	0.2012
@@ -64,7 +64,7 @@ rs12754538	chr1	8408079	T	C	0.308	-6e-04	0.015	0.9663
 rs12755429	chr1	31361128	T	C	0.802	0.0075	0.0171	0.6612
 EOF
 
-cat <<EOF > ./expected-result.yaml
+cat <<EOF > ./expected-result.tsv
 0	SNP	CHR	BP	A1	A2	FREQ_A1	EFFECT_A1	SE	P
 1	rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.0141	0.2648
 10	rs12755429	chr1	31361128	T	C	0.802	0.0075	0.0171	0.6612
