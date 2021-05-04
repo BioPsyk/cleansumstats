@@ -912,7 +912,7 @@ if (params.generateMetafile){
 
 if (doCompleteCleaningWorkflow){
 
-    process add_index_sumstat {
+    process add_sorted_rowindex_to_sumstat {
 
         input:
         tuple datasetID, sfile from ch_sfile_ok
@@ -926,7 +926,7 @@ if (doCompleteCleaningWorkflow){
 
         script:
         """
-        cat $sfile | sstools-raw add-index | LC_ALL=C sort -k1,1 > add_index_sumstat__added_rowindex_sumstat_file
+        add_sorted_rowindex_to_sumstat.sh $sfile > add_index_sumstat__added_rowindex_sumstat_file
 
         #process before and after stats (the -1 is to remove the header count)
         rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
