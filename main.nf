@@ -1276,7 +1276,6 @@ if (doCompleteCleaningWorkflow){
 
     }
 
-
     process rm_dup_chrpos_before_maplift {
 
         publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
@@ -1286,14 +1285,17 @@ if (doCompleteCleaningWorkflow){
         tuple datasetID, dID2, mfile, chrposprep, gbmax from ch_liftover_3
 
         output:
-        tuple datasetID, dID2, mfile, file("rm_dup_chrpos_before_maplift__gb_unique_rows"), gbmax into ch_liftover_333
+        tuple datasetID, dID2, mfile, file("gb_unique_rows_2"), gbmax into ch_liftover_333
         //tuple datasetID, file("desc_removed_duplicated_rows") into ch_removed_rows_before_liftover_chrpos
-        tuple datasetID, file("rm_dup_chrpos_before_maplift__removed_duplicated_rows") into ch_removed_rows_before_liftover_ix_chrpos
-        file("rm_dup_chrpos_before_maplift__beforeLiftoverFiltering_executionorder")
+        tuple datasetID, file("removed_duplicated_rows_2") into ch_removed_rows_before_liftover_ix_chrpos
+        file("beforeLiftoverFiltering_executionorder_2")
 
         script:
+        out1="gb_unique_rows_2"
+        out2="removed_duplicated_rows_2"
+        out3="beforeLiftoverFiltering_executionorder_2"
         """
-        filter_before_liftover.sh $chrposprep ${beforeLiftoverFilter} "rm_dup_chrpos_before_maplift__"
+        rm_dup_chrpos_before_maplift.sh $chrposprep $beforeLiftoverFilter $out1 $out2 $out3
 
         """
     }
