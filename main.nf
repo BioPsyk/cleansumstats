@@ -990,7 +990,7 @@ if (doCompleteCleaningWorkflow){
 
     process prepare_dbsnp_mapping_for_rsid {
 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/prepare_dbsnp_mapping_for_rsid", mode: 'rellink', overwrite: true, enabled: params.dev
 
         input:
         tuple datasetID, mfile, sfile, chrposExists, snpExists, pointsToDifferentCols from ch_present_markers_1
@@ -1005,17 +1005,10 @@ if (doCompleteCleaningWorkflow){
         """
         dID2="liftover_branch_markername_chrpos"
 
-        echo -e "0\tRSID" > prepare_dbsnp_mapping_for_rsid__db_maplift
-        echo -e "0\tMarkername" > prepare_dbsnp_mapping_for_rsid__gb_lift2
+        Sx="\$(grep "^col_SNP:" ${mfile})"
+        colSNP="\$(echo "\${Sx#*: }")"
 
-        if [ "${snpExists}" == "true" ]
-        then
-          Sx="\$(grep "^col_SNP:" $mfile)"
-          colSNP="\$(echo "\${Sx#*: }")"
-          # Select columns and then split in one rs file and one snpchrpos file
-          cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colSNP}" -n"0,RSID" | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1}' | awk -vFS="\t" -vOFS="\t" 'NR>1{if(\$1 ~ /^rs.*/){ print \$0 }else{ print \$0 >> "prepare_dbsnp_mapping_for_rsid__gb_lift2" }}' >> prepare_dbsnp_mapping_for_rsid__db_maplift
-        fi
-        # Use the empty header data to continue with, which should make this branch quick
+        prepare_dbsnp_mapping_for_rsid.sh ${sfile} ${snpExists} \${colSNP} prepare_dbsnp_mapping_for_rsid__db_maplift prepare_dbsnp_mapping_for_rsid__gb_lift2
 
         # Process before and after stats
         rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
