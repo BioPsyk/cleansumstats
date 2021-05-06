@@ -223,6 +223,9 @@ Test a complete run using all example data together
 ```
 # Run the singularity image using the provided test data
 ./scripts/singularity-run.sh /cleansumstats/tests/run-tests.sh
+
+# Or if you want more speed, use the docker image and run only the unit tests
+./scripts/docker-run.sh /cleansumstats/tests/run-unit-tests.sh
 ```
 
 ## Useful information

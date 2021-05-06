@@ -1002,13 +1002,13 @@ if (doCompleteCleaningWorkflow){
         //tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_1
 
         script:
+        def metadata = session.get_metadata(datasetID)
         """
         dID2="liftover_branch_markername_chrpos"
 
-        Sx="\$(grep "^col_SNP:" ${mfile})"
-        colSNP="\$(echo "\${Sx#*: }")"
+        colSNP="${metadata.col_SNP ?: "missing"}"
 
-        prepare_dbsnp_mapping_for_rsid.sh ${sfile} ${snpExists} \${colSNP} prepare_dbsnp_mapping_for_rsid__db_maplift prepare_dbsnp_mapping_for_rsid__gb_lift2
+        prepare_dbsnp_mapping_for_rsid.sh ${sfile} ${snpExists} prepare_dbsnp_mapping_for_rsid__db_maplift prepare_dbsnp_mapping_for_rsid__gb_lift2 \${colSNP}
 
         # Process before and after stats
         rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
@@ -1016,6 +1016,8 @@ if (doCompleteCleaningWorkflow){
         echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
         """
     }
+        //Sx="\$(grep "^col_SNP:" ${mfile})"
+        //colSNP="\$(echo "\${Sx#*: }")"
 
     process remove_duplicated_rsid_before_liftmap {
 
