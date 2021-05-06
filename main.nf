@@ -814,17 +814,17 @@ if (params.generateMetafile){
   }
 
   process make_metafile_unix_friendly {
-      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/${datasetID}/intermediates/make_metafile_unix_friendly", mode: 'rellink', overwrite: true, enabled: params.dev
 
       input:
-      tuple datasetID, mfile from ch_mfile_user_1
+      tuple datasetID, path("input_mfile_raw") from ch_mfile_user_1
 
       output:
-      tuple datasetID, mfile, file("make_metafile_unix_friendly__mfile_unix_safe") into ch_mfile_unix_safe
+      tuple datasetID, path("input_mfile_raw"), file("output__mfile_unix_safe") into ch_mfile_unix_safe
 
       script:
       """
-      dos2unix -n ${mfile} make_metafile_unix_friendly__mfile_unix_safe
+      make_metafile_unix_friendly.sh input_mfile_raw output__mfile_unix_safe
       """
   }
 
@@ -912,7 +912,7 @@ if (params.generateMetafile){
 
 if (doCompleteCleaningWorkflow){
 
-    process add_index_sumstat {
+    process add_sorted_rowindex_to_sumstat {
 
         input:
         tuple datasetID, sfile from ch_sfile_ok
@@ -926,7 +926,7 @@ if (doCompleteCleaningWorkflow){
 
         script:
         """
-        cat $sfile | sstools-raw add-index | LC_ALL=C sort -k1,1 > add_index_sumstat__added_rowindex_sumstat_file
+        add_sorted_rowindex_to_sumstat.sh $sfile > add_index_sumstat__added_rowindex_sumstat_file
 
         #process before and after stats (the -1 is to remove the header count)
         rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
@@ -990,7 +990,7 @@ if (doCompleteCleaningWorkflow){
 
     process prepare_dbsnp_mapping_for_rsid {
 
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+        publishDir "${params.outdir}/${datasetID}/intermediates/prepare_dbsnp_mapping_for_rsid", mode: 'rellink', overwrite: true, enabled: params.dev
 
         input:
         tuple datasetID, mfile, sfile, chrposExists, snpExists, pointsToDifferentCols from ch_present_markers_1
@@ -1002,20 +1002,13 @@ if (doCompleteCleaningWorkflow){
         //tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_1
 
         script:
+        def metadata = session.get_metadata(datasetID)
         """
         dID2="liftover_branch_markername_chrpos"
 
-        echo -e "0\tRSID" > prepare_dbsnp_mapping_for_rsid__db_maplift
-        echo -e "0\tMarkername" > prepare_dbsnp_mapping_for_rsid__gb_lift2
+        colSNP="${metadata.col_SNP ?: "missing"}"
 
-        if [ "${snpExists}" == "true" ]
-        then
-          Sx="\$(grep "^col_SNP:" $mfile)"
-          colSNP="\$(echo "\${Sx#*: }")"
-          # Select columns and then split in one rs file and one snpchrpos file
-          cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colSNP}" -n"0,RSID" | awk -vFS="\t" -vOFS="\t" '{print \$2,\$1}' | awk -vFS="\t" -vOFS="\t" 'NR>1{if(\$1 ~ /^rs.*/){ print \$0 }else{ print \$0 >> "prepare_dbsnp_mapping_for_rsid__gb_lift2" }}' >> prepare_dbsnp_mapping_for_rsid__db_maplift
-        fi
-        # Use the empty header data to continue with, which should make this branch quick
+        prepare_dbsnp_mapping_for_rsid.sh ${sfile} ${snpExists} prepare_dbsnp_mapping_for_rsid__db_maplift prepare_dbsnp_mapping_for_rsid__gb_lift2 \${colSNP}
 
         # Process before and after stats
         rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
@@ -1023,6 +1016,8 @@ if (doCompleteCleaningWorkflow){
         echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
         """
     }
+        //Sx="\$(grep "^col_SNP:" ${mfile})"
+        //colSNP="\$(echo "\${Sx#*: }")"
 
     process remove_duplicated_rsid_before_liftmap {
 
@@ -1033,26 +1028,20 @@ if (doCompleteCleaningWorkflow){
         tuple datasetID, mfile, rsidprep, snpExists from ch_liftover_33
 
         output:
-        tuple datasetID, mfile, file("remove_duplicated_rsid_before_liftmap__gb_unique_rows"), snpExists into ch_liftover_3333
-        //tuple datasetID, file("remove_duplicated_rsid_before_liftmap__desc_removed_duplicated_rows") into ch_removed_rows_before_liftover_rsids
-        tuple datasetID, file("remove_duplicated_rsid_before_liftmap__removed_duplicated_rows") into ch_removed_rows_before_liftover_ix_rsids
-        file("remove_duplicated_rsid_before_liftmap__beforeLiftoverFiltering_executionorder")
+        tuple datasetID, mfile, file("gb_unique_rows_2"), snpExists into ch_liftover_3333
+        //tuple datasetID, file("desc_removed_duplicated_rows_2") into ch_removed_rows_before_liftover_rsids
+        tuple datasetID, file("removed_duplicated_rows_2") into ch_removed_rows_before_liftover_ix_rsids
+        file("beforeLiftoverFiltering_executionorder_2")
 
         script:
+        out1="gb_unique_rows_2"
+        out2="removed_duplicated_rows_2"
+        out3="beforeLiftoverFiltering_executionorder_2"
         """
-        if [ "${snpExists}" == "true" ]
-        then
-          filter_before_liftover.sh $rsidprep ${beforeLiftoverFilter} "remove_duplicated_rsid_before_liftmap__"
-        else
-          # Make empty file (should not have header)
-          touch remove_duplicated_rsid_before_liftmap__removed_duplicated_rows
-          touch remove_duplicated_rsid_before_liftmap__gb_unique_rows
-          touch remove_duplicated_rsid_before_liftmap__beforeLiftoverFiltering_executionorder
-        fi
+        remove_duplicated_rsid_before_liftmap.sh $rsidprep $snpExists $beforeLiftoverFilter $out1 $out2 $out3
 
         """
     }
-
 
     process maplift_dbsnp_GRCh38_rsid {
 
@@ -1289,7 +1278,6 @@ if (doCompleteCleaningWorkflow){
 
     }
 
-
     process rm_dup_chrpos_before_maplift {
 
         publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
@@ -1299,14 +1287,17 @@ if (doCompleteCleaningWorkflow){
         tuple datasetID, dID2, mfile, chrposprep, gbmax from ch_liftover_3
 
         output:
-        tuple datasetID, dID2, mfile, file("rm_dup_chrpos_before_maplift__gb_unique_rows"), gbmax into ch_liftover_333
+        tuple datasetID, dID2, mfile, file("gb_unique_rows_2"), gbmax into ch_liftover_333
         //tuple datasetID, file("desc_removed_duplicated_rows") into ch_removed_rows_before_liftover_chrpos
-        tuple datasetID, file("rm_dup_chrpos_before_maplift__removed_duplicated_rows") into ch_removed_rows_before_liftover_ix_chrpos
-        file("rm_dup_chrpos_before_maplift__beforeLiftoverFiltering_executionorder")
+        tuple datasetID, file("removed_duplicated_rows_2") into ch_removed_rows_before_liftover_ix_chrpos
+        file("beforeLiftoverFiltering_executionorder_2")
 
         script:
+        out1="gb_unique_rows_2"
+        out2="removed_duplicated_rows_2"
+        out3="beforeLiftoverFiltering_executionorder_2"
         """
-        filter_before_liftover.sh $chrposprep ${beforeLiftoverFilter} "rm_dup_chrpos_before_maplift__"
+        rm_dup_chrpos_before_maplift.sh $chrposprep $beforeLiftoverFilter $out1 $out2 $out3
 
         """
     }
