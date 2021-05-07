@@ -29,8 +29,14 @@ function autoRegexpFromMeta(){
     echo "Error: cant find colType" 1>&2
   fi
 
+  >&2 echo "colVal: ${colTypeCol}"
+  >&2 echo "colVal: ${colVal}"
+
   #detect inputtype using regexp on column
+  >&2 cat ${ssfile} | sstools-utils ad-hoc-do -k "${colVal}" -n"Val" | head -n2
+
   val=$(cat ${ssfile} | sstools-utils ad-hoc-do -k "${colVal}" -n"Val" | head -n2 | tail -n1)
+  >&2 echo "val: ${val}"
 
   function colTypeFound(){
     if echo "${2}" | grep -Pwq "${1}"

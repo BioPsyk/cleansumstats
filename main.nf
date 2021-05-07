@@ -1112,9 +1112,18 @@ if (doCompleteCleaningWorkflow){
       def metadata = session.get_metadata(datasetID)
 
       """
-      colCHR="${metadata.col_CHR ?: "missing"}"
-     
-      reformat_chromosome_information.sh ${sfile}
+      # Check branch
+      if [${dID2} == "liftover_branch_chrpos"] ; then
+        chrCol="chr"
+      else if [${dID2} == "liftover_branch_markername_chrpos"] ;then
+        chrCol="markername"
+      fi
+      
+      #colCHR="${metadata.col_CHR ?: "missing"}"
+      colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "\${chrCol}")
+      echo \${colCHR}
+
+      reformat_chromosome_information.sh ${sfile} \${colCHR} prep_sfile_forced_sex_chromosome_format
 
       # Process before and after stats (the -1 is to remove the header count)
       rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
