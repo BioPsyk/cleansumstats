@@ -1006,9 +1006,7 @@ if (doCompleteCleaningWorkflow){
         def metadata = session.get_metadata(datasetID)
         """
         dID2="liftover_branch_markername_chrpos"
-
         colSNP="${metadata.col_SNP ?: "missing"}"
-
         prepare_dbsnp_mapping_for_rsid.sh ${sfile} ${snpExists} prepare_dbsnp_mapping_for_rsid__db_maplift prepare_dbsnp_mapping_for_rsid__gb_lift2 \${colSNP}
 
         # Process before and after stats
@@ -1017,8 +1015,6 @@ if (doCompleteCleaningWorkflow){
         echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
         """
     }
-        //Sx="\$(grep "^col_SNP:" ${mfile})"
-        //colSNP="\$(echo "\${Sx#*: }")"
 
     process remove_duplicated_rsid_before_liftmap {
 
@@ -1103,9 +1099,6 @@ if (doCompleteCleaningWorkflow){
 
       output:
       tuple datasetID, dID2, mfile, file("prep_sfile_forced_sex_chromosome_format") into ch_chromosome_fixed
-     // path("new_chr_sex_format")
-     // path("new_chr_sex_format2")
-     // path("new_chr_sex_format3")
       //tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_2
       tuple datasetID, env(rowsAfter) into ch_rowsAfter_number_of_lines
 
@@ -1114,11 +1107,7 @@ if (doCompleteCleaningWorkflow){
 
       """
       map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func
-      cat adhoc_func
-
       colCHR="\$(cat adhoc_func)"
-      echo \${colCHR}
-
       reformat_chromosome_information.sh ${sfile} \${colCHR} prep_sfile_forced_sex_chromosome_format
 
       # Process before and after stats (the -1 is to remove the header count)
@@ -1127,21 +1116,6 @@ if (doCompleteCleaningWorkflow){
       echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
       """
     }
-
-      //echo "${dID2}"
-      //echo "Hej2"
-      //if [ "${dID2}" == "liftover_branch_chrpos" ] ; 
-      //then
-      //  where_CHR="${metadata.col_CHR ?: "missing"}"
-      //else if [ "${dID2}" == "liftover_branch_markername_chrpos" ] ;
-      //then
-      //  where_CHR="${metadata.col_SNP ?: "missing"}"
-      //  echo "Hej1"
-      //else
-      //  >&2 echo "no branch has this name"
-      //fi
-      //echo "Hej"
-      //echo "\${where_CHR}"
 
     ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
 
@@ -1560,29 +1534,15 @@ process select_chrpos_or_snpchrpos {
         tuple datasetID, file("allele_correction_A1_A2__desc_filtered_allele-pairs_with_dbsnp_as_reference") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
 
         script:
+        def metadata = session.get_metadata(datasetID)
+
         """
-        echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > allele_correction_A1_A2__acorrected
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "effallele" "Markername" > adhoc_func1
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "altallele" "Markername" > adhoc_func2
+        colA1="\$(cat adhoc_func1)"
+        colA2="\$(cat adhoc_func2)"
 
-        #init some the files collecting variants removed because of allele composition
-        touch removed_notGCTA
-        touch removed_indel
-        touch removed_hom
-        touch removed_palin
-        touch removed_notPossPair
-        touch removed_notExpA2
-
-        colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
-        colA2=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "altallele")
-        cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}|\${colA2}" -n"0,A1,A2" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 1.3 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${mapped} | tail -n+2 | sstools-eallele correction -f - >> allele_correction_A1_A2__acorrected
-
-        #only keep the index to prepare for the file with all removed lines
-        touch allele_correction_A1_A2__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"notGCTA"}' removed_notGCTA >> allele_correction_A1_A2__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"indel"}' removed_indel >> allele_correction_A1_A2__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"hom"}' removed_hom >> allele_correction_A1_A2__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"palin"}' removed_palin >> allele_correction_A1_A2__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"notPossPair"}' removed_notPossPair >> allele_correction_A1_A2__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"notExpA2"}' removed_notExpA2 >> allele_correction_A1_A2__removed_allele_filter_ix
+        allele_correction.sh ${sfile} ${mapped} colA1 colA2 allele_correction_A1_A2__acorrected allele_correction_A1_A2__removed_allele_filter_ix
 
         #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
         rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
