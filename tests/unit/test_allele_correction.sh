@@ -119,4 +119,5 @@ EOF
 _run_script "A1" "A2"
 
 #---------------------------------------------------------------------------------
-# Allele correction - a lot of filtering cases to test when you get an opportunity write the tests
+# Allele correction - case 3
+

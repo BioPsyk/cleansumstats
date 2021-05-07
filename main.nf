@@ -1558,7 +1558,7 @@ process select_chrpos_or_snpchrpos {
         colA1="\$(cat adhoc_func1)"
         colA2="\$(cat adhoc_func2)"
 
-        allele_correction.sh ${sfile} ${mapped} colA1 colA2 allele_correction_A1_A2__acorrected allele_correction_A1_A2__removed_allele_filter_ix
+        allele_correction.sh ${sfile} ${mapped} "\${colA1}" "\${colA2}" allele_correction_A1_A2__acorrected allele_correction_A1_A2__removed_allele_filter_ix
 
         #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
         rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
