@@ -6,6 +6,7 @@ test_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export PROJECT_DIR=$(dirname "${test_dir}")
 export PATH="${PATH}:${PROJECT_DIR}/bin"
+export ch_regexp_lexicon="${PROJECT_DIR}/assets/map_regexp_and_adhocfunction.txt"
 
 tmp_dir=$(mktemp -d)
 

@@ -985,6 +985,7 @@ if (doCompleteCleaningWorkflow){
 
         """
     }
+    // cat $sfile | sstools-utils ad-hoc-do -k "${colCHR}|0" -n"Markername,0" > is_chrpos_different_from_snp_and_assign_dID2__prep_chrpos
 
     // LIFTOVER BRANCH 1
 
@@ -1095,13 +1096,13 @@ if (doCompleteCleaningWorkflow){
 
     //reformat_X_Y_XY_and_MT_and_remove_noninterpretables
     process reformat_chromosome_information {
-      publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/${datasetID}/intermediates/reformat_chromosome_information/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
 
       input:
       tuple datasetID, dID2, mfile, sfile, chrposexist from ch_liftover_snpchrpos_chrpos_mixed
 
       output:
-      tuple datasetID, dID2, mfile, file("reformat_chromosome_information__prep_sfile_forced_sex_chromosome_format") into ch_chromosome_fixed
+      tuple datasetID, dID2, mfile, file("prep_sfile_forced_sex_chromosome_format") into ch_chromosome_fixed
      // path("new_chr_sex_format")
      // path("new_chr_sex_format2")
      // path("new_chr_sex_format3")
@@ -1112,38 +1113,35 @@ if (doCompleteCleaningWorkflow){
       def metadata = session.get_metadata(datasetID)
 
       """
-      colCHR="${metadata.col_CHR ?: "missing"}"
+      map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func
+      cat adhoc_func
 
-      # Check number of rows in file
-      nrrows="\$(wc -l ${sfile})"
+      colCHR="\$(cat adhoc_func)"
+      echo \${colCHR}
 
-      # If only header row, then do nothing
-      if [ "\${nrrows}" == "1" ]
-      then
-        # Will just forward the header, as the header should be the only thing present if this is true
-        cat ${sfile}  > prep_sfile_forced_sex_chromosome_format
-      else
-        cat $sfile | sstools-utils ad-hoc-do -k "0|funx_force_sex_chromosomes_format(\${colCHR})" -n"0,\${colCHR}" > new_chr_sex_format
-
-        # Remove sex formats of unknown origin
-        colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
-        echo "\${colCHR}" > gb_ad-hoc-do_funx_CHR_sex_chrom_filter
-        cat new_chr_sex_format | sstools-utils ad-hoc-do -k "0|\${colCHR}" -n"0,CHR" | awk -vFS="\t" -vOFS="\t" 'BEGIN{getline; print \$0}; {if(\$2 > 0 && \$2 < 27){ print \$1, \$2 }}' > new_chr_sex_format2
-        #use the index to remove everything no part of chr numers 1-26 but keep original format
-        LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 -1 1 -2 1 new_chr_sex_format new_chr_sex_format2 > new_chr_sex_format3
-
-        # Replace (if bp or allele info is in the same column it will be kept, as the function above only replaces the chr info part)
-        head -n1 $sfile > header
-        to_keep_from_join="\$(awk -vFS="\t" -vobj=\${colCHR} '{for (i=1; i<=NF; i++){if(obj==\$i){print "2."2}else{print "1."i}}}' header)"
-        LC_ALL=C join -t "\$(printf '\t')" -o \${to_keep_from_join} -1 1 -2 1 $sfile new_chr_sex_format3 > reformat_chromosome_information__prep_sfile_forced_sex_chromosome_format
-      fi
+      reformat_chromosome_information.sh ${sfile} \${colCHR} prep_sfile_forced_sex_chromosome_format
 
       # Process before and after stats (the -1 is to remove the header count)
       rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
-      rowsAfter="\$(wc -l reformat_chromosome_information__prep_sfile_forced_sex_chromosome_format | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l prep_sfile_forced_sex_chromosome_format | awk '{print \$1-1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
       """
     }
+
+      //echo "${dID2}"
+      //echo "Hej2"
+      //if [ "${dID2}" == "liftover_branch_chrpos" ] ; 
+      //then
+      //  where_CHR="${metadata.col_CHR ?: "missing"}"
+      //else if [ "${dID2}" == "liftover_branch_markername_chrpos" ] ;
+      //then
+      //  where_CHR="${metadata.col_SNP ?: "missing"}"
+      //  echo "Hej1"
+      //else
+      //  >&2 echo "no branch has this name"
+      //fi
+      //echo "Hej"
+      //echo "\${where_CHR}"
 
     ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
 

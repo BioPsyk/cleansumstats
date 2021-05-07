@@ -74,7 +74,7 @@ WORKDIR /cleansumstats
 #---------------------------------------------------------------------------------
 # Installing sumstat-tools
 
-ARG SUMSTAT_TOOLS_REVISION="6667f58010f3f083c83bf0126b582e9246fe4a42"
+ARG SUMSTAT_TOOLS_REVISION="845029857"
 
 COPY sumstat-tools.zip .
 

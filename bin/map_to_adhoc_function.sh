@@ -1,9 +1,10 @@
 
 function autoRegexpFromMeta(){
-  allowedfile=$1
-  mapfile=$2
-  ssfile=$3
-  colType=$4
+  allowedfile=${1}
+  ssfile=${2}
+  colType=${3}
+  coltypeFrom=${4}
+
 
   function selRightHand(){
     echo "${1#*: }"
@@ -15,19 +16,21 @@ function autoRegexpFromMeta(){
 
   if [ $colType == "chr" ]; then
     colTypeCol=2
-    colVal="$(selRightHand "$(selColRow "^col_CHR:" ${mapfile})")"
+    #colVal="$(selRightHand "$(selColRow "^col_CHR:" ${mapfile})")"
   elif [ $colType == "bp" ]; then
     colTypeCol=3
-    colVal="$(selRightHand "$(selColRow "^col_POS:" ${mapfile})")"
+    #colVal="$(selRightHand "$(selColRow "^col_POS:" ${mapfile})")"
   elif [ $colType == "effallele" ]; then
     colTypeCol=4
-    colVal="$(selRightHand "$(selColRow "^col_EffectAllele:" ${mapfile})")"
+    #colVal="$(selRightHand "$(selColRow "^col_EffectAllele:" ${mapfile})")"
   elif [ $colType == "altallele" ]; then
     colTypeCol=5
-    colVal="$(selRightHand "$(selColRow "^col_OtherAllele:" ${mapfile})")"
+    #colVal="$(selRightHand "$(selColRow "^col_OtherAllele:" ${mapfile})")"
   else
     echo "Error: cant find colType" 1>&2
   fi
+
+  colVal="${coltypeFrom}"
 
   #detect inputtype using regexp on column
   val=$(cat ${ssfile} | sstools-utils ad-hoc-do -k "${colVal}" -n"Val" | head -n2 | tail -n1)
@@ -93,8 +96,8 @@ function autoRegexpFromMeta(){
 
 }
 allowedFile=${1}
-mapfile=${2}
-ssfile=${3}
-colType=${4}
+ssfile=${2}
+colType=${3}
+coltypeFrom=${4}
 
-autoRegexpFromMeta ${allowedFile} ${mapfile} ${ssfile} ${colType}
+autoRegexpFromMeta ${allowedFile} ${ssfile} ${colType} ${coltypeFrom}
