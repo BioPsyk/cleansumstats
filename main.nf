@@ -1104,7 +1104,6 @@ if (doCompleteCleaningWorkflow){
 
       script:
       def metadata = session.get_metadata(datasetID)
-
       """
       map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func
       colCHR="\$(cat adhoc_func)"
@@ -1134,10 +1133,16 @@ if (doCompleteCleaningWorkflow){
         //file("gb_*")
 
         script:
+        def metadata = session.get_metadata(datasetID)
         """
+        colCHR="${metadata.col_CHR ?: "missing"}"
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "\${colCHR}" > adhoc_func1
+        colCHR="\$(cat adhoc_func1)"
 
-        colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
-        colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
+        colPOS="${metadata.col_POS ?: "missing"}"
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "bp" "\${colPOS}" > adhoc_func1
+        colPOS="\$(cat adhoc_func1)"
+
         echo "\${colCHR}" > gb_ad-hoc-do_funx_CHR_${build}
         echo "\${colPOS}" > gb_ad-hoc-do_funx_POS_${build}
 
@@ -1235,10 +1240,16 @@ if (doCompleteCleaningWorkflow){
         //tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos
 
         script:
+        def metadata = session.get_metadata(datasetID)
         """
+        colCHR="${metadata.col_CHR ?: "missing"}"
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "\${colCHR}" > adhoc_func1
+        colCHR="\$(cat adhoc_func1)"
 
-        colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
-        colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
+        colPOS="${metadata.col_POS ?: "missing"}"
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "bp" "\${colPOS}" > adhoc_func1
+        colPOS="\$(cat adhoc_func1)"
+
 
         cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > sort_by_chrpos_before_maplift__gb_lift
 
@@ -1249,6 +1260,8 @@ if (doCompleteCleaningWorkflow){
         """
 
     }
+       // colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
+       // colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
 
     process rm_dup_chrpos_before_maplift {
 
@@ -1594,9 +1607,7 @@ process select_chrpos_or_snpchrpos {
 
         script:
         def metadata = session.get_metadata(datasetID)
-
         """
-        
         colEff="${metadata.col_EffectAllele ?: "missing"}"
         map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "effallele" "\${colEff}" > adhoc_func1
         colA1="\$(cat adhoc_func1)"
