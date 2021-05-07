@@ -20,8 +20,8 @@ echo "==================================================================="
 
 cd "${tmp_dir}"
 
-#for case_path in "${test_dir}/e2e/cases/"*
-for case_path in "${test_dir}/e2e/cases/grch38-all-cols-multiline-chrpos-in-markername-column"
+for case_path in "${test_dir}/e2e/cases/"*
+#for case_path in "${test_dir}/e2e/cases/grch38-all-cols-multiline-chrpos-in-markername-column"
 do
   if [[ -d "${case_path}" ]]
   then

@@ -985,6 +985,7 @@ if (doCompleteCleaningWorkflow){
 
         """
     }
+    // cat $sfile | sstools-utils ad-hoc-do -k "${colCHR}|0" -n"Markername,0" > is_chrpos_different_from_snp_and_assign_dID2__prep_chrpos
 
     // LIFTOVER BRANCH 1
 
@@ -1112,15 +1113,10 @@ if (doCompleteCleaningWorkflow){
       def metadata = session.get_metadata(datasetID)
 
       """
-      # Check branch
-      if [${dID2} == "liftover_branch_chrpos"] ; then
-        chrCol="chr"
-      else if [${dID2} == "liftover_branch_markername_chrpos"] ;then
-        chrCol="markername"
-      fi
-      
-      #colCHR="${metadata.col_CHR ?: "missing"}"
-      colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "\${chrCol}")
+      map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func
+      cat adhoc_func
+
+      colCHR="\$(cat adhoc_func)"
       echo \${colCHR}
 
       reformat_chromosome_information.sh ${sfile} \${colCHR} prep_sfile_forced_sex_chromosome_format
@@ -1131,6 +1127,21 @@ if (doCompleteCleaningWorkflow){
       echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
       """
     }
+
+      //echo "${dID2}"
+      //echo "Hej2"
+      //if [ "${dID2}" == "liftover_branch_chrpos" ] ; 
+      //then
+      //  where_CHR="${metadata.col_CHR ?: "missing"}"
+      //else if [ "${dID2}" == "liftover_branch_markername_chrpos" ] ;
+      //then
+      //  where_CHR="${metadata.col_SNP ?: "missing"}"
+      //  echo "Hej1"
+      //else
+      //  >&2 echo "no branch has this name"
+      //fi
+      //echo "Hej"
+      //echo "\${where_CHR}"
 
     ch_chromosome_fixed.into {ch_chromosome_fixed1; ch_chromosome_fixed2}
 

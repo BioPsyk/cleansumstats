@@ -32,8 +32,9 @@ function _check_results {
 
 function _run_script {
   coltype=${1}
+  coltypeFrom=${2}
 
-  "${test_script}.sh" ${ch_regexp_lexicon} ./input.yaml ./input.tsv "${coltype}" >  ./observed-result1.tsv
+  "${test_script}.sh" ${ch_regexp_lexicon} ./input.tsv "${coltype}" "${coltypeFrom}">  ./observed-result1.tsv
 
   _check_results ./observed-result1.tsv ./expected-result1.tsv
 
@@ -53,14 +54,6 @@ echo ">> Test ${test_script}"
 
 _setup "simple input"
 
-cat <<EOF > ./input.yaml
-col_CHR: CHR
-col_EffectAllele: A1
-col_OtherAllele: A2
-col_POS: BP
-col_SNP: SNP
-EOF
-
 cat <<EOF > ./input.tsv
 0	SNP	CHR	BP	A1	A2	FREQ_A1	EFFECT_A1	SE	P
 1	rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.0141	0.2648
@@ -78,7 +71,7 @@ cat <<EOF > ./expected-result1.tsv
 funx_chrCHR_2_CHR(CHR)
 EOF
 
-_run_script "chr"
+_run_script "chr" "CHR"
 
 #---------------------------------------------------------------------------------
 # Reformat_chromosome_information using mixed markername info
@@ -86,28 +79,18 @@ _run_script "chr"
 _setup "mixed chr rs IDs in markername, chrXX"
 
 
-cat <<EOF > ./input.yaml
-col_CHR: CHR
-col_EffectAllele: A1
-col_OtherAllele: A2
-col_POS: BP
-col_SNP: SNP
-EOF
-
 cat <<EOF > ./input.tsv
 0	SNP	CHR	BP	A1	A2	FREQ_A1	EFFECT_A1	SE	P
-1	rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.0141	0.2648
-1001	rs10021082	chr4	100801356	T	C	0.958	0.0319	0.0264	0.2265
+1001	chr4:100801356	chr4	100801356	T	C	0.958	0.0319	0.0264	0.2265
 1002	chr18:27735538	chr18	27735538	A	G	0.775	-0.0142	0.0142	0.3176
-1003	rs12726220	chr1	150984623	A	G	0.948	-0.0315	0.0277	0.2547
-1005	rs12754538	chr1	8408079	T	C	0.308	-6e-04	0.015	0.9663
+1003	chr1:150984623	chr1	150984623	A	G	0.948	-0.0315	0.0277	0.2547
 EOF
 
 cat <<EOF > ./expected-result1.tsv
-funx_chrCHR_2_CHR(CHR)
+funx_chrCHR_BP_2_CHR(SNP)
 EOF
 
-_run_script "chr"
+_run_script "chr" "SNP"
 
 #---------------------------------------------------------------------------------
 # Reformat_chromosome_information using mixed markername info
@@ -115,25 +98,15 @@ _run_script "chr"
 _setup "mixed chr rs IDs in markername only integers"
 
 
-cat <<EOF > ./input.yaml
-col_CHR: CHR
-col_EffectAllele: A1
-col_OtherAllele: A2
-col_POS: BP
-col_SNP: SNP
-EOF
-
 cat <<EOF > ./input.tsv
 0	SNP	CHR	BP	A1	A2	FREQ_A1	EFFECT_A1	SE	P
-1	rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.0141	0.2648
-1001	rs10021082	chr4	100801356	T	C	0.958	0.0319	0.0264	0.2265
+1001	4:100801356	chr4	100801356	T	C	0.958	0.0319	0.0264	0.2265
 1002	18:27735538	chr18	27735538	A	G	0.775	-0.0142	0.0142	0.3176
-1003	rs12726220	chr1	150984623	A	G	0.948	-0.0315	0.0277	0.2547
-1005	rs12754538	chr1	8408079	T	C	0.308	-6e-04	0.015	0.9663
+1003	1:150984623	chr1	150984623	A	G	0.948	-0.0315	0.0277	0.2547
 EOF
 
 cat <<EOF > ./expected-result1.tsv
-funx_chrCHR_2_CHR(CHR)
+funx_CHR_BP_2_CHR(SNP)
 EOF
 
-_run_script "chr"
+_run_script "chr" "SNP"
