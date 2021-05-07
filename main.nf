@@ -1537,8 +1537,11 @@ process select_chrpos_or_snpchrpos {
         def metadata = session.get_metadata(datasetID)
 
         """
-        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "effallele" "Markername" > adhoc_func1
-        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "altallele" "Markername" > adhoc_func2
+
+        colEff="${metadata.col_EffectAllele ?: "missing"}"
+        colAlt="${metadata.col_OtherAllele ?: "missing"}"
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "effallele" "\${colEff}" > adhoc_func1
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "altallele" "\${colAlt}" > adhoc_func2
         colA1="\$(cat adhoc_func1)"
         colA2="\$(cat adhoc_func2)"
 
@@ -1590,7 +1593,13 @@ process select_chrpos_or_snpchrpos {
         file("allele_correction_A1__mapped2")
 
         script:
+        def metadata = session.get_metadata(datasetID)
+
         """
+        
+        colEff="${metadata.col_EffectAllele ?: "missing"}"
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "effallele" "\${colEff}" > adhoc_func1
+        colA1="\$(cat adhoc_func1)"
 
         #NOTE to use A1 allele only complicates the filtering on possible pairs etc, so we always need a multiallelic filter in how the filter works right now.
         # This is something we should try to accomodate to, so that it is not required.
@@ -1605,7 +1614,6 @@ process select_chrpos_or_snpchrpos {
         touch removed_notPossPair
         touch removed_notExpA2
 
-        colA1=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "effallele")
         cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | tail -n+2 | sstools-eallele correction -f - -a >> allele_correction_A1__acorrected
 
         #only keep the index to prepare for the file with all removed lines
