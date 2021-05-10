@@ -74,14 +74,12 @@ WORKDIR /cleansumstats
 #---------------------------------------------------------------------------------
 # Installing sumstat-tools
 
-ARG SUMSTAT_TOOLS_REVISION="845029857"
-
-COPY sumstat-tools.zip .
+ARG SUMSTAT_TOOLS_REVISION="be12f3b9dea0dbf454a94d7e917e12462acaad11"
 
 # Note: when sumstat-tools becomes a public repository, uncomment these lines and remove the copy above:
-#RUN wget "https://github.com/BioPsyk/sumstat-tools/archive/${SUMSTAT_TOOLS_REVISION}.zip" \
-# --quiet -O sumstat-tools.zip && \
-RUN unzip -q sumstat-tools.zip && \
+RUN wget "https://github.com/BioPsyk/sumstat-tools/archive/${SUMSTAT_TOOLS_REVISION}.zip" \
+  --quiet -O sumstat-tools.zip && \
+  unzip -q sumstat-tools.zip && \
   mv "sumstat-tools-${SUMSTAT_TOOLS_REVISION}" sumstat-tools && \
   rm sumstat-tools.zip
 
