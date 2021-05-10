@@ -570,7 +570,12 @@ if (params.generateMetafile){
       done
 
       # Sort
-      LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_RSID_GRCh38.map > "${ch_dbsnp_RSID_38.baseName}.bed"
+      LC_ALL=C sort -k 1,1 \
+      --parallel 8 \
+      --temporary-directory=tmp \
+      --buffer-size=20G \
+      All_20180418_RSID_GRCh38.map \
+      > "${ch_dbsnp_RSID_38.baseName}.bed"
 
       """
   }
@@ -597,8 +602,15 @@ if (params.generateMetafile){
         cat \${chunk} >> All_20180418_RSID_GRCh38.map
       done
 
+      awk '{print \$4,\$5,\$6,\$7}' All_20180418_RSID_GRCh38.map > merge_tmp
+
       # Sort
-      awk '{print \$4,\$5,\$6,\$7}' All_20180418_RSID_GRCh38.map | LC_ALL=C sort -k 1,1 --parallel 8 > "${ch_dbsnp_38.baseName}.bed"
+      LC_ALL=C sort -k 1,1 \
+      --parallel 8 \
+      --temporary-directory=tmp \
+      --buffer-size=20G \
+      merge_tmp \
+      > "${ch_dbsnp_38.baseName}.bed"
 
       """
   }
@@ -629,10 +641,20 @@ if (params.generateMetafile){
       awk '{print \$5, \$4, \$6, \$7, \$8}' All_20180418_GRCh38_GRCh37_tmp.map > All_20180418_GRCh38_GRCh37.map
 
       # Sort
-      LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh38_GRCh37.map > "${ch_dbsnp_38_37.baseName}.bed"
+      LC_ALL=C sort -k 1,1 \
+      --parallel 8 \
+      --temporary-directory=tmp \
+      --buffer-size=20G \
+      All_20180418_GRCh38_GRCh37.map \
+      > "${ch_dbsnp_38_37.baseName}.bed"
 
       # Sort
-      LC_ALL=C sort -k 1,1 --parallel 8 All_20180418_GRCh37_GRCh38.map > "${ch_dbsnp_37_38.baseName}.bed"
+      LC_ALL=C sort -k 1,1 \
+      --parallel 8 \
+      --temporary-directory=tmp \
+      --buffer-size=20G \
+      All_20180418_GRCh37_GRCh38.map \
+      > "${ch_dbsnp_37_38.baseName}.bed"
 
       """
   }
