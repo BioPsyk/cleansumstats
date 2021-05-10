@@ -48,7 +48,7 @@ srun --mem=400g --ntasks 1 --cpus-per-task 60 --time=3:00:00 --account ibp_pipel
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generateDbSNPreference \
   --input source_data/dbsnp/All_20180418.vcf.gz \
-  --outdir ./out_dbsnp
+  --outdir ./out_dbsnp \
   --libdirdbsnp ./out_dbsnp
 ```
 
@@ -59,10 +59,13 @@ mkdir -p source_data/1kgp
 wget -P source_data/1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz
 wget -P source_data/1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz.tbi
 
+# ii. If you are on a HPC Start your interactive session (below SLURM settings took about 5min to run)
+srun --mem=80g --ntasks 1 --cpus-per-task 5 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
-  --generateDbSNPreference \
+  --generate1KgAfSNPreference \
   --input source_data/1kgp/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz \
-  --outdir ./out_1kgp
+  --outdir ./out_1kgp \
+  --kg1000AFGRCh38 ./out_1kgp
 ```
 
 ## Prepare meta data files
@@ -73,42 +76,19 @@ After the reference data paths have been set in the nextflow.config file, the pi
 
 ```
 
-## Run the cleaning pipeline
+## Run a fully operational cleaning pipeline (Replace example data with your own data to clean)
+This will take longer time compared to the quick-start run as we now use the full >600 million rows dbsnp reference to map our variants to.
 
-
-## Using images
-
-### Pre-requisites
-
-Docker and singularity has to be installed to create an image executable at a HPC
-- docker-install-instructions(todo)
-- [singularity installation](docs/singularity-installation.md)
-
-### build images
-
-If you are a developer or don't want to download the image from dockerhub, it is easy to build a docker image and singularity images using the following code.
-
-```bash
-# Build docker image (tied to your system)
-./scripts/docker-build.sh
-
-# Build singularity image (movable to other systems)
-./scripts/singularity-build.sh
+```
+# ii. If you are on a HPC Start your interactive session (below SLURM settings took about 10min to run)
+srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
+./scripts/singularity-run.sh nextflow run /cleansumstats \
+  --input /cleansumstats/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
+  --outdir ./out_clean \
+  --libdirdbsnp ./out_dbsnp \
+  --kg1000AFGRCh38 ./out_1kgp
 ```
 
-The general idea of first use docker and then singularity is to facilitate how docker uses layers to speed up build speed, and as a consequence of that, development is also sped up. From the created docker image, it is easy to create a singularity image, which often required by HPCs, as they usually are incompatible with the Docker deamon. The created singulariy image goes to the 'tmp/' folder.
-
-### Use the docker or singulariy image to run the internal test suit
-
-As an extra failsafe when updating the code, we have added unit and e2e tests, which can directly be run using the docker image. They should all return ok.
-
-```bash
-# using docker
-./scripts/docker-run.sh /cleansumstats/tests/run-tests.sh
-
-# using singularity
-./scripts/singularity-run.sh /cleansumstats/tests/run-tests.sh
-```
 
 ## More documentation
 - See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
