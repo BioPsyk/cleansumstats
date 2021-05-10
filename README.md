@@ -43,12 +43,13 @@ wget -P source_data/dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b1
 wget -P source_data/dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.tbi
 wget -P source_data/dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz
 
-# ii. If you are on a HPC Start your interactive session (cpus around 40)
+# ii. If you are on a HPC Start your interactive session (below SLURM settings took about 1h to run)
 srun --mem=400g --ntasks 1 --cpus-per-task 60 --time=3:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generateDbSNPreference \
   --input source_data/dbsnp/All_20180418.vcf.gz \
   --outdir ./out_dbsnp
+  --libdirdbsnp ./out_dbsnp
 ```
 
 ### 1000 genomes project reference
