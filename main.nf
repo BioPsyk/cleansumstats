@@ -3,11 +3,11 @@
 /*
 vim: syntax=groovy
 ========================================================================================
-                         nf-core/cleansumstats
+                         cleansumstats
 ========================================================================================
- nf-core/cleansumstats Analysis Pipeline.
+cleansumstats Pipeline.
  #### Homepage / Documentation
- https://github.com/nf-core/cleansumstats
+ https://github.com/BioPsyk/cleansumstats
 ----------------------------------------------------------------------------------------
 */
 
@@ -71,9 +71,6 @@ def helpMessage() {
     Debug:
       --keepIntermediateFiles       Keeps intermediate files, useful for debugging
 
-    AWSBatch options:
-      --awsqueue                    The AWSBatch JobQueue that needs to be set when running on AWSBatch
-      --awsregion                   The AWS Region for your AWS Batch job to run on
     """.stripIndent()
 
 }
@@ -135,31 +132,11 @@ if (params.generateDbSNPreference) {
 ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
 
 
-
-
-// Stage config files
-ch_multiqc_config = file(params.multiqc_config, checkIfExists: true)
-ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
-
-//example from nf-core how to use fasta
-//params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
-//if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
-
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
 custom_runName = params.name
 if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
   custom_runName = workflow.runName
-}
-
-if ( workflow.profile == 'awsbatch') {
-  // AWSBatch sanity checking
-  if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
-  // Check outdir paths to be S3 buckets if running on AWSBatch
-  // related: https://github.com/nextflow-io/nextflow/issues/813
-  if (!params.outdir.startsWith('s3:')) exit 1, "Outdir not on S3 - specify S3 Bucket to run on AWSBatch!"
-  // Prevent trace files to be stored on S3 since S3 does not support rolling files.
-  if (workflow.tracedir.startsWith('s3:')) exit 1, "Specify a local tracedir or run without trace! S3 cannot be used for tracefiles."
 }
 
 
