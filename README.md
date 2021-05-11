@@ -33,8 +33,11 @@ singularity --version
 To run the IBP GDK specific fully configurated and operational pipeline just run
 
 ```
-# i. Run the singularity image using example data
+# i. Start interactive node and prepare output folder
+srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 mkdir output
+
+# ii. Run the singularity image using example data
 ./cleansumstats.sh tests/example_data/sumstat_1/sumstat_1_raw_meta.txt  output
 ```
 
