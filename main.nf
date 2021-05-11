@@ -260,8 +260,8 @@ if (params.generateMetafile){
       tuple basefilename, dbsnpvcf from ch_file
 
       output:
-      file("chunk_*") into ch_dbsnp_split
-      file("dbsnp_GRCh38")
+      path("chunk_*") into ch_dbsnp_split
+      path("dbsnp_GRCh38")
 
       script:
       """
@@ -288,7 +288,7 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_split2
 
       output:
-      tuple cid, file("${cid}_All_20180418_GRCh38.bed") into ch_dbsnp_preformatted
+      tuple cid, path("${cid}_All_20180418_GRCh38.bed") into ch_dbsnp_preformatted
 
       script:
       """
@@ -305,7 +305,7 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_preformatted
 
       output:
-      tuple cid, file("${cid}_All_20180418_GRCh38.bed.noindel") into ch_dbsnp_rmd_indels
+      tuple cid, path("${cid}_All_20180418_GRCh38.bed.noindel") into ch_dbsnp_rmd_indels
 
       script:
       """
@@ -326,7 +326,7 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_indels1
 
       output:
-      tuple cid, file("*") into ch_dbsnp_report_biallelic_mult_alleles
+      tuple cid, path("*") into ch_dbsnp_report_biallelic_mult_alleles
 
       script:
       """
@@ -344,8 +344,8 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_indels2
 
       output:
-      tuple cid, file("${cid}_All_20180418_GRCh38.bed.noindel.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh38
-      file("${cid}_All_20180418_GRCh38.bed.noindel.sorted")
+      tuple cid, path("${cid}_All_20180418_GRCh38.bed.noindel.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh38
+      path("${cid}_All_20180418_GRCh38.bed.noindel.sorted")
 
       script:
       """
@@ -376,8 +376,8 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh38_1
 
       output:
-      tuple cid, file("${cid}_dbsnp_chunk_GRCh37_GRCh38") into ch_dbsnp_lifted_to_GRCh37
-      file("${cid}_dbsnp_chunk_GRCh37")
+      tuple cid, path("${cid}_dbsnp_chunk_GRCh37_GRCh38") into ch_dbsnp_lifted_to_GRCh37
+      path("${cid}_dbsnp_chunk_GRCh37")
 
       script:
       """
@@ -399,8 +399,8 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_lifted_to_GRCh37
 
       output:
-      tuple cid, file("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh37
-      file("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted")
+      tuple cid, path("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh37
+      path("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted")
 
       script:
       """
@@ -427,8 +427,8 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh37
 
       output:
-      tuple cid, file("${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup.chromclean") into ch_dbsnp_rmd_ambig_GRCh37_liftovers
-      file("${cid}_all_chr_types_GRCh37")
+      tuple cid, path("${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup.chromclean") into ch_dbsnp_rmd_ambig_GRCh37_liftovers
+      path("${cid}_all_chr_types_GRCh37")
 
       script:
       """
@@ -451,7 +451,7 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_ambig_GRCh37_liftovers1
 
       output:
-      tuple cid, file("${cid}_All_20180418_liftcoord_GRCh36.bed"), build into ch_dbsnp_lifted_to_GRCh36
+      tuple cid, path("${cid}_All_20180418_liftcoord_GRCh36.bed"), build into ch_dbsnp_lifted_to_GRCh36
 
       script:
       build = "36"
@@ -473,7 +473,7 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_ambig_GRCh37_liftovers2
 
       output:
-      tuple cid, file("${cid}_All_20180418_liftcoord_GRCh35.bed"), build into ch_dbsnp_lifted_to_GRCh35
+      tuple cid, path("${cid}_All_20180418_liftcoord_GRCh35.bed"), build into ch_dbsnp_lifted_to_GRCh35
 
       script:
       build = "35"
@@ -499,8 +499,8 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk, build from ch_dbsnp_lifted_to_GRCh3x
 
       output:
-      tuple build, cid, file("${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh3x
-      file("${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted")
+      tuple build, cid, path("${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh3x
+      path("${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted")
 
       script:
       """
@@ -527,8 +527,8 @@ if (params.generateMetafile){
       tuple build, cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh3x
 
       output:
-      tuple build, cid, file("${cid}_All_20180418_liftcoord_GRCh${build}_GRCh38.bed.sorted.nodup.chromclean") into ch_dbsnp_rmd_ambig_positions_GRCh3x
-      file("${cid}_all_chr_types_GRCh${build}")
+      tuple build, cid, path("${cid}_All_20180418_liftcoord_GRCh${build}_GRCh38.bed.sorted.nodup.chromclean") into ch_dbsnp_rmd_ambig_positions_GRCh3x
+      path("${cid}_all_chr_types_GRCh${build}")
 
       script:
       """
@@ -549,7 +549,7 @@ if (params.generateMetafile){
       tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh38_2
 
       output:
-      file("${cid}_All_20180418_RSID_GRCh38.bed") into ch_dbsnp_rsid_to_GRCh38
+      path("${cid}_All_20180418_RSID_GRCh38.bed") into ch_dbsnp_rsid_to_GRCh38
 
       script:
       """
@@ -564,10 +564,10 @@ if (params.generateMetafile){
       cpus 4
 
       input:
-      file dbsnp_chunks from ch_dbsnp_rsid_to_GRCh38.collect()
+      path dbsnp_chunks from ch_dbsnp_rsid_to_GRCh38.collect()
 
       output:
-      file("${ch_dbsnp_RSID_38.baseName}.bed")
+      path("${ch_dbsnp_RSID_38.baseName}.bed")
 
       script:
       """
@@ -603,7 +603,7 @@ if (params.generateMetafile){
       file dbsnp_chunks from ch_dbsnp_rmd_dup_positions_GRCh38_3.collect()
 
       output:
-      file("${ch_dbsnp_38.baseName}.bed")
+      path("${ch_dbsnp_38.baseName}.bed")
 
       script:
       """
@@ -639,9 +639,9 @@ if (params.generateMetafile){
       file dbsnp_chunks from ch_dbsnp_rmd_ambig_GRCh37_liftovers3.collect()
 
       output:
-      file("${ch_dbsnp_38_37.baseName}.bed")
-      file("${ch_dbsnp_37_38.baseName}.bed")
-      file("*map")
+      path("${ch_dbsnp_38_37.baseName}.bed")
+      path("${ch_dbsnp_37_38.baseName}.bed")
+      path("*map")
 
       script:
       """
@@ -685,11 +685,11 @@ if (params.generateMetafile){
       cpus 4
 
       input:
-      tuple build, cid, file(dbsnp_chunks) from ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped
+      tuple build, cid, path(dbsnp_chunks) from ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped
 
       output:
-      file("*.bed")
-      file("*.map")
+      path("*.bed")
+      path("*.map")
 
       script:
       """
@@ -746,7 +746,7 @@ if (params.generateMetafile){
       tuple basefilename, af1kgvcf from ch_file
 
       output:
-      tuple basefilename, file("1kg_af_ref") into ch_1kg_af_ref
+      tuple basefilename, path("1kg_af_ref") into ch_1kg_af_ref
 
       script:
       """
@@ -764,7 +764,7 @@ if (params.generateMetafile){
       tuple basefilename, ref1kg from ch_1kg_af_ref
 
       output:
-      tuple basefilename, file("1kg_af_ref.flipped") into ch_1kg_af_ref_tosort
+      tuple basefilename, path("1kg_af_ref.flipped") into ch_1kg_af_ref_tosort
 
       script:
       """
@@ -783,7 +783,7 @@ if (params.generateMetafile){
       tuple basefilename, ref1kg from ch_1kg_af_ref_tosort
 
       output:
-      tuple basefilename, file("1kg_af_ref.sorted") into ch_1kg_af_ref_sorted
+      tuple basefilename, path("1kg_af_ref.sorted") into ch_1kg_af_ref_sorted
 
       script:
       """
@@ -800,7 +800,7 @@ if (params.generateMetafile){
       tuple basefilename, ref1kgsorted from ch_1kg_af_ref_sorted
 
       output:
-      tuple basefilename, file("1kg_af_ref.sorted.joined")
+      tuple basefilename, path("1kg_af_ref.sorted.joined")
 
       script:
       """
