@@ -1014,7 +1014,7 @@ if (doCompleteCleaningWorkflow){
       """
     }
 
-   ch_present_markersX=ch_liftover1.combine(ch_present_markers, by: 0)
+   ch_present_markersX=ch_liftover1.join(ch_present_markers, by: 0)
    ch_present_markersX.into { ch_present_markers_1; ch_present_markers_2 }
 
     process is_chrpos_different_from_snp_and_assign_dID2 {
@@ -1253,7 +1253,7 @@ if (doCompleteCleaningWorkflow){
 
 
     ch_rowsAfter_number_of_lines
-      .combine(ch_build_stats_for_failsafe, by: 0)
+      .join(ch_build_stats_for_failsafe, by: 0)
       .set{ ch_failsafe }
 
     process build_warning {
@@ -1282,7 +1282,7 @@ if (doCompleteCleaningWorkflow){
     }
 
     // Add respective sumstat file from the parallell paths
-    ch_liftover_2=ch_known_genome_build.combine(ch_chromosome_fixed2, by: [0,1])
+    ch_liftover_2=ch_known_genome_build.join(ch_chromosome_fixed2, by: [0,1])
 
     process sort_by_chrpos_before_maplift {
         publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
@@ -1557,7 +1557,7 @@ process select_chrpos_or_snpchrpos {
         """
     }
 
-    ch_allele_correction_combine=ch_allele_correction.combine(ch_sfile_on_stream2, by: 0)
+    ch_allele_correction_combine=ch_allele_correction.join(ch_sfile_on_stream2, by: 0)
     ch_allele_correction_combine.into{ ch_allele_correction_combine1; ch_allele_correction_combine2 }
 
     process does_exist_A2 {
@@ -1585,8 +1585,8 @@ process select_chrpos_or_snpchrpos {
     ch_present_A2_br3=ch_present_A2_br.A2missing
 
     //combine each channel with the matching datasetID
-    ch_A2_exists=ch_allele_correction_combine1.combine(ch_present_A2_br2, by: 0)
-    ch_A2_missing=ch_allele_correction_combine2.combine(ch_present_A2_br3, by: 0)
+    ch_A2_exists=ch_allele_correction_combine1.join(ch_present_A2_br2, by: 0)
+    ch_A2_missing=ch_allele_correction_combine2.join(ch_present_A2_br3, by: 0)
 
     process allele_correction_A1_A2 {
 
@@ -2069,7 +2069,7 @@ process select_chrpos_or_snpchrpos {
 
 
     ch_allele_corrected_mix1
-      .combine(ch_stats_for_output, by: 0)
+      .join(ch_stats_for_output, by: 0)
       .set{ ch_allele_corrected_and_outstats }
 
   process final_assembly {
@@ -2167,9 +2167,9 @@ process select_chrpos_or_snpchrpos {
 
 
     ch_cleaned_file
-      .combine(ch_input_sfile2, by: 0)
-      .combine(ch_sfile_on_stream5, by: 0)
-      .combine(ch_collected_removed_lines4, by: 0)
+      .join(ch_input_sfile2, by: 0)
+      .join(ch_sfile_on_stream5, by: 0)
+      .join(ch_collected_removed_lines4, by: 0)
       .set{ ch_to_write_to_filelibrary2 }
 
     process gzip_outfiles {
@@ -2220,18 +2220,18 @@ process select_chrpos_or_snpchrpos {
 
   //Do actual collection, placed in corresponding step order
   ch_desc_prep_force_tab_sep_BA
-   .combine(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
-   .combine(ch_desc_combined_set_after_liftover, by: 0)
-   .combine(ch_desc_removed_duplicates_after_liftover, by: 0)
-   .combine(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
-   .combine(ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
-   .combine(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA, by: 0)
-   .combine(ch_desc_removed_duplicated_chr_pos_rows_BA, by: 0)
-   .combine(ch_desc_filtered_stat_rows_with_non_numbers_BA, by: 0)
-   .combine(ch_desc_inferred_stats_if_inferred_BA, by: 0)
-   .combine(ch_desc_from_inferred_to_joined_selection_BA, by: 0)
-   .combine(ch_desc_from_sumstats_to_joined_selection_BA, by: 0)
-   .combine(ch_desc_final_merge_BA, by: 0)
+   .join(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
+   .join(ch_desc_combined_set_after_liftover, by: 0)
+   .join(ch_desc_removed_duplicates_after_liftover, by: 0)
+   .join(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
+   .join(ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
+   .join(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA, by: 0)
+   .join(ch_desc_removed_duplicated_chr_pos_rows_BA, by: 0)
+   .join(ch_desc_filtered_stat_rows_with_non_numbers_BA, by: 0)
+   .join(ch_desc_inferred_stats_if_inferred_BA, by: 0)
+   .join(ch_desc_from_inferred_to_joined_selection_BA, by: 0)
+   .join(ch_desc_from_sumstats_to_joined_selection_BA, by: 0)
+   .join(ch_desc_final_merge_BA, by: 0)
    .set{ ch_collected_workflow_stepwise_stats }
 
  //Some that now are part of the branched workflow. Unclear how to save the the stepwise branched workflow before after steps, but all info should be exported in channels.
@@ -2260,10 +2260,10 @@ process select_chrpos_or_snpchrpos {
   }
 
     ch_mfile_ok4
-      .combine(ch_usermeta_checksum, by: 0)
-      .combine(ch_rawsumstat_checksum, by: 0)
-      .combine(ch_cleaned_sumstat_checksums2, by: 0)
-      .combine(ch_cleaned_header, by: 0)
+      .join(ch_usermeta_checksum, by: 0)
+      .join(ch_rawsumstat_checksum, by: 0)
+      .join(ch_cleaned_sumstat_checksums2, by: 0)
+      .join(ch_cleaned_header, by: 0)
       .set { ch_mfile_cleaned_x }
 
     process prepare_cleaned_metadata_file {
@@ -2302,7 +2302,7 @@ process select_chrpos_or_snpchrpos {
 
     // Collect all metafiles in one channel
      ch_mfile_user_2
-     .combine(ch_mfile_cleaned_1, by: 0)
+     .join(ch_mfile_cleaned_1, by: 0)
      .set { ch_all_mfiles }
 
      ch_to_write_to_filelibrary3b
