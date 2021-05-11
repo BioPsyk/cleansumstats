@@ -11,10 +11,10 @@ function selColRow(){
 
 #recode as true or false
 function recode_to_tf(){
-  if [ $1 == "missing" ]; then
-  echo false
+  if [ "$1" == "" ]; then
+    echo false
   else
-  echo true
+    echo true
   fi
 }
 

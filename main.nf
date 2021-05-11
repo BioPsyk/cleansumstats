@@ -2038,7 +2038,7 @@ process select_chrpos_or_snpchrpos {
       .join(ch_added_ref_allele_frequency_default2, by: 0)
       .set{ ch_stats_selection2 }
 
-    process select_stats {
+    process select_stats_for_output {
 
         publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 

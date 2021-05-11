@@ -5,7 +5,7 @@ mefl=${1}
 stdin=${2}
 inferred=${3}
 
-#helpers
+##helpers
 function selRightHand(){
   echo "${1#*: }"
 }
@@ -15,10 +15,10 @@ function selColRow(){
 
 #recode as true or false
 function recode_to_tf(){
-  if [ $1 == "missing" ]; then
-  echo false
+  if [ "$1" == "" ]; then
+    echo false
   else
-  echo true
+    echo true
   fi
 }
 
