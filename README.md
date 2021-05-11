@@ -29,6 +29,15 @@ singularity --version
 
 ```
 
+## Quick Start IBP
+To run the IBP GDK specific fully configurated and operational pipeline just run
+
+```
+# i. Run the singularity image using example data
+mkdir output
+./cleansumstats.sh tests/example_data/sumstat_1/sumstat_1_raw_meta.txt  output
+```
+
 ## Add full size reference data
 In the cleaning all positions are compared to a reference to confirm or add missing annotation.
 
