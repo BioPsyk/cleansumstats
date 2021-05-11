@@ -746,7 +746,7 @@ if (params.generateMetafile){
       tuple basefilename, af1kgvcf from ch_file
 
       output:
-      tuple basefilename, file("1kg_af_ref") into ch_1kg_af_ref
+      tuple basefilename, path("1kg_af_ref") into ch_1kg_af_ref
 
       script:
       """
@@ -764,7 +764,7 @@ if (params.generateMetafile){
       tuple basefilename, ref1kg from ch_1kg_af_ref
 
       output:
-      tuple basefilename, file("1kg_af_ref.flipped") into ch_1kg_af_ref_tosort
+      tuple basefilename, path("1kg_af_ref.flipped") into ch_1kg_af_ref_tosort
 
       script:
       """
@@ -783,7 +783,7 @@ if (params.generateMetafile){
       tuple basefilename, ref1kg from ch_1kg_af_ref_tosort
 
       output:
-      tuple basefilename, file("1kg_af_ref.sorted") into ch_1kg_af_ref_sorted
+      tuple basefilename, path("1kg_af_ref.sorted") into ch_1kg_af_ref_sorted
 
       script:
       """
@@ -800,7 +800,7 @@ if (params.generateMetafile){
       tuple basefilename, ref1kgsorted from ch_1kg_af_ref_sorted
 
       output:
-      tuple basefilename, file("1kg_af_ref.sorted.joined")
+      tuple basefilename, path("1kg_af_ref.sorted.joined")
 
       script:
       """
