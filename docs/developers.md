@@ -1,6 +1,39 @@
 # Developer instructions
 Here we collect developer specific documentation, which never should be expected to be read by a user. Note: in the code there are proposed settings for HPC slurm jobs when the preparations may need parallelization.
 
+## Using images
+
+### Pre-requisites
+
+Docker and singularity has to be installed to create an image executable at a HPC
+
+### build images
+
+If you are a developer or do not want to download the image from dockerhub, it is easy to build a docker image and singularity images using the following code.
+
+```bash
+# Build docker image (tied to your system)
+./scripts/docker-build.sh
+
+# Build singularity image (movable to other systems)
+./scripts/singularity-build.sh
+```
+
+The general idea of first use docker and then singularity is to facilitate how docker uses layers to speed up build speed, and as a consequence of that, development is also sped up. From the created docker image, it is easy to create a singularity image, which often required by HPCs, as they usually are incompatible with the Docker deamon. The created singulariy image goes to the 'tmp/' folder.
+
+### Use the docker or singulariy image to run the internal test suit
+
+As an extra failsafe when updating the code, we have added unit and e2e tests, which can directly be run using the docker image. They should all return ok.
+
+```bash
+# using docker
+./scripts/docker-run.sh /cleansumstats/tests/run-tests.sh
+
+# using singularity
+./scripts/singularity-run.sh /cleansumstats/tests/run-tests.sh
+```
+
+
 ## Creating the ibp-pipeline-lib .jar file
 Build the ibp-pipeline-lib-x.x.x.jar file accroding to instructions at: https://github.com/BioPsyk/ibp-pipeline-lib, Then place it inside the docker/ directory in the cleansumstats repository to be accessible by the docker build script. To facilitate development and because of the small size of the image, we have decided to store the correct version for this repo in the docker/ directory. If in the future this file becomes too large we might exclude it from the repo.
 
