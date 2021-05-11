@@ -121,3 +121,28 @@ _run_script "A1" "A2"
 #---------------------------------------------------------------------------------
 # Allele correction - case 3
 
+_setup "palindromes filtering"
+
+cat <<EOF > ./input1.tsv
+0	CHR	BP	A1	A2
+1	chr3	141663261	G	C
+10	chr7	42980893	T	C
+EOF
+
+# dbSNP input
+cat <<EOF > ./input2.tsv
+0	CHRPOS	RSID	A1	A2
+1	3:140461721	rs6439928	G	C
+10	7:43168054	rs6463169	C	T
+EOF
+
+cat <<EOF > ./expected-result1.tsv
+0	A1	A2	CHRPOS	RSID	EffectAllele	OtherAllele	EMOD
+10	T	C	7:43168054	rs6463169	C	T	-1
+EOF
+
+cat <<EOF > ./expected-result2.tsv
+1	palin
+EOF
+
+_run_script "A1" "A2"
