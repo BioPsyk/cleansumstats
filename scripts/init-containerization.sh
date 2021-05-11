@@ -15,7 +15,7 @@ function format_mount_flags() {
 cd "${project_dir}"
 
 mounts=(
-  "docs" "assets" "bin" "conf" "environment.yml"
+  "docs" "assets" "bin" "conf"
   "main.nf" "nextflow.config" "tests" "tmp" "lib"
 )
 
