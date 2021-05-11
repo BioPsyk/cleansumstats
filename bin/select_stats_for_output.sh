@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
 #meta file
-mvars=${1}
+mefl=${1}
 stdin=${2}
 inferred=${3}
 
 ##helpers
-#function selRightHand(){
-#  echo "${1#*: }"
-#}
-#function selColRow(){
-#  grep ${1} ${2}
-#}
+function selRightHand(){
+  echo "${1#*: }"
+}
+function selColRow(){
+  grep ${1} ${2}
+}
 
 #recode as true or false
 function recode_to_tf(){
@@ -30,30 +30,20 @@ function specfunx_exists(){
 }
 
 #what is colname according to meta data file
-#B="$(selRightHand "$(selColRow "^col_BETA:" $mefl)")"
-#SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
-#Z="$(selRightHand "$(selColRow "^col_Z:" $mefl)")"
-#P="$(selRightHand "$(selColRow "^col_P:" $mefl)")"
-#OR="$(selRightHand "$(selColRow "^col_OR:" $mefl)")"
-#ORL95="$(selRightHand "$(selColRow "^col_ORL95:" $mefl)")"
-#ORU95="$(selRightHand "$(selColRow "^col_ORU95:" $mefl)")"
-#N="$(selRightHand "$(selColRow "^col_N:" $mefl)")"
-#CaseN="$(selRightHand "$(selColRow "^col_CaseN:" $mefl)")"
-#ControlN="$(selRightHand "$(selColRow "^col_ControlN:" $mefl)")"
-#EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
-#OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
-#INFO="$(selRightHand "$(selColRow "^col_INFO:" $mefl)")"
-#DIRECTION="$(selRightHand "$(selColRow "^col_Direction:" $mefl)")"
-
-source $mvars
-
-echo "B"
-echo "---->$DIRECTION<----"
-echo "-------"
-
-echo "DIRECTION"
-echo "---->$DIRECTION<----"
-echo "-------"
+B="$(selRightHand "$(selColRow "^col_BETA:" $mefl)")"
+SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
+Z="$(selRightHand "$(selColRow "^col_Z:" $mefl)")"
+P="$(selRightHand "$(selColRow "^col_P:" $mefl)")"
+OR="$(selRightHand "$(selColRow "^col_OR:" $mefl)")"
+ORL95="$(selRightHand "$(selColRow "^col_ORL95:" $mefl)")"
+ORU95="$(selRightHand "$(selColRow "^col_ORU95:" $mefl)")"
+N="$(selRightHand "$(selColRow "^col_N:" $mefl)")"
+CaseN="$(selRightHand "$(selColRow "^col_CaseN:" $mefl)")"
+ControlN="$(selRightHand "$(selColRow "^col_ControlN:" $mefl)")"
+EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
+OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
+INFO="$(selRightHand "$(selColRow "^col_INFO:" $mefl)")"
+DIRECTION="$(selRightHand "$(selColRow "^col_Direction:" $mefl)")"
 
 
 #true or false (exists or not)
@@ -71,10 +61,6 @@ tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
 tfINFO="$(recode_to_tf $INFO)"
 tfDIRECTION="$(recode_to_tf $DIRECTION)"
-
-echo "DIRECTION_TF"
-echo "---->$tfDIRECTION<----"
-echo "-------"
 
 if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
   EAF2="EAF"
