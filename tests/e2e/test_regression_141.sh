@@ -31,6 +31,7 @@ col_CHR: CHR
 col_EffectAllele: A1
 col_OtherAllele: A2
 col_P: P
+stats_neglog10P: false
 col_POS: BP
 col_SE: SE
 col_SNP: SNP
@@ -117,6 +118,7 @@ function _check_results {
   obs=$1
   exp=$2
   if ! diff -u ${obs} ${exp} &> ./difference; then
+
     echo "- [FAIL] regression-141"
     cat ./difference 
     exit 1

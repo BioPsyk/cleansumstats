@@ -10,6 +10,7 @@ col_P: P
 col_POS: BP
 col_SE: SE
 col_SNP: SNP
+stats_neglog10P: false
 path_pdf: sumstat_1_pmid_23358156.pdf
 path_sumStats: sumstat_1_raw.gz
 path_supplementary:

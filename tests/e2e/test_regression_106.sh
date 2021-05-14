@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-# Check that output from running the whole pipleiine looks as expected 
-# Specificcaly the order of all columns are right, so there has not 
-# been an unintentional shuffling of labels
-# see issue-141
+# Check that the neglog10P converter does as expected
+# see issue-106
 
 set -euo pipefail
 
@@ -11,13 +9,13 @@ e2e_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 tests_dir=$(dirname "${e2e_dir}")
 project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
-work_dir="${project_dir}/tmp/regression-141"
+work_dir="${project_dir}/tmp/regression-106"
 outdir="${work_dir}/out"
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
 
-echo ">> Test regression #141"
+echo ">> Test regression #106"
 
 cd "${work_dir}"
 
@@ -30,7 +28,8 @@ col_BETA: EFFECT_A1
 col_CHR: CHR
 col_EffectAllele: A1
 col_OtherAllele: A2
-col_neglog10P: P
+col_P: P
+stats_neglog10P: true
 col_POS: BP
 col_SE: SE
 col_SNP: SNP
@@ -72,12 +71,12 @@ EOF
 
 cat <<EOF > ./expected-result1.tsv
 CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	B	Z	EAF_1KG
-18	31901577	4	rs12709653	A	G	0.3176	0.0142	-0.0142	-1	0.71
-1	154199074	5	rs12726220	A	G	0.2547	0.0277	-0.0315	-1.13718	0.93
-1	8413753	6	rs12754538	C	T	0.9663	0.015	0.0006	0.04	1
-2	28958241	3	rs10197378	G	A	0.2226	0.0155	0.0189	1.21935	1
-3	140461721	1	rs6439928	T	C	0.2648	0.0141	-0.0157	-1.11347	0.68
-7	43168054	2	rs6463169	C	T	0.2012	0.0171	0.0219	1.2807	1
+18	31901577	4	rs12709653	A	G	0.481282	0.49811951	-0.0142	-0.028507	0.71
+1	154199074	5	rs12726220	A	G	0.556288	0.59397106	-0.0315	-0.053033	0.93
+1	8413753	6	rs12754538	C	T	0.966300	0.015	0.0006	0.04	1
+2	28958241	3	rs10197378	G	A	0.598963	0.65247484	0.0189	0.028967	1
+3	140461721	1	rs6439928	T	C	0.543501	0.57708202	-0.0157	-0.027206	0.68
+7	43168054	2	rs6463169	C	T	0.629216	0.69637202	0.0219	0.031449	1
 EOF
 
 gzip "./input.txt"
@@ -117,7 +116,13 @@ function _check_results {
   obs=$1
   exp=$2
   if ! diff -u ${obs} ${exp} &> ./difference; then
-    echo "- [FAIL] regression-141"
+   echo "---------------------------"
+   cat $obs
+   echo "---------------------------"
+   cat $exp
+   echo "---------------------------"
+
+    echo "- [FAIL] regression-106"
     cat ./difference 
     exit 1
   fi

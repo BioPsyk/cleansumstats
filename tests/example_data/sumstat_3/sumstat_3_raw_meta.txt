@@ -12,6 +12,7 @@ col_P: pval
 col_POS: bp
 col_SE: se
 col_SNP: snpid
+stats_neglog10P: false
 path_pdf: sumstat_3_pmid_22472876.pdf
 path_readMe: sumstat_3_raw_README.txt
 path_sumStats: sumstat_3_raw.gz
