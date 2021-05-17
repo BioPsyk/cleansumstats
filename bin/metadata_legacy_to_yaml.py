@@ -172,9 +172,6 @@ def perform_specific_conversions(input_directory, schema, metadata):
         if key in allowed_properties and value != "missing":
             results[key] = value
 
-    if 'col_P' in results:
-        results['stats_neglog10P'] = False
-
     if 'study_Title' not in results:
         results['study_Title'] = input_directory
 

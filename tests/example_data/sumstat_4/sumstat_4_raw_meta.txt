@@ -9,7 +9,6 @@ col_P: Pval
 col_POS: POS
 col_SE: SE
 col_SNP: MarkerName
-stats_neglog10P: false
 path_pdf: sumstat_4_pmid_27089181.pdf
 path_readMe: sumstat_4_raw_README.txt
 path_sumStats: sumstat_4_raw.gz
