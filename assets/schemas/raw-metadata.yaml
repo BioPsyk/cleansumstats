@@ -538,11 +538,6 @@ properties:
       Column for the P-value.
     type: "string"
 
-  stats_neglog10P:
-    description: |
-      set to 'true' if P-value -log10 transformed
-    type: "boolean"
-
   col_N:
     description: |
       Column for the per variant number of individuals. Sometimes referred to as number non-missing.
@@ -601,9 +596,6 @@ properties:
     type: "string"
 
 additionalProperties: false
-dependencies: {
-    "col_P": ["stats_neglog10P"]
-  }
 required:
   - "cleansumstats_version"
   - "cleansumstats_metafile_user"

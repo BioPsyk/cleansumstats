@@ -196,15 +196,16 @@ process get_software_versions {
     publishDir "${params.outdir}/pipeline_info", mode: 'copy', overwrite: true, pattern: '*.csv'
 
     output:
-    file "software_versions" into ch_software_versions
+    file 'software_versions_mqc.yaml' into software_versions_yaml
+    file "software_versions.csv" into ch_software_versions
 
 
     script:
     """
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
-    sstools-version > v_sumstattools.txt
-    echo "placeholder" > software_versions
+    #sstools-version > v_sumstattools.txt
+    scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
 
@@ -1820,42 +1821,12 @@ process select_chrpos_or_snpchrpos {
       """
     }
 
-    process convert_neglogP {
-
-        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-
-        input:
-        tuple datasetID, mfile, sfile from ch_stats_filtered_remain00
-
-        output:
-        tuple datasetID, mfile, file("convert_neglogP") into ch_convert_neglog10P
-        tuple datasetID, file("convert_neglogP_BA.txt") into ch_desc_convert_neglog10P
-
-        script:
-        def metadata = session.get_metadata(datasetID)
-        """
-        colneglog10P="${metadata.stats_neglog10P ?: "missing"}"
-        colP="${metadata.col_P ?: "missing"}"
-        
-        if [ "\${colneglog10P}" == 'true' ]; then
-          convert_neglogP.sh ${sfile} "\${colP}" > convert_neglogP
-        else
-          cp ${sfile} convert_neglogP
-        fi
-
-        #process before and after stats
-        rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
-        rowsAfter="\$(wc -l convert_neglogP | awk '{print \$1}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tneglog10 Pvalue fix" > convert_neglogP_BA.txt
-        """
-    }
-
     process force_eaf {
 
         publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
         input:
-        tuple datasetID, mfile, sfile from ch_convert_neglog10P
+        tuple datasetID, mfile, sfile from ch_stats_filtered_remain00
 
         output:
         tuple datasetID, file("force_eaf__st_forced_eaf") into ch_stats_filtered_remain
