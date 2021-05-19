@@ -24,7 +24,7 @@ function _check_results {
   exp=$2
   if ! diff -u ${obs} ${exp} &> ./difference; then
     echo "- [FAIL] ${curr_case}"
-    cat ./difference 
+    cat ./difference
     exit 1
   fi
 
@@ -32,7 +32,7 @@ function _check_results {
 
 function _run_script {
 
-  "${test_script}.sh" ./input.yaml ./input1.tsv ./input2.tsv > ./observed-result1.tsv 
+  "${test_script}.sh" ./input.yaml ./input1.tsv ./input2.tsv > ./observed-result1.tsv
 
   _check_results ./observed-result1.tsv ./expected-result1.tsv
 
@@ -53,7 +53,6 @@ echo ">> Test ${test_script}"
 _setup "Simple test"
 
 cat <<EOF > ./input.yaml
-col_AFREQ: FREQ_A1
 col_BETA: EFFECT_A1
 col_P: P
 col_POS: BP

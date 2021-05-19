@@ -20,7 +20,7 @@ function _setup {
 }
 
 function _run_script {
-  "${test_script}.py" "$1" > /dev/null 2>&1
+  "${test_script}.py" "$1" > /dev/null
 
   echo "- [OK] ${curr_case}"
 

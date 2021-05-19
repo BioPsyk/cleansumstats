@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Check that output from running the whole pipleiine looks as expected 
-# Specificcaly the order of all columns are right, so there has not 
+# Check that output from running the whole pipleiine looks as expected
+# Specificcaly the order of all columns are right, so there has not
 # been an unintentional shuffling of labels
 # see issue-141
 
@@ -25,7 +25,6 @@ cat <<EOF > ./metadata.yaml
 cleansumstats_metafile_date: '2020-04-27'
 cleansumstats_metafile_user: Andrew Schork
 cleansumstats_version: 1.0.0-alpha
-col_AFREQ: FREQ_A1
 col_BETA: EFFECT_A1
 col_CHR: CHR
 col_EffectAllele: A1
@@ -120,7 +119,7 @@ function _check_results {
   if ! diff -u ${obs} ${exp} &> ./difference; then
 
     echo "- [FAIL] regression-141"
-    cat ./difference 
+    cat ./difference
     exit 1
   fi
 
@@ -128,4 +127,3 @@ function _check_results {
 
 mv ${outdir}/metadata/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv
-

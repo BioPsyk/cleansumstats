@@ -24,7 +24,7 @@ function _check_results {
   exp=$2
   if ! diff ${obs} ${exp} &> ./difference; then
     echo "- [FAIL] ${curr_case}"
-    cat ./difference 
+    cat ./difference
     exit 1
   fi
 
@@ -54,14 +54,12 @@ cat <<EOF > ./input.yaml
 cleansumstats_metafile_date: '2020-04-27'\r
 cleansumstats_metafile_user: Andrew Schork\r
 cleansumstats_version: 1.0.0-alpha\r
-col_AFREQ: FREQ_A1
 EOF
 
 cat <<EOF > ./expected-result.yaml
 cleansumstats_metafile_date: '2020-04-27'
 cleansumstats_metafile_user: Andrew Schork
 cleansumstats_version: 1.0.0-alpha
-col_AFREQ: FREQ_A1
 EOF
 
 
