@@ -102,10 +102,11 @@ RUN mkdir -p external_data/chain_files && \
   echo "${HG_19_18_CHECKSUM}  hg19ToHg18.over.chain.gz" | sha256sum -c
 
 #---------------------------------------------------------------------------------
-# Installing htslib and bcftools
+# Installing htslib, samtools and bcftools
 
 ARG HTSLIB_VERSION="1.9"
 ARG BCFTOOLS_VERSION="1.9"
+ARG SAMTOOLS_VERSION="1.3.1"
 
 RUN apt-get install -y autoconf automake make zlib1g-dev libbz2-dev \
   liblzma-dev libcurl4-gnutls-dev libssl-dev libncurses5-dev
@@ -120,6 +121,28 @@ RUN make
 RUN make install
 
 WORKDIR /cleansumstats
+
+RUN wget https://github.com/samtools/samtools/releases/download/1.3.1/samtools-1.3.1.tar.bz2 \
+  --quiet -O samtools.tar.bz2 && \
+  tar -vxjf samtools.tar.bz2 && \
+  mv "samtools-${SAMTOOLS_VERSION}" "samtools" 
+
+WORKDIR /cleansumstats/samtools
+RUN make
+
+WORKDIR /cleansumstats
+
+# Installation samtools from guide
+#$ wget https://github.com/samtools/samtools/releases/download/1.3.1/samtools-1.3.1.tar.bz2 -O samtools.tar.bz2
+#$ tar -xjvf samtools.tar.bz2
+#$ cd samtools-{version}
+#$ make
+#$ sudo make prefix=/usr/local/bin install
+## if you have old version such as 0.x from samtools, you may remove it and create a link to new version
+#$ sudo apt remove samtools
+#$ sudo ln -s /usr/local/bin/bin/samtools /usr/bin/samtools
+## Or, you can just use the path to call samtools
+#$ /usr/loca/bin/bin/samtools -h
 
 RUN wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2 \
   --quiet -O bcftools.tar.bz2 && \
@@ -150,6 +173,7 @@ COPY --from=rust_builder /usr/local/cargo/bin/b3sum /usr/bin/b3sum
 
 WORKDIR /cleansumstats
 
+RUN mv /cleansumstats/samtools/samtools /usr/bin/samtools
 RUN mv /cleansumstats/bcftools/bcftools /usr/bin/bcftools
 
 RUN mv r-stats-c-streamer/build/r-stats-c-streamer /usr/bin/ && \
