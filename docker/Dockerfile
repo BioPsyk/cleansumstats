@@ -76,7 +76,6 @@ WORKDIR /cleansumstats
 
 ARG SUMSTAT_TOOLS_REVISION="be12f3b9dea0dbf454a94d7e917e12462acaad11"
 
-# Note: when sumstat-tools becomes a public repository, uncomment these lines and remove the copy above:
 RUN wget "https://github.com/BioPsyk/sumstat-tools/archive/${SUMSTAT_TOOLS_REVISION}.zip" \
   --quiet -O sumstat-tools.zip && \
   unzip -q sumstat-tools.zip && \
@@ -132,18 +131,6 @@ RUN make
 
 WORKDIR /cleansumstats
 
-# Installation samtools from guide
-#$ wget https://github.com/samtools/samtools/releases/download/1.3.1/samtools-1.3.1.tar.bz2 -O samtools.tar.bz2
-#$ tar -xjvf samtools.tar.bz2
-#$ cd samtools-{version}
-#$ make
-#$ sudo make prefix=/usr/local/bin install
-## if you have old version such as 0.x from samtools, you may remove it and create a link to new version
-#$ sudo apt remove samtools
-#$ sudo ln -s /usr/local/bin/bin/samtools /usr/bin/samtools
-## Or, you can just use the path to call samtools
-#$ /usr/loca/bin/bin/samtools -h
-
 RUN wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2 \
   --quiet -O bcftools.tar.bz2 && \
   tar -vxjf bcftools.tar.bz2 && \
@@ -151,6 +138,36 @@ RUN wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9
 
 WORKDIR /cleansumstats/bcftools
 RUN make
+
+WORKDIR /cleansumstats
+
+#---------------------------------------------------------------------------------
+# Downloading fasta reference for GRCh38 and GRCh37 (suboptimal to have them in image, because of size ~1G each, but now it is like this for simplicity)
+# Use samtools to make fasta index (requires samtools to already be installed)
+# https://www.ncbi.nlm.nih.gov/genome/guide/human/
+
+ENV HG_38_FASTA_CHECKSUM "4ef2a29c6425b2b99086aac23d70194704ec67b3ade730d40d96a831e9740777"
+ENV HG_37_FASTA_CHECKSUM "190f35a382668f0e0280539657cbb20ae1182fc71ddb97914185ef2a18eacbea"
+
+RUN mkdir -p external_data/fasta_reference && \
+  cd external_data && \
+  wget -qP fasta_reference "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_genomic.fna.gz" && \
+  wget -qP fasta_reference "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh37_latest/refseq_identifiers/GRCh37_latest_genomic.fna.gz" && \
+  cd fasta_reference && \
+  echo "${HG_38_FASTA_CHECKSUM}  GRCh38_latest_genomic.fna.gz" | sha256sum -c && \
+  echo "${HG_37_FASTA_CHECKSUM}  GRCh37_latest_genomic.fna.gz" | sha256sum -c 
+
+# Recompress using bgzip and make indices .fai and .gzi (compressed version)
+WORKDIR /cleansumstats/external_data/fasta_reference
+
+RUN zcat GRCh38_latest_genomic.fna.gz | bgzip -c > GRCh38_latest_genomic.fna.bgz && \
+  zcat GRCh37_latest_genomic.fna.gz | bgzip -c > GRCh37_latest_genomic.fna.bgz && \
+  /cleansumstats/samtools/samtools faidx GRCh38_latest_genomic.fna.bgz && \
+  /cleansumstats/samtools/samtools faidx GRCh37_latest_genomic.fna.bgz
+
+# Remove the pure gz files to save space
+RUN rm GRCh38_latest_genomic.fna.gz && \
+  rm GRCh37_latest_genomic.fna.gz
 
 WORKDIR /cleansumstats
 
