@@ -146,30 +146,30 @@ WORKDIR /cleansumstats
 # Use samtools to make fasta index (requires samtools to already be installed)
 # https://www.ncbi.nlm.nih.gov/genome/guide/human/
 
-ENV HG_38_FASTA_CHECKSUM "4ef2a29c6425b2b99086aac23d70194704ec67b3ade730d40d96a831e9740777"
-ENV HG_37_FASTA_CHECKSUM "190f35a382668f0e0280539657cbb20ae1182fc71ddb97914185ef2a18eacbea"
-
-RUN mkdir -p external_data/fasta_reference && \
-  cd external_data && \
-  wget -qP fasta_reference "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_genomic.fna.gz" && \
-  wget -qP fasta_reference "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh37_latest/refseq_identifiers/GRCh37_latest_genomic.fna.gz" && \
-  cd fasta_reference && \
-  echo "${HG_38_FASTA_CHECKSUM}  GRCh38_latest_genomic.fna.gz" | sha256sum -c && \
-  echo "${HG_37_FASTA_CHECKSUM}  GRCh37_latest_genomic.fna.gz" | sha256sum -c 
-
-# Recompress using bgzip and make indices .fai and .gzi (compressed version)
-WORKDIR /cleansumstats/external_data/fasta_reference
-
-RUN zcat GRCh38_latest_genomic.fna.gz | bgzip -c > GRCh38_latest_genomic.fna.bgz && \
-  zcat GRCh37_latest_genomic.fna.gz | bgzip -c > GRCh37_latest_genomic.fna.bgz && \
-  /cleansumstats/samtools/samtools faidx GRCh38_latest_genomic.fna.bgz && \
-  /cleansumstats/samtools/samtools faidx GRCh37_latest_genomic.fna.bgz
-
-# Remove the pure gz files to save space
-RUN rm GRCh38_latest_genomic.fna.gz && \
-  rm GRCh37_latest_genomic.fna.gz
-
-WORKDIR /cleansumstats
+#ENV HG_38_FASTA_CHECKSUM "4ef2a29c6425b2b99086aac23d70194704ec67b3ade730d40d96a831e9740777"
+#ENV HG_37_FASTA_CHECKSUM "190f35a382668f0e0280539657cbb20ae1182fc71ddb97914185ef2a18eacbea"
+#
+#RUN mkdir -p external_data/fasta_reference && \
+#  cd external_data && \
+#  wget -qP fasta_reference "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_genomic.fna.gz" && \
+#  wget -qP fasta_reference "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh37_latest/refseq_identifiers/GRCh37_latest_genomic.fna.gz" && \
+#  cd fasta_reference && \
+#  echo "${HG_38_FASTA_CHECKSUM}  GRCh38_latest_genomic.fna.gz" | sha256sum -c && \
+#  echo "${HG_37_FASTA_CHECKSUM}  GRCh37_latest_genomic.fna.gz" | sha256sum -c 
+#
+## Recompress using bgzip and make indices .fai and .gzi (compressed version)
+#WORKDIR /cleansumstats/external_data/fasta_reference
+#
+#RUN zcat GRCh38_latest_genomic.fna.gz | bgzip -c > GRCh38_latest_genomic.fna.bgz && \
+#  zcat GRCh37_latest_genomic.fna.gz | bgzip -c > GRCh37_latest_genomic.fna.bgz && \
+#  /cleansumstats/samtools/samtools faidx GRCh38_latest_genomic.fna.bgz && \
+#  /cleansumstats/samtools/samtools faidx GRCh37_latest_genomic.fna.bgz
+#
+## Remove the pure gz files to save space
+#RUN rm GRCh38_latest_genomic.fna.gz && \
+#  rm GRCh37_latest_genomic.fna.gz
+#
+#WORKDIR /cleansumstats
 
 #---------------------------------------------------------------------------------
 # Compiling b3sum since it is not packaged for debian
