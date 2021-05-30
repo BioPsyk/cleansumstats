@@ -12,9 +12,9 @@ hg19ToHg18chain="/cleansumstats/external_data/chain_files/hg19ToHg18.over.chain.
 hg19ToHg17chain="/cleansumstats/external_data/chain_files/hg19ToHg17.over.chain.gz"
 
 # fasta file GRCh38
-fasta_ref_GRCh38="/cleansumstats/external_data/fasta_reference/GRCh38_latest_genomic.fna.bgz"
+#fasta_ref_GRCh38="/cleansumstats/external_data/fasta_reference/GRCh38_latest_genomic.fna.bgz"
 # fasta file GRCh37
-fasta_ref_GRCh38="/cleansumstats/external_data/fasta_reference/GRCh37_latest_genomic.fna.bgz"
+#fasta_ref_GRCh38="/cleansumstats/external_data/fasta_reference/GRCh37_latest_genomic.fna.bgz"
 
 mkdir "${initial_dir}"
 cd "${initial_dir}"
@@ -43,13 +43,9 @@ function _check_results {
 function _run_script {
   chain=${1}
 
-  "${test_script}.sh" ./input.vcf "${chain}" "chunk_1" ./observed-result1.txt "${fasta_ref_GRCh38}"
+  "${test_script}.sh" ./input.txt "${chain}" "chunk_1" ./observed-result1.txt
 
-  ls
-
-  cat chunk_1_tmp.unmap
-
-  #_check_results ./observed-result1.txt ./expected-result1.txt
+  _check_results ./observed-result1.txt ./expected-result1.txt
 
   echo "- [OK] ${curr_case}"
 
@@ -67,26 +63,20 @@ echo ">> Test ${test_script}"
 
 _setup "check that we get the expected positions"
 
-cat <<EOF > ./input.vcf
-##fileformat=VCFv4.0
-##fileDate=20180418
-##source=dbSNP
-##dbSNP_BUILD_ID=151
-##reference=GRCh38.p7
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
-22	15886178	rs201771182	C	G,T	.	.	RS=2025468
-22	19613567	rs1187200240	G	A	.	.	RS=4836959
-22	19616424	rs1382106019	C	T	.	.	RS=7792011
+cat <<EOF > ./input.txt
+chr22 15781861 15781861 22:15781861 rs1167048608 G A,T
+chr22 15886178 15886178 22:15886178 rs201771182 C G,T
+chr22 19613567 19613567 22:19613567 rs1187200240 G A
+chr22 19616424 19616424 22:19616424 rs1382106019 C T
 EOF
 
-#cat <<EOF > ./input.txt
-#chr22 15886178 15886178 22:15886178 rs201771182 C G,T
-#chr22 19613567 19613567 22:19613567 rs1187200240 G A
-#chr22 19616424 19616424 22:19616424 rs1382106019 C T
-#EOF
-
+# In online dbsnp rs1187200240 and rs1382106019 have no positions in GRCh37. 
+# But apparently it is possible to get a coordinate by using CrossMap
 cat <<EOF > ./expected-result1.txt
+chr22 16196102 16196102 22:16196102 22:15781861 rs1167048608 G A,T
 chr22 16091785 16091785 22:16091785 22:15886178 rs201771182 C G,T
+chr22 19601090 19601090 22:19601090 22:19613567 rs1187200240 G A
+chr22 19603947 19603947 22:19603947 22:19616424 rs1382106019 C T
 EOF
 
 _run_script "${hg38ToHg19chain}"
