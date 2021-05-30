@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-test_script="dbsnp_reference_liftover_GRCh37"
+test_script="dbsnp_reference_liftover"
 initial_dir=$(pwd)"/${test_script}"
 curr_case=""
 
@@ -73,10 +73,10 @@ EOF
 # In online dbsnp rs1187200240 and rs1382106019 have no positions in GRCh37. 
 # But apparently it is possible to get a coordinate by using CrossMap
 cat <<EOF > ./expected-result1.txt
-chr22 16196102 16196102 22:16196102 22:15781861 rs1167048608 G A,T
-chr22 16091785 16091785 22:16091785 22:15886178 rs201771182 C G,T
-chr22 19601090 19601090 22:19601090 22:19613567 rs1187200240 G A
-chr22 19603947 19603947 22:19603947 22:19616424 rs1382106019 C T
+chr22 16196102 16196102 22:15781861 rs1167048608 G A,T
+chr22 16091785 16091785 22:15886178 rs201771182 C G,T
+chr22 19601090 19601090 22:19613567 rs1187200240 G A
+chr22 19603947 19603947 22:19616424 rs1382106019 C T
 EOF
 
 _run_script "${hg38ToHg19chain}"
