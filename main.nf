@@ -376,16 +376,11 @@ if (params.generateMetafile){
 
       output:
       tuple cid, path("${cid}_dbsnp_chunk_GRCh37_GRCh38") into ch_dbsnp_lifted_to_GRCh37
-      path("${cid}_dbsnp_chunk_GRCh37")
 
       script:
       """
-      #for some reason I have to copy the chain file to the wd for it to be found
-      cp ${ch_hg38ToHg19chain} chain2.gz
-
-      # Map to GRCh37
-      CrossMap.py bed chain2.gz ${dbsnp_chunk} ${cid}_dbsnp_chunk_GRCh37
-      awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print \$1, \$2, \$3, tmp":"\$2, \$4, \$5, \$6, \$7}' ${cid}_dbsnp_chunk_GRCh37 > ${cid}_dbsnp_chunk_GRCh37_GRCh38
+      dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg38ToHg19chain} ${cid} "${cid}_tmp2"
+      awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print \$1, \$2, \$3, tmp":"\$2, \$4, \$5, \$6, \$7}' "${cid}_tmp2" > ${cid}_dbsnp_chunk_GRCh37_GRCh38
       """
   }
 
@@ -455,11 +450,7 @@ if (params.generateMetafile){
       script:
       build = "36"
       """
-      #for some reason I have to copy the chain file to the wd for it to be found
-      cp ${ch_hg19ToHg18chain} chain2.gz
-
-      #liftover
-      CrossMap.py bed chain2.gz ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh36.bed
+      dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg19ToHg18chain} ${cid} ${cid}_All_20180418_liftcoord_GRCh36.bed
       """
   }
 
@@ -477,11 +468,7 @@ if (params.generateMetafile){
       script:
       build = "35"
       """
-      #for some reason I have to copy the chain file to the wd for it to be found
-      cp ${ch_hg19ToHg17chain} chain2.gz
-
-      #liftover
-      CrossMap.py bed chain2.gz ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh35.bed
+      dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg19ToHg17chain} ${cid} ${cid}_All_20180418_liftcoord_GRCh35.bed
       """
   }
 
