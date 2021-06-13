@@ -252,7 +252,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_convert_and_split {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 3
 
       input:
@@ -280,7 +280,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_reformat {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 1
 
       input:
@@ -336,7 +336,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_dup_positions_GRCh38 {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 4
 
       input:
@@ -368,7 +368,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_liftover_GRCh37 {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 1
 
       input:
@@ -386,25 +386,24 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_dup_positions_GRCh37 {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 4
 
       input:
       tuple cid, dbsnp_chunk from ch_dbsnp_lifted_to_GRCh37
 
       output:
-      tuple cid, path("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh37
-      path("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted")
+      tuple cid, path("${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh37
 
       script:
       """
-      dbsnp_reference_duplicate_position_filter.sh ${dbsnp_chunk} All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup
+      dbsnp_reference_duplicate_position_filter.sh ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup ${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup
       """
   }
 
   process dbsnp_reference_rm_liftover_remaining_ambigous_GRCh37 {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 1
 
       input:
@@ -428,7 +427,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_liftover_GRCh36 {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 1
 
       input:
@@ -446,7 +445,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_liftover_GRCh35 {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 1
 
       input:
@@ -468,7 +467,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_duplicates_GRCh36_GRCh35 {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 4
 
       input:
@@ -496,7 +495,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_liftover_remaining_ambigous_GRCh36_GRCh35 {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 1
 
       input:
@@ -518,7 +517,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_make_rsid_version_from_GRCh38 {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 1
 
       input:
@@ -608,7 +607,7 @@ if (params.generateMetafile){
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh38_GRCh37 {
 
       publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
       cpus 4
 
       input:
@@ -656,8 +655,8 @@ if (params.generateMetafile){
 
   process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh3x_GRCh38 {
 
-      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
       publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
       cpus 4
 
       input:

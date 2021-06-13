@@ -1,5 +1,6 @@
 dbsnp_chunk=${1}
 out=${2}
+out2=${3}
 
 # Remove all duplicated positions GRCh37 (as some positions might have become duplicates after the liftover)
 mkdir -p tmp
@@ -12,7 +13,7 @@ ${dbsnp_chunk} \
 rm -r tmp
 
 # Remove all versions of the duplicated variants
-awk 'BEGIN{
+awk -vout2="${out2}" 'BEGIN{
   getline; 
   prevrow=$0; 
   prevrowvar=$4; 
@@ -21,10 +22,10 @@ awk 'BEGIN{
   currentvar=$4; 
   if(prevrowvar==currentvar){
     prevrowrm=="removed";
-    print prevrow > "removed_duplicated_rows_GRCh37";
+    print prevrow > out2;
   }else if(prevrowrm=="removed"){
     prevrowrm=="notremoved";
-    print prevrow > "removed_duplicated_rows_GRCh37";
+    print prevrow > out2;
   }else{
     print prevrow;
   }
@@ -33,9 +34,9 @@ prevrow=$0;
 }
 END{
   if(prevrowvar==currentvar){
-    print prevrow > "removed_duplicated_rows_GRCh37";
+    print prevrow > out2;
   }else if(prevrowrm=="removed"){
-    print prevrow > "removed_duplicated_rows_GRCh37";
+    print prevrow > out2;
   }else{
     print prevrow;
   }

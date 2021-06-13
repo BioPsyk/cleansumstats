@@ -120,3 +120,16 @@ EOF
 
 _run_script
 
+#---------------------------------------------------------------------------------
+# Based on the regression test for issue-201
+
+_setup "regression issue-201 specific"
+
+cat <<EOF > ./input.txt
+chr22 16867158 16867158 22:16867158 10:38941571 rs1269049638 C T
+chr22 16867158 16867158 22:16867158 16:34801626 rs1187863544 C T
+chr22 16867158 16867158 22:16867158 22:16386496 rs20763359 C T
+EOF
+
+cat <<EOF > ./expected-result1.txt
+EOF
