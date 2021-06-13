@@ -398,17 +398,7 @@ if (params.generateMetafile){
 
       script:
       """
-      # Remove all duplicated positions GRCh37 (as some positions might have become duplicates after the liftover)
-      mkdir -p tmp
-      LC_ALL=C sort -k 4,4 \
-      --parallel 4 \
-      --temporary-directory=/cleansumstats/tmp \
-      --buffer-size=20G \
-      ${dbsnp_chunk} \
-      > All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted
-      rm -r tmp
-
-      awk 'BEGIN{r0="initrowhere"} {var=\$4; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh37"}; r0=var}' All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted > All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup
+      dbsnp_reference_duplicate_position_filter.sh ${dbsnp_chunk} All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup
       """
   }
 
