@@ -297,7 +297,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_rm_indels {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 1
 
       input:
@@ -318,7 +318,7 @@ if (params.generateMetafile){
 
   process dbsnp_reference_report_number_of_biallelic_multiallelics {
 
-      publishDir "${params.outdir}", mode: 'rellink', overwrite: true, enabled: params.dev
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 1
 
       input:
@@ -334,37 +334,73 @@ if (params.generateMetafile){
       """
   }
 
+  process dbsnp_reference_merge_before_duplicate_filters_GRCh38 {
+
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+      cpus 4
+
+      input:
+      file dbsnp_chunks from ch_dbsnp_rmd_indels2.collect()
+
+      output:
+      path("GRCh38_merge.bed") into ch_merge_GRCh38
+
+      script:
+      """
+      # Concatenate
+      for chunk in ${dbsnp_chunks}
+      do
+        cat \${chunk} >> "GRCh38_merge.bed"
+      done
+
+      """
+  }
+
+
   process dbsnp_reference_rm_dup_positions_GRCh38 {
 
       publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
       cpus 4
 
       input:
-      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_indels2
+      path(GRCh38_all) from ch_merge_GRCh38
 
       output:
-      tuple cid, path("${cid}_All_20180418_GRCh38.bed.noindel.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh38
-      path("${cid}_All_20180418_GRCh38.bed.noindel.sorted")
+      path("All_20180418_liftcoord_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh38
 
       script:
       """
-      # Remove all duplicated positions GRCh38
-      # this will eliminate some rsids, both the ones with multiple rsids for the exact same snp, but also the ones with ref and alt swithed.
-      mkdir -p tmp
-      LC_ALL=C sort -k 4,4 \
-      --parallel 4 \
-      --temporary-directory=/cleansumstats/tmp \
-      --buffer-size=20G \
-      ${dbsnp_chunk} \
-      > ${cid}_All_20180418_GRCh38.bed.noindel.sorted
-      rm -r tmp
-
-      awk 'BEGIN{r0="initrowhere"} {var=\$4; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh38"}; r0=var}' ${cid}_All_20180418_GRCh38.bed.noindel.sorted > ${cid}_All_20180418_GRCh38.bed.noindel.sorted.nodup
+      dbsnp_reference_duplicate_position_filter.sh ${GRCh38_all} All_20180418_liftcoord_GRCh38.bed.sorted.nodup All_20180418_liftcoord_GRCh38.bed.sorted.dup
 
       """
   }
 
   ch_dbsnp_rmd_dup_positions_GRCh38.into { ch_dbsnp_rmd_dup_positions_GRCh38_1; ch_dbsnp_rmd_dup_positions_GRCh38_2; ch_dbsnp_rmd_dup_positions_GRCh38_3 }
+
+  // again split before liftover
+  process dbsnp_split_before_2nd_liftover {
+
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+      cpus 3
+
+      input:
+      path("dbsnp_GRCh38") from ch_dbsnp_rmd_dup_positions_GRCh38_1
+
+      output:
+      path("chunk2_*") into ch_dbsnp_split3
+
+      script:
+      """
+      #split into dbsnpsplit number of unix split files
+      split -d -n l/${dbsnpsplits} dbsnp_GRCh38 chunk2_
+
+      """
+  }
+
+  ch_dbsnp_split3
+    .flatten()
+    .map { file -> tuple(file.baseName, file) }
+    .set { ch_dbsnp_split4 }
 
   process dbsnp_reference_liftover_GRCh37 {
 
@@ -372,15 +408,37 @@ if (params.generateMetafile){
       cpus 1
 
       input:
-      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh38_1
+      tuple cid, dbsnp_chunk from ch_dbsnp_split4
 
       output:
-      tuple cid, path("${cid}_dbsnp_chunk_GRCh37_GRCh38") into ch_dbsnp_lifted_to_GRCh37
+      tuple path("${cid}_dbsnp_chunk_GRCh37_GRCh38") into ch_dbsnp_lifted_to_GRCh37
 
       script:
       """
       dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg38ToHg19chain} ${cid} "${cid}_tmp2"
       awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print \$1, \$2, \$3, tmp":"\$2, \$4, \$5, \$6, \$7}' "${cid}_tmp2" > ${cid}_dbsnp_chunk_GRCh37_GRCh38
+      """
+  }
+
+  process dbsnp_reference_merge_before_duplicate_filters_GRCh37 {
+
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+      cpus 4
+
+      input:
+      file dbsnp_chunks from ch_dbsnp_lifted_to_GRCh37.collect()
+
+      output:
+      path("GRCh37_merge.bed") into ch_merge_GRCh37
+
+      script:
+      """
+      # Concatenate
+      for chunk in ${dbsnp_chunks}
+      do
+        cat \${chunk} >> "GRCh37_merge.bed"
+      done
+
       """
   }
 
@@ -390,14 +448,14 @@ if (params.generateMetafile){
       cpus 4
 
       input:
-      tuple cid, dbsnp_chunk from ch_dbsnp_lifted_to_GRCh37
+      path("GRCh37_all") from ch_merge_GRCh37
 
       output:
-      tuple cid, path("${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh37
+      path("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh37
 
       script:
       """
-      dbsnp_reference_duplicate_position_filter.sh ${dbsnp_chunk} ${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup ${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup
+      dbsnp_reference_duplicate_position_filter.sh GRCh37_all All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.dup
       """
   }
 
@@ -407,23 +465,50 @@ if (params.generateMetafile){
       cpus 1
 
       input:
-      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh37
+      path(dbsnp_chunk) from ch_dbsnp_rmd_dup_positions_GRCh37
 
       output:
-      tuple cid, path("${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup.chromclean") into ch_dbsnp_rmd_ambig_GRCh37_liftovers
-      path("${cid}_all_chr_types_GRCh37")
+      path("All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup.chromclean") into ch_dbsnp_rmd_ambig_GRCh37_liftovers
+      path("all_chr_types_GRCh37")
 
       script:
       """
       #To get a list of all chromosomes types
-      awk '{gsub(":.*","",\$1); print \$1}' ${dbsnp_chunk} | awk '{ seen[\$1] += 1 } END { for (i in seen) print seen[i],i }' > ${cid}_all_chr_types_GRCh37
+      awk '{gsub(":.*","",\$1); print \$1}' ${dbsnp_chunk} | awk '{ seen[\$1] += 1 } END { for (i in seen) print seen[i],i }' > all_chr_types_GRCh37
 
       #remove non standard chromosome names (seems like they include a "_" in the name)
-      awk '{tmp=\$1; gsub(":.*","",\$1); if(\$1 !~ /_/ ){print tmp,\$2,\$3,\$4,\$5,\$6,\$7,\$8}}' ${dbsnp_chunk} > ${cid}_All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup.chromclean
+      awk '{tmp=\$1; gsub(":.*","",\$1); if(\$1 !~ /_/ ){print tmp,\$2,\$3,\$4,\$5,\$6,\$7,\$8}}' ${dbsnp_chunk} > All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted.nodup.chromclean
       """
   }
 
-  ch_dbsnp_rmd_ambig_GRCh37_liftovers.into { ch_dbsnp_rmd_ambig_GRCh37_liftovers1; ch_dbsnp_rmd_ambig_GRCh37_liftovers2; ch_dbsnp_rmd_ambig_GRCh37_liftovers3 }
+  ch_dbsnp_rmd_ambig_GRCh37_liftovers.into { ch_dbsnp_rmd_ambig_GRCh37_liftovers1; ch_dbsnp_rmd_ambig_GRCh37_liftovers2 }
+
+  // again split before liftover
+  process dbsnp_split_before_3nd_liftover {
+
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+      cpus 3
+
+      input:
+      path("dbsnp_GRCh37") from ch_dbsnp_rmd_ambig_GRCh37_liftovers1
+
+      output:
+      path("chunk3_*") into ch_dbsnp_split5
+
+      script:
+      """
+      #split into dbsnpsplit number of unix split files
+      split -d -n l/${dbsnpsplits} dbsnp_GRCh37 chunk3_
+
+      """
+  }
+
+  ch_dbsnp_split5
+    .flatten()
+    .map { file -> tuple(file.baseName, file) }
+    .set { ch_dbsnp_split6 }
+
+  ch_dbsnp_split6.into { ch_dbsnp_split6a; ch_dbsnp_split6b }
 
   process dbsnp_reference_liftover_GRCh36 {
 
@@ -431,7 +516,7 @@ if (params.generateMetafile){
       cpus 1
 
       input:
-      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_ambig_GRCh37_liftovers1
+      tuple cid, dbsnp_chunk from ch_dbsnp_split6a
 
       output:
       tuple cid, path("${cid}_All_20180418_liftcoord_GRCh36.bed"), build into ch_dbsnp_lifted_to_GRCh36
@@ -449,7 +534,7 @@ if (params.generateMetafile){
       cpus 1
 
       input:
-      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_ambig_GRCh37_liftovers2
+      tuple cid, dbsnp_chunk from ch_dbsnp_split6b
 
       output:
       tuple cid, path("${cid}_All_20180418_liftcoord_GRCh35.bed"), build into ch_dbsnp_lifted_to_GRCh35
@@ -460,97 +545,82 @@ if (params.generateMetafile){
       dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg19ToHg17chain} ${cid} ${cid}_All_20180418_liftcoord_GRCh35.bed
       """
   }
+//
+//  ch_dbsnp_lifted_to_GRCh35
+//    .mix(ch_dbsnp_lifted_to_GRCh36)
+//    .set{ ch_dbsnp_lifted_to_GRCh3x }
+//
+//  process dbsnp_reference_rm_duplicates_GRCh36_GRCh35 {
+//
+//      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+//      cpus 4
+//
+//      input:
+//      tuple cid, dbsnp_chunk, build from ch_dbsnp_lifted_to_GRCh3x
+//
+//      output:
+//      tuple build, cid, path("${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh3x
+//      path("${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted")
+//
+//      script:
+//      """
+//      # Remove all duplicated positions GRCh36 (as some positions might have become duplicates after the liftover)
+//      mkdir -p tmp
+//      LC_ALL=C sort -k 4,4 \
+//      --parallel 4 \
+//      --temporary-directory=/cleansumstats/tmp \
+//      --buffer-size=20G \
+//      ${dbsnp_chunk} \
+//      > ${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted
+//      rm -r tmp
+//
+//      awk 'BEGIN{r0="initrowhere"} {var=\$4; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh${build}"}; r0=var}' ${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted > ${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted.nodup
+//      """
+//  }
+//
+//  process dbsnp_reference_rm_liftover_remaining_ambigous_GRCh36_GRCh35 {
+//
+//      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+//      cpus 1
+//
+//      input:
+//      tuple build, cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh3x
+//
+//      output:
+//      tuple build, cid, path("${cid}_All_20180418_liftcoord_GRCh${build}_GRCh38.bed.sorted.nodup.chromclean") into ch_dbsnp_rmd_ambig_positions_GRCh3x
+//      path("${cid}_all_chr_types_GRCh${build}")
+//
+//      script:
+//      """
+//      #To get a list of all chromosomes types
+//      awk '{gsub(":.*","",\$1); print \$1}' ${dbsnp_chunk} | awk '{ seen[\$1] += 1 } END { for (i in seen) print seen[i],i }' > ${cid}_all_chr_types_GRCh${build}
+//
+//      #remove non standard chromosome names (seems like they include a "_" in the name)
+//      awk '{tmp=\$1; gsub(":.*","",\$1); if(\$1 !~ /_/ ){print tmp,\$2,\$3,\$4,\$5,\$6,\$7,\$8}}' ${dbsnp_chunk} > ${cid}_All_20180418_liftcoord_GRCh${build}_GRCh38.bed.sorted.nodup.chromclean
+//      """
+//  }
 
-  ch_dbsnp_lifted_to_GRCh35
-    .mix(ch_dbsnp_lifted_to_GRCh36)
-    .set{ ch_dbsnp_lifted_to_GRCh3x }
+//
+// STORE dbsnp files in reference library
+//
 
-  process dbsnp_reference_rm_duplicates_GRCh36_GRCh35 {
+  process dbsnp_reference_put_files_in_reference_library_RSID {
 
-      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-      cpus 4
-
-      input:
-      tuple cid, dbsnp_chunk, build from ch_dbsnp_lifted_to_GRCh3x
-
-      output:
-      tuple build, cid, path("${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted.nodup") into ch_dbsnp_rmd_dup_positions_GRCh3x
-      path("${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted")
-
-      script:
-      """
-      # Remove all duplicated positions GRCh36 (as some positions might have become duplicates after the liftover)
-      mkdir -p tmp
-      LC_ALL=C sort -k 4,4 \
-      --parallel 4 \
-      --temporary-directory=/cleansumstats/tmp \
-      --buffer-size=20G \
-      ${dbsnp_chunk} \
-      > ${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted
-      rm -r tmp
-
-      awk 'BEGIN{r0="initrowhere"} {var=\$4; if(r0!=var){print \$0}else{print \$0 > "removed_duplicated_rows_GRCh${build}"}; r0=var}' ${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted > ${cid}_All_20180418_GRCh${build}_GRCh38.bed.sorted.nodup
-      """
-  }
-
-  process dbsnp_reference_rm_liftover_remaining_ambigous_GRCh36_GRCh35 {
-
-      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-      cpus 1
-
-      input:
-      tuple build, cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh3x
-
-      output:
-      tuple build, cid, path("${cid}_All_20180418_liftcoord_GRCh${build}_GRCh38.bed.sorted.nodup.chromclean") into ch_dbsnp_rmd_ambig_positions_GRCh3x
-      path("${cid}_all_chr_types_GRCh${build}")
-
-      script:
-      """
-      #To get a list of all chromosomes types
-      awk '{gsub(":.*","",\$1); print \$1}' ${dbsnp_chunk} | awk '{ seen[\$1] += 1 } END { for (i in seen) print seen[i],i }' > ${cid}_all_chr_types_GRCh${build}
-
-      #remove non standard chromosome names (seems like they include a "_" in the name)
-      awk '{tmp=\$1; gsub(":.*","",\$1); if(\$1 !~ /_/ ){print tmp,\$2,\$3,\$4,\$5,\$6,\$7,\$8}}' ${dbsnp_chunk} > ${cid}_All_20180418_liftcoord_GRCh${build}_GRCh38.bed.sorted.nodup.chromclean
-      """
-  }
-
-  process dbsnp_reference_make_rsid_version_from_GRCh38 {
-
-      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-      cpus 1
-
-      input:
-      tuple cid, dbsnp_chunk from ch_dbsnp_rmd_dup_positions_GRCh38_2
-
-      output:
-      path("${cid}_All_20180418_RSID_GRCh38.bed") into ch_dbsnp_rsid_to_GRCh38
-
-      script:
-      """
-      # Make version sorted on RSID to get correct coordinates
-      awk '{print \$5, \$4, \$6, \$7}' ${dbsnp_chunk} > ${cid}_All_20180418_RSID_GRCh38.bed
-      """
-  }
-
-  process dbsnp_reference_merge_and_put_files_in_reference_library_RSID {
-
+      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev, pattern: '*.map'
       publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
       cpus 4
 
       input:
-      path dbsnp_chunks from ch_dbsnp_rsid_to_GRCh38.collect()
+      path GRCh38_all from ch_dbsnp_rmd_dup_positions_GRCh38_2
 
       output:
       path("${ch_dbsnp_RSID_38.baseName}.bed")
+      path("*.map")
 
       script:
       """
-      # Concatenate
-      for chunk in ${dbsnp_chunks}
-      do
-        cat \${chunk} >> All_20180418_RSID_GRCh38.map
-      done
+      # Make version sorted on RSID to get correct coordinates
+      awk '{print \$5, \$4, \$6, \$7}' ${GRCh38_all} > All_20180418_RSID_GRCh38.map
 
       # Sort
       mkdir -p tmp
@@ -565,53 +635,33 @@ if (params.generateMetafile){
       """
   }
 
-//
-// collect and STORE dbsnp files in reference library
-//
 
-  process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh38 {
+  process dbsnp_reference_put_files_in_reference_library_GRCh38 {
 
       publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
       cpus 4
 
       input:
-      file dbsnp_chunks from ch_dbsnp_rmd_dup_positions_GRCh38_3.collect()
+      file dbsnp_final from ch_dbsnp_rmd_dup_positions_GRCh38_3
 
       output:
       path("${ch_dbsnp_38.baseName}.bed")
 
       script:
       """
-      # Concatenate
-      for chunk in ${dbsnp_chunks}
-      do
-        cat \${chunk} >> All_20180418_RSID_GRCh38.map
-      done
-
-      awk '{print \$4,\$5,\$6,\$7}' All_20180418_RSID_GRCh38.map > merge_tmp
-
-      # Sort
-      mkdir -p tmp
-      LC_ALL=C sort -k 1,1 \
-      --parallel 4 \
-      --temporary-directory=/cleansumstats/tmp \
-      --buffer-size=20G \
-      merge_tmp \
-      > "${ch_dbsnp_38.baseName}.bed"
-      rm -r tmp
-
+      awk '{print \$4, \$5, \$6, \$7}' ${dbsnp_final} > "${ch_dbsnp_38.baseName}.bed"
       """
   }
 
 
-  process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh38_GRCh37 {
+  process dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37 {
 
       publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
       publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
       cpus 4
 
       input:
-      file dbsnp_chunks from ch_dbsnp_rmd_ambig_GRCh37_liftovers3.collect()
+      path("All_20180418_GRCh38_GRCh37_tmp.map") from ch_dbsnp_rmd_ambig_GRCh37_liftovers2
 
       output:
       path("${ch_dbsnp_38_37.baseName}.bed")
@@ -620,13 +670,7 @@ if (params.generateMetafile){
 
       script:
       """
-      # Concatenate
-      for chunk in ${dbsnp_chunks}
-      do
-        cat \${chunk} >> All_20180418_GRCh38_GRCh37_tmp.map
-      done
-
-      awk '{print \$4, \$5, \$6, \$7, \$8}' All_20180418_GRCh38_GRCh37_tmp.map > All_20180418_GRCh37_GRCh38.map
+      awk '{print \$4, \$5, \$6, \$7, \$8}' All_20180418_GRCh38_GRCh37_tmp.map > "${ch_dbsnp_37_38.baseName}.bed"
       awk '{print \$5, \$4, \$6, \$7, \$8}' All_20180418_GRCh38_GRCh37_tmp.map > All_20180418_GRCh38_GRCh37.map
 
       # Sort
@@ -638,66 +682,56 @@ if (params.generateMetafile){
       All_20180418_GRCh38_GRCh37.map \
       > "${ch_dbsnp_38_37.baseName}.bed"
       rm -r tmp
-
-      # Sort
-      mkdir -p tmp
-      LC_ALL=C sort -k 1,1 \
-      --parallel 8 \
-      --temporary-directory=tmp \
-      --buffer-size=20G \
-      All_20180418_GRCh37_GRCh38.map \
-      > "${ch_dbsnp_37_38.baseName}.bed"
-      rm -r tmp
       """
   }
 
-  ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped = ch_dbsnp_rmd_ambig_positions_GRCh3x.groupTuple(by:0)
-
-  process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh3x_GRCh38 {
-
-      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
-      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
-      cpus 4
-
-      input:
-      tuple build, cid, path(dbsnp_chunks) from ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped
-
-      output:
-      path("*.bed")
-      path("*.map")
-
-      script:
-      """
-      # Concatenate
-      for chunk in ${dbsnp_chunks}
-      do
-        cat \${chunk} >> All_20180418_GRCh${build}_GRCh38.map
-      done
-
-      # Sort
-      if [ "${build}" == "36" ]; then
-        awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$5, \$6, \$7, \$8}' All_20180418_GRCh36_GRCh38.map > file.tmp 
-        mkdir -p tmp
-        LC_ALL=C sort -k 1,1 \
-        --parallel 4 \
-        --temporary-directory=tmp \
-        --buffer-size=20G \
-        file.tmp  > "${ch_dbsnp_36_38.baseName}.bed"
-        rm -r tmp
-
-      else
-        awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$5, \$6, \$7, \$8}' All_20180418_GRCh35_GRCh38.map > file.tmp 
-        mkdir -p tmp
-        LC_ALL=C sort -k 1,1 \
-        --parallel 4 \
-        --temporary-directory=tmp \
-        --buffer-size=20G \
-        file.tmp > "${ch_dbsnp_35_38.baseName}.bed"
-        rm -r tmp
-      fi
-
-      """
-  }
+//  ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped = ch_dbsnp_rmd_ambig_positions_GRCh3x.groupTuple(by:0)
+//
+//  process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh3x_GRCh38 {
+//
+//      publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
+//      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
+//      cpus 4
+//
+//      input:
+//      tuple build, cid, path(dbsnp_chunks) from ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped
+//
+//      output:
+//      path("*.bed")
+//      path("*.map")
+//
+//      script:
+//      """
+//      # Concatenate
+//      for chunk in ${dbsnp_chunks}
+//      do
+//        cat \${chunk} >> All_20180418_GRCh${build}_GRCh38.map
+//      done
+//
+//      # Sort
+//      if [ "${build}" == "36" ]; then
+//        awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$5, \$6, \$7, \$8}' All_20180418_GRCh36_GRCh38.map > file.tmp 
+//        mkdir -p tmp
+//        LC_ALL=C sort -k 1,1 \
+//        --parallel 4 \
+//        --temporary-directory=tmp \
+//        --buffer-size=20G \
+//        file.tmp  > "${ch_dbsnp_36_38.baseName}.bed"
+//        rm -r tmp
+//
+//      else
+//        awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$5, \$6, \$7, \$8}' All_20180418_GRCh35_GRCh38.map > file.tmp 
+//        mkdir -p tmp
+//        LC_ALL=C sort -k 1,1 \
+//        --parallel 4 \
+//        --temporary-directory=tmp \
+//        --buffer-size=20G \
+//        file.tmp > "${ch_dbsnp_35_38.baseName}.bed"
+//        rm -r tmp
+//      fi
+//
+//      """
+//  }
 }else if(params.generate1KgAfSNPreference){
 
   // ##Download from web
