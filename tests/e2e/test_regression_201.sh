@@ -45,7 +45,6 @@ gzip "./input.vcf"
 
 # There is an empty line at the top right now. It won't be a problem for the analysis, but it looks ugly så can be worth removing
 cat <<EOF > ./expected-result-grch37-grch38.txt
-    
 EOF
 
 time nextflow -q run -offline \
@@ -68,13 +67,13 @@ function _check_results {
   obs=$1
   exp=$2
   if ! diff -u ${obs} ${exp} &> ./difference; then
-  echo "---------------------------"
+  echo "----observed-----------------"
   cat $obs
-  echo "---------------------------"
+  echo "----expected-----------------"
   cat $exp
-  echo "---------------------------"
+  echo "-----------------------------"
 
-    echo "- [FAIL] regression-197"
+    echo "- [FAIL] regression-201"
     cat ./difference
     exit 1
   fi
