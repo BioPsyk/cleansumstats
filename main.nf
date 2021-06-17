@@ -707,7 +707,7 @@ if (params.generateMetafile){
 
   ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped = ch_dbsnp_rmd_ambig_positions_GRCh3x.groupTuple(by:0)
 
-  process dbsnp_reference_merge_and_put_files_in_reference_library_GRCh3x_GRCh38 {
+  process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GRCh38 {
 
       publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
       cpus 4
