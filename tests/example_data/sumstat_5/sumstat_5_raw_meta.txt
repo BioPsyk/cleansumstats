@@ -9,18 +9,18 @@ col_P: Pval
 col_POS: POS
 col_SE: SE
 col_SNP: MarkerName
-stats_neglog10P: false
 path_pdf: sumstat_5_pmid_27089181.pdf
 path_readMe: sumstat_5_raw_README.txt
 path_sumStats: sumstat_5_raw.gz
 path_supplementary:
-- sumstat_5_pmid_27089181_supp/sumstat_5_pmid_27089181_supp_1.pdf
-- sumstat_5_pmid_27089181_supp/sumstat_5_pmid_27089181_supp_2.xlsx
+- sumstat_5_pmid_27089181_supp_1.pdf
+- sumstat_5_pmid_27089181_supp_2.xlsx
 stats_Model: linear
 stats_Notes: 'Metaanalysis of 42 studies. OBS: Sample size best guess looking at ST2:
   total N  298420 - 23andMe N 93454 = 204966'
 stats_TotalN: 204966
 stats_TraitType: quantitative
+stats_neglog10P: false
 study_AccessDate: '2020-04-16'
 study_Ancestry: EUR
 study_Array: meta
