@@ -9,18 +9,18 @@ col_P: Pval
 col_POS: POS
 col_SE: SE
 col_SNP: MarkerName
-stats_neglog10P: false
 path_pdf: sumstat_4_pmid_27089181.pdf
 path_readMe: sumstat_4_raw_README.txt
 path_sumStats: sumstat_4_raw.gz
 path_supplementary:
-- sumstat_4_pmid_27089181_supp/sumstat_4_pmid_27089181_supp_1.pdf
-- sumstat_4_pmid_27089181_supp/sumstat_4_pmid_27089181_supp_2.xlsx
+- sumstat_4_pmid_27089181_supp_1.pdf
+- sumstat_4_pmid_27089181_supp_2.xlsx
 stats_Model: linear
 stats_Notes: 'Metaanalysis of 42 studies. OBS: Sample size incl. 23andMe, however
   only 1000 snps in GWAS. '
 stats_TotalN: 298420
 stats_TraitType: quantitative
+stats_neglog10P: false
 study_AccessDate: '2020-04-16'
 study_Ancestry: EUR
 study_Array: meta
