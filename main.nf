@@ -2030,9 +2030,17 @@ process select_chrpos_or_snpchrpos {
 
         if [ -s st_which_to_infer ]; then
 
-        thisdir="\$(pwd)"
+          Sx="\$(grep "^stats_Model:" ${mfile})"
+          STATM="\${Sx#*: }"
+          if [ "\${STATM}"=="linear" ]; then
+            STATM2="lin"
+          elif [ "\${STATM}"=="logistic" ]; then
+            STATM2="log"
+          fi
 
-        cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${cf}" -n"\${cn}" | r-stats-c-streamer --functionfile st_which_to_infer --skiplines 1 \${cp} --statmodel lin --allelefreqswitch > infer_stats__st_inferred_stats
+          thisdir="\$(pwd)"
+
+          cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${cf}" -n"\${cn}" | r-stats-c-streamer --functionfile st_which_to_infer --skiplines 1 \${cp} --statmodel \${STATM2} --allelefreqswitch > infer_stats__st_inferred_stats
 
         else
           touch infer_stats__st_inferred_stats

@@ -29,7 +29,11 @@ SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
 Z="$(selRightHand "$(selColRow "^col_Z:" $mefl)")"
 P="$(selRightHand "$(selColRow "^col_P:" $mefl)")"
 OR="$(selRightHand "$(selColRow "^col_OR:" $mefl)")"
+ORL95="$(selRightHand "$(selColRow "^col_ORL95:" $mefl)")"
+ORU95="$(selRightHand "$(selColRow "^col_ORU95:" $mefl)")"
 N="$(selRightHand "$(selColRow "^col_N:" $mefl)")"
+CaseN="$(selRightHand "$(selColRow "^col_CaseN:" $mefl)")"
+ControlN="$(selRightHand "$(selColRow "^col_ControlN:" $mefl)")"
 EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
 OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
 
@@ -39,7 +43,11 @@ tfSE="$(recode_to_tf $SE)"
 tfZ="$(recode_to_tf $Z)"
 tfP="$(recode_to_tf $P)"
 tfOR="$(recode_to_tf $OR)"
+tfORL95="$(recode_to_tf $ORL95)"
+tfORU95="$(recode_to_tf $ORU95)"
 tfN="$(recode_to_tf $N)"
+tfCaseN="$(recode_to_tf $CaseN)"
+tfControlN="$(recode_to_tf $ControlN)"
 tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
 
@@ -59,16 +67,16 @@ else
 fi
 
 #which args to use
-array1=($B $SE $Z $P $OR $N $EAF2)
-array2=($tfB $tfSE $tfZ $tfP $tfOR $tfN $tfEAF2)
-array3=("beta" "standarderror" "zscore" "pvalue" "oddsratio" "Nindividuals" "allelefreq")
+array1=($B $SE $Z $P $OR $ORL95 $ORU95 $N $CaseN $ControlN $EAF2)
+array2=($tfB $tfSE $tfZ $tfP $tfOR $tfORL95 $tfORU95 $tfN $tfCaseN $tfControlN $tfEAF2)
+array3=("beta" "standarderror" "zscore" "pvalue" "oddsratio" "ORu95" "ORl95" "Nindividuals" "Ncases" "Ncontrols" "allelefreq")
 
 printf "%s" "0" > ${coln}
 printf "%s" "0" > ${colf}
 printf "%s" "--index 1" > ${argn}
 
 c=1
-for i in {0..6}; do
+for i in {0..10}; do
   if [ "${array2[i]}" == "true" ];then
     c=$((c+1))
     printf ",%s" "${array1[i]}" >> ${coln}
