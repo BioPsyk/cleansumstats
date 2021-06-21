@@ -29,6 +29,9 @@ function specfunx_exists(){
   head -n1 $infs | awk '{print $0" "}'1 | grep -q "[[:space:]]$var[[:space:]]"
 }
 
+#what is statmethod according to meta data file
+STATM="$(selRightHand "$(selColRow "^stats_Model:" $mefl)")"
+
 #what is colname according to meta data file
 B="$(selRightHand "$(selColRow "^col_BETA:" $mefl)")"
 SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
@@ -77,19 +80,23 @@ function which_to_select(){
     echo -e "${B}"
     echo "B" 1>&2
   else
-    if specfunx_exists "beta_from_zscore_se" ${inferred}; then
-      echo "beta_from_zscore_se"
-      echo "B" 1>&2
-    elif specfunx_exists "beta_from_zscore_N_af" ${inferred}; then
-      echo "beta_from_zscore_N_af"
-      echo "B" 1>&2
-    elif specfunx_exists "beta_from_zscore_se_1KG" ${inferred}; then
-      echo "beta_from_zscore_se_1KG"
-      echo "B" 1>&2
-    elif specfunx_exists "beta_from_zscore_N_af_1KG" ${inferred}; then
-      echo "beta_from_zscore_N_af_1KG"
-      echo "B" 1>&2
-    else
+    if [ ${STATM} == "linear" ]; then
+      if specfunx_exists "beta_from_zscore_se" ${inferred}; then
+        echo "beta_from_zscore_se"
+        echo "B" 1>&2
+      elif specfunx_exists "beta_from_zscore_N_af" ${inferred}; then
+        echo "beta_from_zscore_N_af"
+        echo "B" 1>&2
+      elif specfunx_exists "beta_from_zscore_se_1KG" ${inferred}; then
+        echo "beta_from_zscore_se_1KG"
+        echo "B" 1>&2
+      elif specfunx_exists "beta_from_zscore_N_af_1KG" ${inferred}; then
+        echo "beta_from_zscore_N_af_1KG"
+        echo "B" 1>&2
+      else
+        :
+      fi
+    elif [ ${STATM} == "logistic" ]; then
       :
     fi
   fi
@@ -97,19 +104,23 @@ function which_to_select(){
     echo -e "${SE}"
     echo "SE" 1>&2
   else
-    if specfunx_exists "se_from_zscore_beta" ${inferred}; then
-      echo "se_from_zscore_beta"
-      echo "SE" 1>&2
-    elif specfunx_exists "se_from_zscore_N_af" ${inferred}; then
-      echo "se_from_zscore_N_af"
-      echo "SE" 1>&2
-    elif specfunx_exists "se_from_zscore_beta_1KG" ${inferred}; then
-      echo "se_from_zscore_beta_1KG"
-      echo "SE" 1>&2
-    elif specfunx_exists "se_from_zscore_N_af_1KG" ${inferred}; then
-      echo "se_from_zscore_N_af_1KG"
-      echo "SE" 1>&2
-    else
+    if [ ${STATM} == "linear" ]; then
+      if specfunx_exists "se_from_zscore_beta" ${inferred}; then
+        echo "se_from_zscore_beta"
+        echo "SE" 1>&2
+      elif specfunx_exists "se_from_zscore_N_af" ${inferred}; then
+        echo "se_from_zscore_N_af"
+        echo "SE" 1>&2
+      elif specfunx_exists "se_from_zscore_beta_1KG" ${inferred}; then
+        echo "se_from_zscore_beta_1KG"
+        echo "SE" 1>&2
+      elif specfunx_exists "se_from_zscore_N_af_1KG" ${inferred}; then
+        echo "se_from_zscore_N_af_1KG"
+        echo "SE" 1>&2
+      else
+        :
+      fi
+    elif [ ${STATM} == "logistic" ]; then
       :
     fi
   fi
@@ -117,25 +128,29 @@ function which_to_select(){
     echo -e "${Z}"
     echo "Z" 1>&2
   else
-    if specfunx_exists "zscore_from_beta_se" ${inferred}; then
-      echo "zscore_from_beta_se"
-      echo "Z" 1>&2
-    elif specfunx_exists "zscore_from_pval_beta" ${inferred}; then
-      echo "zscore_from_pval_beta"
-      echo "Z" 1>&2
-    elif specfunx_exists "zscore_from_pval_beta_N" ${inferred}; then
-      echo "zscore_from_pval_beta_N"
-      echo "Z" 1>&2
-    elif specfunx_exists "zscore_from_beta_se_1KG" ${inferred}; then
-      echo "zscore_from_beta_se_1KG"
-      echo "Z" 1>&2
-    elif specfunx_exists "zscore_from_pval_beta_1KG" ${inferred}; then
-      echo "zscore_from_pval_beta_1KG"
-      echo "Z" 1>&2
-    elif specfunx_exists "zscore_from_pval_beta_N_1KG" ${inferred}; then
-      echo "zscore_from_pval_beta_N_1KG"
-      echo "Z" 1>&2
-    else
+    if [ ${STATM} == "linear" ]; then
+      if specfunx_exists "zscore_from_beta_se" ${inferred}; then
+        echo "zscore_from_beta_se"
+        echo "Z" 1>&2
+      elif specfunx_exists "zscore_from_pval_beta" ${inferred}; then
+        echo "zscore_from_pval_beta"
+        echo "Z" 1>&2
+      elif specfunx_exists "zscore_from_pval_beta_N" ${inferred}; then
+        echo "zscore_from_pval_beta_N"
+        echo "Z" 1>&2
+      elif specfunx_exists "zscore_from_beta_se_1KG" ${inferred}; then
+        echo "zscore_from_beta_se_1KG"
+        echo "Z" 1>&2
+      elif specfunx_exists "zscore_from_pval_beta_1KG" ${inferred}; then
+        echo "zscore_from_pval_beta_1KG"
+        echo "Z" 1>&2
+      elif specfunx_exists "zscore_from_pval_beta_N_1KG" ${inferred}; then
+        echo "zscore_from_pval_beta_N_1KG"
+        echo "Z" 1>&2
+      else
+        :
+      fi
+    elif [ ${STATM} == "logistic" ]; then
       :
     fi
   fi
@@ -143,19 +158,23 @@ function which_to_select(){
     echo -e "${P}"
     echo "P" 1>&2
   else
-    if specfunx_exists "pval_from_zscore_N" ${inferred}; then
-      echo "pval_from_zscore_N"
-      echo "P" 1>&2
-    elif specfunx_exists "pval_from_zscore" ${inferred}; then
-      echo "pval_from_zscore"
-      echo "P" 1>&2
-    elif specfunx_exists "pval_from_zscore_N_1KG" ${inferred}; then
-      echo "pval_from_zscore_N_1KG"
-      echo "P" 1>&2
-    elif specfunx_exists "pval_from_zscore_1KG" ${inferred}; then
-      echo "pval_from_zscore_1KG"
-      echo "P" 1>&2
-    else
+    if [ ${STATM} == "linear" ]; then
+      if specfunx_exists "pval_from_zscore_N" ${inferred}; then
+        echo "pval_from_zscore_N"
+        echo "P" 1>&2
+      elif specfunx_exists "pval_from_zscore" ${inferred}; then
+        echo "pval_from_zscore"
+        echo "P" 1>&2
+      elif specfunx_exists "pval_from_zscore_N_1KG" ${inferred}; then
+        echo "pval_from_zscore_N_1KG"
+        echo "P" 1>&2
+      elif specfunx_exists "pval_from_zscore_1KG" ${inferred}; then
+        echo "pval_from_zscore_1KG"
+        echo "P" 1>&2
+      else
+        :
+      fi
+    elif [ ${STATM} == "logistic" ]; then
       :
     fi
   fi
@@ -175,13 +194,18 @@ function which_to_select(){
   if [ ${tfN} == "true" ]; then
     echo -e "${N}"
     echo "N" 1>&2
-    if specfunx_exists "N_from_zscore_beta_af" ${inferred}; then
-      echo "N_from_zscore_beta_af"
-      echo "N" 1>&2
-    elif specfunx_exists "N_from_zscore_beta_af_1KG" ${inferred}; then
-      echo "N_from_zscore_beta_af_1KG"
-      echo "N" 1>&2
-    else
+  else
+    if [ ${STATM} == "linear" ]; then
+      if specfunx_exists "N_from_zscore_beta_af" ${inferred}; then
+        echo "N_from_zscore_beta_af"
+        echo "N" 1>&2
+      elif specfunx_exists "N_from_zscore_beta_af_1KG" ${inferred}; then
+        echo "N_from_zscore_beta_af_1KG"
+        echo "N" 1>&2
+      else
+        :
+      fi
+    elif [ ${STATM} == "logistic" ]; then
       :
     fi
   fi
