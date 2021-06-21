@@ -2032,10 +2032,13 @@ process select_chrpos_or_snpchrpos {
 
           Sx="\$(grep "^stats_Model:" ${mfile})"
           STATM="\${Sx#*: }"
-          if [ "\${STATM}"=="linear" ]; then
+
+          if [ "\${STATM}" == "linear" ]; then
             STATM2="lin"
-          elif [ "\${STATM}"=="logistic" ]; then
+          elif [ "\${STATM}" == "logistic" ]; then
             STATM2="log"
+          else
+            echo "Requires a statmodel defined in metafile"
           fi
 
           thisdir="\$(pwd)"
