@@ -111,7 +111,7 @@ class Metadata extends BaseMetadata {
     def header = new SumstatHeader(this.path_sumStats)
 
     Metadata.class.metaClass.getProperties().each { prop ->
-      if (!prop.name.startsWith("col_")) return
+      if (!prop.name.startsWith("col_") || prop.name == "col_Notes") return
 
       def column_name = Metadata.class.metaClass.getProperty(this, prop.name)
 

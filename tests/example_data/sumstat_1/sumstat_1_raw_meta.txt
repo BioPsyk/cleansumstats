@@ -9,17 +9,17 @@ col_P: P
 col_POS: BP
 col_SE: SE
 col_SNP: SNP
-stats_neglog10P: false
 path_pdf: sumstat_1_pmid_23358156.pdf
 path_sumStats: sumstat_1_raw.gz
 path_supplementary:
-- sumstat_1_pmid_23358156_supp/sumstat_1_pmid_23358156_supp_1.pdf
+- sumstat_1_pmid_23358156_supp_1.pdf
 stats_GCMethod: none
 stats_Model: linear
 stats_Notes: Discovery sample only, I think. This sumstat_ID was used to test meta
   file update functionality.
 stats_TotalN: 12441
 stats_TraitType: quantitative
+stats_neglog10P: false
 study_AccessDate: '2020-04-27'
 study_Ancestry: EUR
 study_Array: meta
@@ -37,3 +37,4 @@ study_PhenoDesc: 'Childhood Intelligence (old phenocode: Childhood IQ)'
 study_Title: sumstat_1
 study_Use: open
 study_Year: 2014
+

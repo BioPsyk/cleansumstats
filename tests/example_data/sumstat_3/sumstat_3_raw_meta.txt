@@ -12,17 +12,17 @@ col_P: pval
 col_POS: bp
 col_SE: se
 col_SNP: snpid
-stats_neglog10P: false
 path_pdf: sumstat_3_pmid_22472876.pdf
 path_readMe: sumstat_3_raw_README.txt
 path_sumStats: sumstat_3_raw.gz
 path_supplementary:
-- sumstat_3_pmid_22472876_supp/sumstat_3_pmid_22472876_supp_1.pdf
+- sumstat_3_pmid_22472876_supp_1.pdf
 stats_CaseN: 9240
 stats_ControlN: 9519
 stats_Model: logistic
 stats_TotalN: 18759
 stats_TraitType: case-control
+stats_neglog10P: false
 study_AccessDate: '2020-04-29'
 study_Ancestry: EUR
 study_Array: meta
