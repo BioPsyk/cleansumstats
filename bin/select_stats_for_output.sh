@@ -97,7 +97,15 @@ function which_to_select(){
         :
       fi
     elif [ ${STATM} == "logistic" ]; then
-      :
+      if specfunx_exists "beta_from_oddsratio" ${inferred}; then
+        echo "beta_from_oddsratio"
+        echo "B" 1>&2
+      elif specfunx_exists "beta_from_zscore_se" ${inferred}; then
+        echo "beta_from_zscore_se"
+        echo "B" 1>&2
+      else
+        :
+      fi
     fi
   fi
   if [ ${tfSE} == "true" ]; then
@@ -121,7 +129,15 @@ function which_to_select(){
         :
       fi
     elif [ ${STATM} == "logistic" ]; then
-      :
+      if specfunx_exists "se_from_beta_zscore" ${inferred}; then
+        echo "se_from_beta_zscore"
+        echo "SE" 1>&2
+      elif specfunx_exists "se_from_ORu95_ORl95" ${inferred}; then
+        echo "se_from_ORu95_ORl95"
+        echo "SE" 1>&2
+      else
+        :
+      fi
     fi
   fi
   if [ ${tfZ} == "true" ]; then
@@ -151,7 +167,15 @@ function which_to_select(){
         :
       fi
     elif [ ${STATM} == "logistic" ]; then
-      :
+      if specfunx_exists "zscore_from_beta_se" ${inferred}; then
+        echo "zscore_from_beta_se"
+        echo "Z" 1>&2
+      elif specfunx_exists "zscore_from_pval_oddsratio" ${inferred}; then
+        echo "zscore_from_pval_oddsratio"
+        echo "Z" 1>&2
+      else
+        :
+      fi
     fi
   fi
   if [ ${tfP} == "true" ]; then
@@ -175,7 +199,12 @@ function which_to_select(){
         :
       fi
     elif [ ${STATM} == "logistic" ]; then
-      :
+      if specfunx_exists "pval_from_zscore" ${inferred}; then
+        echo "pval_from_zscore"
+        echo "P" 1>&2
+      else
+        :
+      fi
     fi
   fi
   if [ ${tfOR} == "true" ]; then
@@ -206,7 +235,12 @@ function which_to_select(){
         :
       fi
     elif [ ${STATM} == "logistic" ]; then
-      :
+      if specfunx_exists "Neff_from_Nca_Nco" ${inferred}; then
+        echo "Neff_from_Nca_Nco"
+        echo "N" 1>&2
+      else
+        :
+      fi
     fi
   fi
   if [ ${tfCaseN} == "true" ]; then

@@ -2143,6 +2143,7 @@ process select_chrpos_or_snpchrpos {
       output:
       tuple datasetID, file("final_assembly__cleaned2"), file("final_assembly__header") into ch_cleaned_file_1
       tuple datasetID, file("final_assembly__desc_final_merge_BA.txt") into ch_desc_final_merge_BA
+      path("final_assembly__cleaned")
 
       script:
       """
