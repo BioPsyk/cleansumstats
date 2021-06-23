@@ -661,3 +661,4 @@ required:
   - "study_Gender"
   - "stats_TraitType"
   - "stats_TotalN"
+  - "stats_Model"
