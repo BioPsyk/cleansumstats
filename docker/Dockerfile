@@ -211,6 +211,9 @@ RUN apt-get update --fix-missing && \
   pip3 install pyyaml && \
   apt-get remove --purge python3-pip -y
 
+RUN apt-get update --fix-missing && \
+  apt-get install vim -y
+
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
 RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
 
@@ -220,5 +223,6 @@ ENV NXF_CLASSPATH="/cleansumstats/ipb-pipeline-lib.jar"
 
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
 RUN chown nextflow:users /cleansumstats/external_data -R
+
 
 USER nextflow

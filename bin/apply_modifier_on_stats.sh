@@ -107,7 +107,7 @@ cat $ACOR \
 
 
 # -z returns true if variable is unset
-if [ -z "$var_m" ] && [ -z "$var_m2" ]
+if [ -z "$var_m" ] && [ -z "$var_m2" ] && [ -z "$var_m3" ]
 then
   #echo "hej"
   LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k
