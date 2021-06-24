@@ -2008,10 +2008,10 @@ process select_chrpos_or_snpchrpos {
         output:
         tuple datasetID, af_branch, mfile, file("infer_stats__st_inferred_stats") into ch_stats_selection
         tuple datasetID, file("infer_stats__desc_inferred_stats_if_inferred_BA.txt") into ch_desc_inferred_stats_if_inferred_BA
-       // file("st_which_to_infer")
-       // file("colfields")
-       // file("colnames")
-       // file("colpositions")
+        file("st_which_to_infer")
+        file("colfields")
+        file("colnames")
+        file("colpositions")
 
         script:
         """

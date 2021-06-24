@@ -5,6 +5,7 @@ mefl=$1
 colf=$2
 coln=$3
 argn=$4
+af_branch=$5
 
 #helpers
 function selRightHand(){
@@ -63,25 +64,65 @@ else
     EAF2="missing"
     tfEAF2="false"
   fi
-
 fi
 
 #which args to use
-array1=($B $SE $Z $P $OR $ORL95 $ORU95 $N $CaseN $ControlN $EAF2)
-array2=($tfB $tfSE $tfZ $tfP $tfOR $tfORL95 $tfORU95 $tfN $tfCaseN $tfControlN $tfEAF2)
-array3=("beta" "standarderror" "zscore" "pvalue" "oddsratio" "ORu95" "ORl95" "Nindividuals" "Ncases" "Ncontrols" "allelefreq")
+cat <<EOF > argsfile.txt
+$B
+$SE
+$Z
+$P
+$OR
+$ORL95
+$ORU95
+$N
+$CaseN
+$ControlN
+$EAF2
+EOF
+
+cat <<EOF > argsfileTF.txt
+$tfB
+$tfSE
+$tfZ
+$tfP
+$tfOR
+$tfORL95
+$tfORU95
+$tfN
+$tfCaseN
+$tfControlN
+$tfEAF2
+EOF
+
+cat <<EOF > argsfile2.txt
+beta
+standarderror
+zscore
+pvalue
+oddsratio
+ORu95
+ORl95
+Nindividuals
+Ncases
+Ncontrols
+allelefreq
+EOF
 
 printf "%s" "0" > ${coln}
 printf "%s" "0" > ${colf}
 printf "%s" "--index 1" > ${argn}
 
-c=1
-for i in {0..10}; do
-  if [ "${array2[i]}" == "true" ];then
+c=2
+for i in {1..10}; do
+  el1="$(awk -vc="${i}" 'NR==c{print $0}' argsfile.txt)"
+  el2="$(awk -vc="${i}" 'NR==c{print $0}' argsfileTF.txt)"
+  el3="$(awk -vc="${i}" 'NR==c{print $0}' argsfile2.txt)"
+  if [ "${el2}" == "true" ];then
+    printf ",%s" "${el1}" >> ${coln}
+    printf "|%s" "${el1}" >> ${colf}
+    printf " %s" "--${el3} $c" >> ${argn}
     c=$((c+1))
-    printf ",%s" "${array1[i]}" >> ${coln}
-    printf "|%s" "${array1[i]}" >> ${colf}
-    printf " %s" "--${array3[i]} $c" >> ${argn}
   else
     :
   fi
