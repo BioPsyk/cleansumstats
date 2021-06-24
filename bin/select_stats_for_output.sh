@@ -237,7 +237,7 @@ function which_to_select(){
     elif [ ${STATM} == "logistic" ]; then
       if specfunx_exists "Neff_from_Nca_Nco" ${inferred}; then
         echo "Neff_from_Nca_Nco"
-        echo "N" 1>&2
+        echo "Neff" 1>&2
       else
         :
       fi
