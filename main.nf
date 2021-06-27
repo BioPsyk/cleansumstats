@@ -2008,10 +2008,10 @@ process select_chrpos_or_snpchrpos {
         output:
         tuple datasetID, af_branch, mfile, file("infer_stats__st_inferred_stats") into ch_stats_selection
         tuple datasetID, file("infer_stats__desc_inferred_stats_if_inferred_BA.txt") into ch_desc_inferred_stats_if_inferred_BA
-       // file("st_which_to_infer")
-       // file("colfields")
-       // file("colnames")
-       // file("colpositions")
+        file("st_which_to_infer")
+        file("colfields")
+        file("colnames")
+        file("colpositions")
 
         script:
         """
@@ -2030,9 +2030,20 @@ process select_chrpos_or_snpchrpos {
 
         if [ -s st_which_to_infer ]; then
 
-        thisdir="\$(pwd)"
+          Sx="\$(grep "^stats_Model:" ${mfile})"
+          STATM="\${Sx#*: }"
 
-        cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${cf}" -n"\${cn}" | r-stats-c-streamer --functionfile st_which_to_infer --skiplines 1 \${cp} --statmodel lin --allelefreqswitch > infer_stats__st_inferred_stats
+          if [ "\${STATM}" == "linear" ]; then
+            STATM2="lin"
+          elif [ "\${STATM}" == "logistic" ]; then
+            STATM2="log"
+          else
+            echo "Requires a statmodel defined in metafile"
+          fi
+
+          thisdir="\$(pwd)"
+
+          cat $st_filtered | sstools-utils ad-hoc-do -f - -k "\${cf}" -n"\${cn}" | r-stats-c-streamer --functionfile st_which_to_infer --skiplines 1 \${cp} --statmodel \${STATM2} --allelefreqswitch > infer_stats__st_inferred_stats
 
         else
           touch infer_stats__st_inferred_stats
@@ -2132,6 +2143,7 @@ process select_chrpos_or_snpchrpos {
       output:
       tuple datasetID, file("final_assembly__cleaned2"), file("final_assembly__header") into ch_cleaned_file_1
       tuple datasetID, file("final_assembly__desc_final_merge_BA.txt") into ch_desc_final_merge_BA
+      path("final_assembly__cleaned")
 
       script:
       """

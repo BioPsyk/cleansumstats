@@ -57,6 +57,7 @@ col_BETA: EFFECT_A1
 col_P: P
 col_POS: BP
 col_SE: SE
+stats_Model: linear
 EOF
 
 
@@ -104,16 +105,3 @@ _run_script
 #---------------------------------------------------------------------------------
 # Next case
 
-#_setup "valid_rows_missing_afreq"
-#
-#cat <<EOF > ./acor.tsv
-#0	A1	A2	CHRPOS	RSID	EffectAllele	OtherAllele	EMOD
-#1	A	G	12:126406434	rs1000000	G	A	-1
-#EOF
-#
-#cat <<EOF > ./stat.tsv
-#0	B	SE	Z	P
-#1	-0.0143	0.0156	-0.916667	0.3604
-#EOF
-#
-#_run_script

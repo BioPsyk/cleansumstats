@@ -20,32 +20,19 @@ function _setup {
 }
 
 function _check_results {
-  header=$(head -n 1 ./result.tsv)
-
-  IFS=$'\t' read -r -a columns <<< "${header}"
-  unset IFS
-
-  expected_columns=(
-    "0" "CHR" "POS" "RSID" "EffectAllele" "OtherAllele"
-    "P" "SE" "B" "Z"
-  )
-
-  for exp in "${expected_columns[@]}"
-  do
-    if [[ ! " ${columns[@]} " =~ " ${exp} " ]]; then
-      echo "- [FAIL] ${curr_case}: Column '${exp}' was missing from expected columns:"
-      echo "  '${expected_columns[@]}'"
-      exit 1
-    fi
-  done
-
-  echo "- [OK] ${curr_case}"
+  obs=$1
+  exp=$2
+  if ! diff ${obs} ${exp} &> ./difference; then
+    echo "- [FAIL] ${curr_case}"
+    cat ./difference 
+    exit 1
+  fi
 }
 
 function _run_script {
-  "${test_script}.sh" ./acor.tsv ./stat.tsv > ./result.tsv
+  "${test_script}.sh" ./acor.tsv ./stat.tsv > ./observed-result1.txt
 
-  _check_results
+  _check_results ./observed-result1.txt ./expected-result1.tsv
 
   cd "${initial_dir}"
 }
@@ -57,9 +44,9 @@ echo ">> Test ${test_script}"
 #=================================================================================
 
 #---------------------------------------------------------------------------------
-# Using valid rows that contains all columns
+# Case 1
 
-_setup "valid_rows_all_columns"
+_setup "input P, SE, B, Z, EAF, linear regression"
 
 cat <<EOF > ./acor.tsv
 0	A1	A2	CHRPOS	RSID	EffectAllele	OtherAllele	EMOD
@@ -67,16 +54,21 @@ cat <<EOF > ./acor.tsv
 EOF
 
 cat <<EOF > ./stat.tsv
-0	B	SE	Z	P	AFREQ
+0	B	SE	Z	P	EAF
 1	-0.0143	0.0156	-0.916667	0.3604	0.373
+EOF
+
+cat <<EOF > ./expected-result1.tsv
+0	CHR	POS	RSID	EffectAllele	OtherAllele	P	SE	B	Z	EAF
+1	12	126406434	rs1000000	G	A	0.3604	0.0156	0.0143	0.916667	0.627
 EOF
 
 _run_script
 
 #---------------------------------------------------------------------------------
-# Using valid rows that is missing the AFREQ column
+# Case 2
 
-_setup "valid_rows_missing_afreq"
+_setup "input P, SE, B, Z linear regression"
 
 cat <<EOF > ./acor.tsv
 0	A1	A2	CHRPOS	RSID	EffectAllele	OtherAllele	EMOD
@@ -86,6 +78,33 @@ EOF
 cat <<EOF > ./stat.tsv
 0	B	SE	Z	P
 1	-0.0143	0.0156	-0.916667	0.3604
+EOF
+
+cat <<EOF > ./expected-result1.tsv
+0	CHR	POS	RSID	EffectAllele	OtherAllele	P	SE	B	Z
+1	12	126406434	rs1000000	G	A	0.3604	0.0156	0.0143	0.916667
+EOF
+
+_run_script
+
+#---------------------------------------------------------------------------------
+# Case 3
+
+_setup "input P, SE, OR, INFO logistic regression"
+
+cat <<EOF > ./acor.tsv
+0	A1	A2	CHRPOS	RSID	EffectAllele	OtherAllele	EMOD
+1	A	G	12:126406434	rs1000000	G	A	-1
+EOF
+
+cat <<EOF > ./stat.tsv
+0	SE	P	OR	INFO
+1	0.0112	0.2696	0.98768	0.99
+EOF
+
+cat <<EOF > ./expected-result1.tsv
+0	CHR	POS	RSID	EffectAllele	OtherAllele	P	SE	INFO	OR
+1	12	126406434	rs1000000	G	A	0.2696	0.0112	0.99	1.01247
 EOF
 
 _run_script

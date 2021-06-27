@@ -54,7 +54,7 @@ RUN rm -rf rmath
 #---------------------------------------------------------------------------------
 # Installing r-stats-c-streamer
 
-ARG R_STATS_C_STREAMER_REVISION="7183d83523600c67a223a7b7a4c86615d9b779f7"
+ARG R_STATS_C_STREAMER_REVISION="91c4430b3d5a9f313de95bcc3aae205a663d23d7"
 
 RUN wget "https://github.com/pappewaio/r-stats-c-streamer/archive/${R_STATS_C_STREAMER_REVISION}.zip" \
   --quiet -O r-stats-c-streamer.zip && \
@@ -211,6 +211,9 @@ RUN apt-get update --fix-missing && \
   pip3 install pyyaml && \
   apt-get remove --purge python3-pip -y
 
+RUN apt-get update --fix-missing && \
+  apt-get install vim -y
+
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
 RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
 
@@ -220,5 +223,6 @@ ENV NXF_CLASSPATH="/cleansumstats/ipb-pipeline-lib.jar"
 
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
 RUN chown nextflow:users /cleansumstats/external_data -R
+
 
 USER nextflow

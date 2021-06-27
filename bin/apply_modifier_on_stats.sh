@@ -22,11 +22,6 @@ function which_to_mod(){
       echo "B"
       echo "B" 1>&2
     fi
-   #needs special care for allele flipping
-   # if stat_exists "OR" ${STAT}; then
-   #   echo "OR"
-   #   echo "OR" 1>&2
-   # fi
     if stat_exists "Z" ${STAT}; then
       echo "Z"
       echo "Z" 1>&2
@@ -41,6 +36,13 @@ function which_to_mod2(){
     if stat_exists "EAF_1KG" ${STAT}; then
       echo "EAF_1KG"
       echo "EAF_1KG" 1>&2
+    fi
+}
+
+function which_to_mod3(){
+    if stat_exists "OR" ${STAT}; then
+      echo "OR"
+      echo "OR" 1>&2
     fi
 }
 
@@ -83,12 +85,15 @@ function which_to_keep(){
     fi
 }
 
-unset var_m var_m2
+unset var_m var_m2 var_m3
 
 var_m=$(which_to_mod 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
 nam_m=$(which_to_mod 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
 var_m2=$(which_to_mod2 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
 nam_m2=$(which_to_mod2 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
+var_m3=$(which_to_mod3 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
+nam_m3=$(which_to_mod3 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
+
 var_k=$(which_to_keep 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
 nam_k=$(which_to_keep 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
 
@@ -102,7 +107,7 @@ cat $ACOR \
 
 
 # -z returns true if variable is unset
-if [ -z "$var_m" ] && [ -z "$var_m2" ]
+if [ -z "$var_m" ] && [ -z "$var_m2" ] && [ -z "$var_m3" ]
 then
   #echo "hej"
   LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k
@@ -124,13 +129,28 @@ else
   else
     :
   fi
+  #1/var
+  if [ -n "$var_m3" ] ; then
+    sstools-utils ad-hoc-do -f $STAT -k "0|${var_m3}" -n"0,${nam_m3}" | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 modifier - | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s", $1; for(i=3; i<=NF; i++){printf "%s%s", OFS, $i}; printf "%s", RS }; NR>1{printf "%s", $1; for(i=3; i<=NF; i++){if($2=="1"){printf "%s%s", OFS, $i}else{printf "%s%s", OFS, 1/$i}}; printf "%s", RS}' > sel_stats_m3
+  else
+    :
+  fi
 
   #connect it now in some clever way depending on if we have both or only one of the modified variants
-  if [ -n "$var_m" ] && [ -n "$var_m2" ] ; then
+  if [ -n "$var_m" ] && [ -n "$var_m2" ] && [ -n "$var_m3" ] ; then
+    LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m2 | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m3
+  elif [ -n "$var_m" ] && [ -n "$var_m3" ] ; then
+    LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m3
+  elif [ -n "$var_m2" ] && [ -n "$var_m3" ] ; then
+    LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m2 | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m3
+  elif [ -n "$var_m" ] && [ -n "$var_m2" ] ; then
     LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m2
   elif [ -n "$var_m" ] ; then
     LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m
-  else
+  elif [ -n "$var_m2" ] ; then
     LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m2
+  else
+    LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 core_vars sel_stats_k | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 - sel_stats_m3
   fi
 fi
+
