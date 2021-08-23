@@ -4,6 +4,11 @@ This document describes the output produced by the pipeline. Most of the plots a
 
 <!-- TODO nf-core: Write this documentation describing your workflow's output -->
 
+To merge different builds
+```
+paste <(zcat cleaned_GRCh37.gz) <(zcat claned_GRCH38.gz) | gzip -c > merged.gz
+```
+
 ## Pipeline overview
 The pipeline is built using [Nextflow](https://www.nextflow.io/)
 and processes data using the following steps:
