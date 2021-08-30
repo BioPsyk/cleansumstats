@@ -113,7 +113,7 @@ RUN apt-get install -y autoconf automake make zlib1g-dev libbz2-dev \
 RUN wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2 \
   --quiet -O htslib.tar.bz2 && \
   tar -xjvf htslib.tar.bz2 && \
-  mv "htslib-${HTSLIB_VERSION}" "htslib" 
+  mv "htslib-${HTSLIB_VERSION}" "htslib"
 
 WORKDIR /cleansumstats/htslib
 RUN make
@@ -124,7 +124,7 @@ WORKDIR /cleansumstats
 RUN wget https://github.com/samtools/samtools/releases/download/1.3.1/samtools-1.3.1.tar.bz2 \
   --quiet -O samtools.tar.bz2 && \
   tar -vxjf samtools.tar.bz2 && \
-  mv "samtools-${SAMTOOLS_VERSION}" "samtools" 
+  mv "samtools-${SAMTOOLS_VERSION}" "samtools"
 
 WORKDIR /cleansumstats/samtools
 RUN make
@@ -134,7 +134,7 @@ WORKDIR /cleansumstats
 RUN wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2 \
   --quiet -O bcftools.tar.bz2 && \
   tar -vxjf bcftools.tar.bz2 && \
-  mv "bcftools-${BCFTOOLS_VERSION}" "bcftools" 
+  mv "bcftools-${BCFTOOLS_VERSION}" "bcftools"
 
 WORKDIR /cleansumstats/bcftools
 RUN make
@@ -155,7 +155,7 @@ WORKDIR /cleansumstats
 #  wget -qP fasta_reference "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh37_latest/refseq_identifiers/GRCh37_latest_genomic.fna.gz" && \
 #  cd fasta_reference && \
 #  echo "${HG_38_FASTA_CHECKSUM}  GRCh38_latest_genomic.fna.gz" | sha256sum -c && \
-#  echo "${HG_37_FASTA_CHECKSUM}  GRCh37_latest_genomic.fna.gz" | sha256sum -c 
+#  echo "${HG_37_FASTA_CHECKSUM}  GRCh37_latest_genomic.fna.gz" | sha256sum -c
 #
 ## Recompress using bgzip and make indices .fai and .gzi (compressed version)
 #WORKDIR /cleansumstats/external_data/fasta_reference
@@ -177,7 +177,7 @@ WORKDIR /cleansumstats
 # Represents docker.io/library/rust:1.49.0-slim at 2021-01-21
 FROM rust@sha256:f46e703b7a0efd836690ed488edc55f8f84f4a161aa9a2724e0cffd59646f5a5 AS rust_builder
 
-RUN cargo install b3sum
+RUN cargo install --version 0.3.8 b3sum
 
 #---------------------------------------------------------------------------------
 # Creating runtime image with software built in builder image
