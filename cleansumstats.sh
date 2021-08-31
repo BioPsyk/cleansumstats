@@ -6,6 +6,7 @@
 # --input
 # --outdir
 
+
 # For now we will hardcode the other possible input types (and use path set in README):
 #--libdirdbsnp ./out_dbsnp \
 #--kg1000AFGRCh38 ./out_1kgp
@@ -13,6 +14,9 @@
 
 # This script is run like this:
 # cleansumstats.sh "metadatafile" "outfolder"
+
+# OR like this:
+# cleansumstats.sh "metadatafile" "outfolder" "test"
 
 # Example paths can look like this
 # input: /home/joeri/blabla/metadata.yaml
@@ -41,8 +45,22 @@ if [ ! -d $outdir_host ]; then
   exit 1
 fi
 
+# For testing purposes we can use the test flag to run on a smaller reference set of dbsnp and 1kgp
+# check test argument exist
+if [ -z $3 ]; then
+  libdirdbsnp="./out_dbsnp"
+  kg1000AFGRCh38="./out_1kgp"
+else
+  if [ "$3"=="test" ]; then
+    kg1000AFGRCh38="/cleansumstats/tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined"
+    libdirdbsnp="/cleansumstats/tests/example_data/dbsnp/generated_reference"
+  else
+    >&2 echo "test argument has to be 'test'"
+    exit 1
+  fi
+fi
 
-# All paths we se will start from the project root, even if the command is called from somewhere else
+# All paths we see will start from the project root, even if the command is called from somewhere else
 project_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 source "${project_dir}/scripts/init-containerization.sh"
@@ -69,6 +87,6 @@ exec singularity run \
      nextflow run /cleansumstats \
        --input "${metafile_container}" \
        --outdir "${outdir_container}" \
-       --libdirdbsnp ./out_dbsnp \
-       --kg1000AFGRCh38 ./out_1kgp
+       --libdirdbsnp "${libdirdbsnp}" \
+       --kg1000AFGRCh38 "${kg1000AFGRCh38}"
 

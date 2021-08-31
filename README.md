@@ -29,17 +29,23 @@ singularity --version
 
 ```
 
-## Quick Start IBP
-To run the IBP GDK specific fully configurated and operational pipeline just run
+## Quick Start 2
+As a convenience wrapper to get in and output folders mounted in the right place it is poosible to use the cleansumstats.sh script.
 
 ```
 # i. Start interactive node and prepare output folder
 srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
+
+# ii. Make output folder (can be anywhere on the system)
 mkdir output
 
-# ii. Run the singularity image using example data
-./cleansumstats.sh tests/example_data/sumstat_1/sumstat_1_raw_meta.txt  output
+# iii. Using the convenience wrapper, which is same example data as above (activated declaring 'test')
+./cleansumstats.sh \
+  tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
+  output \
+  test
 ```
+
 
 ## Add full size reference data
 In the cleaning all positions are compared to a reference to confirm or add missing annotation.
@@ -92,13 +98,22 @@ After the reference data paths have been set in the nextflow.config file, the pi
 This will take longer time compared to the quick-start run as we now use the full >600 million rows dbsnp reference to map our variants to.
 
 ```
-# ii. If you are on a HPC Start your interactive session (below SLURM settings took about 10min to run)
+# i. If you are on a HPC Start your interactive session (below SLURM settings took about 10min to run)
 srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --input /cleansumstats/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   --outdir ./out_clean \
   --libdirdbsnp ./out_dbsnp \
   --kg1000AFGRCh38 ./out_1kgp
+```
+
+As a convenience wrapper to get in and output folders mounted in the right place it is poosible to use the cleansumstats.sh script. '--libdirdbsnp' and '--kg1000AFGRCh38' should be set in nextflow.config (default is a smaller set of example data used for the quick start in the beginning of the README)
+```
+# ii. Same as above using ./out_dbsnp and ./out_1kgp, but using the convenience wrapper
+mkdir output
+./cleansumstats.sh \
+  tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
+  output
 ```
 
 
