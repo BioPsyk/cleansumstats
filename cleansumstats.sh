@@ -2,38 +2,111 @@
 
 # This script is a wrapper to run the singularity image of this pipeline, where folders are parsed and mounted in the right place.
 
-# This script takes two required inputs, which directories have to be mounted: 
-# --input
-# --outdir
+################################################################################
+# Help page
+################################################################################
+
+function general_usage(){
+ echo "Example usage, specify output and the test flag:"
+ echo " ./cleansumstats.sh -o output -t"
+ echo ""
+ echo "Simple Usage:"
+ echo " ./cleansumstats.sh -i <file> -o <dir>"
+ echo ""
+ echo "Advanced Usage:"
+ echo " ./cleansumstats.sh -i <file> -o <dir> -d <dir> -k <dir>"
+ echo ""
+ echo "options:"
+ echo "-h		 Display help message for cleansumstats"
+ echo "-i <file> 	 path to meta file"
+ echo "-o <dir> 	 path to output directory"
+ echo "-d <dir> 	 path to dbsnp processed reference"
+ echo "-k <dir> 	 path to 1000 genomes processed reference"
+ echo "-t  	 	 test the example version of dbsnp and 1000 genomes references"
+ echo ""
+ echo ""
+ echo "NOTE: For 'simple usage' it requires dbsnp and 1000G project references to be set up and linked to in the config file."
+
+}
 
 
-# For now we will hardcode the other possible input types (and use path set in README):
-#--libdirdbsnp ./out_dbsnp \
-#--kg1000AFGRCh38 ./out_1kgp
-#
+################################################################################
+# Parameter parsing
+################################################################################
+#whatever the input make it array
+paramarray=($@)
 
-# This script is run like this:
-# cleansumstats.sh "metadatafile" "outfolder"
+# starting getops with :, puts the checking in silent mode for errors.
+getoptsstring=":hvi:o:d:k:t"
 
-# OR like this:
-# cleansumstats.sh "metadatafile" "outfolder" "test"
+# Set default dbsnpdir to where the files are automatically placed when
+# following the instrucitons in the README.md
+# NOTE: Remember to symlink back here in case these files are moved to a 
+#       shared resources folder.
+dbsnpdir="tmp/out_dbsnp"
+kgpfile="tmp/out_1kgp/1kg_af_ref.sorted.joined"
 
-# Example paths can look like this
-# input: /home/joeri/blabla/metadata.yaml
-# out_dir: /faststorage/project/gwas/results/
+while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
+  case ${opt} in
+    h )
+      general_usage 1>&2
+      exit 0
+      ;;
+    v )
+      #write a something that parses the actual version number
+      echo "Version: 1.0.0" 1>&2
+      exit 0
+      ;;
+    i )
+      metafile="$OPTARG"
+      ;;
+    o )
+      outdir="$OPTARG"
+      ;;
+    d )
+      dbsnpdir="$OPTARG"
+      ;;
+    k )
+      kgpfile="$OPTARG"
+      ;;
+    t )
+      test=true
+      ;;
+    \? )
+      echo "Invalid Option: -$OPTARG" 1>&2
+      exit 1
+      ;;
+    : )
+      echo "Invalid Option: -$OPTARG requires an argument" 1>&2
+      exit 1
+      ;;
+  esac
+done
 
-# check both arguments exist
-if [ -z $1 ]; then
-  >&2 echo "First argument not given (metadatafile)"
-  exit 1
+################################################################################
+# Check test option
+################################################################################
+
+# For testing purposes we can use the test flag to run on a smaller reference
+# set of dbsnp and 1kgp
+# check test argument exist
+if $test; then
+  # give path to example data
+  metafile="tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
+  dbsnpdir="tests/example_data/dbsnp/generated_reference"
+  kgpfile="tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined"
+  outdir="out_test"
+  mkdir -p $outdir
 fi
-if [ -z $2 ]; then
-  >&2 echo "Second argument not given (outdir)"
-  exit 1
-fi
 
-metafile_host=$(realpath "${1}")
-outdir_host=$(realpath "${2}")
+################################################################################
+# Check if the provided paths exist
+################################################################################
+
+metafile_host=$(realpath "${metafile}")
+outdir_host=$(realpath "${outdir}")
+dbsnpdir_host=$(realpath "${dbsnpdir}")
+kgpfile_host=$(realpath "${kgpfile}")
 
 # Test that file and folder exists
 if [ ! -f $metafile_host ]; then
@@ -44,21 +117,19 @@ if [ ! -d $outdir_host ]; then
   >&2 echo "outdir doesn't exist"
   exit 1
 fi
-
-# For testing purposes we can use the test flag to run on a smaller reference set of dbsnp and 1kgp
-# check test argument exist
-if [ -z $3 ]; then
-  libdirdbsnp="./out_dbsnp"
-  kg1000AFGRCh38="./out_1kgp"
-else
-  if [ "$3"=="test" ]; then
-    kg1000AFGRCh38="/cleansumstats/tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined"
-    libdirdbsnp="/cleansumstats/tests/example_data/dbsnp/generated_reference"
-  else
-    >&2 echo "test argument has to be 'test'"
-    exit 1
-  fi
+if [ ! -d $dbsnpdir_host ]; then
+  >&2 echo "dbsnpdir doesn't exist"
+  exit 1
 fi
+if [ ! -f $kgpfile_host ]; then
+  >&2 echo "kgpfile doesn't exist"
+  exit 1
+fi
+
+
+################################################################################
+# Prepare container variables
+################################################################################
 
 # All paths we see will start from the project root, even if the command is called from somewhere else
 project_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -67,11 +138,24 @@ source "${project_dir}/scripts/init-containerization.sh"
 
 mount_flags=$(format_mount_flags "-B")
 
+# metadir
 metadir_host=$(dirname "${metafile_host}")
 metafile_name=$(basename "${metafile_host}")
 metadir_container="/cleansumstats/input"
 metafile_container="${metadir_container}/${metafile_name}"
-outdir_container="/cleansumstats/out"
+
+# outdir
+outdir_container="/cleansumstats/outdir"
+
+# dbsnpdir
+dbsnpdir_container="/cleansumstats/dbsnp"
+
+# kgpdir
+kgpdir_host=$(dirname "${kgpfile_host}")
+kgpfile_name=$(basename "${kgpfile_host}")
+kgpdir_container="/cleansumstats/kgpdir"
+kgpfile_container="${kgpdir_container}/${kgpfile_name}"
+
 
 FAKE_HOME="tmp/fake-home"
 export SINGULARITY_HOME="/cleansumstats/${FAKE_HOME}"
@@ -83,10 +167,12 @@ exec singularity run \
      ${mount_flags} \
      -B "${metadir_host}:${metadir_container}" \
      -B "${outdir_host}:${outdir_container}" \
+     -B "${dbsnpdir_host}:${dbsnpdir_container}" \
+     -B "${kgpdir_host}:${kgpdir_container}" \
      "tmp/${singularity_image_tag}" \
      nextflow run /cleansumstats \
        --input "${metafile_container}" \
        --outdir "${outdir_container}" \
-       --libdirdbsnp "${libdirdbsnp}" \
-       --kg1000AFGRCh38 "${kg1000AFGRCh38}"
+       --libdirdbsnp "${dbsnpdir_container}" \
+       --kg1000AFGRCh38 "${kgpfile_container}"
 
