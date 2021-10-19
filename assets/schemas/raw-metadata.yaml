@@ -257,72 +257,88 @@ properties:
     description: |
       What data set was used to assist phasing.
       NOTE: If a meta-analysis with multiple approaches, use "meta".
-    type: "string"
-    enum:
-      - "HapMap"
-      - "HapMap2"
-      - "HapMap3"
-      - "1KGP"
-      - "TOPMED"
-      - "HRC"
-      - "meta"
+    anyOf:
+      - title: "Common panels"
+        type: "string"
+        enum:
+          - "HapMap"
+          - "HapMap2"
+          - "HapMap3"
+          - "1KGP"
+          - "TOPMED"
+          - "HRC"
+          - "meta"
+      - title: "Free text"
+        type: "string"
 
   study_PhaseSoftware:
     title: "Phasing software"
     description: |
       What software were use to phase.
       NOTE: If a meta-analysis with multiple approaches, use "meta".
-    type: "string"
-    enum:
-      - "plink"
-      - "impute"
-      - "impute2"
-      - "impute3"
-      - "shapeIt"
-      - "shapeIt2"
-      - "shapeIt3"
-      - "shapeIt4"
-      - "shapeIt5"
-      - "MaCH"
-      - "Beagle"
-      - "Beagle1.0"
-      - "meta"
+    anyOf:
+      - title: "Common software"
+        type: "string"
+        enum:
+          - "plink"
+          - "impute"
+          - "impute2"
+          - "impute3"
+          - "shapeIt"
+          - "shapeIt2"
+          - "shapeIt3"
+          - "shapeIt4"
+          - "shapeIt5"
+          - "MaCH"
+          - "Beagle"
+          - "Beagle1.0"
+          - "meta"
+      - title: "Free text"
+        type: "string"
 
   study_ImputePanel:
     title: "Imputation reference panel"
     description: |
       What data set was this study imputed to?
       NOTE: If a meta-analysis with multiple approaches, use "meta".
-    type: "string"
-    enum:
-      - "HapMap"
-      - "HapMap2"
-      - "HapMap3"
-      - "1KGP"
-      - "TOPMED"
-      - "HRC"
-      - "meta"
+    anyOf:
+      - title: "Common panels"
+        type: "string"
+        enum:
+          - "HapMap"
+          - "HapMap2"
+          - "HapMap3"
+          - "1KGP"
+          - "TOPMED"
+          - "HRC"
+          - "meta"
+      - title: "Free text"
+        type: "string"
 
   study_ImputeSoftware:
     title: "Imputation software"
     description: |
       What software were use to impute.
       NOTE: If a meta-analysis with multiple approaches, use "meta".
-    type: "string"
-    enum:
-      - "plink"
-      - "impute"
-      - "impute2"
-      - "impute3"
-      - "shapeIt"
-      - "shapeIt2"
-      - "shapeIt3"
-      - "shapeIt4"
-      - "shapeIt5"
-      - "MaCH"
-      - "Beagle"
-      - "Beagle1.0"
-      - "meta"
+    anyOf:
+      - title: "Common software"
+        type: "string"
+        enum:
+          - "plink"
+          - "impute"
+          - "impute2"
+          - "impute3"
+          - "shapeIt"
+          - "shapeIt2"
+          - "shapeIt3"
+          - "shapeIt4"
+          - "shapeIt5"
+          - "MaCH"
+          - "Beagle"
+          - "Beagle1.0"
+          - "meta"
+      - title: "Free text"
+        type: "string"
 
   study_Array:
     title: "Genotyping array"
