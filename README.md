@@ -107,11 +107,8 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
   --outdir ./out_clean \
   --libdirdbsnp ./out_dbsnp \
   --kg1000AFGRCh38 ./out_1kgp
-```
 
-```
 # ii. Same as above, but instead using the convenience wrapper, and instead using ./out_dbsnp and ./out_1kgp as default reference locations. To quickly access the small reference sets, it is possible to use the -t flag, intended only for testing purposes.
-
 mkdir -p output
 ./cleansumstats.sh \
   -i ./tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
