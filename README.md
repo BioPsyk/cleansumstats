@@ -21,7 +21,7 @@ Briefly, the pipeline first detects the genome build, then map all variants to a
 We are using the available statistics to infer missing statistics, see [repo](https://github.com/pappewaio/r-stats-c-streamer) for the core tool doing that. All statistics are flipped in accordance to the ref allele. 
 
 ### Output
-Lastly, an output folder is assembled, which always has the same structure and names for each sumstat that is being processed. 
+The last step of the worlflow is creating an output folder, which always has the same structure and names for each sumstat that is being processed.
 
 ### Engine
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker and singularity containers making installation trivial and results highly reproducible.
@@ -52,8 +52,8 @@ mkdir output
 
 ```
 
-- The results from iii. can be found in tmp/out_example
-- The results from iv. can be found in output
+- The results from iii. can be found in ./tmp/out_example
+- The results from iv. can be found in ./output
 
 ## Add full size reference data
 In the cleaning all positions are compared to a reference to confirm or add missing annotation.
@@ -73,7 +73,7 @@ wget -P source_data/dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b1
 srun --mem=400g --ntasks 1 --cpus-per-task 60 --time=10:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generateDbSNPreference \
-  --input source_data/dbsnp/All_20180418.vcf.gz \
+  --input ./source_data/dbsnp/All_20180418.vcf.gz \
   --outdir ./out_dbsnp \
   --libdirdbsnp ./out_dbsnp
 ```
@@ -89,7 +89,7 @@ wget -P source_data/1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collecti
 srun --mem=80g --ntasks 1 --cpus-per-task 5 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generate1KgAfSNPreference \
-  --input source_data/1kgp/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz \
+  --input ./source_data/1kgp/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz \
   --outdir ./out_1kgp \
   --kg1000AFGRCh38 ./out_1kgp
 ```
@@ -115,8 +115,8 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 
 mkdir -p output
 ./cleansumstats.sh \
-  -i tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
-  -o output
+  -i ./tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
+  -o ./output
 
 # For additional flags, see:
 ./cleansumstats.sh -h
