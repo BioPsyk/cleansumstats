@@ -11,7 +11,7 @@ cd "${project_dir}"
 
 source "./scripts/init-containerization.sh"
 
-./scripts/docker-deploy-build.sh
+#./scripts/docker-deploy-build.sh
 
 echo ">> Running deploy container"
 
@@ -32,6 +32,7 @@ docker run \
        -v "${project_dir}/tmp:/cleansumstats/tmp" \
        -v "${project_dir}/main.nf:/cleansumstats/main.nf" \
        "${deploy_image_tag}" \
+       nextflow run /cleansumstats \
        --input '/cleansumstats/tmp/deploy-container/in/*.yaml' \
        --outdir "/cleansumstats/tmp/deploy-container/out" \
        --libdirdbsnp "/cleansumstats/tmp/deploy-container/data/dbsnp" \

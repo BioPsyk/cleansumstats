@@ -6,9 +6,10 @@ source "${script_dir}/init-containerization.sh"
 
 cd "${project_dir}"
 
-target="public.ecr.aws/y5a4r2h0/${deploy_image_tag}"
+target="biopsyk/${deploy_image_tag}"
 
 echo ">> Pushing deployment docker image"
 
 docker tag "${deploy_image_tag}" "${target}"
 docker push "${target}"
+

@@ -19,33 +19,27 @@ To run a quick test using provided example and test data
 # i. Make sure singularity is installed, see [singularity installation](docs/singularity-installation.md)
 singularity --version
 
-# ii. Download our container image containing all software and code needed
-# A downloadable image will be provided at dockerhub
+# ii. Download our container image, move it to a folder called tmp within the repo (<1GB)
+singularity pull ibp-cleansumstats-base_version-1.0.0.simg docker://biopsyk/ibp-cleansumstats:1.0.0
+mkdir -p tmp
+mv ibp-cleansumstats-base_version-1.0.0.simg tmp/
 
 # iii. Run the singularity image using example data
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --input /cleansumstats/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   --outdir ./out_example
 
-```
-
-## Quick Start 2
-As a convenience wrapper to get in and output folders mounted in the right place it is poosible to use the cleansumstats.sh script.
-
-```
-# i. Start interactive node and prepare output folder
-srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
-
-# ii. Make output folder (can be anywhere on the system)
+#iv. Run the same thing using a convenience wrapper that correctly mounts folders outside of tmp/
 mkdir output
-
-# iii. Using the convenience wrapper, which is same example data as above (activated declaring 'test')
 ./cleansumstats.sh \
   tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   output \
   test
+
 ```
 
+- The results from iii. can be found in tmp/out_example
+- The results from iv. can be found in output
 
 ## Add full size reference data
 In the cleaning all positions are compared to a reference to confirm or add missing annotation.
@@ -110,10 +104,14 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 As a convenience wrapper to get in and output folders mounted in the right place it is poosible to use the cleansumstats.sh script. '--libdirdbsnp' and '--kg1000AFGRCh38' should be set in nextflow.config (default is a smaller set of example data used for the quick start in the beginning of the README)
 ```
 # ii. Same as above using ./out_dbsnp and ./out_1kgp, but using the convenience wrapper
-mkdir output
+mkdir -p output
 ./cleansumstats.sh \
   tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   output
+
+# For additional flags, see:
+./cleansumstats.sh -h
+
 ```
 
 
