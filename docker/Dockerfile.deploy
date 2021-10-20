@@ -7,19 +7,13 @@ WORKDIR /cleansumstats
 COPY assets ./assets
 COPY bin ./bin
 COPY CHANGELOG.md ./CHANGELOG.md
-COPY cleansumstats.sh ./cleansumstats.sh
 COPY conf ./conf
-COPY docker ./docker
 COPY docs ./docs
 COPY lib ./lib
 COPY main.nf ./main.nf
 COPY nextflow.config ./nextflow.config
 COPY README.md ./README.md
-COPY scripts ./scripts
-COPY tests ./tests
 
 WORKDIR /home/nextflow
 
-# Not using an entry point for now
-# ENTRYPOINT ["nextflow", "run", "-offline", "/cleansumstats"]
 

@@ -11,8 +11,6 @@ cd "${project_dir}"
 
 source "./scripts/init-containerization.sh"
 
-#./scripts/docker-deploy-build.sh
-
 echo ">> Running deploy container"
 
 test_dir="tmp/deploy-container"
