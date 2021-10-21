@@ -6,13 +6,14 @@ WORKDIR /cleansumstats
 
 COPY assets ./assets
 COPY bin ./bin
+COPY CHANGELOG.md ./CHANGELOG.md
 COPY conf ./conf
 COPY docs ./docs
-COPY environment.yml ./environment.yml
 COPY lib ./lib
 COPY main.nf ./main.nf
 COPY nextflow.config ./nextflow.config
+COPY README.md ./README.md
 
 WORKDIR /home/nextflow
 
-ENTRYPOINT ["nextflow", "run", "-offline", "/cleansumstats"]
+

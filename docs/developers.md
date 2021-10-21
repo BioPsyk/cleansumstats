@@ -1,6 +1,30 @@
 # Developer instructions
 Here we collect developer specific documentation, which never should be expected to be read by a user. Note: in the code there are proposed settings for HPC slurm jobs when the preparations may need parallelization.
 
+## Gitflow
+In this repo we use the gitflow way of naming our branches,e.g:
+- feature-xxx --> develop
+- bugfix-xxx --> release-y.y
+- hotfix-xxx --> master
+
+see a full description [here](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow):
+
+## DockerHub
+We have a docker image repository at [dockerhub](https://hub.docker.com/repository/docker/biopsyk/ibp-cleansumstats). To push new images to dockehub, use the following commands:
+```
+# login to dockerhub
+docker login -u "myusername" -p "mypassword" dockerPasw
+
+# build and push
+./scripts/docker-build.sh
+./scripts/docker-deploy-build.sh
+./scripts/docker-deploy-push.sh
+
+# test it!
+./scripts/docker-deploy-test.sh
+
+```
+
 ## Using images
 
 ### Pre-requisites
@@ -20,6 +44,7 @@ If you are a developer or do not want to download the image from dockerhub, it i
 ```
 
 The general idea of first use docker and then singularity is to facilitate how docker uses layers to speed up build speed, and as a consequence of that, development is also sped up. From the created docker image, it is easy to create a singularity image, which often required by HPCs, as they usually are incompatible with the Docker deamon. The created singulariy image goes to the 'tmp/' folder.
+
 
 ### Use the docker or singulariy image to run the internal test suit
 
