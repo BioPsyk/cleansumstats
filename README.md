@@ -20,7 +20,7 @@ Briefly, the pipeline first detects the genome build, then map all variants to a
 We are using the available statistics to infer missing statistics, see [repo](https://github.com/pappewaio/r-stats-c-streamer) for the core tool doing that. All statistics are flipped in accordance to the ref allele. 
 
 ### Output
-The last step of the worlflow is creating an output folder, which always has the same structure and names for each sumstat that is being processed.
+The last step of the workflow is creating an output folder, which always has the same structure and names for each sumstat that is being processed.
 
 ### Engine
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker and singularity containers making installation trivial and results highly reproducible.
@@ -29,20 +29,25 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 To run a quick test using provided example and test data
 
 ```bash
-# i. Make sure singularity is installed, see [singularity installation](docs/singularity-installation.md)
+# i. Make sure git and singularity are installed, see [singularity installation](docs/singularity-installation.md)
 singularity --version
+git --version
 
-# ii. Download our container image, move it to a folder called tmp within the repo (<1GB)
+# ii. clone and enter the cleansumstats github project
+git clone https://github.com/BioPsyk/cleansumstats.git
+cd cleansumstats
+
+# iii. Download our container image, move it to a folder called tmp within the repo (<1GB)
 singularity pull ibp-cleansumstats-base_version-1.0.0.simg docker://biopsyk/ibp-cleansumstats:1.0.0
 mkdir -p tmp
 mv ibp-cleansumstats-base_version-1.0.0.simg tmp/
 
-# iii. Run the singularity image using example data
+# iv. Run the singularity image using example data
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --input /cleansumstats/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   --outdir ./out_example
 
-#iv. Run the same thing using a convenience wrapper that correctly mounts folders outside of tmp/
+# v. Run the same thing using a convenience wrapper that correctly mounts folders outside of tmp/
 mkdir output
 ./cleansumstats.sh \
   -i tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
@@ -51,8 +56,8 @@ mkdir output
 
 ```
 
-- The results from iii. can be found in ./tmp/out_example
-- The results from iv. can be found in ./output
+- The results from iv. can be found in ./tmp/out_example
+- The results from v. can be found in ./output
 
 ## Add full size reference data
 In the cleaning all positions are compared to a reference to confirm or add missing annotation.
@@ -62,13 +67,17 @@ The preparation of the dbsnp reference only has to be done once, and can be reus
 
 ```bash
 # i. Download the dbsnp reference: size 15GB (and the readme, etc for future reference)
-mkdir -p source_data/dbsnp
-wget -P source_data/dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/README.txt
-wget -P source_data/dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.md5
-wget -P source_data/dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.tbi
-wget -P source_data/dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz
+mkdir -p dbsnp
+wget -P dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/README.txt
+wget -P dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.md5
+wget -P dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.tbi
+wget -P dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz
 
-# ii. If you are on a HPC Start your interactive session (below SLURM settings took about 5h to run)
+# ii. To get it automatically mounted, move it into
+mkdir -p tmp/fake-home/source_data
+mv dbsnp tmp/fake-home/source_data/
+
+# iii. If you are on a HPC Start your interactive session (below SLURM settings took about 5h to run)
 srun --mem=400g --ntasks 1 --cpus-per-task 60 --time=10:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generateDbSNPreference \
@@ -80,11 +89,15 @@ srun --mem=400g --ntasks 1 --cpus-per-task 60 --time=10:00:00 --account ibp_pipe
 ### 1000 genomes project reference
 ```bash
 # i. Download
-mkdir -p source_data/1kgp
-wget -P source_data/1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz
-wget -P source_data/1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz.tbi
+mkdir -p 1kgp
+wget -P 1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz
+wget -P 1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz.tbi
 
-# ii. If you are on a HPC Start your interactive session (below SLURM settings took about 5min to run)
+# ii. To get it automatically mounted, move it into
+mkdir -p tmp/fake-home/source_data
+mv 1kgp tmp/fake-home/source_data/
+
+# iii. If you are on a HPC Start your interactive session (below SLURM settings took about 5min to run)
 srun --mem=80g --ntasks 1 --cpus-per-task 5 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --generate1KgAfSNPreference \
