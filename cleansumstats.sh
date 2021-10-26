@@ -43,8 +43,8 @@ getoptsstring=":hvi:o:d:k:t"
 # following the instrucitons in the README.md
 # NOTE: Remember to symlink back here in case these files are moved to a 
 #       shared resources folder.
-dbsnpdir="tmp/out_dbsnp"
-kgpfile="tmp/out_1kgp/1kg_af_ref.sorted.joined"
+dbsnpdir="tmp/fake-home/out_dbsnp"
+kgpfile="tmp/fake-home/out_1kgp/1kg_af_ref.sorted.joined"
 
 metafileexists=false
 outdirexists=false
