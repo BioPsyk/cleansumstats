@@ -46,6 +46,9 @@ getoptsstring=":hvi:o:d:k:t"
 dbsnpdir="tmp/out_dbsnp"
 kgpfile="tmp/out_1kgp/1kg_af_ref.sorted.joined"
 
+metafileexists=false
+outdirexists=false
+
 while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
   case ${opt} in
     h )
@@ -59,9 +62,11 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       ;;
     i )
       metafile="$OPTARG"
+      metafileexists=true
       ;;
     o )
       outdir="$OPTARG"
+      outdirexists=true
       ;;
     d )
       dbsnpdir="$OPTARG"
@@ -92,11 +97,19 @@ done
 # check test argument exist
 if $test; then
   # give path to example data
-  metafile="tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
+  if $metafileexists; then
+    :
+  else
+    metafile="tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
+  fi
+  if $outdirexists; then
+    :
+  else
+    outdir="out_test"
+  fi
   dbsnpdir="tests/example_data/dbsnp/generated_reference"
   kgpfile="tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined"
-  outdir="out_test"
-  mkdir -p $outdir
+  mkdir -p ${outdir}
 fi
 
 ################################################################################
