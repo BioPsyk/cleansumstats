@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## [1.0.1] - 2021-10-26
+### Changed hotfix-224
+ - set default testoption=false, which was missing for cleansumstats.sh
+
 ## [1.0.0] - 2021-10-20
 ### Added (major updates from alpha version)
 
