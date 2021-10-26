@@ -107,10 +107,14 @@ srun --mem=80g --ntasks 1 --cpus-per-task 5 --time=1:00:00 --account ibp_pipelin
 ```
 
 ## Prepare meta data files
-After the reference data paths have been set in the nextflow.config file, the pipeline can be run with only one argument, pointing to only one file. This file is called the meta file, and contains paths to other important files, such as the actual sumstats, README, article pdf, etc,. for which all need to be in the same folder as their corresponding metafile. This file has to be filled in manually, see tests/example_data/sumstat_1/sumstat_1_raw_meta.txt for an example of how it looks like. 
+After the reference data paths have been set in the nextflow.config file, the pipeline can be run with only one argument, pointing to only one file. This file is called the meta file, and contains paths to other important files, such as the actual sumstats, README, article pdf, etc,. for which all need to be in the same folder as their corresponding metafile. This file has to be filled in manually, see `tests/example_data/sumstat_1/sumstat_1_raw_meta.txt` for an example of how it looks like. 
 
-## Run a fully operational cleaning pipeline (Replace example data with your own data to clean)
+You can also use this [webinterface](https://biopsyk.github.io/metadata) to generate a metadatafile. Again, remember that all files referred to by the metadatafile have to be in the same directory as the metafile when you run cleansumstats. Check `tests/example_data` and sumstats 1-5 for an example of how you can structure your input folders.
+
+## Run a fully operational cleaning pipeline 
 This will take longer time compared to the quick-start run as we now use the full >600 million rows dbsnp reference to map our variants to. The '--libdirdbsnp' and '--kg1000AFGRCh38' default is a smaller set of example data used for the quick start in the beginning of the README)
+
+When you have prepared your meta data files, then replace `--input` example data with your own data
 
 ```
 # i. If you are on a HPC Start your interactive session (below SLURM settings took about 10min to run)
