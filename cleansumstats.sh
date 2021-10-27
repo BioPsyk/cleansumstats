@@ -7,14 +7,15 @@
 ################################################################################
 
 function general_usage(){
- echo "Example usage, specify output and the test flag:"
- echo " ./cleansumstats.sh -o output -t"
- echo ""
  echo "Simple Usage:"
  echo " ./cleansumstats.sh -i <file> -o <dir>"
+ echo " ./cleansumstats.sh install dbsnp -i <file> -o <dir>"
  echo ""
  echo "Advanced Usage:"
  echo " ./cleansumstats.sh -i <file> -o <dir> -d <dir> -k <dir>"
+ echo ""
+ echo "Example usage, using the quick test flag:"
+ echo " ./cleansumstats.sh -o output -t"
  echo ""
  echo "options:"
  echo "-h		 Display help message for cleansumstats"
@@ -33,8 +34,26 @@ function general_usage(){
 ################################################################################
 # Parameter parsing
 ################################################################################
-#whatever the input make it array
+# whatever the input make it array
 paramarray=($@)
+
+# check for modifiers
+if ${paramarray[0]}; then
+case "${paramarray[0]}" in
+  install)
+    sstools_modifier=${paramarray[0]}
+    getoptsstring=":hlns:"
+    shift # Remove `install` from the argument list
+    ;;
+  *)
+    echo "you have to specify a modifier, see below for example"
+    general_usage 1>&2
+    exit 1
+    ;;
+esac
+
+# remove modifier, 1st element
+paramarray=("${paramarray[@]:1}")
 
 # starting getops with :, puts the checking in silent mode for errors.
 getoptsstring=":hvi:o:d:k:t"
