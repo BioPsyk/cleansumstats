@@ -9,13 +9,16 @@
 function general_usage(){
  echo "Simple Usage:"
  echo " ./cleansumstats.sh -i <file> -o <dir>"
- echo " ./cleansumstats.sh install dbsnp -i <file> -o <dir>"
  echo ""
  echo "Advanced Usage:"
  echo " ./cleansumstats.sh -i <file> -o <dir> -d <dir> -k <dir>"
  echo ""
  echo "Example usage, using the quick test flag:"
- echo " ./cleansumstats.sh -o output -t"
+ echo " ./cleansumstats.sh -o <dir> -t"
+ echo ""
+ echo "Generate references:"
+ echo " ./cleansumstats.sh prepare-dbsnp -i <file> -o <dir>"
+ echo " ./cleansumstats.sh prepare-1kgp -i <file> -o <dir>"
  echo ""
  echo "options:"
  echo "-h		 Display help message for cleansumstats"
@@ -38,22 +41,18 @@ function general_usage(){
 paramarray=($@)
 
 # check for modifiers
-if ${paramarray[0]}; then
-case "${paramarray[0]}" in
-  install)
-    sstools_modifier=${paramarray[0]}
-    getoptsstring=":hlns:"
-    shift # Remove `install` from the argument list
-    ;;
-  *)
-    echo "you have to specify a modifier, see below for example"
-    general_usage 1>&2
-    exit 1
-    ;;
-esac
+if ${paramarray[0]} == "prepare-dbsnp"; then
+  preparedbsnp=true
+  # remove modifier, 1st element
+  paramarray=("${paramarray[@]:1}")
+elif ${paramarray[0]} == "prepare-1kgp"; then
+  prepare1kgp=true
+  # remove modifier, 1st element
+  paramarray=("${paramarray[@]:1}")
+else
+  normalrun=true
+fi
 
-# remove modifier, 1st element
-paramarray=("${paramarray[@]:1}")
 
 # starting getops with :, puts the checking in silent mode for errors.
 getoptsstring=":hvi:o:d:k:t"
