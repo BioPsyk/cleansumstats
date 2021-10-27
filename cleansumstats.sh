@@ -48,6 +48,7 @@ kgpfile="tmp/fake-home/out_1kgp/1kg_af_ref.sorted.joined"
 
 metafileexists=false
 outdirexists=false
+testoption=false
 
 while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
   case ${opt} in
@@ -75,7 +76,7 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       kgpfile="$OPTARG"
       ;;
     t )
-      test=true
+      testoption=true
       ;;
     \? )
       echo "Invalid Option: -$OPTARG" 1>&2
@@ -95,7 +96,7 @@ done
 # For testing purposes we can use the test flag to run on a smaller reference
 # set of dbsnp and 1kgp
 # check test argument exist
-if $test; then
+if $testoption; then
   # give path to example data
   if $metafileexists; then
     :
