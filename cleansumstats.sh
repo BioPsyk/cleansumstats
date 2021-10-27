@@ -7,10 +7,7 @@
 ################################################################################
 
 function general_usage(){
- echo "Simple Usage:"
- echo " ./cleansumstats.sh -i <file> -o <dir>"
- echo ""
- echo "Advanced Usage:"
+ echo "Usage:"
  echo " ./cleansumstats.sh -i <file> -o <dir> -d <dir> -k <dir>"
  echo ""
  echo "Example usage, using the quick example flag:"
@@ -28,10 +25,6 @@ function general_usage(){
  echo "-k <dir> 	 path to 1000 genomes processed reference"
  echo "-t  	 	 quick test for all paths and params"
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
- echo ""
- echo ""
- echo "NOTE: For 'simple usage' it requires dbsnp and 1000G project references to be prepared"
-
 }
 
 
