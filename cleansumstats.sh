@@ -43,8 +43,12 @@ getoptsstring=":hvi:o:d:k:t"
 # following the instrucitons in the README.md
 # NOTE: Remember to symlink back here in case these files are moved to a 
 #       shared resources folder.
-dbsnpdir="tmp/out_dbsnp"
-kgpfile="tmp/out_1kgp/1kg_af_ref.sorted.joined"
+dbsnpdir="tmp/fake-home/out_dbsnp"
+kgpfile="tmp/fake-home/out_1kgp/1kg_af_ref.sorted.joined"
+
+metafileexists=false
+outdirexists=false
+testoption=false
 
 while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
   case ${opt} in
@@ -59,9 +63,11 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       ;;
     i )
       metafile="$OPTARG"
+      metafileexists=true
       ;;
     o )
       outdir="$OPTARG"
+      outdirexists=true
       ;;
     d )
       dbsnpdir="$OPTARG"
@@ -70,7 +76,7 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       kgpfile="$OPTARG"
       ;;
     t )
-      test=true
+      testoption=true
       ;;
     \? )
       echo "Invalid Option: -$OPTARG" 1>&2
@@ -90,13 +96,21 @@ done
 # For testing purposes we can use the test flag to run on a smaller reference
 # set of dbsnp and 1kgp
 # check test argument exist
-if $test; then
+if $testoption; then
   # give path to example data
-  metafile="tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
+  if $metafileexists; then
+    :
+  else
+    metafile="tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
+  fi
+  if $outdirexists; then
+    :
+  else
+    outdir="out_test"
+  fi
   dbsnpdir="tests/example_data/dbsnp/generated_reference"
   kgpfile="tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined"
-  outdir="out_test"
-  mkdir -p $outdir
+  mkdir -p ${outdir}
 fi
 
 ################################################################################

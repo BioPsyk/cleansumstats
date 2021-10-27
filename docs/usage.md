@@ -64,12 +64,9 @@ results         # Finished results (configurable, see below)
 ### Reproducibility
 The pipeline version is indicated in the file name of the downloaded image. There are two ways of accessing version information of the included software.
 
-1. Studying the software version file from the output after running the pipeline on your data.
-2. Enter the image and test each included softwares version:
-```
-#Code to do so
-
-```
+1. Study the software version file from the output after running the pipeline on your data.
+2. Study the software version file in docker/VERSION.
+3. Enter the image and test each included softwares version:
 
 ## Main arguments
 
@@ -189,7 +186,7 @@ This filter has no set default, and is therefore set to "".
 
 ## Job management and resources
 ### Automatic resubmission
-Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the steps in the pipeline, if the job exits with an error code of `143` (exceeded requested resources) it will automatically resubmit with higher requests (2 x original, then 3 x original). If it still fails after three times then the pipeline is stopped. (Feature not implemented yet)
+NOT ACTIVE. Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the steps in the pipeline, if the job exits with an error code of `143` (exceeded requested resources) it will automatically resubmit with higher requests (2 x original, then 3 x original). If it still fails after three times then the pipeline is stopped. (Feature not implemented yet)
 
 ### `--email`
 Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.
