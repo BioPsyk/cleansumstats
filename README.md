@@ -110,6 +110,8 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 ##-k <dir> 	 path to 1000 genomes processed reference
 ##-t  	 	 quick test for all paths and params
 ##-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references
+##-v  	 	 get the version number
+
 
 ```
 
