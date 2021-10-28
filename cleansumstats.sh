@@ -25,8 +25,14 @@ function general_usage(){
  echo "-k <dir> 	 path to 1000 genomes processed reference"
  echo "-t  	 	 quick test for all paths and params"
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
+ echo "-v  	 	 get the version number"
 }
 
+################################################################################
+# Prepare path parsing
+################################################################################
+# All paths we see will start from the project root, even if the command is called from somewhere else
+project_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 ################################################################################
 # Parameter parsing
@@ -76,7 +82,7 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       ;;
     v )
       #write a something that parses the actual version number
-      echo "Version: 1.0.0" 1>&2
+      cat ${project_dir}/VERSION 1>&2
       exit 0
       ;;
     i )
