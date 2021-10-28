@@ -15,7 +15,7 @@ function general_usage(){
  echo ""
  echo "Generate references:"
  echo " ./cleansumstats.sh prepare-dbsnp -i <file> -o <dir>"
- echo " ./cleansumstats.sh prepare-1kgp -i <file> -o <dir>"
+ echo " ./cleansumstats.sh prepare-1kgp -i <file> -d <dir> -o <dir>"
  echo ""
  echo "options:"
  echo "-h		 Display help message for cleansumstats"
