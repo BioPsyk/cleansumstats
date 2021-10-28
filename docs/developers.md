@@ -23,6 +23,8 @@ If you make non-backward-compatible change, then you will bump the X part of the
 When you work with a hotfix-branch then you will bump the Z part of the version, e.g., 1.0.0 to 1.0.1
 When you work with a bugfix-branch then you will bump the Z part of the version, e.g., 1.0.0 to 1.0.1
 
+Read more [here](https://semver.org/spec/v2.0.0.html)
+
 ## DockerHub
 We have a docker image repository at [dockerhub](https://hub.docker.com/repository/docker/biopsyk/ibp-cleansumstats). To push new images to dockehub, use the following commands:
 ```
