@@ -6,21 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2021-10-28
+### Added 
+ - added version flag -v to cleansumstats.sh
+ - added documentation about versioning to docs/developers.md
+
 ## [1.1.0] - 2021-10-28
 ### Added 
- - added variable and path test to cleansumstat.sh
- - added prepare-1kgp to cleansumstat.sh
- - added prepare-dbsnp to cleansumstat.sh
+ - added variable and path test to cleansumstats.sh
+ - added prepare-1kgp to cleansumstats.sh
+ - added prepare-dbsnp to cleansumstats.sh
 
 ### Changed 
  - moved almost all introduction content to outout docs to make README.md more readable
- - changed README.md to match the new cleansumstat.sh 
+ - changed README.md to match the new cleansumstats.sh 
 
 ## [Released]
 
 ## [1.0.2] - 2021-10-27
 ### Changed 
- - changed default path for cleansumstat.sh to match with README.md
+ - changed default path for cleansumstats.sh to match with README.md
 
 ## [1.0.1] - 2021-10-26
 ### Fixed 
