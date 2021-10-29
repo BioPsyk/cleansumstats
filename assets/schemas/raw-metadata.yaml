@@ -678,3 +678,38 @@ required:
   - "stats_TraitType"
   - "stats_TotalN"
   - "stats_Model"
+  - "col_EffectAllele"
+allOf:
+  - anyOf:
+      - required:
+          - "col_SNP"
+      - required:
+          - "col_CHR"
+          - "col_POS"
+  - anyOf:
+      - required:
+          - "col_BETA"
+      - required:
+          - "col_SE"
+      - required:
+          - "col_Z"
+      - required:
+          - "col_P"
+      - required:
+          - "col_OR"
+      - required:
+          - "col_ORL95"
+      - required:
+          - "col_ORU95"
+      - required:
+          - "col_N"
+      - required:
+          - "col_CaseN"
+      - required:
+          - "col_ControlN"
+      - required:
+          - "col_EAF"
+      - required:
+          - "col_OAF"
+      - required:
+          - "col_INFO"
