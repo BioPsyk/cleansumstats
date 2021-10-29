@@ -11,6 +11,8 @@ cleansumstats Pipeline.
 ----------------------------------------------------------------------------------------
 */
 
+pipelineVersion = new File("$projectDir/VERSION").text.trim()
+
 def helpMessage() {
     log.info nfcoreHeader()
     log.info"""
@@ -131,7 +133,6 @@ if (params.generateDbSNPreference) {
 
 ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
 
-
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
 custom_runName = params.name
@@ -201,7 +202,7 @@ process get_software_versions {
 
     script:
     """
-    echo $workflow.manifest.version > v_pipeline.txt
+    echo $pipelineVersion > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
     sstools-version > v_sumstattools.txt
     echo "placeholder" > software_versions
@@ -722,7 +723,7 @@ if (params.generateMetafile){
       """
       # Select Cols and Sort on chr:pos
       if [ "${build}" == "36" ]; then
-        awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$5, \$6, \$7, \$8}' ${dbsnp_chunks} > file.tmp 
+        awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$5, \$6, \$7, \$8}' ${dbsnp_chunks} > file.tmp
         mkdir -p tmp
         LC_ALL=C sort -k 1,1 \
         --parallel 4 \
@@ -732,7 +733,7 @@ if (params.generateMetafile){
         rm -r tmp
 
       else
-        awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$5, \$6, \$7, \$8}' ${dbsnp_chunks} > file.tmp 
+        awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$5, \$6, \$7, \$8}' ${dbsnp_chunks} > file.tmp
         mkdir -p tmp
         LC_ALL=C sort -k 1,1 \
         --parallel 4 \
@@ -1857,7 +1858,7 @@ process select_chrpos_or_snpchrpos {
         """
         colneglog10P="${metadata.stats_neglog10P ?: "missing"}"
         colP="${metadata.col_P ?: "missing"}"
-        
+
         if [ "\${colneglog10P}" == 'true' ]; then
           convert_neglogP.sh ${sfile} "\${colP}" > convert_neglogP
         else
@@ -2448,7 +2449,7 @@ def cleansumstatsHeader(){
     return """    -${c_dim}--------------------------------------------------${c_reset}-
                                             ${c_green},--.${c_black}/${c_green},-.${c_reset}
                                             ${c_cyan}`._,._,\'${c_reset}
-    ${c_purple} cleansumstats v${workflow.manifest.version}${c_reset}
+    ${c_purple} cleansumstats v${pipelineVersion}${c_reset}
     -${c_dim}--------------------------------------------------${c_reset}-
     """.stripIndent()
 }
