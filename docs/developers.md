@@ -2,12 +2,28 @@
 Here we collect developer specific documentation, which never should be expected to be read by a user. Note: in the code there are proposed settings for HPC slurm jobs when the preparations may need parallelization.
 
 ## Gitflow
+### Branches
 In this repo we use the gitflow way of naming our branches,e.g:
 - feature-xxx --> develop
 - bugfix-xxx --> release-y.y
 - hotfix-xxx --> master
 
 see a full description [here](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow):
+
+### Versioning
+The idea is to work with one issue at the time, for which you bump the version.
+A version number has 3 parts X.Y.Z:
+X = "Major version number" = Huge changes that are not backward-compatible. For example changing metadata format.
+Y = "Minor version number" = When introducing new functionality, which is backward-compatible.
+Z = "Patch version number" = Correcting something, without adding new functionality, which is backward-compatible.
+
+Applied like this:
+When you work with a feature branch, then you will bump the Y part of the version, e.g, 1.0.0 to 1.1.0
+If you make non-backward-compatible change, then you will bump the X part of the version, e.g., 1.0.0 to 2.0.0
+When you work with a hotfix-branch then you will bump the Z part of the version, e.g., 1.0.0 to 1.0.1
+When you work with a bugfix-branch then you will bump the Z part of the version, e.g., 1.0.0 to 1.0.1
+
+Read more [here](https://semver.org/spec/v2.0.0.html)
 
 ## DockerHub
 We have a docker image repository at [dockerhub](https://hub.docker.com/repository/docker/biopsyk/ibp-cleansumstats). To push new images to dockehub, use the following commands:
