@@ -298,6 +298,7 @@ else
      -B "${kgpdir_host}:${kgpdir_container}" \
      "tmp/${singularity_image_tag}" \
      nextflow run /cleansumstats ${runtype} \
+       --dev \
        --input "${infile_container}" \
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \

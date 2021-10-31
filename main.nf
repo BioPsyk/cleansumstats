@@ -1166,24 +1166,39 @@ if (doCompleteCleaningWorkflow){
       .mix(ch_liftover_snpchrpos)
       .set{ ch_liftover_snpchrpos_chrpos_mixed }
 
+      ch_liftover_snpchrpos_chrpos_mixed.into{ch_liftover_snpchrpos_chrpos_mixed1;ch_liftover_snpchrpos_chrpos_mixed2}
+    // ch_liftover_snpchrpos_chrpos_mixed2.view()
+
     //reformat_X_Y_XY_and_MT_and_remove_noninterpretables
     process reformat_chromosome_information {
       publishDir "${params.outdir}/${datasetID}/intermediates/reformat_chromosome_information/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
 
       input:
-      tuple datasetID, dID2, mfile, sfile, chrposexist from ch_liftover_snpchrpos_chrpos_mixed
+      tuple datasetID, dID2, mfile, sfile, chrposexist from ch_liftover_snpchrpos_chrpos_mixed1
 
       output:
       tuple datasetID, dID2, mfile, file("prep_sfile_forced_sex_chromosome_format") into ch_chromosome_fixed
       //tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_2
       tuple datasetID, env(rowsAfter) into ch_rowsAfter_number_of_lines
+      file('new_chr_sex_format*')
 
       script:
       def metadata = session.get_metadata(datasetID)
       """
-      map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func
+
+      if [ "${dID2}" == "liftover_branch_markername_chrpos" ];then
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func
+      elif [ "${dID2}" == "liftover_branch_chrpos" ];then
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "${metadata.col_CHR ?: "missing"}" > adhoc_func
+      else
+        echo "neither Markername nor Chromosome position information used"
+        exit 1;
+      fi
+
       colCHR="\$(cat adhoc_func)"
-      reformat_chromosome_information.sh ${sfile} \${colCHR} prep_sfile_forced_sex_chromosome_format
+      cat $sfile | sstools-utils ad-hoc-do -k "0|\${colCHR}" -n"0,CHR" > new_chr_sex_format0
+      reformat_chromosome_information.sh new_chr_sex_format0 "CHR" prep_sfile_forced_sex_chromosome_format
+
 
       # Process before and after stats (the -1 is to remove the header count)
       rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
