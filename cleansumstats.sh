@@ -296,6 +296,7 @@ else
      -B "${outdir_host}:${outdir_container}" \
      -B "${dbsnpdir_host}:${dbsnpdir_container}" \
      -B "${kgpdir_host}:${kgpdir_container}" \
+     -B "/tmp:/tmp" \
      "tmp/${singularity_image_tag}" \
      nextflow run /cleansumstats ${runtype} \
        --dev \

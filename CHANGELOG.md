@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - A previous fix of the advanced chromosome reformatting introduced a bug. This has been fixed.
 
+## [1.1.7] - 2021-10-29
+### Fixed
+- mounting system /tmp on image /tmp to not run out of image memory
+
 ## [1.1.6] - 2021-10-29
 ### Fixed
 - Giving no `col_*` fields in the metadata file is accepted as valid
