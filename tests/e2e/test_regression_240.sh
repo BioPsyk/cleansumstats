@@ -6,7 +6,7 @@ e2e_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 tests_dir=$(dirname "${e2e_dir}")
 project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
-work_dir="${project_dir}/tmp/regression-233"
+work_dir="${project_dir}/tmp/regression-240"
 outdir="${work_dir}/out"
 
 rm -rf "${work_dir}"
