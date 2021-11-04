@@ -1166,29 +1166,54 @@ if (doCompleteCleaningWorkflow){
       .mix(ch_liftover_snpchrpos)
       .set{ ch_liftover_snpchrpos_chrpos_mixed }
 
+      ch_liftover_snpchrpos_chrpos_mixed.into{ch_liftover_snpchrpos_chrpos_mixed1;ch_liftover_snpchrpos_chrpos_mixed2}
+    // ch_liftover_snpchrpos_chrpos_mixed2.view()
+
     //reformat_X_Y_XY_and_MT_and_remove_noninterpretables
     process reformat_chromosome_information {
       publishDir "${params.outdir}/${datasetID}/intermediates/reformat_chromosome_information/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
 
       input:
-      tuple datasetID, dID2, mfile, sfile, chrposexist from ch_liftover_snpchrpos_chrpos_mixed
+      tuple datasetID, dID2, mfile, sfile, chrposexist from ch_liftover_snpchrpos_chrpos_mixed1
 
       output:
-      tuple datasetID, dID2, mfile, file("prep_sfile_forced_sex_chromosome_format") into ch_chromosome_fixed
+      tuple datasetID, dID2, mfile, file("gb_ready_to_join_to_detect_build_sorted") into ch_chromosome_fixed
       //tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_2
       tuple datasetID, env(rowsAfter) into ch_rowsAfter_number_of_lines
+      file('new_chr_sex_format*')
 
       script:
       def metadata = session.get_metadata(datasetID)
       """
-      map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func
+
+      if [ "${dID2}" == "liftover_branch_markername_chrpos" ];then
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func
+      elif [ "${dID2}" == "liftover_branch_chrpos" ];then
+        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "${metadata.col_CHR ?: "missing"}" > adhoc_func
+      else
+        echo 2>1 "neither Markername nor Chromosome position information used"
+        exit 1;
+      fi
+
       colCHR="\$(cat adhoc_func)"
-      reformat_chromosome_information.sh ${sfile} \${colCHR} prep_sfile_forced_sex_chromosome_format
+      cat $sfile | sstools-utils ad-hoc-do -k "0|\${colCHR}" -n"0,CHR" > new_chr_sex_format0
+      reformat_chromosome_information.sh new_chr_sex_format0 "CHR" prep_sfile_forced_sex_chromosome_format
+
+      colPOS="${metadata.col_POS ?: "missing"}"
+      map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "bp" "\${colPOS}" > adhoc_func1
+      colPOS="\$(cat adhoc_func1)"
+      cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colPOS}" -n"0,BP" > prep_sfile_selected_pos_prep
+
+      #combine and sort
+      LC_ALL=C join --header -1 1 -2 1 prep_sfile_forced_sex_chromosome_format prep_sfile_selected_pos_prep > gb_extract_and_format_chr_and_pos_to_detect_build
+      awk -vOFS="\t" '{print \$2":"\$3,\$1}' gb_extract_and_format_chr_and_pos_to_detect_build > gb_ready_to_join_to_detect_build
+      LC_ALL=C sort -k1,1 gb_ready_to_join_to_detect_build > gb_ready_to_join_to_detect_build_sorted
 
       # Process before and after stats (the -1 is to remove the header count)
       rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
-      rowsAfter="\$(wc -l prep_sfile_forced_sex_chromosome_format | awk '{print \$1-1}')"
+      rowsAfter="\$(wc -l gb_ready_to_join_to_detect_build_sorted | awk '{print \$1-1}')"
       echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
+
       """
     }
 
@@ -1201,7 +1226,7 @@ if (doCompleteCleaningWorkflow){
         publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
 
         input:
-        tuple datasetID, dID2, mfile, sfile from ch_chromosome_fixed1
+        tuple datasetID, dID2, mfile, sfile_chrpos from ch_chromosome_fixed1
         each build from whichbuild
 
         output:
@@ -1211,29 +1236,16 @@ if (doCompleteCleaningWorkflow){
         script:
         def metadata = session.get_metadata(datasetID)
         """
-        colCHR="${metadata.col_CHR ?: "missing"}"
-        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "\${colCHR}" > adhoc_func1
-        colCHR="\$(cat adhoc_func1)"
-
-        colPOS="${metadata.col_POS ?: "missing"}"
-        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "bp" "\${colPOS}" > adhoc_func1
-        colPOS="\$(cat adhoc_func1)"
-
-        echo "\${colCHR}" > gb_ad-hoc-do_funx_CHR_${build}
-        echo "\${colPOS}" > gb_ad-hoc-do_funx_POS_${build}
 
         #check number of rows in file
-        nrrows="\$(wc -l ${sfile})"
+        nrrows="\$(wc -l ${sfile_chrpos})"
         #if only header row, then do nothing
         if [ "\${nrrows}" == "1" ]
         then
           #I here choose to set number of mapped to 0, as nothing has been mapped.
           echo -e "0\t${build}" > ${datasetID}.${build}.res
         else
-          cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" > gb_extract_and_format_chr_and_pos_to_detect_build_${build}
-          awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' gb_extract_and_format_chr_and_pos_to_detect_build_${build} > gb_ready_to_join_to_detect_build_${build}
-          LC_ALL=C sort -k1,1 gb_ready_to_join_to_detect_build_${build} > gb_ready_to_join_to_detect_build_sorted_${build}
-          format_chrpos_for_dbsnp.sh ${build} gb_ready_to_join_to_detect_build_sorted_${build} ${ch_dbsnp_35_38} ${ch_dbsnp_36_38} ${ch_dbsnp_37_38} ${ch_dbsnp_38} > ${build}.map
+          format_chrpos_for_dbsnp.sh ${build} ${sfile_chrpos} ${ch_dbsnp_35_38} ${ch_dbsnp_36_38} ${ch_dbsnp_37_38} ${ch_dbsnp_38} > ${build}.map
           sort -u -k1,1 ${build}.map | wc -l | awk -vOFS="\t" -vbuild=${build} '{print \$1,build}' > detect_genome_build__${build}.res
         fi
 
@@ -1303,41 +1315,7 @@ if (doCompleteCleaningWorkflow){
     }
 
     // Add respective sumstat file from the parallell paths
-    ch_liftover_2=ch_known_genome_build.join(ch_chromosome_fixed2, by: [0,1])
-
-    process sort_by_chrpos_before_maplift {
-        publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
-
-        input:
-        tuple datasetID, dID2, gbmax, mfile, sfile from ch_liftover_2
-
-        output:
-        tuple datasetID, dID2, mfile, file("sort_by_chrpos_before_maplift__gb_lift"), gbmax into ch_liftover_3
-        //tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos
-
-        script:
-        def metadata = session.get_metadata(datasetID)
-        """
-        colCHR="${metadata.col_CHR ?: "missing"}"
-        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "\${colCHR}" > adhoc_func1
-        colCHR="\$(cat adhoc_func1)"
-
-        colPOS="${metadata.col_POS ?: "missing"}"
-        map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "bp" "\${colPOS}" > adhoc_func1
-        colPOS="\$(cat adhoc_func1)"
-
-
-        cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > sort_by_chrpos_before_maplift__gb_lift
-
-        #process before and after stats
-        rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
-        rowsAfter="\$(wc -l sort_by_chrpos_before_maplift__gb_lift | awk '{print \$1-1}')"
-        echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
-        """
-
-    }
-       // colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
-       // colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
+    ch_liftover_3=ch_known_genome_build.join(ch_chromosome_fixed2, by: [0,1])
 
     process rm_dup_chrpos_before_maplift {
 
@@ -1345,7 +1323,8 @@ if (doCompleteCleaningWorkflow){
         publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
         input:
-        tuple datasetID, dID2, mfile, chrposprep, gbmax from ch_liftover_3
+   //     tuple datasetID, dID2, mfile, chrposprep, gbmax from ch_liftover_3
+        tuple datasetID, dID2, gbmax, mfile, chrposprep from ch_liftover_3
 
         output:
         tuple datasetID, dID2, mfile, file("gb_unique_rows_2"), gbmax into ch_liftover_333
@@ -1362,7 +1341,6 @@ if (doCompleteCleaningWorkflow){
 
         """
     }
-
 
 
   process maplift_dbsnp_GRCh38_chrpos {
