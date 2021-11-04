@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.8] - 2021-11-02
 ### Fixed
-- A previous fix of the advanced chromosome reformatting introduced a bug. This has been fixed.
+- A previous fix of the advanced chromosome reformatting introduced a bug. The main problem was that we tried to feed two special functions to sumstats-tools, while it can only take one. The solution was to do the manipulation in two steps.
 
 ## [1.1.6] - 2021-10-29
 ### Fixed

@@ -1317,40 +1317,6 @@ if (doCompleteCleaningWorkflow){
     // Add respective sumstat file from the parallell paths
     ch_liftover_3=ch_known_genome_build.join(ch_chromosome_fixed2, by: [0,1])
 
-   // process sort_by_chrpos_before_maplift {
-   //     publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
-
-   //     input:
-   //     tuple datasetID, dID2, gbmax, mfile, sfile from ch_liftover_2
-
-   //     output:
-   //     tuple datasetID, dID2, mfile, file("sort_by_chrpos_before_maplift__gb_lift"), gbmax into ch_liftover_3
-   //     //tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos
-
-   //     script:
-   //     def metadata = session.get_metadata(datasetID)
-   //     """
-   //     colCHR="${metadata.col_CHR ?: "missing"}"
-   //     map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "\${colCHR}" > adhoc_func1
-   //     colCHR="\$(cat adhoc_func1)"
-
-   //     colPOS="${metadata.col_POS ?: "missing"}"
-   //     map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "bp" "\${colPOS}" > adhoc_func1
-   //     colPOS="\$(cat adhoc_func1)"
-
-
-   //     cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colCHR}|\${colPOS}" -n"0,CHR,BP" | awk -vFS="\t" -vOFS="\t" '{print \$2":"\$3,\$1}' > sort_by_chrpos_before_maplift__gb_lift
-
-   //     #process before and after stats
-   //     rowsBefore="\$(wc -l ${sfile} | awk '{print \$1-1}')"
-   //     rowsAfter="\$(wc -l sort_by_chrpos_before_maplift__gb_lift | awk '{print \$1-1}')"
-   //     echo -e "\$rowsBefore\t\$rowsAfter\tPrepare file for mapping to dbsnp by sorting the mapping index" > desc_prepare_format_for_dbsnp_mapping_BA.txt
-   //     """
-
-   // }
-       // colCHR=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "chr")
-       // colPOS=\$(map_to_adhoc_function.sh ${ch_regexp_lexicon} ${mfile} ${sfile} "bp")
-
     process rm_dup_chrpos_before_maplift {
 
         publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
@@ -1375,7 +1341,6 @@ if (doCompleteCleaningWorkflow){
 
         """
     }
-
 
 
   process maplift_dbsnp_GRCh38_chrpos {
