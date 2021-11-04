@@ -1565,11 +1565,13 @@ process select_chrpos_or_snpchrpos {
         tuple datasetID, mfile from ch_mfile_ok2
 
         output:
-        tuple datasetID, env(A2exists) into ch_present_A2
+        tuple datasetID, A2exists into ch_present_A2
 
         script:
+        def metadata = session.get_metadata(datasetID)
+        A2exists="${metadata.col_OtherAllele ? true : false}"
         """
-        A2exists=\$(doesA2exist.sh $mfile)
+        echo ${A2exists} > A2exists
         """
     }
 
@@ -1657,8 +1659,6 @@ process select_chrpos_or_snpchrpos {
         tuple datasetID, build, mfile, file("allele_correction_A1__acorrected") into ch_A2_missing2
         tuple datasetID, file("allele_correction_A1__removed_allele_filter_ix") into ch_removed_by_allele_filter_ix2
         tuple datasetID, file("allele_correction_A1__desc_filtered_allele-pairs_with_dbsnp_as_reference") into ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA
-        file("allele_correction_A1__mapped2")
-
         script:
         def metadata = session.get_metadata(datasetID)
         """
@@ -1668,28 +1668,9 @@ process select_chrpos_or_snpchrpos {
 
         #NOTE to use A1 allele only complicates the filtering on possible pairs etc, so we always need a multiallelic filter in how the filter works right now.
         # This is something we should try to accomodate to, so that it is not required.
-        multiallelic_filter.sh $mapped > allele_correction_A1__mapped2
-        echo -e "0\tA1\tA2\tCHRPOS\tRSID\tEffectAllele\tOtherAllele\tEMOD" > allele_correction_A1__acorrected
+        multiallelic_filter.sh $mapped > allele_correction_A1__multifiltered
 
-        #init some the files collecting variants removed because of allele composition
-        touch removed_notGCTA
-        touch removed_indel
-        touch removed_hom
-        touch removed_palin
-        touch removed_notPossPair
-        touch removed_notExpA2
-
-        cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colA1}" -n"0,A1" | LC_ALL=C join -t "\$(printf '\t')" -o 1.1 1.2 2.2 2.3 2.4 2.5 -1 1 -2 1 - ${build}_mapped2 | tail -n+2 | sstools-eallele correction -f - -a >> allele_correction_A1__acorrected
-
-        #only keep the index to prepare for the file with all removed lines
-        touch allele_correction_A1__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"notGCTA"}' removed_notGCTA >> allele_correction_A1__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"indel"}' removed_indel >> allele_correction_A1__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"hom"}' removed_hom >> allele_correction_A1__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"palin"}' removed_palin >> allele_correction_A1__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"notPossPair"}' removed_notPossPair >> allele_correction_A1__removed_allele_filter_ix
-        awk -vOFS="\t" '{print \$1,"notExpA2"}' removed_notExpA2 >> allele_correction_A1__removed_allele_filter_ix
-
+        allele_correction_onlyA1.sh ${sfile} allele_correction_A1__multifiltered "\${colA1}" allele_correction_A1__acorrected allele_correction_A1__removed_allele_filter_ix
         #process before and after stats (create one for each discarded filter, the original before after concept where all output files are directly tested is a bit violated here as we have to count down from input file)
         rowsBefore="\$(wc -l ${mapped} | awk '{print \$1-1}')"
         rowsAfter="\$(wc -l removed_notGCTA | awk -vrb=\${rowsBefore} '{ra=rb-\$1; print ra}')"
@@ -1718,6 +1699,7 @@ process select_chrpos_or_snpchrpos {
         rowsBefore="\${rowsAfter}"
         rowsAfter="\$(wc -l allele_correction_A1__acorrected | awk '{print \$1-1}')"
         echo -e "\$rowsBefore\t\$rowsAfter\tsanity sanity check that final filtered file before and after file have same row count" >> allele_correction_A1__desc_filtered_allele-pairs_with_dbsnp_as_reference
+
 
         """
     }
