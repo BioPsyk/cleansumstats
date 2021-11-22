@@ -84,7 +84,6 @@ cat <<EOF > ./mfile.yaml
 col_P: p
 col_SE: se
 col_OR: or
-colEAF: AF_1KG_CS
 EOF
 
 cat <<EOF > ./expected-colfields.txt
