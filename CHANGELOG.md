@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.10] - 2021-11-22
+### Fixed
+- Allele frequency was not sent correctly to r-stats-c-streamer, which returned strange results for the inferred N.
+
 ## [1.1.9] - 2021-11-04
 ### Fixed
 - When no otherAllele was specified, it resulted in no rows from the allele correction process. It all was caused by the shift from the old metadata reader to the new groovy version. In the end resulting in that the path was never taken through the process for when only effect allele exists.
