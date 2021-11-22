@@ -31,7 +31,9 @@ function _check_results {
 
 function _run_script {
 
-  "${test_script}.sh" ./mfile.yaml ./colfields.txt ./colnames.txt ./colpositions.txt "branchX"
+  branchX=$1
+
+  "${test_script}.sh" ./mfile.yaml ./colfields.txt ./colnames.txt ./colpositions.txt "${branchX}"
 
   _check_results ./colfields.txt ./expected-colfields.txt
   _check_results ./colnames.txt ./expected-colnames.txt
@@ -70,8 +72,32 @@ cat <<EOF > ./expected-colnames.txt
 EOF
 
 
-_run_script
+_run_script "branchX"
 
 #---------------------------------------------------------------------------------
-# Case 2
+# Case 2 - hotfix-245 - the last entry of available stat types was previously missed
+#                       That last entry was "allelefreq"
 
+_setup "input P, SE, OR, AF(1KGP) linear regression"
+
+cat <<EOF > ./mfile.yaml
+col_P: p
+col_SE: se
+col_OR: or
+colEAF: AF_1KG_CS
+EOF
+
+cat <<EOF > ./expected-colfields.txt
+0|se|p|or|AF_1KG_CS
+EOF
+
+cat <<EOF > ./expected-colpositions.txt
+--index 1 --standarderror 2 --pvalue 3 --oddsratio 4 --allelefreq 5
+EOF
+
+cat <<EOF > ./expected-colnames.txt
+0,se,p,or,AF_1KG_CS
+EOF
+
+
+_run_script "g1kaf_stats_branch"

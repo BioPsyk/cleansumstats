@@ -109,12 +109,14 @@ Ncontrols
 allelefreq
 EOF
 
+nrows=$( cat argsfile2.txt | wc -l )
+
 printf "%s" "0" > ${coln}
 printf "%s" "0" > ${colf}
 printf "%s" "--index 1" > ${argn}
 
 c=2
-for i in {1..10}; do
+for i in $(seq 1 ${nrows}); do
   el1="$(awk -vc="${i}" 'NR==c{print $0}' argsfile.txt)"
   el2="$(awk -vc="${i}" 'NR==c{print $0}' argsfileTF.txt)"
   el3="$(awk -vc="${i}" 'NR==c{print $0}' argsfile2.txt)"
