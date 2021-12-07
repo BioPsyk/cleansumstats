@@ -62,7 +62,7 @@ mkdir -p 1kgp
 wget -P 1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz
 wget -P 1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz.tbi
 
-# iii. If you are on a HPC Start your interactive session (below SLURM settings took about 5min to run)
+# ii. If you are on a HPC Start your interactive session (below SLURM settings took about 5min to run)
 srun --mem=80g --ntasks 1 --cpus-per-task 5 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./cleansumstats.sh \
   prepare-1kgp \
@@ -72,12 +72,12 @@ srun --mem=80g --ntasks 1 --cpus-per-task 5 --time=1:00:00 --account ibp_pipelin
 ```
 
 ## Prepare meta data files
-After the reference data paths have been set in the nextflow.config file, the pipeline can be run with only one argument, pointing to only one file. This file is called the meta file, and contains paths to other important files, such as the actual sumstats, README, article pdf, etc,. for which all need to be in the same folder as their corresponding metafile. This file has to be filled in manually, see `tests/example_data/sumstat_1/sumstat_1_raw_meta.txt` for an example of how it looks like. 
+After the reference data (dbsnp and 1000 genomes) has been created it is time to prepare the input for the actual cleaning. This file is called the meta file, and contains paths to other important files, such as the actual sumstats, README, article pdf, etc,. for which all need to be in the same folder as their corresponding metafile. This file has to be filled in manually, see `tests/example_data/sumstat_1/sumstat_1_raw_meta.txt` for an example of how it looks like. 
 
 You can also use this [webinterface](https://biopsyk.github.io/metadata) to generate a metadatafile. Again, remember that all files referred to by the metadatafile have to be in the same directory as the metafile when you run cleansumstats. Check `tests/example_data` and sumstats 1-5 for an example of how you can structure your input folders.
 
 ## Run a fully operational cleaning pipeline 
-This will take longer time compared to the quick-start run as we now use the full >600 million rows dbsnp reference to map our variants to. The '--libdirdbsnp' and '--kg1000AFGRCh38' default is a smaller set of example data used for the quick start in the beginning of the README)
+This will take longer time compared to the quick-start run as we now use the full >600 million rows dbsnp reference to map our variants to.
 
 When you have prepared your meta data files, then replace `-i` example data with your own data.
 
@@ -100,7 +100,7 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 ##
 ##Generate references:
 ## ./cleansumstats.sh prepare-dbsnp -i <file> -o <dir>
-## ./cleansumstats.sh prepare-1kgp -i <file> -o <dir>
+## ./cleansumstats.sh prepare-1kgp -i <file> -d <dir> -o <dir>
 ##
 ##options:
 ##-h		 Display help message for cleansumstats
@@ -110,6 +110,8 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 ##-k <dir> 	 path to 1000 genomes processed reference
 ##-t  	 	 quick test for all paths and params
 ##-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references
+##-v  	 	 get the version number
+
 
 ```
 

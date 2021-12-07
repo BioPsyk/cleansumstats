@@ -15,7 +15,7 @@ function general_usage(){
  echo ""
  echo "Generate references:"
  echo " ./cleansumstats.sh prepare-dbsnp -i <file> -o <dir>"
- echo " ./cleansumstats.sh prepare-1kgp -i <file> -o <dir>"
+ echo " ./cleansumstats.sh prepare-1kgp -i <file> -d <dir> -o <dir>"
  echo ""
  echo "options:"
  echo "-h		 Display help message for cleansumstats"
@@ -42,15 +42,15 @@ paramarray=($@)
 
 # check for modifiers
 if [ ${paramarray[0]} == "prepare-dbsnp" ] ; then
-  runtype="prepdbsnp"
+  runtype="--generateDbSNPreference"
   # remove modifier, 1st element
   paramarray=("${paramarray[@]:1}")
 elif [ ${paramarray[0]} == "prepare-1kgp" ] ; then
-  runtype="prep1kgp"
+  runtype="--generate1KgAfSNPreference"
   # remove modifier, 1st element
   paramarray=("${paramarray[@]:1}")
 else
-  runtype="normalrun"
+  runtype=""
 fi
 
 
@@ -64,7 +64,7 @@ getoptsstring=":hvi:o:d:k:te"
 dbsnpdir="out_dbsnp"
 kgpdir="out_1kgp"
 infile=""
-outdir=""
+outdir="out"
 
 # some logical defaults
 infile_given=false
@@ -98,7 +98,7 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       dbsnpdir_given=true
       ;;
     k )
-      kgpfile="$OPTARG"
+      kgpdir="$OPTARG"
       kgpdir_given=true
       ;;
     e )
@@ -123,7 +123,7 @@ done
 ################################################################################
 # give path to example data
 if $runexampledata; then
-  if [ ${runtype} == "prepdbsnp" ] ; then
+  if [ "${runtype}" == "--generateDbSNPreference" ] ; then
     if ${infile_given}; then
       :
     else
@@ -135,8 +135,10 @@ if $runexampledata; then
       outdir="out_dbsnp_test"
     fi
     dbsnpdir=${outdir}
+    #won't be used, but needs to be set
+    kgpdir="tests/example_data/1kgp/generated_reference"
 
-  elif [ ${runtype} == "prep1kgp" ] ; then
+  elif [ "${runtype}" == "--generate1KgAfSNPreference" ] ; then
     if ${infile_given}; then
       :
     else
@@ -150,11 +152,11 @@ if $runexampledata; then
     if ${dbsnpdir_given}; then
       :
     else
-      dbsnpdir="out_dbsnp_test"
+      dbsnpdir="tests/example_data/dbsnp/generated_reference"
     fi
     kgpdir=${outdir}
 
-  elif [ ${runtype} == "normalrun" ] ; then
+  elif [ "${runtype}" == "" ] ; then
     if ${infile_given}; then
       :
     else
@@ -171,7 +173,6 @@ if $runexampledata; then
     echo "${runtype}"
     echo "unknown runtype"
   fi
-
 fi
 
 ################################################################################
@@ -183,10 +184,22 @@ mkdir -p ${outdir}
 
 infile_host=$(realpath "${infile}")
 outdir_host=$(realpath "${outdir}")
+
+# check for modifiers
+if [ "${runtype}" == "--generateDbSNPreference" ] ; then
+  # use outdir as landing directory for all output
+  dbsnpdir="${outdir}"
+  kgpdir="${outdir}"
+elif [ "${runtype}" == "--generate1KgAfSNPreference" ] ; then
+  # use outdir as landing directory for all output
+  kgpdir=${outdir}
+else
+  :
+fi
 dbsnpdir_host=$(realpath "${dbsnpdir}")
 kgpdir_host=$(realpath "${kgpdir}")
 
-# Test that file and folder exists
+# Test that file and folder exists, all of these will always get mounted
 if [ ! -f $infile_host ]; then
   >&2 echo "infile doesn't exist"
   exit 1
@@ -238,6 +251,7 @@ FAKE_HOME="tmp/fake-home"
 export SINGULARITY_HOME="/cleansumstats/${FAKE_HOME}"
 mkdir -p "${FAKE_HOME}"
 
+
 if ${pathquicktest}; then
  echo "cleansumstats.sh to-mount"
  echo "------------------"
@@ -273,56 +287,21 @@ if ${pathquicktest}; then
  echo "--libdirdbsnp ${dbsnpdir_container}"
  echo "--kg1000AFGRCh38 ${kgpfile_container}"
 else
-  if [ ${runtype} == "prepdbsnp" ] ; then
-    echo "${runtype}"
-    exec singularity run \
-         --contain \
-         --cleanenv \
-         ${mount_flags} \
-         -B "${indir_host}:${indir_container}" \
-         -B "${outdir_host}:${outdir_container}" \
-         -B "${dbsnpdir_host}:${dbsnpdir_container}" \
-         "tmp/${singularity_image_tag}" \
-         nextflow run /cleansumstats \
-           --generateDbSNPreference \
-           --input "${infile_container}" \
-           --outdir "${outdir_container}" \
-           --libdirdbsnp "${dbsnpdir_container}" 
-  elif [ ${runtype} == "prep1kgp" ] ; then
-    echo "${runtype}"
-    exec singularity run \
-         --contain \
-         --cleanenv \
-         ${mount_flags} \
-         -B "${indir_host}:${indir_container}" \
-         -B "${outdir_host}:${outdir_container}" \
-         -B "${dbsnpdir_host}:${dbsnpdir_container}" \
-         -B "${kgpdir_host}:${kgpdir_container}" \
-         "tmp/${singularity_image_tag}" \
-         nextflow run /cleansumstats \
-	   --generate1KgAfSNPreference \
-           --input "${infile_container}" \
-           --outdir "${outdir_container}" \
-           --libdirdbsnp "${dbsnpdir_container}" \
-           --kg1000AFGRCh38 "${kgpfile_container}"
-  elif [ ${runtype} == "normalrun" ] ; then
-    echo "${runtype}"
-    exec singularity run \
-       --contain \
-       --cleanenv \
-       ${mount_flags} \
-       -B "${indir_host}:${indir_container}" \
-       -B "${outdir_host}:${outdir_container}" \
-       -B "${dbsnpdir_host}:${dbsnpdir_container}" \
-       -B "${kgpdir_host}:${kgpdir_container}" \
-       "tmp/${singularity_image_tag}" \
-       nextflow run /cleansumstats \
-         --input "${infile_container}" \
-         --outdir "${outdir_container}" \
-         --libdirdbsnp "${dbsnpdir_container}" \
-         --kg1000AFGRCh38 "${kgpfile_container}"
-  else
-    echo "${runtype}"
-    echo "unknown runtype"
-  fi
+
+  exec singularity run \
+     --contain \
+     --cleanenv \
+     ${mount_flags} \
+     -B "${indir_host}:${indir_container}" \
+     -B "${outdir_host}:${outdir_container}" \
+     -B "${dbsnpdir_host}:${dbsnpdir_container}" \
+     -B "${kgpdir_host}:${kgpdir_container}" \
+     -B "/tmp:/tmp" \
+     "tmp/${singularity_image_tag}" \
+     nextflow run /cleansumstats ${runtype} \
+       --input "${infile_container}" \
+       --outdir "${outdir_container}" \
+       --libdirdbsnp "${dbsnpdir_container}" \
+       --kg1000AFGRCh38 "${kgpfile_container}"
 fi
+

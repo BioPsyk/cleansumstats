@@ -31,7 +31,7 @@ class Metadata extends BaseMetadata {
   String study_FileURL = null
   Date study_AccessDate = null
   String study_Use = null
-  String study_includedCohorts = null
+  List<String> study_includedCohorts = []
   String study_Ancestry = null
   String study_Gender = null
   String study_PhasePanel = null
