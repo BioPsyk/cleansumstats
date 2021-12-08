@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2021-12-08
+### Added
+- Add post-process script that converts from the present output format to a vcf file, mathing column names to https://github.com/MRCIEU/gwas2vcf
+- Add a file in the details folder explaining the source of each output column
+- Add a post-process section in docs that is linked to from README.md
+
 ## [1.1.10] - 2021-11-22
 ### Fixed
 - Allele frequency was not sent correctly to r-stats-c-streamer, which returned strange results for the inferred N.

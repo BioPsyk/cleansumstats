@@ -308,3 +308,8 @@ Test a complete run using all example data together
 - `sort` threats a file as small if comming from a pipe, which cancel parallelization.
 - `sort` doesn't make use of more than 8 cpus according to its documentation.
 - `sort` `--buffer-size=20G` is useful to get better control of memory allocation.
+
+## Nextflow flags
+Some described nextflow flags
+
+- See [nextflow-flags](nextflow-flags.md) for a description of some available options when running the pipeline as dev.

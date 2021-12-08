@@ -2069,12 +2069,13 @@ process select_chrpos_or_snpchrpos {
 
         output:
         tuple datasetID, file("select_stats__st_stats_for_output") into ch_stats_for_output
+        tuple datasetID, file("select_stats__selected_source.txt") into ch_stats_for_output_selected_source
         tuple datasetID, file("select_stats__desc_from_inferred_to_joined_selection_BA.txt") into ch_desc_from_inferred_to_joined_selection_BA
         tuple datasetID, file("select_stats__desc_from_sumstats_to_joined_selection_BA.txt") into ch_desc_from_sumstats_to_joined_selection_BA
 
         script:
         """
-        select_stats_for_output.sh $mfile $sfile $inferred > select_stats__st_stats_for_output
+        select_stats_for_output.sh $mfile $sfile $inferred select_stats__selected_source.txt > select_stats__st_stats_for_output
 
         #process before and after stats
         rowsBefore="\$(wc -l ${inferred} | awk '{print \$1}')"
@@ -2336,8 +2337,8 @@ process select_chrpos_or_snpchrpos {
       .join(ch_all_mfiles, by: 0)
       .join(ch_to_write_to_raw_library, by: 0)
       .join(ch_input_pdf_stuff, by: 0)
+      .join(ch_stats_for_output_selected_source, by: 0)
       .set{ ch_to_write_to_filelibrary7 }
-
 
      //.combine(ch_collected_removed_lines2)
 
@@ -2346,7 +2347,7 @@ process select_chrpos_or_snpchrpos {
         publishDir "${params.outdir}/${datasetID}", mode: 'copy', overwrite: true
 
         input:
-        tuple datasetID, sclean, scleanGRCh37, removedlines, readme, overviewworkflow, removedlinestable, gbdetectCHRPOS, gbdetectSNPCHRPOS, usermfile, cleanmfile, rawfile, pmid, pdfpath, pdfsuppdir from ch_to_write_to_filelibrary7
+        tuple datasetID, sclean, scleanGRCh37, removedlines, readme, overviewworkflow, removedlinestable, gbdetectCHRPOS, gbdetectSNPCHRPOS, usermfile, cleanmfile, rawfile, pmid, pdfpath, pdfsuppdir, selected_source from ch_to_write_to_filelibrary7
 
         output:
         path("*")
@@ -2357,6 +2358,7 @@ process select_chrpos_or_snpchrpos {
         # Store data in library by copying (move is faster, but debug gets slower as input disappears)
         cp ${sclean} cleaned_GRCh38.gz
         cp ${scleanGRCh37} cleaned_GRCh37.gz
+        cp ${cleanmfile} cleaned_metadata.yaml
 
         # Make a folder with detailed data of the cleaning
         mkdir details
@@ -2365,7 +2367,8 @@ process select_chrpos_or_snpchrpos {
         cp $gbdetectCHRPOS details/genome_build_map_count_table_chrpos.txt
         cp $gbdetectSNPCHRPOS details/genome_build_map_count_table_markername.txt
         cp ${removedlines} details/removed_lines.gz
-        cp ${cleanmfile} cleaned_metadata.yaml
+        cp ${selected_source} details/selected_source_stats.txt
+
 
         # copy all raw stuff into raw
         mkdir raw
