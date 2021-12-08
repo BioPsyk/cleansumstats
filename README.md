@@ -21,9 +21,9 @@ git clone https://github.com/BioPsyk/cleansumstats.git
 cd cleansumstats
 
 # iii. Download our container image, move it to a folder called tmp within the repo (<1GB)
-singularity pull ibp-cleansumstats-base_version-1.0.0.simg docker://biopsyk/ibp-cleansumstats:1.0.0
+singularity pull ibp-cleansumstats-base_version-1.0.1.simg docker://biopsyk/ibp-cleansumstats:1.0.1
 mkdir -p tmp
-mv ibp-cleansumstats-base_version-1.0.0.simg tmp/
+mv ibp-cleansumstats-base_version-1.0.1.simg tmp/
 
 # iv. clean a sumstat using shrinked example data for dbsnp and 1kgp (-e flag)
 ./cleansumstats.sh \
@@ -117,9 +117,10 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 
 
 ## More documentation
-- See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 - See [Output and how to interpret the results](docs/output.md) for the output structure and how to interpret the results.
+- See [Post-processing](docs/post-processing.md) for how to further process the output
 - See [Developer instructions](docs/developers.md) only for developers
+
 
 ## Credits
 
