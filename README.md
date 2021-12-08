@@ -117,9 +117,10 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 
 
 ## More documentation
-- See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 - See [Output and how to interpret the results](docs/output.md) for the output structure and how to interpret the results.
+- See [Post-processing](docs/post-processing.md) for how to further process the output
 - See [Developer instructions](docs/developers.md) only for developers
+
 
 ## Credits
 
