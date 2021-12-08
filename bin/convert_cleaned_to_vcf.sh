@@ -2,17 +2,20 @@
 
 sfile=${1}
 out=${2}
+cleanup=${3}
 
-tmp_dir=$(mktemp -d)
-
-function cleanup()
-{
-  cd "${test_dir}"
-  rm -rf "${tmp_dir}"
-}
-
-trap cleanup EXIT
-cd "${tmp_dir}"
+if ${cleanup} ;then
+  tmp_dir=$(mktemp -d)
+  
+  function cleanup()
+  {
+    cd "${test_dir}"
+    rm -rf "${tmp_dir}"
+  }
+  
+  trap cleanup EXIT
+  cd "${tmp_dir}"
+fi
 
 VarToSearchFor=(
 B

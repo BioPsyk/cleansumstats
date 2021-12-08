@@ -37,4 +37,5 @@ exec singularity run \
    "tmp/${singularity_image_tag}" \
    /cleansumstats/bin/convert_cleaned_to_vcf.sh \
      "${infile_container}" \
-     "${outfile_container}"
+     "${outfile_container}" \
+     true
