@@ -111,7 +111,7 @@ EOF
 add_header_format_meta >> tmp1
 
 # Make the header row
-echo -e "CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sumstats" >> tmp1
+echo -e "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sumstats" >> tmp1
 
 # Make remaining rows
 zcat $sfile | awk -vOFS="\t" -vformat="${nam_k}" -vpos="${pos_k}" '

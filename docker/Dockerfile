@@ -110,6 +110,8 @@ ARG SAMTOOLS_VERSION="1.3.1"
 RUN apt-get install -y autoconf automake make zlib1g-dev libbz2-dev \
   liblzma-dev libcurl4-gnutls-dev libssl-dev libncurses5-dev
 
+WORKDIR /cleansumstats
+
 RUN wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2 \
   --quiet -O htslib.tar.bz2 && \
   tar -xjvf htslib.tar.bz2 && \
@@ -190,6 +192,8 @@ COPY --from=rust_builder /usr/local/cargo/bin/b3sum /usr/bin/b3sum
 
 WORKDIR /cleansumstats
 
+RUN mv /cleansumstats/htslib/tabix /usr/bin/tabix
+RUN mv /cleansumstats/htslib/bgzip /usr/bin/bgzip
 RUN mv /cleansumstats/samtools/samtools /usr/bin/samtools
 RUN mv /cleansumstats/bcftools/bcftools /usr/bin/bcftools
 
