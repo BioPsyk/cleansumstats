@@ -221,29 +221,6 @@ def session = new PipelineSession<Metadata>(
   params.input
 )
 
-//if (params.generateMetafile){
-//  session.metadata_paths.each {
-//    log.info "Writing metadata template"
-//
-//    def metadata_id = it.getBaseName().toString()
-//
-//    def template_file = new File("${params.outdir}/${metadata_id}.template.yaml")
-//    template_file.write(
-//      session.metadata_schema.generate_metadata_template()
-//    )
-//
-//    log.info "Metadata template written to ${params.outdir}/${metadata_id}.template.yaml"
-//  }
-//}else if(params.generateMetaClass){
-//  log.info "Metadata class written to ${params.outdir}/Metadata.groovy"
-//
-//  def class_file = new File("${params.outdir}/Metadata.groovy")
-//  class_file.write(
-//    session.metadata_schema.generate_metadata_groovy_class()
-//  )
-//
-//  log.info "Metadata class written to ${params.outdir}/Metadata.groovy"
-//}else if(params.generateDbSNPreference){
 
 include { prepare_dbsnp_reference } from './modules/subworkflow/prepare_dbsnp.nf' 
 include { prepare_1kgaf_reference } from './modules/subworkflow/prepare_1kgaf.nf' 
@@ -252,7 +229,30 @@ include { prepare_1kgaf_reference } from './modules/subworkflow/prepare_1kgaf.nf
 
 workflow {
   main:
-  if(params.generateDbSNPreference){
+
+  if (params.generateMetafile){
+    session.metadata_paths.each {
+      log.info "Writing metadata template"
+  
+      def metadata_id = it.getBaseName().toString()
+  
+      def template_file = new File("${params.outdir}/${metadata_id}.template.yaml")
+      template_file.write(
+        session.metadata_schema.generate_metadata_template()
+      )
+  
+      log.info "Metadata template written to ${params.outdir}/${metadata_id}.template.yaml"
+    }
+  }else if(params.generateMetaClass){
+    log.info "Metadata class written to ${params.outdir}/Metadata.groovy"
+  
+    def class_file = new File("${params.outdir}/Metadata.groovy")
+    class_file.write(
+      session.metadata_schema.generate_metadata_groovy_class()
+    )
+  
+    log.info "Metadata class written to ${params.outdir}/Metadata.groovy"
+  }else if(params.generateDbSNPreference){
     prepare_dbsnp_reference(
       "${params.input}", 
       ch_hg38ToHg19chain, 
