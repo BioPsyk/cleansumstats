@@ -245,117 +245,35 @@ def session = new PipelineSession<Metadata>(
 //  log.info "Metadata class written to ${params.outdir}/Metadata.groovy"
 //}else if(params.generateDbSNPreference){
 
-include {
-  prepare_dbsnp_reference
-} from './modules/subworkflow/prepare_dbsnp.nf' 
+include { prepare_dbsnp_reference } from './modules/subworkflow/prepare_dbsnp.nf' 
+include { prepare_1kgaf_reference } from './modules/subworkflow/prepare_1kgaf.nf' 
+
 
 
 workflow {
   main:
-  prepare_dbsnp_reference(
-    "${params.input}", 
-    ch_hg38ToHg19chain, 
-    ch_hg19ToHg18chain, 
-    ch_hg19ToHg17chain,
-    ch_dbsnp_RSID_38,
-    ch_dbsnp_38,
-    ch_dbsnp_38_37,
-    ch_dbsnp_37_38,
-    ch_dbsnp_36_38,
-    ch_dbsnp_35_38
+  if(params.generateDbSNPreference){
+    prepare_dbsnp_reference(
+      "${params.input}", 
+      ch_hg38ToHg19chain, 
+      ch_hg19ToHg18chain, 
+      ch_hg19ToHg17chain,
+      ch_dbsnp_RSID_38,
+      ch_dbsnp_38,
+      ch_dbsnp_38_37,
+      ch_dbsnp_37_38,
+      ch_dbsnp_36_38,
+      ch_dbsnp_35_38
 
-  )
+    )
+  }else if(params.generate1KgAfSNPreference){
+    prepare_1kgaf_reference("${params.input}", ch_dbsnp_38)
+    //#check for not agreeing ref alleles and alt alleles
+    // awk '{if($2!=$10){print $0}}' 1kg_af_ref.sorted.joined | head
+    // awk '{if($3!=$11){print $0}}' 1kg_af_ref.sorted.joined | head
+  }
 }
 
-//}else if(params.generate1KgAfSNPreference){
-//
-//  // ##Download from web
-//  // ##Download readme describing the new mapping directly to GRCh38
-//  // ##wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/20190312_biallelic_SNV_and_INDEL_README.txt
-//  // ##
-//  // ###then download the datasets from this website portal
-//  // ##wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz
-//  // ##wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz.tbi
-//  // ##
-//
-//  ch_file = Channel
-//    .fromPath(params.input, type: 'file')
-//    .map { file -> tuple(file.baseName, file) }
-//
-//  process extract_frequency_data {
-//
-//      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-//
-//      input:
-//      tuple basefilename, af1kgvcf from ch_file
-//
-//      output:
-//      tuple basefilename, path("1kg_af_ref") into ch_1kg_af_ref
-//
-//      script:
-//      """
-//      gendb_1kaf_extract_freq_data.sh ${af1kgvcf} > 1kg_af_ref
-//
-//      """
-//  }
-//
-//  // As 1KG by default shows alternative allele frequency, we flip to follow our default on showing effect allele frequency, which in our system will be the reference allele frequency.
-//  process flip_frequency_data {
-//
-//      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-//
-//      input:
-//      tuple basefilename, ref1kg from ch_1kg_af_ref
-//
-//      output:
-//      tuple basefilename, path("1kg_af_ref.flipped") into ch_1kg_af_ref_tosort
-//
-//      script:
-//      """
-//      #sort 1kg af reference on position
-//      awk '{print \$1, \$2, \$3, 1-\$4, 1-\$5, 1-\$6, 1-\$7, 1-\$8}' ${ref1kg} > 1kg_af_ref.flipped
-//      """
-//  }
-//
-//  process sort_frequency_data {
-//
-//      cpus 4
-//
-//      publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-//
-//      input:
-//      tuple basefilename, ref1kg from ch_1kg_af_ref_tosort
-//
-//      output:
-//      tuple basefilename, path("1kg_af_ref.sorted") into ch_1kg_af_ref_sorted
-//
-//      script:
-//      """
-//      #sort 1kg af reference on position
-//      LC_ALL=C sort -k 1,1 --parallel 4 ${ref1kg} > 1kg_af_ref.sorted
-//      """
-//  }
-//
-//  process join_frequency_data_on_dbsnp_reference {
-//
-//      publishDir "${params.outdir}", mode: 'copy', overwrite: true
-//
-//      input:
-//      tuple basefilename, ref1kgsorted from ch_1kg_af_ref_sorted
-//
-//      output:
-//      tuple basefilename, path("1kg_af_ref.sorted.joined")
-//
-//      script:
-//      """
-//      #join the two datasets
-//      LC_ALL=C join -1 1 -2 1 ${ref1kgsorted} ${ch_dbsnp_38} > 1kg_af_ref.sorted.joined
-//
-//      """
-//  }
-//      //#check for not agreeing ref alleles and alt alleles
-//      // awk '{if($2!=$10){print $0}}' 1kg_af_ref.sorted.joined | head
-//      // awk '{if($3!=$11){print $0}}' 1kg_af_ref.sorted.joined | head
 //
 //}else {
 //
