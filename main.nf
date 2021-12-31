@@ -134,7 +134,7 @@ if (params.generateDbSNPreference) {
   if (params.dbsnp_RSID_38) { ch_dbsnp_RSID_38 = file(params.dbsnp_RSID_38, checkIfExists: true) }
 }
 
-ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
+params.ch_regexp_lexicon = file("$baseDir/assets/map_regexp_and_adhocfunction.txt", checkIfExists: true)
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
@@ -221,6 +221,8 @@ def sess = new PipelineSession<Metadata>(
   params.input
 )
 
+params.sess=sess
+
 
 include { prepare_dbsnp_reference } from './modules/subworkflow/prepare_dbsnp.nf' 
 include { prepare_1kgaf_reference } from './modules/subworkflow/prepare_1kgaf.nf' 
@@ -234,8 +236,7 @@ include {
   add_sorted_rowindex_to_sumstat
 } from './modules/process/main_init_checks.nf' 
 
-include { map_to_dbsnp } from './modules/subworkflow/map_to_dbsnp.nf' 
-
+include { map_to_dbsnp } from './modules/subworkflow/map_to_dbsnp.nf'
 
 
 
@@ -334,7 +335,9 @@ workflow {
 //    ch_mfile_and_stream.into { ch_check_gb; ch_liftover; ch_liftover1; ch_liftover2; ch_stats_inference }
 
   if (doCompleteCleaningWorkflow){
-    map_to_dbsnp(main_init_checks_crucial_paths.out.mfile_check_format, sess)
+
+    map_to_dbsnp(add_sorted_rowindex_to_sumstat.out.main)
+
   }
 }
 

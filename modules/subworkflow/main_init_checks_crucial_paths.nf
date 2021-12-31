@@ -28,6 +28,7 @@ workflow main_init_checks_crucial_paths {
  all.map { mID, fl, spath, rpath, pmid, pdfpath, supps -> tuple(mID, rpath) }.set { rpath }
  all.map { mID, fl, spath, rpath, pmid, pdfpath, supps -> tuple(mID, pmid) }.set { pmid }
  all.map { mID, fl, spath, rpath, pmid, pdfpath, supps -> tuple(mID, pmid, pdfpath, supps) }.set { pdfstuff }
+ all.map { mID, fl, spath, rpath, pmid, pdfpath, supps -> tuple(mID) }.set { mID }
 
   emit:
   mfile_check_format
@@ -35,6 +36,8 @@ workflow main_init_checks_crucial_paths {
   rpath
   pmid
   pdfstuff
+  mID
+
 
 }
 

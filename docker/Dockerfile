@@ -6,7 +6,7 @@ RUN apt-get update --fix-missing
 #---------------------------------------------------------------------------------
 # Installing nextflow
 
-ARG NEXTFLOW_REVISION="539a22b68c114c94eaf4a88ea8d26b7bfe2d0c39"
+ARG NEXTFLOW_REVISION="a96233af6fb505a1716a70408d46218f7d45dc96"
 
 WORKDIR /cleansumstats
 
@@ -107,6 +107,7 @@ ARG HTSLIB_VERSION="1.9"
 ARG BCFTOOLS_VERSION="1.9"
 ARG SAMTOOLS_VERSION="1.3.1"
 
+RUN apt-get update --fix-missing
 RUN apt-get install -y autoconf automake make zlib1g-dev libbz2-dev \
   liblzma-dev libcurl4-gnutls-dev libssl-dev libncurses5-dev
 
@@ -205,7 +206,7 @@ COPY install-sumstat-tools.sh .
 RUN mv sumstat-tools /usr/lib/ && \
   ./install-sumstat-tools.sh /usr/lib/sumstat-tools/bin /usr/bin
 
-RUN mv nextflow/build/releases/nextflow-20.10.0-all /usr/bin/nextflow && \
+RUN mv nextflow/build/releases/nextflow-21.12.1-edge-all /usr/bin/nextflow && \
   chmod +x /usr/bin/nextflow
 
 RUN apt-get update --fix-missing && \
