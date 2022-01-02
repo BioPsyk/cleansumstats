@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 
 #meta file
-mefl=${1}
-stdin=${2}
-inferred=${3}
-from_which_source=${4}
-
-##helpers
-function selRightHand(){
-  echo "${1#*: }"
-}
-function selColRow(){
-  grep ${1} ${2}
-}
+stdin=${1}
+inferred=${2}
+from_which_source=${3}
+STATM=${4}
+B=${5}
+SE=${6}
+Z=${7}
+P=${8}
+OR=${9}
+ORL95=${10}
+ORU95=${11}
+N=${11}
+CaseN=${12}
+ControlN=${13}
+EAF=${14}
+OAF=${15}
+INFO=${16}
+DIRECTION=${17}
 
 #recode as true or false
 function recode_to_tf(){
@@ -32,23 +38,6 @@ function specfunx_exists(){
 
 #what is statmethod according to meta data file
 STATM="$(selRightHand "$(selColRow "^stats_Model:" $mefl)")"
-
-#what is colname according to meta data file
-B="$(selRightHand "$(selColRow "^col_BETA:" $mefl)")"
-SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
-Z="$(selRightHand "$(selColRow "^col_Z:" $mefl)")"
-P="$(selRightHand "$(selColRow "^col_P:" $mefl)")"
-OR="$(selRightHand "$(selColRow "^col_OR:" $mefl)")"
-ORL95="$(selRightHand "$(selColRow "^col_ORL95:" $mefl)")"
-ORU95="$(selRightHand "$(selColRow "^col_ORU95:" $mefl)")"
-N="$(selRightHand "$(selColRow "^col_N:" $mefl)")"
-CaseN="$(selRightHand "$(selColRow "^col_CaseN:" $mefl)")"
-ControlN="$(selRightHand "$(selColRow "^col_ControlN:" $mefl)")"
-EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
-OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
-INFO="$(selRightHand "$(selColRow "^col_INFO:" $mefl)")"
-DIRECTION="$(selRightHand "$(selColRow "^col_Direction:" $mefl)")"
-
 
 #true or false (exists or not)
 tfB="$(recode_to_tf $B)"
