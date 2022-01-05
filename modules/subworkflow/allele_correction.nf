@@ -48,14 +48,17 @@ workflow allele_correction {
 
     allele_correction_A1_A2.out.ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1A2_BA
       .mix(allele_correction_A1.out.ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_A1_BA)
+      .join(rm_dup_chrpos_rows_after_acor.out.ch_desc_removed_duplicated_chr_pos_rows_BA, by: 0)
       .set{ desc_filt_allele_pairs_BA }
 
-  //output
+  //to emit
   rm_dup_chrpos_rows_after_acor.out.ch_allele_corrected_mix_Y.set { allele_corrected }
+
   emit:
   allele_corrected
   removed_by_allele_filter_ix
   desc_filt_allele_pairs_BA
+
 }
 
 

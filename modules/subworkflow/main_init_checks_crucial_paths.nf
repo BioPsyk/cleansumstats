@@ -18,7 +18,7 @@ workflow main_init_checks_crucial_paths {
     def rpath= metadata.path_readMe == null ? "missing" : metadata.path_readMe
     def pmid= metadata.study_PMID
     def pdfpath= metadata.path_pdf == null ? "missing" : metadata.path_pdf
-    def supps = metadata.path_supplementary
+    def supps = metadata.path_supplementary.join(" ")
     return tuple(mID, fl, spath, rpath, pmid, pdfpath, supps)
   }
   .set { all }

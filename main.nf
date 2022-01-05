@@ -337,257 +337,47 @@ workflow {
     ch_allele_correction_combine=map_to_dbsnp.out.dbsnp_mapped.join(add_sorted_rowindex_to_sumstat.out.main, by: 0)
     allele_correction(ch_allele_correction_combine)
     update_stats(add_sorted_rowindex_to_sumstat.out.main, allele_correction.out.allele_corrected)
-    organize_output(allele_correction.out.allele_corrected, update_stats.out.cleaned_stats)
 
+  //Collect and place in corresponding stepwise order
+    map_to_dbsnp.out.dbsnp_rm_ix
+     .join(allele_correction.out.removed_by_allele_filter_ix, by: 0)
+     .join(update_stats.out.stats_rm_by_filter_ix, by: 0)
+     .set{ ch_collected_removed_lines }
+
+  //Collect desc_BA info
+  check_sumstat_format.out.nrows_before_after
+  .join(add_sorted_rowindex_to_sumstat.out.nrows_before_after, by: 0)
+  .join(map_to_dbsnp.out.rows_before_after)
+  .join(allele_correction.out.desc_filt_allele_pairs_BA)
+  .join(update_stats.out.nrows_before_after)
+  .set {nrows_before_after}
+
+
+  //join checksums
+    calculate_checksum_on_metafile_input.out.main
+    .join(calculate_checksum_on_sumstat_input.out.main, by: 0)
+    .set { ch_mfile_cleaned_x }
+
+    main_init_checks_crucial_paths.out.rpath
+    .join(map_to_dbsnp.out.ch_gb_stats_combined, by: 0)
+    .join(main_init_checks_crucial_paths.out.pdfstuff, by: 0)
+    .join(update_stats.out.cleaned_stats_col_source, by: 0)
+    .set{ ch_to_write_to_filelibrary7 }
+
+    organize_output(
+      allele_correction.out.allele_corrected, 
+      update_stats.out.cleaned_stats,
+      ch_collected_removed_lines,
+      main_init_checks_crucial_paths.out.spath,
+      add_sorted_rowindex_to_sumstat.out.main,
+      nrows_before_after,
+      ch_mfile_cleaned_x,
+      ch_to_write_to_filelibrary7,
+      ch_mfile_checkX
+    )
   }
 }
 
-//
-//    process collect_rmd_lines {
-//        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-//
-//        input:
-//        tuple datasetID, step1, step2, step3 from ch_collected_removed_lines
-//
-//        output:
-//        tuple datasetID, file("collect_rmd_lines__removed_lines_collected.txt") into ch_collected_removed_lines2
-//
-//        script:
-//        """
-//        echo -e "RowIndex\tExclusionReason" > collect_rmd_lines__removed_lines_collected.txt
-//        cat ${step1} ${step2} ${step3} >> collect_rmd_lines__removed_lines_collected.txt
-//        """
-//    }
-//
-//    ch_collected_removed_lines2
-//      .into { ch_collected_removed_lines3; ch_collected_removed_lines4 }
-//
-//    process desc_rmd_lines_as_table {
-//
-//      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-//
-//        input:
-//        tuple datasetID, filtered_stats_removed from ch_collected_removed_lines3
-//
-//        output:
-//        tuple datasetID, file("desc_rmd_lines_as_table__desc_removed_lines_table.txt") into ch_removed_lines_table
-//
-//        script:
-//        """
-//        # prepare process specific descriptive statistics
-//        echo -e "NrExcludedRows\tExclusionReason" > desc_rmd_lines_as_table__desc_removed_lines_table.txt
-//        cat $filtered_stats_removed | tail -n+2 | awk -vOFS="\t" '{ seen[\$2] += 1 } END { for (i in seen) print seen[i],i }' >> desc_rmd_lines_as_table__desc_removed_lines_table.txt
-//
-//        """
-//    }
-//
-//
-//    ch_cleaned_file
-//      .join(ch_input_sfile2, by: 0)
-//      .join(ch_sfile_on_stream5, by: 0)
-//      .join(ch_collected_removed_lines4, by: 0)
-//      .set{ ch_to_write_to_filelibrary2 }
-//
-//    process gzip_outfiles {
-//        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-//
-//        input:
-//        tuple datasetID, sclean, scleanGRCh37, inputsfile, inputformatted, removedlines from ch_to_write_to_filelibrary2
-//
-//        output:
-//        tuple datasetID, path("gzip_outfiles__sclean.gz"), path("gzip_outfiles__scleanGRCh37.gz"), path("gzip_outfiles__removed_lines.gz") into ch_to_write_to_filelibrary3
-//        tuple datasetID, path("gzip_outfiles__cleanedheader") into ch_cleaned_header
-//        tuple datasetID, inputsfile into ch_to_write_to_raw_library
-//        val datasetID into ch_check_avail
-//
-//        script:
-//        """
-//        # Make a header file to use when deciding on what cols are present for the new meta file
-//        head -n1 ${sclean} > gzip_outfiles__cleanedheader
-//
-//        # Store data in library
-//        gzip -c ${sclean} > gzip_outfiles__sclean.gz
-//        gzip -c ${scleanGRCh37} > gzip_outfiles__scleanGRCh37.gz
-//        gzip -c ${removedlines} > gzip_outfiles__removed_lines.gz
-//        """
-//    }
-//
-//    ch_to_write_to_filelibrary3.into { ch_to_write_to_filelibrary3a; ch_to_write_to_filelibrary3b }
-//
-//    process calculate_checksum_on_sumstat_cleaned {
-//        publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-//
-//        input:
-//        tuple datasetID, sclean, scleanGRCh37, removedlines from ch_to_write_to_filelibrary3a
-//
-//        output:
-//        tuple datasetID, env(scleanchecksum), env(scleanGRCh37checksum), env(removedlineschecksum) into ch_cleaned_sumstat_checksums
-//
-//        script:
-//        """
-//        scleanchecksum="\$(b3sum ${sclean} | awk '{print \$1}')"
-//        scleanGRCh37checksum="\$(b3sum ${scleanGRCh37} | awk '{print \$1}')"
-//        removedlineschecksum="\$(b3sum ${removedlines} | awk '{print \$1}')"
-//        """
-//    }
-//
-//  ch_cleaned_sumstat_checksums.into { ch_cleaned_sumstat_checksums1; ch_cleaned_sumstat_checksums2 }
-//
-//
-//  //Do actual collection, placed in corresponding step order
-//  ch_desc_prep_force_tab_sep_BA
-//   .join(ch_desc_prep_add_sorted_rowindex_BA, by: 0)
-//   .join(ch_desc_combined_set_after_liftover, by: 0)
-//   .join(ch_desc_removed_duplicates_after_liftover, by: 0)
-//   .join(ch_desc_keep_a_GRCh38_reference_BA, by: 0)
-//   .join(ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
-//   .join(ch_desc_filtered_allele_pairs_with_dbsnp_as_reference_BA, by: 0)
-//   .join(ch_desc_removed_duplicated_chr_pos_rows_BA, by: 0)
-//   .join(ch_desc_filtered_stat_rows_with_non_numbers_BA, by: 0)
-//   .join(ch_desc_inferred_stats_if_inferred_BA, by: 0)
-//   .join(ch_desc_from_inferred_to_joined_selection_BA, by: 0)
-//   .join(ch_desc_from_sumstats_to_joined_selection_BA, by: 0)
-//   .join(ch_desc_final_merge_BA, by: 0)
-//   .set{ ch_collected_workflow_stepwise_stats }
-//
-// //Some that now are part of the branched workflow. Unclear how to save the the stepwise branched workflow before after steps, but all info should be exported in channels.
-// //  .combine(ch_desc_sex_chrom_formatting_BA, by: 0)
-// //  .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
-// //  .combine(ch_removed_rows_before_liftover, by: 0)
-// //  .combine(ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA, by: 0)
-//
-//  process collect_and_prep_stepwise_readme {
-//      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-//
-//      input:
-//      tuple datasetID, step1, step2, step3, step4, step5, step6, step7, step8, step9, step10, step11, step12, step13 from ch_collected_workflow_stepwise_stats
-//
-//      output:
-//      tuple datasetID, file("collect_and_prep_stepwise_readme__desc_collected_workflow_stepwise_stats.txt") into ch_overview_workflow_steps
-//
-//      script:
-//      """
-//      cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11 $step12 $step13 > all_removed_steps
-//
-//      echo -e "Steps\tBefore\tAfter\tDescription" > collect_and_prep_stepwise_readme__desc_collected_workflow_stepwise_stats.txt
-//      awk -vFS="\t" -vOFS="\t" '{print "Step"NR, \$1, \$2, \$3}' all_removed_steps >> collect_and_prep_stepwise_readme__desc_collected_workflow_stepwise_stats.txt
-//
-//      """
-//  }
-//
-//    ch_mfile_ok4
-//      .join(ch_usermeta_checksum, by: 0)
-//      .join(ch_rawsumstat_checksum, by: 0)
-//      .join(ch_cleaned_sumstat_checksums2, by: 0)
-//      .join(ch_cleaned_header, by: 0)
-//      .set { ch_mfile_cleaned_x }
-//
-//    process prepare_cleaned_metadata_file {
-//      publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-//
-//        input:
-//        tuple datasetID, mfile, usermetachecksum, rawsumstatchecksum, scleanchecksum, scleanGRCh37checksum, removedlineschecksum, cleanedheader from ch_mfile_cleaned_x
-//
-//        output:
-//        tuple datasetID, path("prepare_cleaned_metadata_file__prepared_cleaned_metafile") into ch_mfile_cleaned_1
-//
-//        script:
-//        """
-//
-//        #Add cleaned output lines
-//        dateOfCreation="\$(date +%F-%H%M)"
-//        echo "cleansumstats_date: \${dateOfCreation}" > mfile_additions
-//        echo "cleansumstats_user: \$(id -u -n)" >> mfile_additions
-//        echo "cleansumstats_cleaned_GRCh38: sumstat_cleaned_GRCh38.gz" >> mfile_additions
-//        echo "cleansumstats_cleaned_GRCh38_checksum: ${scleanchecksum}" >> mfile_additions
-//        echo "cleansumstats_cleaned_GRCh37_coordinates: sumstat_cleaned_GRCh37.gz" >> mfile_additions
-//        echo "cleansumstats_cleaned_GRCh37_coordinates_checksum: ${scleanGRCh37checksum}" >> mfile_additions
-//        echo "cleansumstats_removed_lines: sumstat_removed_lines.gz" >> mfile_additions
-//        echo "cleansumstats_removed_lines_checksum: ${removedlineschecksum}" >> mfile_additions
-//        echo "cleansumstats_metafile_user_checksum: ${usermetachecksum}" >> mfile_additions
-//        echo "cleansumstats_sumstat_raw_checksum: ${rawsumstatchecksum}" >> mfile_additions
-//
-//        #Calcualate effective N using meta data info
-//        try_infere_Neffective.sh ${mfile} >> mfile_additions
-//
-//        # Apply additions to make the cleaned meta file ready
-//        create_output_meta_data_file_cleaned.sh mfile_additions ${cleanedheader} > prepare_cleaned_metadata_file__prepared_cleaned_metafile
-//        """
-//    }
-//
-//
-//    // Collect all metafiles in one channel
-//     ch_mfile_user_2
-//     .join(ch_mfile_cleaned_1, by: 0)
-//     .set { ch_all_mfiles }
-//
-//     ch_to_write_to_filelibrary3b
-//      .join(ch_input_readme, by: 0)
-//      .join(ch_overview_workflow_steps, by: 0)
-//      .join(ch_removed_lines_table, by: 0)
-//      .join(ch_gb_stats_combined, by: 0)
-//      .join(ch_all_mfiles, by: 0)
-//      .join(ch_to_write_to_raw_library, by: 0)
-//      .join(ch_input_pdf_stuff, by: 0)
-//      .join(ch_stats_for_output_selected_source, by: 0)
-//      .set{ ch_to_write_to_filelibrary7 }
-//
-//     //.combine(ch_collected_removed_lines2)
-//
-//    process put_in_cleaned_library {
-//
-//        publishDir "${params.outdir}/${datasetID}", mode: 'copy', overwrite: true
-//
-//        input:
-//        tuple datasetID, sclean, scleanGRCh37, removedlines, readme, overviewworkflow, removedlinestable, gbdetectCHRPOS, gbdetectSNPCHRPOS, usermfile, cleanmfile, rawfile, pmid, pdfpath, pdfsuppdir, selected_source from ch_to_write_to_filelibrary7
-//
-//        output:
-//        path("*")
-//
-//        script:
-//
-//        """
-//        # Store data in library by copying (move is faster, but debug gets slower as input disappears)
-//        cp ${sclean} cleaned_GRCh38.gz
-//        cp ${scleanGRCh37} cleaned_GRCh37.gz
-//        cp ${cleanmfile} cleaned_metadata.yaml
-//
-//        # Make a folder with detailed data of the cleaning
-//        mkdir details
-//        cp $overviewworkflow details/stepwise_overview.txt
-//        cp ${removedlinestable} details/removed_lines_per_type_table.txt
-//        cp $gbdetectCHRPOS details/genome_build_map_count_table_chrpos.txt
-//        cp $gbdetectSNPCHRPOS details/genome_build_map_count_table_markername.txt
-//        cp ${removedlines} details/removed_lines.gz
-//        cp ${selected_source} details/selected_source_stats.txt
-//
-//
-//        # copy all raw stuff into raw
-//        mkdir raw
-//        cp ${rawfile} raw/.
-//        cp ${usermfile} raw/.
-//
-//        #reference material
-//        mkdir raw/reference
-//        mkdir raw/reference/supplemental_material
-//
-//        if [ "${pdfpath}" != "missing" ]
-//        then
-//          cp ${pdfpath} raw/reference/.
-//        fi
-//
-//        cat ${pdfsuppdir} | while read -r supp; do
-//           if [ "\${supp}" != "missing" ]
-//           then
-//             cp \$supp raw/reference/supplemental_material/.
-//           else
-//             :
-//           fi
-//        done
-//        """
-//    }
-//  }
-//}
 
 def cleansumstatsHeader(){
     // Log colors ANSI codes

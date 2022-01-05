@@ -72,7 +72,7 @@ process check_sumstat_format {
     //tuple datasetID, mfile into ch_mfile_ok
     tuple val(datasetID), path("check_sumstat_format__sumstat_file"), emit: sfile
     //tuple datasetID, file("check_sumstat_format__sumstat_file") into ch_sfile_ok
-    tuple val(datasetID), path("check_sumstat_format__desc_force_tab_sep_BA.txt"), emit: desc
+    tuple val(datasetID), path("check_sumstat_format__desc_force_tab_sep_BA.txt"), emit: nrows_before_after
     //tuple datasetID, file("check_sumstat_format__desc_force_tab_sep_BA.txt") into ch_desc_prep_force_tab_sep_BA
     tuple path("check_sumstat_format__sumstat_1000_rows"), path("check_sumstat_format__sumstat_1000_rows_formatted"), path("*.log"), emit: intermediate
     
@@ -102,7 +102,7 @@ process add_sorted_rowindex_to_sumstat {
     output:
     tuple val(datasetID), path("add_index_sumstat__added_rowindex_sumstat_file"), emit: main
     //tuple datasetID, file("add_index_sumstat__added_rowindex_sumstat_file") into ch_sfile_on_stream
-    tuple val(datasetID), path("add_index_sumstat__desc_before_after"), emit: desc
+    tuple val(datasetID), path("add_index_sumstat__desc_before_after"), emit: nrows_before_after
     //tuple datasetID, file("add_index_sumstat__desc_before_after") into ch_desc_prep_add_sorted_rowindex_BA
 
     script:

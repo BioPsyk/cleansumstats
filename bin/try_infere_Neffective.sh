@@ -1,30 +1,19 @@
 #!/usr/bin/env bash
 
 #meta file
-mefl=${1}
-
-#helpers
-function selRightHand(){
-  echo "${1#*: }"
-}
-function selColRow(){
-  grep ${1} ${2}
-}
+TraitType=$1
+TotalN=$2
+CaseN=$3
+ControlN=$4
 
 #recode as true or false
 function recode_to_tf(){
-  if [ "$1" == "" ]; then
+  if [ "$1" == "missing" ]; then
     echo false
   else
     echo true
   fi
 }
-
-#what is colname according to meta data file
-TraitType="$(selRightHand "$(selColRow "^stats_TraitType:" $mefl)")"
-TotalN="$(selRightHand "$(selColRow "^stats_TotalN:" $mefl)")"
-CaseN="$(selRightHand "$(selColRow "^stats_CaseN:" $mefl)")"
-ControlN="$(selRightHand "$(selColRow "^stats_ControlN:" $mefl)")"
 
 
 #true or false (exists or not)
