@@ -74,6 +74,13 @@ As an extra failsafe when updating the code, we have added unit and e2e tests, w
 ./scripts/singularity-run.sh /cleansumstats/tests/run-tests.sh
 ```
 
+### Runn the alpha -> beta converter
+Here and example looping over alpha id numbers. Storing the results in PWD=sumstat_conv, which does not have to be mounted. The files to convert do however need to e mounted
+```
+#convert a set of IDs
+for id in 8 23 22 28 1 7 2 3 14 15 30 26 19 3023 3073 3025 3090; do ../scripts/singularity-run.sh /cleansumstats/bin/metadata_legacy_to_yaml.py /cleansumstats/tmp/sumstat_tmp/sumstat_${id}_raw_meta.txt > sumstat_${id}_raw_meta2.txt; done
+```
+
 
 ## Creating the ibp-pipeline-lib .jar file
 Build the ibp-pipeline-lib-x.x.x.jar file accroding to instructions at: https://github.com/BioPsyk/ibp-pipeline-lib, Then place it inside the docker/ directory in the cleansumstats repository to be accessible by the docker build script. To facilitate development and because of the small size of the image, we have decided to store the correct version for this repo in the docker/ directory. If in the future this file becomes too large we might exclude it from the repo.

@@ -28,7 +28,8 @@ STUDY_PANELS = {
     '^1KGP.*': '1KGP',
     '^TOPMED.*': 'TOPMED',
     '^HRC.*': 'HRC',
-    '^meta.*': 'meta'
+    '^meta.*': 'meta',
+    '^UKB.*': 'UKB'
 }
 
 STUDY_SOFTWARES = {
@@ -45,6 +46,9 @@ STUDY_SOFTWARES = {
     '^Bealge.*': 'Beagle',
     '^Beagle.*': 'Beagle',
     '^Beagle1\.0.*': 'Beagle1.0',
+    '^minimac2.*': 'minimac2',
+    '^minimac3.*': 'minimac3',
+    '^eagle2.*': 'eagle2',
     '^meta.*': 'meta'
 }
 
@@ -59,11 +63,13 @@ CONVERSION_TABLE = {
     },
     'stats_TraitType': {
         'qt': 'quantitative',
-        'cc': 'case-control'
+        'cc': 'case-control',
+        '^ord$': 'ordinal'
     },
     'stats_Model': {
         'lin': 'linear',
-        'log': 'logistic'
+        'log': 'logistic',
+        'other': 'other'
     }
 }
 
@@ -106,7 +112,7 @@ def convert_to_iso_date(metadata, key):
         return
 
     value = str(metadata[key])
-    regexp = re.compile('^([0-9]{4})_?([0-9]{2})_?([0-9]{2})$')
+    regexp = re.compile('^([0-9]{4})[-_]?([0-9]{2})[-_]?([0-9]{2})$')
     match = regexp.match(value)
 
     if match is None:
@@ -133,7 +139,8 @@ def convert_enum_item(key, value):
     matrix = CONVERSION_TABLE[key]
 
     for regexp, replacement in matrix.items():
-        match = re.compile(regexp).match(value)
+        #match = re.compile(regexp).match(value)
+        match = re.match(regexp, value, re.IGNORECASE)
 
         if match is not None:
             return replacement
