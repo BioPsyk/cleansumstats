@@ -142,13 +142,13 @@ process dbsnp_reference_liftover_GRCh37 {
 
     input:
     tuple val(cid), path(dbsnp_chunk)
-    path(ch_hg38ToHg19chain)
  //from ch_dbsnp_split4
 
     output:
     path("${cid}_dbsnp_chunk_GRCh37_GRCh38")
  //into ch_dbsnp_lifted_to_GRCh37
     script:
+    ch_hg38ToHg19chain=file(params.hg38ToHg19chain)
     """
     dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg38ToHg19chain} ${cid} "${cid}_tmp2"
     awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print \$1, \$2, \$3, tmp":"\$2, \$4, \$5, \$6, \$7}' "${cid}_tmp2" > ${cid}_dbsnp_chunk_GRCh37_GRCh38
@@ -249,7 +249,6 @@ process dbsnp_reference_liftover_GRCh36 {
 
     input:
     tuple val(cid), path(dbsnp_chunk)
-    path(ch_hg19ToHg18chain)
     //from ch_dbsnp_split6a
 
     output:
@@ -257,6 +256,7 @@ process dbsnp_reference_liftover_GRCh36 {
     //into ch_dbsnp_lifted_to_GRCh36
 
     script:
+    ch_hg19ToHg18chain=file(params.hg19ToHg18chain)
     build = "36"
     """
     dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg19ToHg18chain} ${cid} ${cid}_All_20180418_liftcoord_GRCh36.bed
@@ -271,12 +271,12 @@ process dbsnp_reference_liftover_GRCh35 {
     input:
     tuple val(cid), path(dbsnp_chunk)
     //from ch_dbsnp_split6b
-    path(ch_hg19ToHg17chain)
     output:
     tuple val("35"), path("*_All_20180418_liftcoord_GRCh35.bed")
     //into ch_dbsnp_lifted_to_GRCh35
 
     script:
+    ch_hg19ToHg17chain=file(params.hg19ToHg17chain)
     build = "35"
     """
     dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg19ToHg17chain} ${cid} ${cid}_All_20180418_liftcoord_GRCh35.bed
@@ -323,13 +323,11 @@ process dbsnp_reference_rm_duplicates_GRCh36_GRCh35 {
     tuple val(build), path("All_20180418_liftcoord_${build}_GRCh38.bed.sorted.nodup"), emit: main
     //into ch_dbsnp_rmd_dup_positions_GRCh3x
     path("All_20180418_liftcoord_${build}_GRCh38.bed.sorted.dup"), emit: dups
-    path("GRCh${build}_all"), emit: intermediate
 
     script:
     """
     # Remove all duplicated positions GRCh35 and GRCh36 (as some positions might have become duplicates after the liftover)
-    mv ${dbsnp_chunk} GRCh${build}_all
-    dbsnp_reference_duplicate_position_filter.sh GRCh${build}_all All_20180418_liftcoord_${build}_GRCh38.bed.sorted.nodup All_20180418_liftcoord_${build}_GRCh38.bed.sorted.dup
+    dbsnp_reference_duplicate_position_filter.sh ${dbsnp_chunk} All_20180418_liftcoord_${build}_GRCh38.bed.sorted.nodup All_20180418_liftcoord_${build}_GRCh38.bed.sorted.dup
     """
 }
 
@@ -363,7 +361,6 @@ process dbsnp_reference_put_files_in_reference_library_RSID {
 
     input:
     path(GRCh38_all) 
-    val(ch_dbsnp_RSID_38)
     //from ch_dbsnp_rmd_dup_positions_GRCh38_2)
 
     output:
@@ -371,6 +368,7 @@ process dbsnp_reference_put_files_in_reference_library_RSID {
     path("*.map"), emit: intermediates
 
     script:
+    ch_dbsnp_RSID_38=file(params.dbsnp_RSID_38)
     """
     # Make version sorted on RSID to get correct coordinates
     awk '{print \$5, \$4, \$6, \$7}' ${GRCh38_all} > All_20180418_RSID_GRCh38.map
@@ -397,12 +395,12 @@ process dbsnp_reference_put_files_in_reference_library_GRCh38 {
     input:
     path(dbsnp_final)
     //from ch_dbsnp_rmd_dup_positions_GRCh38_3
-    val(ch_dbsnp_38)
 
     output:
     path("${ch_dbsnp_38.baseName}.bed")
 
     script:
+    ch_dbsnp_38=file(params.dbsnp_38)
     """
     awk '{print \$4, \$5, \$6, \$7}' ${dbsnp_final} > "${ch_dbsnp_38.baseName}.bed"
     """
@@ -416,8 +414,6 @@ process dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37 {
 
     input:
     path("All_20180418_GRCh38_GRCh37_tmp.map")
-    val(ch_dbsnp_38_37)
-    val(ch_dbsnp_37_38)
 
     output:
     path("${ch_dbsnp_38_37.baseName}.bed")
@@ -425,6 +421,8 @@ process dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37 {
     path("*map")
 
     script:
+    ch_dbsnp_38_37=file(params.dbsnp_38_37)
+    ch_dbsnp_37_38=file(params.dbsnp_37_38)
     """
     awk '{print \$4, \$5, \$6, \$7, \$8}' All_20180418_GRCh38_GRCh37_tmp.map > "${ch_dbsnp_37_38.baseName}.bed"
     awk '{print \$5, \$4, \$6, \$7, \$8}' All_20180418_GRCh38_GRCh37_tmp.map > All_20180418_GRCh38_GRCh37.map
@@ -449,13 +447,13 @@ process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GR
     input:
     tuple val(build), path(dbsnp_chunks)
     //from ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped
-    val(ch_dbsnp_36_38)
-    val(ch_dbsnp_35_38)
 
     output:
     path("*.bed")
 
     script:
+    ch_dbsnp_36_38=file(params.dbsnp_36_38)
+    ch_dbsnp_35_38=file(params.dbsnp_35_38)
     """
     # Select Cols and Sort on chr:pos
     if [ "${build}" == "36" ]; then

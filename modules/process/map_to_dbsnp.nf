@@ -172,6 +172,11 @@ process reformat_chromosome_information {
   def metadata = params.sess.get_metadata(datasetID)
   ch_regexp_lexicon=file(params.ch_regexp_lexicon)
   """
+ # if [ "$dID2" == "liftover_branch_chrpos" ];then
+ #   echo "$dID2"
+ #   head $sfile
+ #   exit 1
+ # fi
 
   if [ "${dID2}" == "liftover_branch_markername_chrpos" ];then
     map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func

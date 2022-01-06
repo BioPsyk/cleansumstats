@@ -269,19 +269,7 @@ workflow {
   
     log.info "Metadata class written to ${params.outdir}/Metadata.groovy"
   }else if(params.generateDbSNPreference){
-    prepare_dbsnp_reference(
-      "${params.input}", 
-      ch_hg38ToHg19chain, 
-      ch_hg19ToHg18chain, 
-      ch_hg19ToHg17chain,
-      ch_dbsnp_RSID_38,
-      ch_dbsnp_38,
-      ch_dbsnp_38_37,
-      ch_dbsnp_37_38,
-      ch_dbsnp_36_38,
-      ch_dbsnp_35_38
-
-    )
+    prepare_dbsnp_reference("${params.input}")
   }else if(params.generate1KgAfSNPreference){
     prepare_1kgaf_reference("${params.input}", ch_dbsnp_38)
     //#check for not agreeing ref alleles and alt alleles
@@ -313,68 +301,69 @@ workflow {
     )
   
     log.info("All pipeline parameters validated")
-  }
+  
 
-  //=================================================================================
-  // Start of execution
-  //=================================================================================
+    //=================================================================================
+    // Start of execution
+    //=================================================================================
 
-  Channel
-    .fromPath("${params.input}", type: 'file')
-    .map { file -> tuple(file.baseName, file) }
-    .set { ch_mfile_checkX } 
+    Channel
+      .fromPath("${params.input}", type: 'file')
+      .map { file -> tuple(file.baseName, file) }
+      .set { ch_mfile_checkX } 
 
-  main_init_checks_crucial_paths(ch_mfile_checkX, sess)
-  calculate_checksum_on_metafile_input(ch_mfile_checkX)
-  calculate_checksum_on_sumstat_input(main_init_checks_crucial_paths.out.spath)
-  make_metafile_unix_friendly(ch_mfile_checkX)
-  check_sumstat_format(main_init_checks_crucial_paths.out.mfile_check_format)
-  add_sorted_rowindex_to_sumstat(check_sumstat_format.out.sfile)
+    main_init_checks_crucial_paths(ch_mfile_checkX, sess)
+    calculate_checksum_on_metafile_input(ch_mfile_checkX)
+    calculate_checksum_on_sumstat_input(main_init_checks_crucial_paths.out.spath)
+    make_metafile_unix_friendly(ch_mfile_checkX)
+    check_sumstat_format(main_init_checks_crucial_paths.out.mfile_check_format)
+    add_sorted_rowindex_to_sumstat(check_sumstat_format.out.sfile)
 
-  if (doCompleteCleaningWorkflow){
+    if (doCompleteCleaningWorkflow){
 
-    map_to_dbsnp(add_sorted_rowindex_to_sumstat.out.main)
-    ch_allele_correction_combine=map_to_dbsnp.out.dbsnp_mapped.join(add_sorted_rowindex_to_sumstat.out.main, by: 0)
-    allele_correction(ch_allele_correction_combine)
-    update_stats(add_sorted_rowindex_to_sumstat.out.main, allele_correction.out.allele_corrected)
+      map_to_dbsnp(add_sorted_rowindex_to_sumstat.out.main)
+      ch_allele_correction_combine=map_to_dbsnp.out.dbsnp_mapped.join(add_sorted_rowindex_to_sumstat.out.main, by: 0)
+      allele_correction(ch_allele_correction_combine)
+      update_stats(add_sorted_rowindex_to_sumstat.out.main, allele_correction.out.allele_corrected)
 
-  //Collect and place in corresponding stepwise order
-    map_to_dbsnp.out.dbsnp_rm_ix
-     .join(allele_correction.out.removed_by_allele_filter_ix, by: 0)
-     .join(update_stats.out.stats_rm_by_filter_ix, by: 0)
-     .set{ ch_collected_removed_lines }
+      //Collect and place in corresponding stepwise order
+      map_to_dbsnp.out.dbsnp_rm_ix
+       .join(allele_correction.out.removed_by_allele_filter_ix, by: 0)
+       .join(update_stats.out.stats_rm_by_filter_ix, by: 0)
+       .set{ ch_collected_removed_lines }
 
-  //Collect desc_BA info
-  check_sumstat_format.out.nrows_before_after
-  .join(add_sorted_rowindex_to_sumstat.out.nrows_before_after, by: 0)
-  .join(map_to_dbsnp.out.rows_before_after)
-  .join(allele_correction.out.desc_filt_allele_pairs_BA)
-  .join(update_stats.out.nrows_before_after)
-  .set {nrows_before_after}
+      //Collect desc_BA info
+      check_sumstat_format.out.nrows_before_after
+      .join(add_sorted_rowindex_to_sumstat.out.nrows_before_after, by: 0)
+      .join(map_to_dbsnp.out.rows_before_after)
+      .join(allele_correction.out.desc_filt_allele_pairs_BA)
+      .join(update_stats.out.nrows_before_after)
+      .set {nrows_before_after}
 
 
-  //join checksums
-    calculate_checksum_on_metafile_input.out.main
-    .join(calculate_checksum_on_sumstat_input.out.main, by: 0)
-    .set { ch_mfile_cleaned_x }
+      //join checksums
+      calculate_checksum_on_metafile_input.out.main
+      .join(calculate_checksum_on_sumstat_input.out.main, by: 0)
+      .set { ch_mfile_cleaned_x }
 
-    main_init_checks_crucial_paths.out.rpath
-    .join(map_to_dbsnp.out.ch_gb_stats_combined, by: 0)
-    .join(main_init_checks_crucial_paths.out.pdfstuff, by: 0)
-    .join(update_stats.out.cleaned_stats_col_source, by: 0)
-    .set{ ch_to_write_to_filelibrary7 }
+      main_init_checks_crucial_paths.out.rpath
+      .join(map_to_dbsnp.out.ch_gb_stats_combined, by: 0)
+      .join(main_init_checks_crucial_paths.out.pdfstuff, by: 0)
+      .join(update_stats.out.cleaned_stats_col_source, by: 0)
+      .set{ ch_to_write_to_filelibrary7 }
 
-    organize_output(
-      allele_correction.out.allele_corrected, 
-      update_stats.out.cleaned_stats,
-      ch_collected_removed_lines,
-      main_init_checks_crucial_paths.out.spath,
-      add_sorted_rowindex_to_sumstat.out.main,
-      nrows_before_after,
-      ch_mfile_cleaned_x,
-      ch_to_write_to_filelibrary7,
-      ch_mfile_checkX
-    )
+      organize_output(
+        allele_correction.out.allele_corrected, 
+        update_stats.out.cleaned_stats,
+        ch_collected_removed_lines,
+        main_init_checks_crucial_paths.out.spath,
+        add_sorted_rowindex_to_sumstat.out.main,
+        nrows_before_after,
+        ch_mfile_cleaned_x,
+        ch_to_write_to_filelibrary7,
+        ch_mfile_checkX
+      )
+    }
   }
 }
 

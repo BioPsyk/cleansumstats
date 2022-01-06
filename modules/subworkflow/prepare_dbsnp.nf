@@ -33,15 +33,6 @@ workflow prepare_dbsnp_reference {
 
   take:
   input
-  ch_hg38ToHg19chain
-  ch_hg19ToHg18chain
-  ch_hg19ToHg17chain
-  ch_dbsnp_RSID_38
-  ch_dbsnp_38
-  ch_dbsnp_38_37
-  ch_dbsnp_37_38
-  ch_dbsnp_36_38
-  ch_dbsnp_35_38
 
   main:
 
@@ -70,7 +61,7 @@ workflow prepare_dbsnp_reference {
     .flatten()
     .map { file -> tuple(file.baseName, file) }
     .set { ch_dbsnp_split4 }
-  dbsnp_reference_liftover_GRCh37(ch_dbsnp_split4, ch_hg38ToHg19chain)
+  dbsnp_reference_liftover_GRCh37(ch_dbsnp_split4)
   dbsnp_reference_merge_before_duplicate_filters_GRCh37(dbsnp_reference_liftover_GRCh37.out.collect())
   dbsnp_reference_rm_dup_positions_GRCh37(dbsnp_reference_merge_before_duplicate_filters_GRCh37.out)
   dbsnp_reference_rm_liftover_remaining_ambigous_GRCh37(dbsnp_reference_rm_dup_positions_GRCh37.out)
@@ -79,8 +70,8 @@ workflow prepare_dbsnp_reference {
     .flatten()
     .map { file -> tuple(file.baseName, file) }
     .set { ch_dbsnp_split6 }
-  dbsnp_reference_liftover_GRCh36(ch_dbsnp_split6,ch_hg19ToHg18chain)
-  dbsnp_reference_liftover_GRCh35(ch_dbsnp_split6,ch_hg19ToHg17chain)
+  dbsnp_reference_liftover_GRCh36(ch_dbsnp_split6)
+  dbsnp_reference_liftover_GRCh35(ch_dbsnp_split6)
   dbsnp_reference_liftover_GRCh35.out
     .mix(dbsnp_reference_liftover_GRCh36.out)
     .set{ ch_dbsnp_lifted_to_GRCh3x }
@@ -90,12 +81,12 @@ workflow prepare_dbsnp_reference {
   dbsnp_reference_rm_liftover_remaining_ambigous_GRCh36_GRCh35(dbsnp_reference_rm_duplicates_GRCh36_GRCh35.out.main)
 
   //// Write dbsnp to reference output
-  dbsnp_reference_put_files_in_reference_library_RSID(dbsnp_reference_rm_dup_positions_GRCh38.out, ch_dbsnp_RSID_38)
-  dbsnp_reference_put_files_in_reference_library_GRCh38(dbsnp_reference_rm_dup_positions_GRCh38.out, ch_dbsnp_38)
+  dbsnp_reference_put_files_in_reference_library_RSID(dbsnp_reference_rm_dup_positions_GRCh38.out)
+  dbsnp_reference_put_files_in_reference_library_GRCh38(dbsnp_reference_rm_dup_positions_GRCh38.out)
 
-  dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37(dbsnp_reference_rm_liftover_remaining_ambigous_GRCh37.out.main, ch_dbsnp_38_37, ch_dbsnp_37_38)
+  dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37(dbsnp_reference_rm_liftover_remaining_ambigous_GRCh37.out.main)
 
   ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped = dbsnp_reference_rm_liftover_remaining_ambigous_GRCh36_GRCh35.out.main.groupTuple(by:0)
-  dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GRCh38(ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped, ch_dbsnp_36_38, ch_dbsnp_35_38)
+  dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GRCh38(ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped)
 }
 

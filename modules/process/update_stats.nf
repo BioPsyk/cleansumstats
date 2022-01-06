@@ -368,7 +368,9 @@ process select_stats_for_output {
       "${col_CaseN}" \
       "${col_ControlN}" \
       "${col_EAF}" \
-      "${col_OAF}"
+      "${col_OAF}" \
+      "${col_INFO}" \
+      "${col_DIRECTION}"
 
     #process before and after stats
     rowsBefore="\$(wc -l ${inferred} | awk '{print \$1}')"

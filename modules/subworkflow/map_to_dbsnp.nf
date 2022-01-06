@@ -32,7 +32,7 @@ workflow map_to_dbsnp {
     def pointsToDifferent = !metadata.chrpos_points_to_snp()
     def CHRPOSexists = metadata.chrpos_exists()
     def SNPexists= metadata.col_SNP != null
-    return tuple(mID, spath, pointsToDifferent, CHRPOSexists, SNPexists)
+    return tuple(mID, spath, CHRPOSexists, SNPexists, pointsToDifferent)
   }
   .set { ch_present_markers }
 

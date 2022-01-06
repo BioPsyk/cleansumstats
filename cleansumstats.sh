@@ -299,6 +299,7 @@ else
      -B "/tmp:/tmp" \
      "tmp/${singularity_image_tag}" \
      nextflow run /cleansumstats ${runtype} \
+       --dev \
        --input "${infile_container}" \
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \

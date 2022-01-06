@@ -2,6 +2,9 @@ dbsnp_chunk=${1}
 out=${2}
 out2=${3}
 
+touch $out
+touch $out2
+
 # Remove all duplicated positions GRCh37 (as some positions might have become duplicates after the liftover)
 mkdir -p tmp
 LC_ALL=C sort -k 4,4 \
@@ -9,11 +12,12 @@ LC_ALL=C sort -k 4,4 \
 --temporary-directory=/cleansumstats/tmp \
 --buffer-size=20G \
 ${dbsnp_chunk} \
-> All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted
+> input.sorted
 rm -r tmp
 
 # Remove all versions of the duplicated variants
-awk -vout2="${out2}" 'BEGIN{
+awk -vout2="${out2}" '
+BEGIN{
   getline; 
   prevrow=$0; 
   prevrowvar=$4; 
@@ -29,18 +33,17 @@ awk -vout2="${out2}" 'BEGIN{
   }else{
     print prevrow;
   }
-prevrowvar=currentvar;
-prevrow=$0;
+  prevrowvar2=prevrowvar;
+  prevrowvar=currentvar;
+  prevrow=$0;
 }
 END{
-  if(prevrowvar==currentvar){
-    print prevrow > out2;
-  }else if(prevrowrm=="removed"){
+  if(prevrowvar2==prevrowvar){
     print prevrow > out2;
   }else{
     print prevrow;
   }
 }
-' All_20180418_liftcoord_GRCh37_GRCh38.bed.sorted > ${out}
+' input.sorted > ${out}
 
 
