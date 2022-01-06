@@ -61,8 +61,8 @@ getoptsstring=":hvi:o:d:k:te"
 # following the instrucitons in the README.md
 # NOTE: If you are a sysadmin, remember to symlink back here in case these files are moved to a 
 #       shared resources folder.
-dbsnpdir="out_dbsnp"
-kgpdir="out_1kgp"
+dbsnpdir="${project_dir}/out_dbsnp"
+kgpdir="${project_dir}/out_1kgp"
 infile=""
 outdir="out"
 

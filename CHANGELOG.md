@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.0] - 2022-01-06
 ### Changed
 - DSL-1 converted to DSL-2
-- updated nextflow in Dockerfile to nextflow-21.12.1-edge-all
+- Updated nextflow in Dockerfile to nextflow-21.12.1-edge-all
+
+### Fixed
+- Now possible to run from anywhere, not only from within the clensumstats repo
 
 ## [1.2.0] - 2021-12-08
 ### Added
