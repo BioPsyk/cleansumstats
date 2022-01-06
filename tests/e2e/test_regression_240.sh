@@ -164,7 +164,7 @@ function _check_results {
    cat $exp
    echo "---------------------------"
 
-    echo "- [FAIL] regression-106"
+    echo "- [FAIL] regression-240"
     cat ./difference
     exit 1
   fi

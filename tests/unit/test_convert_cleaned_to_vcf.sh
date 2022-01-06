@@ -34,7 +34,7 @@ function _run_script {
 
   "${test_script}.sh" input.tsv.gz observed-result1.tsv.gz false
 
-  _check_results <(zcat observed-result1.tsv.gz) <(zcat expected-result1.tsv.gz)
+  _check_results <(zcat observed-result1.tsv.gz | grep -v "##fileDate=") <(zcat expected-result1.tsv.gz | grep -v "##fileDate=")
 
   echo "- [OK] ${curr_case}"
 
