@@ -31,7 +31,7 @@ process numeric_filter_stats {
   RETURN_NAMES="0,${stat_fields.values().join(",")}"
   """
 
-  numeric_filter_stats.sh ${sfile} ${SELECT} ${RETURN_NAMES} ${se_column_id} ${exclude_column_ids}
+  numeric_filter_stats.sh ${sfile} "${SELECT}" "${RETURN_NAMES}" "${se_column_id}" "${exclude_column_ids}"
 
   #process before and after stats
   rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
