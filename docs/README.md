@@ -1,4 +1,4 @@
-# cleansumstats: Documentation
+# Documentation
 
 The cleansumstats documentation is split into the following files:
 
