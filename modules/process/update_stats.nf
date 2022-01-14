@@ -16,36 +16,22 @@ process numeric_filter_stats {
   def metadata = params.sess.get_metadata(datasetID)
   Map stat_fields = metadata.resolve_stat_fields()
   int se_column_id = -1
+  int exclude_column_ids = -1
 
   stat_fields.eachWithIndex { entry, i ->
     if (entry.key == "SE") {
       se_column_id = i
     }
+    if (entry.key == "DIRECTION") {
+      exclude_column_ids = i
+    }
   }
 
+  SELECT="0|${stat_fields.values().join("|")}"
+  RETURN_NAMES="0,${stat_fields.values().join(",")}"
   """
-  if [[ \$(wc -l $sfile | awk '{print \$1}') == "1" ]]
-  then
-    echo "[ERROR] The inputted file sfile did not have any data"
-    exit 1
-  fi
 
-  touch numeric_filter_stats__removed_stat_non_numeric_in_awk
-  touch numeric_filter_stats__removed_stat_non_numeric_in_awk_ix
-
-  sstools-utils ad-hoc-do -f $sfile \
-    -k "0|${stat_fields.values().join("|")}" \
-    -n "0,${stat_fields.values().join(",")}" | \
-    filter_stat_values_awk.sh -vzeroSE="${se_column_id}" \
-      > numeric_filter_stats__st_filtered_remains 2> numeric_filter_stats__removed_stat_non_numeric_in_awk
-
-  awk -vOFS="\t" '{print \$1,"stat_non_numeric_in_awk"}' numeric_filter_stats__removed_stat_non_numeric_in_awk > numeric_filter_stats__removed_stat_non_numeric_in_awk_ix
-
-  if [[ \$(wc -l numeric_filter_stats__st_filtered_remains | awk '{print \$1}') == "1" ]]
-  then
-    echo "[ERROR] The outputted file st_filtered_remains did not have any data"
-    exit 1
-  fi
+  numeric_filter_stats.sh ${sfile} ${SELECT} ${RETURN_NAMES} ${se_column_id} ${exclude_column_ids}
 
   #process before and after stats
   rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
