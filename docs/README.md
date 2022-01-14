@@ -1,6 +1,6 @@
 # cleansumstats: Documentation
 
-Thecleansumstats documentation is split into the following files:
+The cleansumstats documentation is split into the following files:
 
 1. [Installation](installation.md)
 2. [Pipeline configuration](pipeline-configuration.md)
