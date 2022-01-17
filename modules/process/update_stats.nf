@@ -20,10 +20,10 @@ process numeric_filter_stats {
 
   stat_fields.eachWithIndex { entry, i ->
     if (entry.key == "SE") {
-      se_column_id = i
+      se_column_id = i+2
     }
     if (entry.key == "DIRECTION") {
-      exclude_column_ids.add(i)
+      exclude_column_ids.add(i+2)
     }
   }
 
@@ -105,7 +105,6 @@ process force_eaf {
       echo "[ERROR] The outputted file st_forced_eaf did not have any data"
       exit 1
     fi
-
     #process before and after stats
     rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
     rowsAfter="\$(wc -l force_eaf__st_forced_eaf | awk '{print \$1}')"
@@ -188,6 +187,7 @@ process add_af_stats {
     else
       head -n1 ${st_filtered} > add_af_stats__st_added_1kg_ref
     fi
+
     """
 }
 
