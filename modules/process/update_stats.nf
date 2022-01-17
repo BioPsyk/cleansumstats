@@ -16,22 +16,23 @@ process numeric_filter_stats {
   def metadata = params.sess.get_metadata(datasetID)
   Map stat_fields = metadata.resolve_stat_fields()
   int se_column_id = -1
-  int exclude_column_ids = -1
+  def exclude_column_ids = []
 
   stat_fields.eachWithIndex { entry, i ->
     if (entry.key == "SE") {
       se_column_id = i
     }
     if (entry.key == "DIRECTION") {
-      exclude_column_ids = i
+      exclude_column_ids.add(i)
     }
   }
 
   SELECT="0|${stat_fields.values().join("|")}"
   RETURN_NAMES="0,${stat_fields.values().join(",")}"
+  EXCLUDE_COLUMNS="${exclude_column_ids.join(",")}"
   """
 
-  numeric_filter_stats.sh ${sfile} "${SELECT}" "${RETURN_NAMES}" "${se_column_id}" "${exclude_column_ids}"
+  numeric_filter_stats.sh ${sfile} "${SELECT}" "${RETURN_NAMES}" "${se_column_id}" "${EXCLUDE_COLUMNS}"
 
   #process before and after stats
   rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"

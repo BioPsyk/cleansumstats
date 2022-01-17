@@ -8,6 +8,12 @@
 BEGIN{
   FS="\t"
   OFS="\t"
+  split(columskip, column_ids_skip, ",");
+  # set values as keys
+  for (i in column_ids_skip) column_ids_skip2[column_ids_skip[i]] = ""
+  #for (i in column_ids_skip2) {
+  #  print i, column_ids_skip2[i]
+  #}
 }
 
 NR==1 {
@@ -26,6 +32,10 @@ NR>1{
   whyremoved="foobar"
   #printf "%s%s", $1, OFS
   for(i=2; i<=NF; i++){
+    #printf "%s%s", $i, "____"
+    if(i in column_ids_skip2){
+      continue;
+    }
 
     if($i != $i+0){
     #check if awk understands how to use math for this value
