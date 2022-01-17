@@ -6,13 +6,13 @@ e2e_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 tests_dir=$(dirname "${e2e_dir}")
 project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
-work_dir="${project_dir}/tmp/regression-242"
+work_dir="${project_dir}/tmp/regression-258"
 outdir="${work_dir}/out"
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
 
-echo ">> Test regression #242"
+echo ">> Test regression #258"
 
 cd "${work_dir}"
 
@@ -46,23 +46,24 @@ col_P: P
 col_POS: BP
 col_SE: SE
 col_SNP: SNP
+col_Direction: DIRECTION
 EOF
 
 cat <<EOF > ./input.txt
-SNP CHR BP A1 A2 FREQ_A1 EFFECT_A1 SE P
-rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.0141	0.2648
-rs6443624	chr3	180380376	A	C	0.242	0.0027	0.0155	0.8603
-rs6444089	chr3	187159052	A	G	0.55	0.0043	0.0128	0.7394
-rs645184	chr11	73806781	A	G	0.608	0.003	0.0129	0.8169
-rs645510	chr12	116569153	T	C	0.675	-0.0151	0.0143	0.292
-rs6456063	chr6	166624019	A	G	0.783	0.0245	0.018	0.1735
-rs6458154	chr6	40461984	A	G	0.458	0.0126	0.0132	0.3407
+SNP CHR BP A1 A2 FREQ_A1 EFFECT_A1 SE P	DIRECTION
+rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.0141	0.2648	+-?
+rs6443624	chr3	180380376	A	C	0.242	0.0027	0.0155	0.8603	--?
+rs6444089	chr3	187159052	A	G	0.55	0.0043	0.0128	0.7394	+-?
+rs645184	chr11	73806781	A	G	0.608	0.003	0.0129	0.8169	+-?
+rs645510	chr12	116569153	T	C	0.675	-0.0151	0.0143	0.292	+-+
+rs6456063	chr6	166624019	A	G	0.783	0.0245	0.018	0.1735	+-+
+rs6458154	chr6	40461984	A	G	0.458	0.0126	0.0132	0.3407	+-+
 EOF
 
 cat <<EOF > ./expected-result1.tsv
-CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	B	Z	EAF_1KG
-12	117668628	5	rs645510	C	T	0.510505	0.0143	0.0151	1.05594	1
-3	140461721	1	rs6439928	T	C	0.543501	0.0141	-0.0157	-1.11347	0.68
+CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	Direction	B	Z	EAF_1KG
+12	117668628	5	rs645510	C	T	0.510505	0.0143	+-+	0.0151	1.05594	1
+3	140461721	1	rs6439928	T	C	0.543501	0.0141	+-?	-0.0157	-1.11347	0.68
 EOF
 
 gzip "./input.txt"
@@ -108,7 +109,7 @@ function _check_results {
    cat $exp
    echo "---------------------------"
 
-    echo "- [FAIL] regression-242"
+    echo "- [FAIL] regression-258"
     cat ./difference
     exit 1
   fi

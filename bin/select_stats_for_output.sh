@@ -12,13 +12,13 @@ P=${8}
 OR=${9}
 ORL95=${10}
 ORU95=${11}
-N=${11}
-CaseN=${12}
-ControlN=${13}
-EAF=${14}
-OAF=${15}
-INFO=${16}
-DIRECTION=${17}
+N=${12}
+CaseN=${13}
+ControlN=${14}
+EAF=${15}
+OAF=${16}
+INFO=${17}
+DIRECTION=${18}
 
 #recode as true or false
 function recode_to_tf(){

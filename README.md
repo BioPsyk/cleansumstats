@@ -93,26 +93,6 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 
 # For additional flags, see:
 ./cleansumstats.sh -h
-##Usage:
-## ./cleansumstats.sh -i <file> -o <dir> -d <dir> -k <dir>
-##
-##Example usage, using the quick example flag:
-## ./cleansumstats.sh -o <dir> -e
-##
-##Generate references:
-## ./cleansumstats.sh prepare-dbsnp -i <file> -o <dir>
-## ./cleansumstats.sh prepare-1kgp -i <file> -d <dir> -o <dir>
-##
-##options:
-##-h		 Display help message for cleansumstats
-##-i <file> 	 path to infile
-##-o <dir> 	 path to output directory
-##-d <dir> 	 path to dbsnp processed reference
-##-k <dir> 	 path to 1000 genomes processed reference
-##-t  	 	 quick test for all paths and params
-##-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references
-##-v  	 	 get the version number
-
 
 ```
 
@@ -120,7 +100,7 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 ## More documentation
 - See [Output and how to interpret the results](docs/output.md) for the output structure and how to interpret the results.
 - See [Post-processing](docs/post-processing.md) for how to further process the output
-- See [Developer instructions](docs/developers.md) only for developers
+- And [more](docs/README.md) 
 
 
 ## Credits
