@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2022-01-06
+## [1.3.0] - 2022-01-17
 ### Changed
 - DSL-1 converted to DSL-2
 - Updated nextflow in Dockerfile to nextflow-21.12.1-edge-all
@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Now possible to run from anywhere, not only from within the clensumstats repo
+- Now DIRECTION is skipped by the awk numeric test
 
 ## [1.2.0] - 2021-12-08
 ### Added
