@@ -5,10 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.3.0] - 2022-01-17
+### Added
+- Explanation of how to treat .csv input in troubleshooting
+
 ### Changed
 - DSL-1 converted to DSL-2
 - Updated nextflow in Dockerfile to nextflow-21.12.1-edge-all
-- improved `docs/`, but still work to be done
+- Improved `docs/`, but still work to be done
 
 ### Fixed
 - Now possible to run from anywhere, not only from within the clensumstats repo
