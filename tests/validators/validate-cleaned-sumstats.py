@@ -19,7 +19,7 @@ int_columns = ['0', 'CHR', 'POS']
 
 float_columns = [
     'P', 'SE', 'ORL95', 'ORU95', 'N', 'CaseN', 'ControlN',
-    'INFO', 'Direction', 'B', 'Z', 'EAF', 'EAF_1KG'
+    'INFO', 'B', 'Z', 'EAF', 'EAF_1KG'
 ]
 
 def parse_sumstats_file(file_path):

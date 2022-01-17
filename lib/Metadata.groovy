@@ -163,7 +163,8 @@ class Metadata extends BaseMetadata {
       "ControlN": this.col_ControlN,
       "EAF": this.col_EAF,
       "OAF": this.col_OAF,
-      "INFO": this.col_INFO
+      "INFO": this.col_INFO,
+      "DIRECTION": this.col_Direction
     ]
 
     return stats.findAll { it.value != null }

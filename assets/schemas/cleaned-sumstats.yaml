@@ -42,7 +42,7 @@ items:
     INFO:
       type: number
     Direction:
-      type: number
+      type: string
     B:
       type: number
     Z:

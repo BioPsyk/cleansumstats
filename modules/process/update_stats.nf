@@ -16,36 +16,23 @@ process numeric_filter_stats {
   def metadata = params.sess.get_metadata(datasetID)
   Map stat_fields = metadata.resolve_stat_fields()
   int se_column_id = -1
+  def exclude_column_ids = []
 
   stat_fields.eachWithIndex { entry, i ->
     if (entry.key == "SE") {
-      se_column_id = i
+      se_column_id = i+2
+    }
+    if (entry.key == "DIRECTION") {
+      exclude_column_ids.add(i+2)
     }
   }
 
+  SELECT="0|${stat_fields.values().join("|")}"
+  RETURN_NAMES="0,${stat_fields.values().join(",")}"
+  EXCLUDE_COLUMNS="${exclude_column_ids.join(",")}"
   """
-  if [[ \$(wc -l $sfile | awk '{print \$1}') == "1" ]]
-  then
-    echo "[ERROR] The inputted file sfile did not have any data"
-    exit 1
-  fi
 
-  touch numeric_filter_stats__removed_stat_non_numeric_in_awk
-  touch numeric_filter_stats__removed_stat_non_numeric_in_awk_ix
-
-  sstools-utils ad-hoc-do -f $sfile \
-    -k "0|${stat_fields.values().join("|")}" \
-    -n "0,${stat_fields.values().join(",")}" | \
-    filter_stat_values_awk.sh -vzeroSE="${se_column_id}" \
-      > numeric_filter_stats__st_filtered_remains 2> numeric_filter_stats__removed_stat_non_numeric_in_awk
-
-  awk -vOFS="\t" '{print \$1,"stat_non_numeric_in_awk"}' numeric_filter_stats__removed_stat_non_numeric_in_awk > numeric_filter_stats__removed_stat_non_numeric_in_awk_ix
-
-  if [[ \$(wc -l numeric_filter_stats__st_filtered_remains | awk '{print \$1}') == "1" ]]
-  then
-    echo "[ERROR] The outputted file st_filtered_remains did not have any data"
-    exit 1
-  fi
+  numeric_filter_stats.sh ${sfile} "${SELECT}" "${RETURN_NAMES}" "${se_column_id}" "${EXCLUDE_COLUMNS}"
 
   #process before and after stats
   rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
@@ -118,7 +105,6 @@ process force_eaf {
       echo "[ERROR] The outputted file st_forced_eaf did not have any data"
       exit 1
     fi
-
     #process before and after stats
     rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
     rowsAfter="\$(wc -l force_eaf__st_forced_eaf | awk '{print \$1}')"
@@ -201,6 +187,7 @@ process add_af_stats {
     else
       head -n1 ${st_filtered} > add_af_stats__st_added_1kg_ref
     fi
+
     """
 }
 
