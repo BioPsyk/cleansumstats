@@ -251,6 +251,9 @@ process add_details_to_output {
     output:
     path("*")
 
+    when:
+    params.details != false
+
     script:
     """
     # Make a folder with detailed data of the cleaning
