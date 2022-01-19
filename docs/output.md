@@ -2,6 +2,21 @@
 
 Details about the output should be available here at some point
 
+## modify output structure
+By default everything is located in the folder specified by `cleansumstats.sh -o`, which internally will be managed as `params.outdir`. It is however possible to independently set the different output categories to their own location. In `nextflow.config`, see the section containing these lines:
+```
+  //output
+  intermediates="${params.outdir}/intermediates"
+  rawoutput="${params.outdir}/raw"
+  details="${params.outdir}/details"
+  pipeline_info="${params.outdir}/pipeline_info"
+```
+
+If you don't want the raw output, then use:
+```
+  rawoutput=false
+```
+
 ## Overview
 
 ### DbSNP and allele flipping

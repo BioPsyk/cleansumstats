@@ -1,6 +1,6 @@
 
 process calculate_checksum_on_metafile_input {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(mfile)
@@ -21,7 +21,7 @@ process calculate_checksum_on_metafile_input {
 
 
 process make_metafile_unix_friendly {
-    publishDir "${params.outdir}/${datasetID}/intermediates/make_metafile_unix_friendly", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/make_metafile_unix_friendly", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path("input_mfile_raw")
@@ -40,7 +40,7 @@ process make_metafile_unix_friendly {
 //ch_input_sfile.into { ch_input_sfile1; ch_input_sfile2 }
 
 process calculate_checksum_on_sumstat_input {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(sfile)
@@ -61,7 +61,7 @@ process calculate_checksum_on_sumstat_input {
 // Force into the right format if possible
 process check_sumstat_format {
 
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(mfile), path(sfilePath)
@@ -93,7 +93,7 @@ process check_sumstat_format {
 }
 
 process add_sorted_rowindex_to_sumstat {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(sfile)

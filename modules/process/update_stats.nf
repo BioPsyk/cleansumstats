@@ -1,6 +1,6 @@
 process numeric_filter_stats {
-  publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-  publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+  publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+  publishDir "${params.outdir}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
   input:
   tuple val(datasetID), path(sfile)
@@ -43,7 +43,7 @@ process numeric_filter_stats {
 
 process convert_neglogP {
 
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(sfile)
@@ -112,7 +112,7 @@ process force_eaf {
     """
 }
 process prep_af_stats {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), val(build), path(sfile)
@@ -160,7 +160,7 @@ process prep_af_stats {
 //if ancestry code (eg EUR)is available, add allele_frequency
 process add_af_stats {
 
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(st_filtered), val(availAF), path(afFreqs)
@@ -194,7 +194,7 @@ process add_af_stats {
 
 process infer_stats {
 
-    publishDir "${params.outdir}/${datasetID}/intermediates/${af_branch}", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/${af_branch}", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), val(af_branch), path(st_filtered)
@@ -291,7 +291,7 @@ process infer_stats {
 }
 
 process merge_inferred_data {
-  publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+  publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
   input:
   tuple val(datasetID), path("kgversion"), path("defaultversion")
@@ -312,7 +312,7 @@ process merge_inferred_data {
 }
 
 process select_stats_for_output {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(inferred), val(stats_branch), path(sfile)

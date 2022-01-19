@@ -25,7 +25,7 @@
 
 // LIFTOVER BRANCH 1 - rsid mapping
 process prepare_dbsnp_mapping_for_rsid {
-    publishDir "${params.outdir}/${datasetID}/intermediates/prepare_dbsnp_mapping_for_rsid", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/prepare_dbsnp_mapping_for_rsid", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(sfile), val(chrposExists), val(snpExists), val(pointsToDifferentCols)
@@ -54,8 +54,8 @@ process prepare_dbsnp_mapping_for_rsid {
 }
 
 process remove_duplicated_rsid_before_liftmap {
-    publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid", mode: 'rellink', overwrite: true, enabled: params.dev
-    publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+    publishDir "${params.outdir}/intermediates/liftover_branch_markername_rsid", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/liftover_branch_markername_rsid/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
     input:
     tuple val(datasetID), path(rsidprep), val(snpExists)
@@ -80,8 +80,8 @@ process remove_duplicated_rsid_before_liftmap {
 }
 
 process maplift_dbsnp_GRCh38_rsid {
-   publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid", mode: 'rellink', overwrite: true, enabled: params.dev
-   publishDir "${params.outdir}/${datasetID}/intermediates/liftover_branch_markername_rsid/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+   publishDir "${params.outdir}/intermediates/liftover_branch_markername_rsid", mode: 'rellink', overwrite: true, enabled: params.dev
+   publishDir "${params.outdir}/intermediates/liftover_branch_markername_rsid/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
    input:
    tuple val(datasetID), path(fsorted), val(snpExists)
@@ -127,7 +127,7 @@ process maplift_dbsnp_GRCh38_rsid {
 
 // LIFTOVER BRANCH 2 - chrpos mapping
 process is_chrpos_different_from_snp_and_assign_dID2 {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(sfile), val(chrposExists), val(snpExists), val(pointsToDifferentCols)
@@ -154,7 +154,7 @@ process is_chrpos_different_from_snp_and_assign_dID2 {
 
 //reformat_X_Y_XY_and_MT_and_remove_noninterpretables
 process reformat_chromosome_information {
-  publishDir "${params.outdir}/${datasetID}/intermediates/reformat_chromosome_information/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
+  publishDir "${params.outdir}/intermediates/reformat_chromosome_information/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
 
   input:
   tuple val(datasetID), val(dID2), path(sfile), val(chrposexist)
@@ -211,7 +211,7 @@ process reformat_chromosome_information {
 
 process detect_genome_build {
 
-    publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), val(dID2), val(sfile_chrpos)
@@ -246,7 +246,7 @@ process detect_genome_build {
 }
 
 process decide_genome_build {
-    publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), val(dID2), path(ujoins)
@@ -279,7 +279,7 @@ process decide_genome_build {
 
 process build_warning {
 
-  publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
+  publishDir "${params.outdir}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), val(tot), val(dID2), path(buildstat), val(grmax)
@@ -306,8 +306,8 @@ process build_warning {
 
 process rm_dup_chrpos_before_maplift {
 
-    publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
-    publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+    publishDir "${params.outdir}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/${dID2}/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
     input:
     tuple val(datasetID), val(dID2), val(gbmax), path(chrposprep)
@@ -334,8 +334,8 @@ process rm_dup_chrpos_before_maplift {
 
 process maplift_dbsnp_GRCh38_chrpos {
 
-  publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
-  publishDir "${params.outdir}/${datasetID}/intermediates/${dID2}/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+  publishDir "${params.outdir}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
+  publishDir "${params.outdir}/intermediates/${dID2}/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
   input:
   tuple val(datasetID), val(dID2), path(fsorted), val(gbmax) 
@@ -409,7 +409,7 @@ process maplift_dbsnp_GRCh38_chrpos {
 
 
 process select_chrpos_or_snpchrpos {
-  publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+  publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
   input:
   tuple val(datasetID), val(dID2), path("liftedGRCh38"), val(dID2SNP), path("liftedGRCh38SNP"), path(liftedGRCh38RSID), path(beforeLiftover)
@@ -458,8 +458,8 @@ process select_chrpos_or_snpchrpos {
 
 process rm_dup_chrpos_allele_rows {
 
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-    publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
     input:
     tuple val(datasetID), path(liftedandmapped)
@@ -485,7 +485,7 @@ process rm_dup_chrpos_allele_rows {
 
 
 process reformat_sumstat {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(liftedandmapped)
@@ -512,7 +512,7 @@ process reformat_sumstat {
 
 
 process split_multiallelics_resort_rowindex {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), val(build), path(liftgrs)

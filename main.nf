@@ -346,11 +346,15 @@ workflow {
       .join(calculate_checksum_on_sumstat_input.out.main, by: 0)
       .set { ch_mfile_cleaned_x }
 
-      main_init_checks_crucial_paths.out.rpath
-      .join(map_to_dbsnp.out.ch_gb_stats_combined, by: 0)
-      .join(main_init_checks_crucial_paths.out.pdfstuff, by: 0)
+      
+      map_to_dbsnp.out.ch_gb_stats_combined
       .join(update_stats.out.cleaned_stats_col_source, by: 0)
       .set{ ch_to_write_to_filelibrary7 }
+
+      //for raw output
+      main_init_checks_crucial_paths.out.rpath
+      .join(main_init_checks_crucial_paths.out.pdfstuff, by: 0)
+      .set{ ch_to_write_to_raw }
 
       organize_output(
         allele_correction.out.allele_corrected, 
@@ -361,7 +365,8 @@ workflow {
         nrows_before_after,
         ch_mfile_cleaned_x,
         ch_to_write_to_filelibrary7,
-        ch_mfile_checkX
+        ch_mfile_checkX,
+        ch_to_write_to_raw
       )
     }
   }

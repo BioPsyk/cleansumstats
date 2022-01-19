@@ -14,8 +14,8 @@
 //    """
 process allele_correction_A1_A2 {
 
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-    publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
     input:
     tuple val(datasetID),val(build), path(mapped), path(sfile), val(A2exists)
@@ -75,8 +75,8 @@ process allele_correction_A1_A2 {
 }
 
 process allele_correction_A1 {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-    publishDir "${params.outdir}/${datasetID}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
     input:
     tuple val(datasetID), val(build), path(mapped), path(sfile), val(A2missing)
@@ -136,7 +136,7 @@ process allele_correction_A1 {
 }
 
 process rm_dup_chrpos_rows_after_acor {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), val(build), path(acorrected)

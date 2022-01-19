@@ -1,5 +1,5 @@
 process final_assembly {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), val(build), path(acorrected), path(stats)
@@ -28,7 +28,7 @@ process final_assembly {
 
 process prep_GRCh37_coord {
 
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(cleaned_chrpos_sorted), path(header)
@@ -52,7 +52,7 @@ process prep_GRCh37_coord {
 
 
 process collect_rmd_lines {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(step1), path(step2), path(step3)
@@ -70,7 +70,7 @@ process collect_rmd_lines {
 
 process desc_rmd_lines_as_table {
 
-  publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+  publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(filtered_stats_removed)
@@ -90,14 +90,15 @@ process desc_rmd_lines_as_table {
 
 
 process gzip_outfiles {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(sclean), path(scleanGRCh37), path(inputsfile), path(inputformatted), path(removedlines)
     //from ch_to_write_to_filelibrary2
 
     output:
-    tuple val(datasetID), path("gzip_outfiles__sclean.gz"), path("gzip_outfiles__scleanGRCh37.gz"), path("gzip_outfiles__removed_lines.gz"), emit: gz_to_write
+    tuple val(datasetID), path("gzip_outfiles__sclean.gz"), path("gzip_outfiles__scleanGRCh37.gz"), emit: gz_to_write
+    tuple val(datasetID), path("gzip_outfiles__removed_lines.gz"), emit: gz_rm_lines_to_write
     tuple val(datasetID), path("gzip_outfiles__cleanedheader"), emit: ch_cleaned_header
     tuple val(datasetID), path(inputsfile), emit: ch_to_write_to_raw_library
     val(datasetID), emit: ch_check_avail
@@ -117,7 +118,7 @@ process gzip_outfiles {
 //    ch_to_write_to_filelibrary3.into { ch_to_write_to_filelibrary3a; ch_to_write_to_filelibrary3b }
   
 process calculate_checksum_on_sumstat_cleaned {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), path(sclean), path(scleanGRCh37), path(removedlines)
@@ -135,7 +136,7 @@ process calculate_checksum_on_sumstat_cleaned {
 }
 
 process collect_and_prep_stepwise_readme {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), 
@@ -168,7 +169,7 @@ process collect_and_prep_stepwise_readme {
 }
 
 process prepare_cleaned_metadata_file {
-    publishDir "${params.outdir}/${datasetID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(datasetID), val(usermetachecksum), val(rawsumstatchecksum), val(scleanchecksum), val(scleanGRCh37checksum), val(removedlineschecksum), val(cleanedheader)
@@ -211,74 +212,105 @@ process prepare_cleaned_metadata_file {
       """
 }
 
-process put_in_cleaned_library {
+process add_cleaned_to_output {
 
-    publishDir "${params.outdir}/${datasetID}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}", mode: 'copy', overwrite: true
 
     input:
     tuple val(datasetID), 
-    val(readme),
-    path("gbdetectCHRPOS"),
-    path("gbdetectSNPCHRPOS"),
-    val(pmid),
-    val(pdfpath), 
-    val(pdfsuppdir), 
-    path(selected_source),
     path(sclean), 
     path(scleanGRCh37),
-    path(removedlines), 
-    path(overviewworkflow),
-    path(removedlinestable),
-    path(usermfile),
-    path(cleanmfile),
-    path(rawfile)
-    //from ch_to_write_to_filelibrary7
+    path(cleanmfile)
 
     output:
     path("*")
 
     script:
-
     """
     # Store data in library by copying (move is faster, but debug gets slower as input disappears)
     cp ${sclean} cleaned_GRCh38.gz
     cp ${scleanGRCh37} cleaned_GRCh37.gz
     cp ${cleanmfile} cleaned_metadata.yaml
 
+    """
+}
+
+process add_details_to_output {
+
+    publishDir "${params.details}", mode: 'copy', overwrite: true
+
+    input:
+    tuple val(datasetID), 
+    path("gbdetectCHRPOS"),
+    path("gbdetectSNPCHRPOS"),
+    path(selected_source),
+    path(removedlines), 
+    path(overviewworkflow),
+    path(removedlinestable)
+
+    output:
+    path("*")
+
+    when:
+    params.details != false
+
+    script:
+    """
     # Make a folder with detailed data of the cleaning
-    mkdir details
-    cp $overviewworkflow details/stepwise_overview.txt
-    cp ${removedlinestable} details/removed_lines_per_type_table.txt
-    cp "gbdetectCHRPOS" details/genome_build_map_count_table_chrpos.txt
-    cp "gbdetectSNPCHRPOS" details/genome_build_map_count_table_markername.txt
-    cp ${removedlines} details/removed_lines.gz
-    cp ${selected_source} details/selected_source_stats.txt
+    cp $overviewworkflow stepwise_overview.txt
+    cp ${removedlinestable} removed_lines_per_type_table.txt
+    cp "gbdetectCHRPOS" genome_build_map_count_table_chrpos.txt
+    cp "gbdetectSNPCHRPOS" genome_build_map_count_table_markername.txt
+    cp ${removedlines} removed_lines.gz
+    cp ${selected_source} selected_source_stats.txt
 
+    """
+}
 
-    # copy all raw stuff into raw
-    mkdir raw
-    cp ${rawfile} raw/.
-    cp ${usermfile} raw/.
+process add_raw_to_output {
 
-    #reference material
-    mkdir raw/reference
-    mkdir raw/reference/supplemental_material
+    //Because of name clashes and missing files, publishDir is not feasible
+    //publishDir "${params.rawoutput}", mode: 'copy', overwrite: true
+
+    input:
+    tuple val(datasetID), 
+    path(usermfile),
+    val(readme),
+    val(pmid),
+    val(pdfpath), 
+    val(pdfsuppdir), 
+    path(rawfile)
+
+    when:
+    params.rawoutput != false
+
+    script:
+    """
+    # make dir if not existing
+    mkdir -p ${params.rawoutput}
+
+    # copy all raw stuff into rawinput
+    cp ${rawfile} ${params.rawoutput}/.
+    cp ${usermfile} ${params.rawoutput}/.
+
+    if [ "${readme}" != "missing" ]
+    then
+      cp ${pdfpath} ${params.rawoutput}/.
+    fi
 
     if [ "${pdfpath}" != "missing" ]
     then
-      cp ${pdfpath} raw/reference/.
+      cp ${pdfpath} ${params.rawoutput}/.
     fi
 
     for supp in ${pdfsuppdir};do
        if [ "\${supp}" != "missing" ]
        then
-         cp \$supp raw/reference/supplemental_material/.
+         cp \$supp ${params.rawoutput}/.
        else
          :
        fi
     done
     """
 }
-
-
 
