@@ -125,8 +125,6 @@ NR>1{
   for (i=2; i <= length(sp); i++){printf "%s%s", ":",$(sp[i])}; 
   printf "\n"}' > tmp2
 
-#if(length(sp)>0){printf "%s%s", OFS, sp[1]};if(length(sp)>1){
-
 # sort and make tabix index
 sort -t "$(printf '\t')" -k1,1 -k2,2n tmp2 > tmp2b
 
