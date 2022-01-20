@@ -21,6 +21,13 @@ NTOT="$(awk '$1~"stats_EffectiveN:"{print $2}' out_test/sumstat_1_raw_meta/clean
 awk -vFS="\t" -vOFS="\t" -vntot="${NTOT}" 'NR==1{print $0, "N"}; NR>1{print $0, ntot}' <(zcat out_test/sumstat_1_raw_meta/cleaned_GRCh38.gz)
 ```
 
+## Add 5 main pop AF from 1kgp
+Everything that doesn't match gets NA. The output will always be .gz
+```
+./cleansumstats -e -o out_test
+./add1kgaf2clean.sh out_test/cleaned_GRCh38.gz tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined out_test/cleaned_GRCh38_added5pop.gz
+```
+
 ## Convert to vcf
 
 To better integrate with other tools we provide a script that converts the cleaned output to a vcf. The stats will all be placed in the FORMAT field, similarly to the output from https://github.com/MRCIEU/gwas2vcf.
