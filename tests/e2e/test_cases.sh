@@ -57,13 +57,13 @@ do
 
     echo "-- Pipeline done, validating results"
 
-    for f in ./out/**/cleaned_metadata.yaml
+    for f in ./out/cleaned_metadata.yaml
     do
       "${test_dir}/validators/validate-cleaned-metadata.py" \
         "${schemas_dir}/cleaned-metadata.yaml" "${f}"
     done
 
-    for f in ./out/**/*.gz
+    for f in ./out/*.gz
     do
       gzip --decompress "${f}"
       "${test_dir}/validators/validate-cleaned-sumstats.py" \
