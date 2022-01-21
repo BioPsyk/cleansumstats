@@ -8,11 +8,15 @@ process final_assembly {
     output:
     tuple val(datasetID), path("final_assembly__cleaned2"), path("final_assembly__header"), emit: cleaned_file
     tuple val(datasetID), path("final_assembly__desc_final_merge_BA.txt"), emit: ch_desc_final_merge_BA
+    tuple val(datasetID), path("emod.gz"), emit: emod
     //path("final_assembly__cleaned")
 
     script:
     """
     apply_modifier_on_stats.sh $acorrected $stats > final_assembly__cleaned
+
+    #Extract EMOD
+    cut -f 4,8 $acorrected | LC_ALL=C sort -k 1,1 | gzip -c > emod.gz
 
     #sort on chrpos (which will make header not on top, so lift that out, and prepare order for next process)
     head -n1 final_assembly__cleaned | awk -vFS="\t" -vOFS="\t" '{printf "%s%s%s%s%s%s", \$2, OFS, \$3, OFS, \$1, OFS; for(i=4; i<=NF-1; i++){printf "%s%s", \$i, OFS}; print \$NF}' > final_assembly__header
@@ -246,7 +250,8 @@ process add_details_to_output {
     path(selected_source),
     path(removedlines), 
     path(overviewworkflow),
-    path(removedlinestable)
+    path(removedlinestable),
+    path(emod)
 
     output:
     path("*")
@@ -263,6 +268,7 @@ process add_details_to_output {
     cp "gbdetectSNPCHRPOS" genome_build_map_count_table_markername.txt
     cp ${removedlines} removed_lines.gz
     cp ${selected_source} selected_source_stats.txt
+    cp ${emod} effect_modifier.gz
 
     """
 }

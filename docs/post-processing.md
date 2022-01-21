@@ -22,10 +22,10 @@ awk -vFS="\t" -vOFS="\t" -vntot="${NTOT}" 'NR==1{print $0, "N"}; NR>1{print $0, 
 ```
 
 ## Add 5 main pop AF from 1kgp
-Everything that doesn't match gets NA. The output will always be .gz
+Everything that doesn't match gets NA. The output will always be .gz. To get the right direction of effects in respect to effect allele and other allele, we need to apply the effect modifier.
 ```
 ./cleansumstats -e -o out_test
-./add1kgaf2clean.sh out_test/cleaned_GRCh38.gz tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined out_test/cleaned_GRCh38_added5pop.gz
+./add1kgaf2clean.sh out_test/cleaned_GRCh38.gz tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined out_test/details/effect_modifier.gz out_test/cleaned_GRCh38_added5pop.gz
 ```
 
 ## Convert to vcf
