@@ -39,11 +39,13 @@ def parse_sumstats_file(file_path):
 
         for index, column in enumerate(line):
             column_name = header[index]
-
-            if column_name in int_columns:
-                column = int(column)
-            elif column_name in float_columns:
-                column = float(column)
+            try:
+                if column_name in int_columns:
+                    column = int(column)
+                elif column_name in float_columns:
+                    column = float(column)
+            except ValueError:
+                pass
 
             row[column_name] = column
 

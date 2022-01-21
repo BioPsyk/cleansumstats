@@ -76,6 +76,7 @@ workflow organize_output {
    .join(collect_and_prep_stepwise_readme.out.ch_overview_workflow_steps, by: 0)
    .join(gzip_outfiles.out.gz_rm_lines_to_write, by: 0)
    .join(desc_rmd_lines_as_table.out.ch_removed_lines_table, by: 0)
+   .join(final_assembly.out.emod, by: 0)
    .set { details_output }
 
   ch_mfile_checkX

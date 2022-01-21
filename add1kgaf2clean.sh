@@ -1,10 +1,12 @@
 infile=$1
 affreqs=$2
-outfile=$3
+emod=$3
+outfile=$4
 
 infile_host=$(realpath "${infile}")
 outfile_host=$(realpath "${outfile}")
 affreqs_host=$(realpath "${affreqs}")
+emod_host=$(realpath "${emod}")
 
 # Test that file and folder exists, all of these will always get mounted
 if [ ! -f $infile_host ]; then
@@ -36,6 +38,12 @@ affile_name=$(basename "${affreqs_host}")
 afdir_container="/cleansumstats/affreqs"
 affile_container="${afdir_container}/${affile_name}"
 
+# emod
+emoddir_host=$(dirname "${emod_host}")
+emodfile_name=$(basename "${emod_host}")
+emoddir_container="/cleansumstats/emod"
+emodfile_container="${emoddir_container}/${emodfile_name}"
+
 # outdir
 outdir_host=$(dirname "${outfile_host}")
 outfile_name=$(basename "${outfile_host}")
@@ -48,6 +56,7 @@ mkdir -p "${FAKE_HOME}"
 
 #echo      "${infile_container}" 
 #echo      "${affile_container}" 
+#echo      "${emodfile_container}" 
 #echo      "${outfile_container}"
 
 exec singularity run \
@@ -57,10 +66,12 @@ exec singularity run \
    -B "${indir_host}:${indir_container}" \
    -B "${outdir_host}:${outdir_container}" \
    -B "${afdir_host}:${afdir_container}" \
+   -B "${emoddir_host}:${emoddir_container}" \
    -B "/tmp:/tmp" \
    "tmp/${singularity_image_tag}" \
    /cleansumstats/bin/add_af_stats.sh \
      "${infile_container}" \
      "${affile_container}" \
+     "${emodfile_container}" \
      "${outfile_container}"
 
