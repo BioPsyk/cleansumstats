@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [1.3.0] - 2022-01-21
+## [1.3.0] - 2022-01-24
 ### Added
 - New post-processing adding all 5 major pops from 1kgp
 - More options regarding directing and repressing output using nextflow.config
@@ -18,9 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved `docs/`, but still work to be done
 
 ### Fixed
-- Now AF information has support for NA
-- Now possible to run from anywhere, not only from within the clensumstats repo
-- Now DIRECTION is skipped by the awk numeric test
+- AF information has now support for NA
+- It is now possible to run from anywhere, not only from within the clensumstats repo
+- DIRECTION is now skipped by the awk numeric test
+- General support for NA in r-stat-c-streamer
 
 ## [1.2.0] - 2021-12-08
 ### Added
