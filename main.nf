@@ -218,7 +218,8 @@ def sess = new PipelineSession<Metadata>(
   Metadata.class,
   baseDir,
   workflow.workDir,
-  params.input
+  params.input,
+  params.extrapaths
 )
 
 params.sess=sess
