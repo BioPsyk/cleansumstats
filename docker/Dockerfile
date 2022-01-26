@@ -222,9 +222,9 @@ RUN apt-get update --fix-missing && \
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
 RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
 
-COPY ibp-pipeline-lib-1.0.0.jar /cleansumstats/ipb-pipeline-lib.jar
+COPY ibp-pipeline-lib-1.0.0.jar /cleansumstats/ibp-pipeline-lib.jar
 
-ENV NXF_CLASSPATH="/cleansumstats/ipb-pipeline-lib.jar"
+ENV NXF_CLASSPATH="/cleansumstats/ibp-pipeline-lib.jar"
 
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
 RUN chown nextflow:users /cleansumstats/external_data -R
