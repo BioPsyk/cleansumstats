@@ -119,5 +119,5 @@ function _check_results {
 
 }
 
-mv ${outdir}/metadata/cleaned_GRCh38 ./observed-result1.tsv
+mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv
