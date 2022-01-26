@@ -125,7 +125,7 @@ else
   fi
   #1-var
   if [ -n "$var_m2" ] ; then
-    sstools-utils ad-hoc-do -f $STAT -k "0|${var_m2}" -n"0,${nam_m2}" | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 modifier - | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s", $1; for(i=3; i<=NF; i++){printf "%s%s", OFS, $i}; printf "%s", RS }; NR>1{printf "%s", $1; for(i=3; i<=NF; i++){if($2=="1"){printf "%s%s", OFS, $i}else{printf "%s%s", OFS, 1-$i}}; printf "%s", RS}' > sel_stats_m2
+    sstools-utils ad-hoc-do -f $STAT -k "0|${var_m2}" -n"0,${nam_m2}" | LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 modifier - | awk -vFS="\t" -vOFS="\t" 'NR==1{printf "%s", $1; for(i=3; i<=NF; i++){printf "%s%s", OFS, $i}; printf "%s", RS }; NR>1{printf "%s", $1; for(i=3; i<=NF; i++){if($2=="1" || $i=="NA"){printf "%s%s", OFS, $i}else{printf "%s%s", OFS, 1-$i}}; printf "%s", RS}' > sel_stats_m2
   else
     :
   fi

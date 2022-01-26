@@ -142,7 +142,7 @@ process prep_af_stats {
     # If we have an available ancestry reference frequency
     if [ \${avail} == "true" ]; then
       # Join with AF table using chrpos column (keep only rowindex and allele frequency, merge later)
-      awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$2"-"\$3, \$1}' ${sfile} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')" > prep_af_stats__st_1kg_af_ref_sorted
+      awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$6"-"\$7, \$1}' ${sfile} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')" > prep_af_stats__st_1kg_af_ref_sorted
       awk -vFS=" " -vOFS="\t" -vcount=\${count} '{print \$1"-"\$2"-"\$3,\$count}' ${ch_kg1000AFGRCh38} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')"| LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" -o 2.2 1.2 - prep_af_stats__st_1kg_af_ref_sorted > prep_af_stats__st_1kg_af_ref_sorted_joined
       echo -e "0\tAF_1KG_CS" > prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx
       LC_ALL=C sort -k 1,1 prep_af_stats__st_1kg_af_ref_sorted_joined >> prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx
