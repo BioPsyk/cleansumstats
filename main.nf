@@ -12,7 +12,7 @@ cleansumstats Pipeline.
 ----------------------------------------------------------------------------------------
 */
 
-nextflow.enable.dsl=2      
+nextflow.enable.dsl=2
 
 pipelineVersion = new File("$projectDir/VERSION").text.trim()
 
@@ -218,31 +218,27 @@ def sess = new PipelineSession<Metadata>(
   Metadata.class,
   baseDir,
   workflow.workDir,
-  params.input,
-  params.extrapaths
+  params
 )
 
 params.sess=sess
 
+include { prepare_dbsnp_reference } from './modules/subworkflow/prepare_dbsnp.nf'
+include { prepare_1kgaf_reference } from './modules/subworkflow/prepare_1kgaf.nf'
 
-include { prepare_dbsnp_reference } from './modules/subworkflow/prepare_dbsnp.nf' 
-include { prepare_1kgaf_reference } from './modules/subworkflow/prepare_1kgaf.nf' 
-
-include { main_init_checks_crucial_paths } from './modules/subworkflow/main_init_checks_crucial_paths.nf' 
+include { main_init_checks_crucial_paths } from './modules/subworkflow/main_init_checks_crucial_paths.nf'
 include {
   calculate_checksum_on_metafile_input
   make_metafile_unix_friendly
   calculate_checksum_on_sumstat_input
   check_sumstat_format
   add_sorted_rowindex_to_sumstat
-} from './modules/process/main_init_checks.nf' 
+} from './modules/process/main_init_checks.nf'
 
 include { map_to_dbsnp } from './modules/subworkflow/map_to_dbsnp.nf'
 include { allele_correction } from './modules/subworkflow/allele_correction.nf'
 include { update_stats } from './modules/subworkflow/update_stats.nf'
 include { organize_output } from './modules/subworkflow/organize_output.nf'
-
-
 
 workflow {
   main:
@@ -250,24 +246,24 @@ workflow {
   if (params.generateMetafile){
     sess.metadata_paths.each {
       log.info "Writing metadata template"
-  
+
       def metadata_id = it.getBaseName().toString()
-  
+
       def template_file = new File("${params.outdir}/${metadata_id}.template.yaml")
       template_file.write(
         sess.metadata_schema.generate_metadata_template()
       )
-  
+
       log.info "Metadata template written to ${params.outdir}/${metadata_id}.template.yaml"
     }
   }else if(params.generateMetaClass){
     log.info "Metadata class written to ${params.outdir}/Metadata.groovy"
-  
+
     def class_file = new File("${params.outdir}/Metadata.groovy")
     class_file.write(
       sess.metadata_schema.generate_metadata_groovy_class()
     )
-  
+
     log.info "Metadata class written to ${params.outdir}/Metadata.groovy"
   }else if(params.generateDbSNPreference){
     prepare_dbsnp_reference("${params.input}")
@@ -277,32 +273,32 @@ workflow {
     // awk '{if($2!=$10){print $0}}' 1kg_af_ref.sorted.joined | head
     // awk '{if($3!=$11){print $0}}' 1kg_af_ref.sorted.joined | head
   }else {
-  
+
     //=================================================================================
     // Pre-execution validation
     //=================================================================================
-  
+
     log.info("Reading metadata files")
-  
+
     sess.read_metadata_files()
-  
+
     log.info("All metadata files read")
     log.info("Validating pipeline parameters")
-  
+
     ParametersValidator.validate_filters_allowed(
       "before",
       params.beforeLiftoverFilter,
       "${baseDir}/assets/allowed_names_beforeLiftoverFilter.txt"
     )
-  
+
     ParametersValidator.validate_filters_allowed(
       "after",
       params.afterLiftoverFilter,
       "${baseDir}/assets/allowed_names_afterLiftoverFilter.txt"
     )
-  
+
     log.info("All pipeline parameters validated")
-  
+
 
     //=================================================================================
     // Start of execution
@@ -311,7 +307,7 @@ workflow {
     Channel
       .fromPath("${params.input}", type: 'file')
       .map { file -> tuple(file.baseName, file) }
-      .set { ch_mfile_checkX } 
+      .set { ch_mfile_checkX }
 
     main_init_checks_crucial_paths(ch_mfile_checkX, sess)
     calculate_checksum_on_metafile_input(ch_mfile_checkX)
@@ -347,7 +343,7 @@ workflow {
       .join(calculate_checksum_on_sumstat_input.out.main, by: 0)
       .set { ch_mfile_cleaned_x }
 
-      
+
       map_to_dbsnp.out.ch_gb_stats_combined
       .join(update_stats.out.cleaned_stats_col_source, by: 0)
       .set{ ch_to_write_to_filelibrary7 }
@@ -358,7 +354,7 @@ workflow {
       .set{ ch_to_write_to_raw }
 
       organize_output(
-        allele_correction.out.allele_corrected, 
+        allele_correction.out.allele_corrected,
         update_stats.out.cleaned_stats,
         ch_collected_removed_lines,
         main_init_checks_crucial_paths.out.spath,
