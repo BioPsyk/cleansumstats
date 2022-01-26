@@ -256,12 +256,14 @@ kgpfile_name="1kg_af_ref.sorted.joined"
 kgpdir_container="/cleansumstats/kgpdir"
 kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
-# Add metadata env variable folders
+# Add metadata env variable folders (fix realpath)
 if ${extrapaths_given} ;
 then
-  extrapaths2="$(echo ${extrapaths} | sed 's/:/\n/g' | awk -vOFS="" '{printf "%s%s%s%s%s", "-B ", $1,":/cleansumstats/extrabind/fold",++count," "}; END{printf "%s", RS}')"
+  extrapaths2="$(echo ${extrapaths} | sed 's/,/\n/g' | xargs realpath | awk -vOFS="" '{printf "%s%s%s%s%s", "-B ", $1,":/cleansumstats/extrabind/fold",++count," "}; END{printf "%s", RS}')"
+  extrapaths3="$(echo ${extrapaths} | sed 's/,/\n/g' | awk -vOFS="," '{printf "%s%s%s", "/cleansumstats/extrabind/fold",++count,","}; END{printf "%s", RS}' | sed 's/\(.*\),/\1 /')"
 else
   extrapaths2=""
+  extrapaths3=""
 fi
 
 FAKE_HOME="tmp/fake-home"
@@ -317,7 +319,7 @@ else
      -B "/tmp:/tmp" \
      "tmp/${singularity_image_tag}" \
      nextflow run /cleansumstats ${runtype} \
-       --extrapaths ${extrapaths_given} \
+       --extrapaths ${extrapaths3} \
        --dev \
        --input "${infile_container}" \
        --outdir "${outdir_container}" \
