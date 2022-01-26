@@ -715,3 +715,5 @@ allOf:
           - "col_OAF"
       - required:
           - "col_INFO"
+      - required:
+          - "col_Direction"

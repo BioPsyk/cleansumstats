@@ -13,6 +13,24 @@ The absolute minimum requirements are:
 - "stats_Model"
 - "col_SNP" or "col_CHR" and "col_POS"
 - "col_EffectAllele"
+- anyOf:
+  - "col_BETA"
+  - "col_SE"
+  - "col_Z"
+  - "col_P"
+  - "col_OR"
+  - "col_ORL95"
+  - "col_ORU95"
+  - "col_N"
+  - "col_CaseN"
+  - "col_ControlN"
+  - "col_EAF"
+  - "col_OAF"
+  - "col_INFO"
+  - "col_Direction"
+
+Dependend fields:
+- col_P, if stats_neglog10P
 
 ## Minimum requirements for inclusion in a sumstat library
 If the library switch in the config is activated, then more fields will be required:
@@ -52,6 +70,7 @@ As well as
   - "col_EAF"
   - "col_OAF"
   - "col_INFO"
+  - "col_Direction"
 
 Dependend fields:
 - col_P, if stats_neglog10P
