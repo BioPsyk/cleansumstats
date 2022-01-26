@@ -10,5 +10,5 @@ do
 done
 
 ## run only one regression test
-#${test_dir}/e2e/test_regression_258.sh
+#${test_dir}/e2e/test_regression_257.sh
 
