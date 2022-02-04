@@ -83,6 +83,10 @@ function which_to_keep(){
       echo "Direction"
       echo "Direction" 1>&2
     fi
+    if stat_exists "StudyN" ${STAT}; then
+      echo "StudyN"
+      echo "StudyN" 1>&2
+    fi
 }
 
 unset var_m var_m2 var_m3

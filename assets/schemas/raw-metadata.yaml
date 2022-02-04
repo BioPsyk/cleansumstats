@@ -619,6 +619,12 @@ properties:
       Column for the number of used individuals as controls for this variant.
     type: "string"
 
+  col_StudyN:
+    title: "Per SNP number of metastudies"
+    description: |
+      Column for the per variant number of how many metastudies that were used.
+    type: "string"
+
   col_INFO:
     title: "Imputation quality score"
     description: |
@@ -709,6 +715,8 @@ allOf:
           - "col_CaseN"
       - required:
           - "col_ControlN"
+      - required:
+          - "col_StudyN"
       - required:
           - "col_EAF"
       - required:
