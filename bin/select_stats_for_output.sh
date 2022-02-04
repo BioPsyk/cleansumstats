@@ -19,6 +19,7 @@ EAF=${15}
 OAF=${16}
 INFO=${17}
 DIRECTION=${18}
+StudyN=${19}
 
 #recode as true or false
 function recode_to_tf(){
@@ -54,6 +55,7 @@ tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
 tfINFO="$(recode_to_tf $INFO)"
 tfDIRECTION="$(recode_to_tf $DIRECTION)"
+tfStudyN="$(recode_to_tf $StudyN)"
 
 if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
   EAF2="EAF"
@@ -299,6 +301,11 @@ function which_to_select(){
     echo -e "${DIRECTION}"
     echo -e "Direction\toriginal" >> ${selected_source}
     echo "Direction" 1>&2
+  fi
+  if [ ${tfStudyN} == "true" ]; then
+    echo -e "${StudyN}"
+    echo -e "StudyN\toriginal" >> ${selected_source}
+    echo "StudyN" 1>&2
   fi
 }
 

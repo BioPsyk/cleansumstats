@@ -65,6 +65,7 @@ class Metadata extends BaseMetadata {
   String col_N = null
   String col_CaseN = null
   String col_ControlN = null
+  String col_StudyN = null
   String col_INFO = null
   String col_EAF = null
   String col_OAF = null
@@ -178,7 +179,8 @@ class Metadata extends BaseMetadata {
       "EAF": this.col_EAF,
       "OAF": this.col_OAF,
       "INFO": this.col_INFO,
-      "DIRECTION": this.col_Direction
+      "DIRECTION": this.col_Direction,
+      "StudyN": this.col_StudyN
     ]
 
     return stats.findAll { it.value != null }

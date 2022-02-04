@@ -341,6 +341,7 @@ process select_stats_for_output {
     col_OAF="${metadata.col_OAF ?: "missing"}"
     col_INFO="${metadata.col_INFO ?: "missing"}"
     col_DIRECTION="${metadata.col_Direction ?: "missing"}"
+    col_StudyN="${metadata.col_StudyN ?: "missing"}"
     """
     select_stats_for_output.sh $sfile $inferred select_stats__selected_source.txt > select_stats__st_stats_for_output \
       "${stats_Model}" \
@@ -357,7 +358,8 @@ process select_stats_for_output {
       "${col_EAF}" \
       "${col_OAF}" \
       "${col_INFO}" \
-      "${col_DIRECTION}"
+      "${col_DIRECTION}" \
+      "${col_StudyN}"
 
     #process before and after stats
     rowsBefore="\$(wc -l ${inferred} | awk '{print \$1}')"

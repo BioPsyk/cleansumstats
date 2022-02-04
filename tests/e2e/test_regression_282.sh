@@ -47,7 +47,7 @@ col_POS: BP
 col_SE: SE
 col_SNP: SNP
 col_Direction: DIRECTION
-col_studyN: metaN
+col_StudyN: metaN
 EOF
 
 cat <<EOF > ./input.txt
@@ -62,6 +62,9 @@ rs6458154	chr6	40461984	A	G	0.458	0.0126	0.0132	0.3407	+-+	3
 EOF
 
 cat <<EOF > ./expected-result1.tsv
+CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	Direction	StudyN	B	Z	EAF_1KG
+12	117668628	5	rs645510	C	T	0.510505	0.0143	+-+	3	0.0151	1.05594	0.67
+3	140461721	1	rs6439928	T	C	0.543501	0.0141	+-?	3	-0.0157	-1.11347	0.68
 EOF
 
 gzip "./input.txt"

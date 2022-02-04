@@ -618,7 +618,8 @@ properties:
     description: |
       Column for the number of used individuals as controls for this variant.
     type: "string"
-  col_studyN:
+
+  col_StudyN:
     title: "Per SNP number of metastudies"
     description: |
       Column for the per variant number of how many metastudies that were used.
@@ -715,7 +716,7 @@ allOf:
       - required:
           - "col_ControlN"
       - required:
-          - "col_studyN"
+          - "col_StudyN"
       - required:
           - "col_EAF"
       - required:
