@@ -77,6 +77,8 @@ After the reference data (dbsnp and 1000 genomes) has been created it is time to
 
 You can also use this [webinterface](https://biopsyk.github.io/metadata) to generate a metadatafile. Again, remember that all files referred to by the metadatafile have to be in the same directory as the metafile when you run cleansumstats. Check `tests/example_data` and sumstats 1-5 for an example of how you can structure your input folders.
 
+There is no support for relative links in the metadata file, which means all files have to be in the same folder. However, you can provide paths to associated files `-p path/to/folder1,path/to/folder2`
+
 ## Run a fully operational cleaning pipeline 
 This will take longer time compared to the quick-start run as we now use the full >600 million rows dbsnp reference to map our variants to.
 

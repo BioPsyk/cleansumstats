@@ -29,13 +29,6 @@ Here's a direct link to the zip-archive:
 Download that file and save it with the file name `docker/sumstat-tools.zip` in this
 repository. When this repository becomes public, there will be no need to download the zip.
 
-The library `ibp-pipeline-lib` is also kept in a private repository and to use it
-one must download the built JAR-file of the library. Here's a direct link to the
-latest release of the library JAR-file:
-[ibp-pipeline-lib-0.1.0.zip](https://github.com/BioPsyk/ibp-pipeline-lib/releases/download/0.1.0/ibp-pipeline-lib-0.1.0.jar).
-Download that file and save it with the file name `docker/ibp-pipeline-lib.jar` in this
-repository. If this repository becomes public, there will be no need to download the jar file.
-
 After doing that you can start the Docker image build:
 
 ```bash

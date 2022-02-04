@@ -62,7 +62,7 @@ EOF
 
 cat <<EOF > ./expected-result1.tsv
 CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	Direction	B	Z	EAF_1KG
-12	117668628	5	rs645510	C	T	0.510505	0.0143	+-+	0.0151	1.05594	1
+12	117668628	5	rs645510	C	T	0.510505	0.0143	+-+	0.0151	1.05594	0.67
 3	140461721	1	rs6439928	T	C	0.543501	0.0141	+-?	-0.0157	-1.11347	0.68
 EOF
 
@@ -116,5 +116,5 @@ function _check_results {
 
 }
 
-mv ${outdir}/metadata/cleaned_GRCh38 ./observed-result1.tsv
+mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv

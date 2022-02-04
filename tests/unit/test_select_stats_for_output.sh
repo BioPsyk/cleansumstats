@@ -48,6 +48,7 @@ function _run_script {
     "missing" \
     "missing" \
     "missing" \
+    "missing" \
     > ./observed-result1.tsv
 
   _check_results ./observed-result1.tsv ./expected-result1.tsv
