@@ -1,6 +1,18 @@
 # Input
 All information to run each sumstat file should be defined in a metafile.
 
+## Metadata
+
+### Types
+The different types of fields are broadly categoriezed with a prefix:
+`path_` for filenames 
+`study_` for study/sumstat-specific information
+`stat_` for information about the statistical model 
+`col_` for the name of each stats column in the sumstat file
+
+There are three note fields: `study_Notes`, `stats_Notes` and `col_Notes`. `col_Notes` would be a good place for variant specific notes or explaining odd column names.
+
+There is no `path_` support for relative links in the metadata file, which means all files have to be in the same folder. However, you can provide paths to associated files `-p path/to/folder1,path/to/folder2`
 
 ### Requirements
 All requirements are specified in the file `assets/schemas/raw-metadata.yaml`, but here we will go through the thinking behind how we selected them.
@@ -28,6 +40,7 @@ The absolute minimum requirements are:
   - "col_OAF"
   - "col_INFO"
   - "col_Direction"
+  - "col_StudyN"
 
 Dependend fields:
 - col_P, if stats_neglog10P
@@ -71,6 +84,7 @@ As well as
   - "col_OAF"
   - "col_INFO"
   - "col_Direction"
+  - "col_StudyN"
 
 Dependend fields:
 - col_P, if stats_neglog10P
