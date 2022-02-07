@@ -48,6 +48,15 @@ properties:
     type: "string"
     format: "date"
 
+  cleansumstats_metafile_kind:
+    description: |
+      Whether the metafile is to be used as a library metafile or just a minimal
+      requirements file to run the pipeline.
+    type: "string"
+    enum:
+      - "minimal"
+      - "library"
+
   #---------------------------------------------------------------------------------
   # path properties
 
@@ -670,21 +679,7 @@ dependencies:
     col_P:
       required: ["stats_neglog10P"]
 required:
-  - "cleansumstats_version"
-  - "cleansumstats_metafile_user"
-  - "cleansumstats_metafile_date"
   - "path_sumStats"
-  - "study_Title"
-  - "study_PMID"
-  - "study_Year"
-  - "study_PhenoDesc"
-  - "study_PhenoCode"
-  - "study_AccessDate"
-  - "study_Use"
-  - "study_Ancestry"
-  - "study_Gender"
-  - "stats_TraitType"
-  - "stats_TotalN"
   - "stats_Model"
   - "col_EffectAllele"
 allOf:
@@ -725,3 +720,23 @@ allOf:
           - "col_INFO"
       - required:
           - "col_Direction"
+if:
+  properties:
+    cleansumstats_metafile_kind:
+      const: "library"
+then:
+  required:
+    - "cleansumstats_version"
+    - "cleansumstats_metafile_user"
+    - "cleansumstats_metafile_date"
+    - "study_Title"
+    - "study_PMID"
+    - "study_Year"
+    - "study_PhenoDesc"
+    - "study_PhenoCode"
+    - "study_AccessDate"
+    - "study_Use"
+    - "study_Ancestry"
+    - "study_Gender"
+    - "stats_TraitType"
+    - "stats_TotalN"

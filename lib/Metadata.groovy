@@ -19,6 +19,7 @@ class Metadata extends BaseMetadata {
   String cleansumstats_version = null
   String cleansumstats_metafile_user = null
   Date cleansumstats_metafile_date = null
+  String cleansumstats_metafile_kind = null
   String path_sumStats = null
   String path_readMe = null
   String path_pdf = null
