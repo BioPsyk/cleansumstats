@@ -1,28 +1,17 @@
-mefl=$1
-sfile=$2
-
-#helpers
-function selRightHand(){
-  echo "${1#*: }"
-}
-function selColRow(){
-  grep ${1} ${2}
-}
+sfile=$1
+EAF=$2
+OAF=$3
 
 #recode as true or false
 function recode_to_tf(){
-  if [ "$1" == "" ]; then
+  if [ "$1" == "missing" ]; then
     echo false
   else
     echo true
   fi
 }
 
-
-
 #check if EAF or OAF is specified in metadatafile
-EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
-OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
 tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Check that the neglog10P converter does as expected
-# see issue-106
+# investigate if .bed 's 0 position system affects our liftover
+# see issue-197
 
 set -euo pipefail
 
@@ -38,16 +38,11 @@ gzip "./input.vcf"
 # rs1187200240 - it doesn't exist in GRCh37 according to web resources, but we still get it from liftover. I think it is fine.
 # rs1382106019 - it doesn't exist in GRCh37 according to web resources, but we still get it from liftover. I think it is fine.
 
-# There is an empty line at the top right now. It won't be a problem for the analysis, but it looks ugly så can be worth removing
-##cat <<EOF > ./expected-result-grch37-grch38.txt
-##    
-##22:16091785 22:15886178 rs201771182 C G,T
-##22:19601090 22:19613567 rs1187200240 G A
-##22:19603947 22:19616424 rs1382106019 C T
-##EOF
-
-# Latest expected file
+# expected file: 2022-01-05 , after a small fix for the last row, which previously was counted as a duplicate
 cat <<EOF > ./expected-result-grch37-grch38.txt
+22:16091785 22:15886178 rs201771182 C G,T
+22:19601090 22:19613567 rs1187200240 G A
+22:19603947 22:19616424 rs1382106019 C T
 EOF
 
 time nextflow -q run -offline \

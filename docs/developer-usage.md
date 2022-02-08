@@ -1,8 +1,8 @@
-# nf-core/cleansumstats: Usage
+# cleansumstats: Usage
 
 ## Table of contents
 <!-- TOC START min:1 max:3 link:true asterisk:false update:true -->
-- [nf-core/cleansumstats: Usage](#nf-corecleansumstats-usage)
+- [cleansumstats: Usage](#cleansumstats-usage)
   - [Table of contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Running the pipeline](#running-the-pipeline)

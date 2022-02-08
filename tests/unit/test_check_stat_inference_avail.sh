@@ -33,7 +33,20 @@ function _run_script {
 
   branchX=$1
 
-  "${test_script}.sh" ./mfile.yaml ./colfields.txt ./colnames.txt ./colpositions.txt "${branchX}"
+  "${test_script}.sh" ./colfields.txt ./colnames.txt ./colpositions.txt "${branchX}" \
+    "missing" \
+    "se" \
+    "missing" \
+    "p" \
+    "or" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing"
+
 
   _check_results ./colfields.txt ./expected-colfields.txt
   _check_results ./colnames.txt ./expected-colnames.txt

@@ -6,7 +6,7 @@ RUN apt-get update --fix-missing
 #---------------------------------------------------------------------------------
 # Installing nextflow
 
-ARG NEXTFLOW_REVISION="539a22b68c114c94eaf4a88ea8d26b7bfe2d0c39"
+ARG NEXTFLOW_REVISION="a96233af6fb505a1716a70408d46218f7d45dc96"
 
 WORKDIR /cleansumstats
 
@@ -54,7 +54,7 @@ RUN rm -rf rmath
 #---------------------------------------------------------------------------------
 # Installing r-stats-c-streamer
 
-ARG R_STATS_C_STREAMER_REVISION="91c4430b3d5a9f313de95bcc3aae205a663d23d7"
+ARG R_STATS_C_STREAMER_REVISION="a3ef08bef1e45c9135400b42aea798e3bf0dbf0f"
 
 RUN wget "https://github.com/pappewaio/r-stats-c-streamer/archive/${R_STATS_C_STREAMER_REVISION}.zip" \
   --quiet -O r-stats-c-streamer.zip && \
@@ -107,6 +107,7 @@ ARG HTSLIB_VERSION="1.9"
 ARG BCFTOOLS_VERSION="1.9"
 ARG SAMTOOLS_VERSION="1.3.1"
 
+RUN apt-get update --fix-missing
 RUN apt-get install -y autoconf automake make zlib1g-dev libbz2-dev \
   liblzma-dev libcurl4-gnutls-dev libssl-dev libncurses5-dev
 
@@ -205,7 +206,7 @@ COPY install-sumstat-tools.sh .
 RUN mv sumstat-tools /usr/lib/ && \
   ./install-sumstat-tools.sh /usr/lib/sumstat-tools/bin /usr/bin
 
-RUN mv nextflow/build/releases/nextflow-20.10.0-all /usr/bin/nextflow && \
+RUN mv nextflow/build/releases/nextflow-21.12.1-edge-all /usr/bin/nextflow && \
   chmod +x /usr/bin/nextflow
 
 RUN apt-get update --fix-missing && \
@@ -221,9 +222,9 @@ RUN apt-get update --fix-missing && \
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
 RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
 
-COPY ibp-pipeline-lib-0.1.1.jar /cleansumstats/ipb-pipeline-lib.jar
+COPY ibp-pipeline-lib-1.0.0.jar /cleansumstats/ibp-pipeline-lib.jar
 
-ENV NXF_CLASSPATH="/cleansumstats/ipb-pipeline-lib.jar"
+ENV NXF_CLASSPATH="/cleansumstats/ibp-pipeline-lib.jar"
 
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
 RUN chown nextflow:users /cleansumstats/external_data -R

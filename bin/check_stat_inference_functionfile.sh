@@ -1,42 +1,29 @@
 #!/usr/bin/env bash
 
 #meta file
-mefl=${1}
-af_branch=${2}
-
-#helpers
-function selRightHand(){
-  echo "${1#*: }"
-}
-function selColRow(){
-  grep ${1} ${2}
-}
+af_branch=${1}
+STATM=${2}
+B=${3}
+SE=${4}
+Z=${5}
+P=${6}
+OR=${7}
+ORL95=${8}
+ORU95=${9}
+N=${10}
+CaseN=${11}
+ControlN=${12}
+EAF=${13}
+OAF=${14}
 
 #recode as true or false
 function recode_to_tf(){
-  if [ "$1" == "" ]; then
+  if [ "$1" == "missing" ]; then
     echo false
   else
     echo true
   fi
 }
-
-#what is statmethod according to meta data file
-STATM="$(selRightHand "$(selColRow "^stats_Model:" $mefl)")"
-
-#what is colname according to meta data file
-B="$(selRightHand "$(selColRow "^col_BETA:" $mefl)")"
-SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
-Z="$(selRightHand "$(selColRow "^col_Z:" $mefl)")"
-P="$(selRightHand "$(selColRow "^col_P:" $mefl)")"
-OR="$(selRightHand "$(selColRow "^col_OR:" $mefl)")"
-ORL95="$(selRightHand "$(selColRow "^col_ORL95:" $mefl)")"
-ORU95="$(selRightHand "$(selColRow "^col_ORU95:" $mefl)")"
-N="$(selRightHand "$(selColRow "^col_N:" $mefl)")"
-CaseN="$(selRightHand "$(selColRow "^col_CaseN:" $mefl)")"
-ControlN="$(selRightHand "$(selColRow "^col_ControlN:" $mefl)")"
-EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
-OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
 
 #true or false (exists or not)
 tfB="$(recode_to_tf $B)"

@@ -1,12 +1,14 @@
-# nf-core/cleansumstats: Documentation
+# Documentation
 
-The nf-core/cleansumstats documentation is split into the following files:
+The cleansumstats documentation is split into the following files:
 
-1. [Installation](https://nf-co.re/usage/installation)
-2. Pipeline configuration
-    * [Local installation](https://nf-co.re/usage/local_installation)
-    * [Adding your own system config](https://nf-co.re/usage/adding_own_config)
-    * [Reference genomes](https://nf-co.re/usage/reference_genomes)
-3. [Running the pipeline](usage.md)
+1. [Installation](installation.md)
+2. [Pipeline configuration](pipeline-configuration.md)
+3. [Input](input.md)
 4. [Output and how to interpret the results](output.md)
-5. [Troubleshooting](https://nf-co.re/usage/troubleshooting)
+5. [Troubleshooting](troubleshooting)
+6. [developer-usage](developer-usage.md)
+7. [developer-extra](developer-usage.md)
+8. [developer-docker](developer-docker.md)
+9. [post-processing](post-processing.md)
+

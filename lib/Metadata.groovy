@@ -2,6 +2,7 @@ import groovy.lang.MetaProperty
 import java.nio.file.Path
 import java.nio.file.Paths
 import dk.biopsyk.BaseMetadata
+import nextflow.script.ScriptBinding.ParamsMap
 
 /**
  * Represents the contents of a metadata YAML-file. Contains functionality to:
@@ -18,6 +19,7 @@ class Metadata extends BaseMetadata {
   String cleansumstats_version = null
   String cleansumstats_metafile_user = null
   Date cleansumstats_metafile_date = null
+  String cleansumstats_metafile_kind = null
   String path_sumStats = null
   String path_readMe = null
   String path_pdf = null
@@ -64,6 +66,7 @@ class Metadata extends BaseMetadata {
   String col_N = null
   String col_CaseN = null
   String col_ControlN = null
+  String col_StudyN = null
   String col_INFO = null
   String col_EAF = null
   String col_OAF = null
@@ -74,17 +77,30 @@ class Metadata extends BaseMetadata {
   /**
    *
    */
-  public def postprocess() {
+  public def postprocess(ParamsMap nextflow_params) {
     System.out.println("Postprocess metadata")
 
-    this.validate_paths()
+    this.validate_paths(nextflow_params)
     this.validate_sumstat_header()
   }
 
   /**
    * Makes sure that all metadata fields that are paths points to an existing and readable file.
    */
-  private def validate_paths() {
+  private def validate_paths(ParamsMap nextflow_params) {
+    def dirs = nextflow_params.get("extrapaths")
+    def metadata_dir = this.source_path.getParent()
+
+    if (dirs != null && dirs instanceof String) {
+      dirs = dirs.tokenize(",")
+    } else {
+      dirs = []
+    }
+
+    if (metadata_dir != null) {
+      dirs.push(metadata_dir.toString())
+    }
+
     Metadata.class.metaClass.getProperties().each { prop ->
       if (!prop.name.startsWith("path_")) return
 
@@ -93,10 +109,10 @@ class Metadata extends BaseMetadata {
       if (value == null) {
         return
       } else if (value instanceof String) {
-        value = assert_readable_file_exists(prop.name, value)
+        value = assert_readable_file_exists(prop.name, value, dirs)
       } else if (value instanceof List) {
         value = value.collect {
-          assert_readable_file_exists(prop.name, it)
+          assert_readable_file_exists(prop.name, it, dirs)
         }
       } else {
         return
@@ -163,7 +179,9 @@ class Metadata extends BaseMetadata {
       "ControlN": this.col_ControlN,
       "EAF": this.col_EAF,
       "OAF": this.col_OAF,
-      "INFO": this.col_INFO
+      "INFO": this.col_INFO,
+      "DIRECTION": this.col_Direction,
+      "StudyN": this.col_StudyN
     ]
 
     return stats.findAll { it.value != null }

@@ -12,7 +12,7 @@ outdir="${work_dir}/out"
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
 
-echo ">> Test regression #240"
+echo ">> Test regression #242"
 
 cd "${work_dir}"
 
@@ -61,7 +61,7 @@ EOF
 
 cat <<EOF > ./expected-result1.tsv
 CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	B	Z	EAF_1KG
-12	117668628	5	rs645510	C	T	0.510505	0.0143	0.0151	1.05594	1
+12	117668628	5	rs645510	C	T	0.510505	0.0143	0.0151	1.05594	0.67
 3	140461721	1	rs6439928	T	C	0.543501	0.0141	-0.0157	-1.11347	0.68
 EOF
 
@@ -83,13 +83,13 @@ fi
 
 echo "-- Pipeline done, general validation"
 
-for f in ./out/**/cleaned_metadata.yaml
+for f in ./out/cleaned_metadata.yaml
 do
   "${tests_dir}/validators/validate-cleaned-metadata.py" \
     "${schemas_dir}/cleaned-metadata.yaml" "${f}"
 done
 
-for f in ./out/**/*.gz
+for f in ./out/*.gz
 do
   gzip --decompress "${f}"
   "${tests_dir}/validators/validate-cleaned-sumstats.py" \
@@ -108,12 +108,12 @@ function _check_results {
    cat $exp
    echo "---------------------------"
 
-    echo "- [FAIL] regression-106"
+    echo "- [FAIL] regression-242"
     cat ./difference
     exit 1
   fi
 
 }
 
-mv ${outdir}/metadata/cleaned_GRCh38 ./observed-result1.tsv
+mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv

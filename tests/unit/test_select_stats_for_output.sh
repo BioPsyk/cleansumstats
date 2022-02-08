@@ -32,7 +32,24 @@ function _check_results {
 
 function _run_script {
 
-  "${test_script}.sh" ./input.yaml ./sfile.tsv ./inferred.tsv ./observed-source > ./observed-result1.tsv
+  "${test_script}.sh" ./sfile.tsv ./inferred.tsv ./observed-source \
+    "linear" \
+    "EFFECT_A1" \
+    "SE" \
+    "missing" \
+    "P" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    > ./observed-result1.tsv
 
   _check_results ./observed-result1.tsv ./expected-result1.tsv
   _check_results ./observed-source ./expected-source

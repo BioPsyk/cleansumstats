@@ -42,7 +42,7 @@ items:
     INFO:
       type: number
     Direction:
-      type: number
+      type: string
     B:
       type: number
     Z:
@@ -50,5 +50,8 @@ items:
     EAF:
       type: number
     EAF_1KG:
-      type: number
+      anyOf:
+        - type: number
+        - type: string
+          const: "NA"
   required: ["CHR", "POS", "RSID"]

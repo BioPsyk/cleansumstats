@@ -4,11 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.3.0] - 2022-02-08
+### Added
+- New post-processing adding all 5 major pops from 1kgp
+- New post-processing flipping allele direction of effects
+- More options regarding directing and repressing output using nextflow.config
+- Explanation of how to treat .csv input in troubleshooting
+- New instructions in the README.md to set a more flexible write access to the user created `tmp/` folder
+- Support for extra paths to search for files in the metafile using `-p path1,path2`
+- Support for variant specific information of number of metastudies: `col_StudyN`
+- Support for two metafile minimum requiriments options, default and library
+- New user options to set tmp and workdirs -b -w
+- New user option to set dev mode -l
+- Automatic cleanup of workdir when not in dev move
+
+### Changed
+- DSL-1 converted to DSL-2
+- Updated nextflow in Dockerfile to nextflow-21.12.1-edge-all
+- Improved `docs/`, but still work to be done
+
+### Fixed
+- AF information has now support for NA
+- It is now possible to run from anywhere, not only from within the clensumstats repo
+- DIRECTION is now skipped by the awk numeric test
+- General support for NA in r-stat-c-streamer
+
 ## [1.2.0] - 2021-12-08
 ### Added
-- Add post-process script that converts from the present output format to a vcf file, mathing column names to https://github.com/MRCIEU/gwas2vcf
-- Add a file in the details folder explaining the source of each output column
-- Add a post-process section in docs that is linked to from README.md
+- Post-process script that converts from the present output format to a vcf file, mathing column names to https://github.com/MRCIEU/gwas2vcf
+- New file in the details folder explaining the source of each output column
+- New post-process section in docs that is linked to from README.md
 
 ## [1.1.10] - 2021-11-22
 ### Fixed
@@ -24,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.7] - 2021-10-29
 ### Fixed
-- mounting system /tmp on image /tmp to not run out of image memory
+- Mounting system /tmp on image /tmp to not run out of image memory
 
 ## [1.1.6] - 2021-10-29
 ### Fixed
@@ -46,22 +72,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.1] - 2021-10-28
 ### Added
-- Added version flag -v to cleansumstats.sh
-- Added documentation about versioning to docs/developers.md
+- Version flag -v to cleansumstats.sh
+- Documentation about versioning to docs/developers.md
 
 ## [1.1.0] - 2021-10-28
 ### Added
-- Added variable and path test to cleansumstats.sh
-- Added prepare-1kgp to cleansumstats.sh
-- Added prepare-dbsnp to cleansumstats.sh
+- Variable and path test to cleansumstats.sh
+- Prepare-1kgp to cleansumstats.sh
+- Prepare-dbsnp to cleansumstats.sh
 
 ### Changed
 - Moved almost all introduction content to outout docs to make README.md more readable
-- Changed README.md to match the new cleansumstats.sh
+- README.md to match the new cleansumstats.sh
 
 ## [1.0.2] - 2021-10-27
 ### Changed
-- Changed default path for cleansumstats.sh to match with README.md
+- Default path for cleansumstats.sh to match with README.md
 
 ## [1.0.1] - 2021-10-26
 ### Fixed

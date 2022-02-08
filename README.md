@@ -21,8 +21,9 @@ git clone https://github.com/BioPsyk/cleansumstats.git
 cd cleansumstats
 
 # iii. Download our container image, move it to a folder called tmp within the repo (<1GB)
-singularity pull ibp-cleansumstats-base_version-1.0.1.simg docker://biopsyk/ibp-cleansumstats:1.0.1
+singularity pull ibp-cleansumstats-base_version-1.1.0.simg docker://biopsyk/ibp-cleansumstats:1.1.0
 mkdir -p tmp
+chmod ug+rwX tmp
 mv ibp-cleansumstats-base_version-1.0.1.simg tmp/
 
 # iv. clean a sumstat using shrinked example data for dbsnp and 1kgp (-e flag)
@@ -76,6 +77,8 @@ After the reference data (dbsnp and 1000 genomes) has been created it is time to
 
 You can also use this [webinterface](https://biopsyk.github.io/metadata) to generate a metadatafile. Again, remember that all files referred to by the metadatafile have to be in the same directory as the metafile when you run cleansumstats. Check `tests/example_data` and sumstats 1-5 for an example of how you can structure your input folders.
 
+There is no support for relative links in the metadata file, which means all files have to be in the same folder. However, you can provide paths to associated files `-p path/to/folder1,path/to/folder2`
+
 ## Run a fully operational cleaning pipeline 
 This will take longer time compared to the quick-start run as we now use the full >600 million rows dbsnp reference to map our variants to.
 
@@ -92,26 +95,6 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 
 # For additional flags, see:
 ./cleansumstats.sh -h
-##Usage:
-## ./cleansumstats.sh -i <file> -o <dir> -d <dir> -k <dir>
-##
-##Example usage, using the quick example flag:
-## ./cleansumstats.sh -o <dir> -e
-##
-##Generate references:
-## ./cleansumstats.sh prepare-dbsnp -i <file> -o <dir>
-## ./cleansumstats.sh prepare-1kgp -i <file> -d <dir> -o <dir>
-##
-##options:
-##-h		 Display help message for cleansumstats
-##-i <file> 	 path to infile
-##-o <dir> 	 path to output directory
-##-d <dir> 	 path to dbsnp processed reference
-##-k <dir> 	 path to 1000 genomes processed reference
-##-t  	 	 quick test for all paths and params
-##-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references
-##-v  	 	 get the version number
-
 
 ```
 
@@ -119,7 +102,7 @@ srun --mem=40g --ntasks 1 --cpus-per-task 6 --time=1:00:00 --account ibp_pipelin
 ## More documentation
 - See [Output and how to interpret the results](docs/output.md) for the output structure and how to interpret the results.
 - See [Post-processing](docs/post-processing.md) for how to further process the output
-- See [Developer instructions](docs/developers.md) only for developers
+- And [more](docs/README.md) 
 
 
 ## Credits

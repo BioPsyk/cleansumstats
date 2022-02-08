@@ -74,10 +74,10 @@ cat <<EOF > ./expected-result1.tsv
 CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	B	Z	EAF_1KG
 18	31901577	4	rs12709653	A	G	0.3176	0.0142	-0.0142	-1	0.71
 1	154199074	5	rs12726220	A	G	0.2547	0.0277	-0.0315	-1.13718	0.93
-1	8413753	6	rs12754538	C	T	0.9663	0.015	0.0006	0.04	1
-2	28958241	3	rs10197378	G	A	0.2226	0.0155	0.0189	1.21935	1
+1	8413753	6	rs12754538	C	T	0.9663	0.015	0.0006	0.04	0.22
+2	28958241	3	rs10197378	G	A	0.2226	0.0155	0.0189	1.21935	0.21
 3	140461721	1	rs6439928	T	C	0.2648	0.0141	-0.0157	-1.11347	0.68
-7	43168054	2	rs6463169	C	T	0.2012	0.0171	0.0219	1.2807	1
+7	43168054	2	rs6463169	C	T	0.2012	0.0171	0.0219	1.2807	0.79
 EOF
 
 gzip "./input.txt"
@@ -98,13 +98,13 @@ fi
 
 echo "-- Pipeline done, general validation"
 
-for f in ./out/**/cleaned_metadata.yaml
+for f in ./out/cleaned_metadata.yaml
 do
   "${tests_dir}/validators/validate-cleaned-metadata.py" \
     "${schemas_dir}/cleaned-metadata.yaml" "${f}"
 done
 
-for f in ./out/**/*.gz
+for f in ./out/*.gz
 do
   gzip --decompress "${f}"
   "${tests_dir}/validators/validate-cleaned-sumstats.py" \
@@ -125,5 +125,5 @@ function _check_results {
 
 }
 
-mv ${outdir}/metadata/cleaned_GRCh38 ./observed-result1.tsv
+mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv

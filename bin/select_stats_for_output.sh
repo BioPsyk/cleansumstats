@@ -1,22 +1,29 @@
 #!/usr/bin/env bash
 
 #meta file
-mefl=${1}
-stdin=${2}
-inferred=${3}
-from_which_source=${4}
-
-##helpers
-function selRightHand(){
-  echo "${1#*: }"
-}
-function selColRow(){
-  grep ${1} ${2}
-}
+stdin=${1}
+inferred=${2}
+from_which_source=${3}
+STATM=${4}
+B=${5}
+SE=${6}
+Z=${7}
+P=${8}
+OR=${9}
+ORL95=${10}
+ORU95=${11}
+N=${12}
+CaseN=${13}
+ControlN=${14}
+EAF=${15}
+OAF=${16}
+INFO=${17}
+DIRECTION=${18}
+StudyN=${19}
 
 #recode as true or false
 function recode_to_tf(){
-  if [ "$1" == "" ]; then
+  if [ "$1" == "missing" ]; then
     echo false
   else
     echo true
@@ -31,24 +38,7 @@ function specfunx_exists(){
 }
 
 #what is statmethod according to meta data file
-STATM="$(selRightHand "$(selColRow "^stats_Model:" $mefl)")"
-
-#what is colname according to meta data file
-B="$(selRightHand "$(selColRow "^col_BETA:" $mefl)")"
-SE="$(selRightHand "$(selColRow "^col_SE:" $mefl)")"
-Z="$(selRightHand "$(selColRow "^col_Z:" $mefl)")"
-P="$(selRightHand "$(selColRow "^col_P:" $mefl)")"
-OR="$(selRightHand "$(selColRow "^col_OR:" $mefl)")"
-ORL95="$(selRightHand "$(selColRow "^col_ORL95:" $mefl)")"
-ORU95="$(selRightHand "$(selColRow "^col_ORU95:" $mefl)")"
-N="$(selRightHand "$(selColRow "^col_N:" $mefl)")"
-CaseN="$(selRightHand "$(selColRow "^col_CaseN:" $mefl)")"
-ControlN="$(selRightHand "$(selColRow "^col_ControlN:" $mefl)")"
-EAF="$(selRightHand "$(selColRow "^col_EAF:" $mefl)")"
-OAF="$(selRightHand "$(selColRow "^col_OAF:" $mefl)")"
-INFO="$(selRightHand "$(selColRow "^col_INFO:" $mefl)")"
-DIRECTION="$(selRightHand "$(selColRow "^col_Direction:" $mefl)")"
-
+#STATM="$(selRightHand "$(selColRow "^stats_Model:" $mefl)")"
 
 #true or false (exists or not)
 tfB="$(recode_to_tf $B)"
@@ -65,6 +55,7 @@ tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
 tfINFO="$(recode_to_tf $INFO)"
 tfDIRECTION="$(recode_to_tf $DIRECTION)"
+tfStudyN="$(recode_to_tf $StudyN)"
 
 if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
   EAF2="EAF"
@@ -83,7 +74,7 @@ function which_to_select(){
     echo "B" 1>&2
     echo -e "B\toriginal" >> ${selected_source}
   else
-    if [ ${STATM} == "linear" ]; then
+    if [ "${STATM}" == "linear" ]; then
       if specfunx_exists "beta_from_zscore_se" ${inferred}; then
         echo "beta_from_zscore_se"
         echo -e "B\tbeta_from_zscore_se" >> ${selected_source}
@@ -103,7 +94,7 @@ function which_to_select(){
       else
         :
       fi
-    elif [ ${STATM} == "logistic" ]; then
+    elif [ "${STATM}" == "logistic" ]; then
       if specfunx_exists "beta_from_oddsratio" ${inferred}; then
         echo "beta_from_oddsratio"
         echo -e "B\tbeta_from_oddsratio" >> ${selected_source}
@@ -122,7 +113,7 @@ function which_to_select(){
     echo "SE" 1>&2
     echo -e "SE\toriginal" >> ${selected_source}
   else
-    if [ ${STATM} == "linear" ]; then
+    if [ "${STATM}" == "linear" ]; then
       if specfunx_exists "se_from_zscore_beta" ${inferred}; then
         echo "se_from_zscore_beta"
         echo -e "SE\tse_from_zscore_beta" >> ${selected_source}
@@ -142,7 +133,7 @@ function which_to_select(){
       else
         :
       fi
-    elif [ ${STATM} == "logistic" ]; then
+    elif [ "${STATM}" == "logistic" ]; then
       if specfunx_exists "se_from_beta_zscore" ${inferred}; then
         echo "se_from_beta_zscore"
         echo -e "SE\tse_from_beta_zscore" >> ${selected_source}
@@ -161,7 +152,7 @@ function which_to_select(){
     echo "Z" 1>&2
     echo -e "Z\toriginal" >> ${selected_source}
   else
-    if [ ${STATM} == "linear" ]; then
+    if [ "${STATM}" == "linear" ]; then
       if specfunx_exists "zscore_from_beta_se" ${inferred}; then
         echo "zscore_from_beta_se"
         echo -e "Z\tzscore_from_beta_se" >> ${selected_source}
@@ -189,7 +180,7 @@ function which_to_select(){
       else
         :
       fi
-    elif [ ${STATM} == "logistic" ]; then
+    elif [ "${STATM}" == "logistic" ]; then
       if specfunx_exists "zscore_from_beta_se" ${inferred}; then
         echo "zscore_from_beta_se"
         echo -e "Z\tzscore_from_beta_se" >> ${selected_source}
@@ -208,7 +199,7 @@ function which_to_select(){
     echo "P" 1>&2
     echo -e "P\toriginal" >> ${selected_source}
   else
-    if [ ${STATM} == "linear" ]; then
+    if [ "${STATM}" == "linear" ]; then
       if specfunx_exists "pval_from_zscore_N" ${inferred}; then
         echo "pval_from_zscore_N"
         echo -e "P\tpval_from_zscore_N" >> ${selected_source}
@@ -228,7 +219,7 @@ function which_to_select(){
       else
         :
       fi
-    elif [ ${STATM} == "logistic" ]; then
+    elif [ "${STATM}" == "logistic" ]; then
       if specfunx_exists "pval_from_zscore" ${inferred}; then
         echo "pval_from_zscore"
         echo -e "P\tpval_from_zscore" >> ${selected_source}
@@ -259,7 +250,7 @@ function which_to_select(){
     echo "N" 1>&2
     echo -e "N\toriginal" >> ${selected_source}
   else
-    if [ ${STATM} == "linear" ]; then
+    if [ "${STATM}" == "linear" ]; then
       if specfunx_exists "N_from_zscore_beta_af" ${inferred}; then
         echo "N_from_zscore_beta_af"
         echo -e "N\tN_from_zscore_beta_af" >> ${selected_source}
@@ -271,7 +262,7 @@ function which_to_select(){
       else
         :
       fi
-    elif [ ${STATM} == "logistic" ]; then
+    elif [ "${STATM}" == "logistic" ]; then
       if specfunx_exists "Neff_from_Nca_Nco" ${inferred}; then
         echo "Neff_from_Nca_Nco"
         echo -e "Neff\tNeff_from_Nca_Nco" >> ${selected_source}
@@ -310,6 +301,11 @@ function which_to_select(){
     echo -e "${DIRECTION}"
     echo -e "Direction\toriginal" >> ${selected_source}
     echo "Direction" 1>&2
+  fi
+  if [ ${tfStudyN} == "true" ]; then
+    echo -e "${StudyN}"
+    echo -e "StudyN\toriginal" >> ${selected_source}
+    echo "StudyN" 1>&2
   fi
 }
 
