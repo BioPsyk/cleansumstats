@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for extra paths to search for files in the metafile using `-p path1,path2`
 - Support for variant specific information of number of metastudies: `col_StudyN`
 - Support for two metafile minimum requiriments options, default and library
+- New user options to set tmp and workdirs -b -w
+- New user option to set dev mode -l
+- Automatic cleanup of workdir when not in dev move
 
 ### Changed
 - DSL-1 converted to DSL-2
