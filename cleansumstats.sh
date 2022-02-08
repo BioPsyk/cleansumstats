@@ -23,6 +23,7 @@ function general_usage(){
  echo "-o <dir> 	 path to output directory"
  echo "-d <dir> 	 path to dbsnp processed reference"
  echo "-k <dir> 	 path to 1000 genomes processed reference"
+ echo "-b <dir> 	 path to system tmp or scratch (default: /tmp)"
  echo "-p path1:path2 	 path to metadata associated folders"
  echo "-t  	 	 quick test for all paths and params"
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
@@ -56,7 +57,7 @@ fi
 
 
 # starting getops with :, puts the checking in silent mode for errors.
-getoptsstring=":hvi:o:d:k:p:te"
+getoptsstring=":hvi:o:d:k:b:p:te"
 
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
@@ -72,6 +73,7 @@ infile_given=false
 outdir_given=false
 dbsnpdir_given=false
 kgpdir_given=false
+tmpdir_given=false
 extrapaths_given=false
 pathquicktest=false
 runexampledata=false
@@ -79,6 +81,9 @@ runexampledata=false
 # default extrapaths values
 unset extrapaths
 unset extrapaths2
+
+# default system tmp
+tmpdir="/tmp"
 
 while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
   case ${opt} in
@@ -106,6 +111,10 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
     k )
       kgpdir="$OPTARG"
       kgpdir_given=true
+      ;;
+    b )
+      tmpdir="$OPTARG"
+      tmpdir_given=true
       ;;
     p )
       extrapaths="$OPTARG"
@@ -208,6 +217,7 @@ else
 fi
 dbsnpdir_host=$(realpath "${dbsnpdir}")
 kgpdir_host=$(realpath "${kgpdir}")
+tmpdir_host=$(realpath "${tmpdir}")
 
 # Test that file and folder exists, all of these will always get mounted
 if [ ! -f $infile_host ]; then
@@ -224,6 +234,10 @@ if [ ! -d $dbsnpdir_host ]; then
 fi
 if [ ! -d $kgpdir_host ]; then
   >&2 echo "kgpdir doesn't exist"
+  exit 1
+fi
+if [ ! -d $tmpdir_host ]; then
+  >&2 echo "tmpdir doesn't exist"
   exit 1
 fi
 
@@ -261,6 +275,9 @@ outdir_container="/cleansumstats/outdir"
 # dbsnpdir
 dbsnpdir_container="/cleansumstats/dbsnp"
 
+# tmpdir
+tmpdir_container="/tmp"
+
 # kgpdir
 kgpfile_name="1kg_af_ref.sorted.joined"
 kgpdir_container="/cleansumstats/kgpdir"
@@ -279,6 +296,7 @@ if ${pathquicktest}; then
  echo "outdir: ${outdir}"
  echo "dbsnpdir: ${dbsnpdir}"
  echo "kgpdir: ${kgpdir}"
+ echo "tmpdir: ${tmpdir}"
  echo ""
  echo "cleansumstats.sh logic"
  echo "------------------"
@@ -317,7 +335,7 @@ else
      -B "${outdir_host}:${outdir_container}" \
      -B "${dbsnpdir_host}:${dbsnpdir_container}" \
      -B "${kgpdir_host}:${kgpdir_container}" \
-     -B "/tmp:/tmp" \
+     -B "${tmpdir_host}:${tmpdir_container}" \
      "tmp/${singularity_image_tag}" \
      nextflow run /cleansumstats ${runtype} \
        --extrapaths ${extrapaths3} \
