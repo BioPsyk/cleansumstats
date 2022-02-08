@@ -24,9 +24,11 @@ function general_usage(){
  echo "-d <dir> 	 path to dbsnp processed reference"
  echo "-k <dir> 	 path to 1000 genomes processed reference"
  echo "-b <dir> 	 path to system tmp or scratch (default: /tmp)"
+ echo "-w <dir> 	 path to workdir/intermediate files (default: work)"
  echo "-p path1:path2 	 path to metadata associated folders"
  echo "-t  	 	 quick test for all paths and params"
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
+ echo "-l  	 	 dev mode, saving intermediate files, no cleanup of workdir(default: not active)"
  echo "-v  	 	 get the version number"
 }
 
@@ -34,6 +36,7 @@ function general_usage(){
 # Prepare path parsing
 ################################################################################
 # All paths we see will start from the project root, even if the command is called from somewhere else
+present_dir="${PWD}"
 project_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 ################################################################################
@@ -57,7 +60,7 @@ fi
 
 
 # starting getops with :, puts the checking in silent mode for errors.
-getoptsstring=":hvi:o:d:k:b:p:te"
+getoptsstring=":hvi:o:d:k:b:w:p:tle"
 
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
@@ -84,6 +87,8 @@ unset extrapaths2
 
 # default system tmp
 tmpdir="/tmp"
+workdir="${present_dir}/work"
+devmode=""
 
 while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
   case ${opt} in
@@ -116,12 +121,19 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       tmpdir="$OPTARG"
       tmpdir_given=true
       ;;
+    w )
+      workdir="$OPTARG"
+      workdir_given=true
+      ;;
     p )
       extrapaths="$OPTARG"
       extrapaths_given=true
       ;;
     e )
       runexampledata=true
+      ;;
+    l )
+      devmode="--dev"
       ;;
     t )
       pathquicktest=true
@@ -201,6 +213,9 @@ fi
 # make outdir if it doesn't already exist
 mkdir -p ${outdir}
 
+# make workdir if it doesn't already exist
+mkdir -p ${workdir}
+
 infile_host=$(realpath "${infile}")
 outdir_host=$(realpath "${outdir}")
 
@@ -218,6 +233,7 @@ fi
 dbsnpdir_host=$(realpath "${dbsnpdir}")
 kgpdir_host=$(realpath "${kgpdir}")
 tmpdir_host=$(realpath "${tmpdir}")
+workdir_host=$(realpath "${workdir}")
 
 # Test that file and folder exists, all of these will always get mounted
 if [ ! -f $infile_host ]; then
@@ -238,6 +254,10 @@ if [ ! -d $kgpdir_host ]; then
 fi
 if [ ! -d $tmpdir_host ]; then
   >&2 echo "tmpdir doesn't exist"
+  exit 1
+fi
+if [ ! -d $workdir_host ]; then
+  >&2 echo "workdir doesn't exist"
   exit 1
 fi
 
@@ -278,6 +298,9 @@ dbsnpdir_container="/cleansumstats/dbsnp"
 # tmpdir
 tmpdir_container="/tmp"
 
+# workdir
+workdir_container="/cleansumstats/work"
+
 # kgpdir
 kgpfile_name="1kg_af_ref.sorted.joined"
 kgpdir_container="/cleansumstats/kgpdir"
@@ -287,7 +310,6 @@ kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 FAKE_HOME="tmp/fake-home"
 export SINGULARITY_HOME="/cleansumstats/${FAKE_HOME}"
 mkdir -p "${FAKE_HOME}"
-
 
 if ${pathquicktest}; then
  echo "cleansumstats.sh to-mount"
@@ -336,16 +358,14 @@ else
      -B "${dbsnpdir_host}:${dbsnpdir_container}" \
      -B "${kgpdir_host}:${kgpdir_container}" \
      -B "${tmpdir_host}:${tmpdir_container}" \
+     -B "${workdir_host}:${workdir_container}" \
      "tmp/${singularity_image_tag}" \
      nextflow run /cleansumstats ${runtype} \
        --extrapaths ${extrapaths3} \
-       --dev \
+       ${devmode} \
        --input "${infile_container}" \
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \
-       --kg1000AFGRCh38 "${kgpfile_container}" \
-       --cleanup "true" \
-       --workDir "/cleansumstats/work" \
-       --tmpDir "/cleansumstats/tmp"
+       --kg1000AFGRCh38 "${kgpfile_container}"
 fi
 
