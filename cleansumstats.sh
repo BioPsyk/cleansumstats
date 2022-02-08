@@ -343,6 +343,9 @@ else
        --input "${infile_container}" \
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \
-       --kg1000AFGRCh38 "${kgpfile_container}"
+       --kg1000AFGRCh38 "${kgpfile_container}" \
+       --cleanup "true" \
+       --workDir "/cleansumstats/work" \
+       --tmpDir "/cleansumstats/tmp"
 fi
 
