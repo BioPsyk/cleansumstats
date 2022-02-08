@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [1.3.0] - 2022-02-04
+## [1.3.0] - 2022-02-08
 ### Added
 - New post-processing adding all 5 major pops from 1kgp
 - New post-processing flipping allele direction of effects
@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New instructions in the README.md to set a more flexible write access to the user created `tmp/` folder
 - Support for extra paths to search for files in the metafile using `-p path1,path2`
 - Support for variant specific information of number of metastudies: `col_StudyN`
+- Support for two metafile minimum requiriments options, default and library
 
 ### Changed
 - DSL-1 converted to DSL-2

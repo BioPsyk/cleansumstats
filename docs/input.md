@@ -17,7 +17,7 @@ There is no `path_` support for relative links in the metadata file, which means
 ### Requirements
 All requirements are specified in the file `assets/schemas/raw-metadata.yaml`, but here we will go through the thinking behind how we selected them.
 
-## Minimum requirements
+## Minimum requirements (default)
 It is possible to run the pipeline with just a few fields in the metafile. This is useful if you just want to process the data without the intention of adding it to a library, or if you have your own library system.
 
 The absolute minimum requirements are:
@@ -46,13 +46,13 @@ Dependend fields:
 - col_P, if stats_neglog10P
 
 ## Minimum requirements for inclusion in a sumstat library
-If the library switch in the config is activated, then more fields will be required:
+If the library switch is activated, by addiing the field and value:
+- "cleansumstats_metafile_kind: library"
 
-The minimum requirements to organize a library are:
+then these additional minimum fields will be required:
 - "cleansumstats_version"
 - "cleansumstats_metafile_user"
 - "cleansumstats_metafile_date"
-- "path_sumStats"
 - "study_Title"
 - "study_PMID"
 - "study_Year"
@@ -64,28 +64,4 @@ The minimum requirements to organize a library are:
 - "study_Gender"
 - "stats_TraitType"
 - "stats_TotalN"
-- "stats_Model"
-- "col_EffectAllele"
-
-As well as
-- "col_SNP" or "col_CHR" and "col_POS"
-- anyOf:
-  - "col_BETA"
-  - "col_SE"
-  - "col_Z"
-  - "col_P"
-  - "col_OR"
-  - "col_ORL95"
-  - "col_ORU95"
-  - "col_N"
-  - "col_CaseN"
-  - "col_ControlN"
-  - "col_EAF"
-  - "col_OAF"
-  - "col_INFO"
-  - "col_Direction"
-  - "col_StudyN"
-
-Dependend fields:
-- col_P, if stats_neglog10P
 
