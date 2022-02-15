@@ -21,10 +21,10 @@ git clone https://github.com/BioPsyk/cleansumstats.git
 cd cleansumstats
 
 # iii. Download our container image, move it to a folder called tmp within the repo (<1GB)
-singularity pull ibp-cleansumstats-base_version-1.1.0.simg docker://biopsyk/ibp-cleansumstats:1.1.0
+singularity pull ibp-cleansumstats-base_version-1.1.0.sif docker://biopsyk/ibp-cleansumstats:1.1.0
 mkdir -p tmp
 chmod ug+rwX tmp
-mv ibp-cleansumstats-base_version-1.0.1.simg tmp/
+mv ibp-cleansumstats-base_version-1.0.1.sif tmp/
 
 # iv. clean a sumstat using shrinked example data for dbsnp and 1kgp (-e flag)
 ./cleansumstats.sh \
