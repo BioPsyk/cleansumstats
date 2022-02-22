@@ -29,7 +29,11 @@ STUDY_PANELS = {
     '^TOPMED.*': 'TOPMED',
     '^HRC.*': 'HRC',
     '^meta.*': 'meta',
-    '^UKB.*': 'UKB'
+    '^UKB.*': 'UKB',
+    '^UK10K.*': 'UK10K',
+    '^SISu.*3': 'SISu3',
+    '^SISu.*4': 'SISu4',
+    'other': 'other'
 }
 
 STUDY_SOFTWARES = {
@@ -48,6 +52,7 @@ STUDY_SOFTWARES = {
     '^Beagle1\.0.*': 'Beagle1.0',
     '^minimac2.*': 'minimac2',
     '^minimac3.*': 'minimac3',
+    '^eagle': 'eagle',
     '^eagle2.*': 'eagle2',
     '^meta.*': 'meta'
 }
@@ -69,7 +74,8 @@ CONVERSION_TABLE = {
     'stats_Model': {
         'lin': 'linear',
         'log': 'logistic',
-        'other': 'other'
+        'other': 'other',
+        'cox': 'cox'
     }
 }
 

@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.3.1] - 2022-02-22
+### Added
+-  New allowed values e.g., reference panels in the metafile schema
+
 ## [1.3.0] - 2022-02-08
 ### Added
 - New post-processing adding all 5 major pops from 1kgp
@@ -32,9 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.0] - 2021-12-08
 ### Added
-- Add post-process script that converts from the present output format to a vcf file, mathing column names to https://github.com/MRCIEU/gwas2vcf
-- Add a file in the details folder explaining the source of each output column
-- Add a post-process section in docs that is linked to from README.md
+- Post-process script that converts from the present output format to a vcf file, mathing column names to https://github.com/MRCIEU/gwas2vcf
+- New file in the details folder explaining the source of each output column
+- New post-process section in docs that is linked to from README.md
 
 ## [1.1.10] - 2021-11-22
 ### Fixed
@@ -50,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.7] - 2021-10-29
 ### Fixed
-- mounting system /tmp on image /tmp to not run out of image memory
+- Mounting system /tmp on image /tmp to not run out of image memory
 
 ## [1.1.6] - 2021-10-29
 ### Fixed
@@ -72,22 +76,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.1] - 2021-10-28
 ### Added
-- Added version flag -v to cleansumstats.sh
-- Added documentation about versioning to docs/developers.md
+- Version flag -v to cleansumstats.sh
+- Documentation about versioning to docs/developers.md
 
 ## [1.1.0] - 2021-10-28
 ### Added
-- Added variable and path test to cleansumstats.sh
-- Added prepare-1kgp to cleansumstats.sh
-- Added prepare-dbsnp to cleansumstats.sh
+- Variable and path test to cleansumstats.sh
+- Prepare-1kgp to cleansumstats.sh
+- Prepare-dbsnp to cleansumstats.sh
 
 ### Changed
 - Moved almost all introduction content to outout docs to make README.md more readable
-- Changed README.md to match the new cleansumstats.sh
+- README.md to match the new cleansumstats.sh
 
 ## [1.0.2] - 2021-10-27
 ### Changed
-- Changed default path for cleansumstats.sh to match with README.md
+- Default path for cleansumstats.sh to match with README.md
 
 ## [1.0.1] - 2021-10-26
 ### Fixed
