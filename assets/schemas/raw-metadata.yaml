@@ -278,6 +278,7 @@ properties:
           - "HRC"
           - "UKB"
           - "meta"
+          - "other"
       - title: "Free text"
         type: "string"
 
@@ -302,6 +303,8 @@ properties:
           - "MaCH"
           - "Beagle"
           - "Beagle1.0"
+          - "Eagle"
+          - "Eagle2"
           - "meta"
       - title: "Free text"
         type: "string"
@@ -322,7 +325,11 @@ properties:
           - "TOPMED"
           - "HRC"
           - "UKB"
+          - "UK10K"
+          - "SISu3"
+          - "SISu4"
           - "meta"
+          - "other"
       - title: "Free text"
         type: "string"
 
@@ -359,6 +366,7 @@ properties:
       NOTE: If a meta-analysis with multiple approaches, use "meta".
     type: "string"
     enum:
+      - "UK Biobank Axiom"
       - "UKB"
       - "meta"
 
@@ -406,7 +414,6 @@ properties:
       - "cox"                  = Used to model survival times
       - "other"                = Some other model, should be described in `stats_Notes`
 
-      When the model could not be resolved, this field should be excluded.
     type: "string"
     enum:
       - "linear"
