@@ -301,7 +301,7 @@ process add_raw_to_output {
 
     if [ "${readme}" != "missing" ]
     then
-      cp ${pdfpath} ${params.rawoutput}/.
+      cp ${readme} ${params.rawoutput}/.
     fi
 
     if [ "${pdfpath}" != "missing" ]
