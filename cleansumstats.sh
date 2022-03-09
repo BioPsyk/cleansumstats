@@ -158,7 +158,7 @@ if $runexampledata; then
     if ${infile_given}; then
       :
     else
-      infile="tests/example_data/dbsnp/All_20180418_example_data.vcf.gz"
+      infile="${project_dir}/tests/example_data/dbsnp/All_20180418_example_data.vcf.gz"
     fi
     if ${outdir_given}; then
       :
@@ -167,13 +167,13 @@ if $runexampledata; then
     fi
     dbsnpdir=${outdir}
     #won't be used, but needs to be set
-    kgpdir="tests/example_data/1kgp/generated_reference"
+    kgpdir="${project_dir}/tests/example_data/1kgp/generated_reference"
 
   elif [ "${runtype}" == "--generate1KgAfSNPreference" ] ; then
     if ${infile_given}; then
       :
     else
-      infile="tests/example_data/1kgp/1kg_example_data.vcf.gz"
+      infile="${project_dir}/tests/example_data/1kgp/1kg_example_data.vcf.gz"
     fi
     if ${outdir_given}; then
       :
@@ -183,7 +183,7 @@ if $runexampledata; then
     if ${dbsnpdir_given}; then
       :
     else
-      dbsnpdir="tests/example_data/dbsnp/generated_reference"
+      dbsnpdir="${project_dir}/tests/example_data/dbsnp/generated_reference"
     fi
     kgpdir=${outdir}
 
@@ -191,15 +191,15 @@ if $runexampledata; then
     if ${infile_given}; then
       :
     else
-      infile="tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
+      infile="${project_dir}/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
     fi
     if ${outdir_given}; then
       :
     else
       outdir="out_test"
     fi
-    dbsnpdir="tests/example_data/dbsnp/generated_reference"
-    kgpdir="tests/example_data/1kgp/generated_reference"
+    dbsnpdir="${project_dir}/tests/example_data/dbsnp/generated_reference"
+    kgpdir="${project_dir}/tests/example_data/1kgp/generated_reference"
   else
     echo "${runtype}"
     echo "unknown runtype"
