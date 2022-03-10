@@ -1,5 +1,17 @@
 infile=$1
 outfile=$2
+baseAllele=$3
+
+if [[ "${baseAllele}" == "REF" ]];
+then
+  baseAllele2="Reference"
+elif [[ "${baseAllele}" == "ALT" ]];
+then
+  baseAllele2="Alternative"
+else
+  echo "base allele needs to be either REF or ALT"
+  exit 1
+fi
 
 infile_host=$(realpath "${infile}")
 outfile_host=$(realpath "${outfile}")
@@ -38,4 +50,6 @@ exec singularity run \
    /cleansumstats/bin/convert_cleaned_to_vcf.sh \
      "${infile_container}" \
      "${outfile_container}" \
-     true
+     true \
+     "${baseAllele2}"
+
