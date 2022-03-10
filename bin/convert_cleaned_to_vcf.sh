@@ -3,6 +3,7 @@
 sfile=${1}
 out=${2}
 cleanup=${3}
+whichAlleleBase="${4}"
 
 if ${cleanup} ;then
   tmp_dir=$(mktemp -d)
@@ -25,8 +26,11 @@ P
 N
 CaseN
 EAF
+EAF_1KG
 INFO
 )
+
+
 
 VarToUseAsName=(
 ES
@@ -36,25 +40,27 @@ EP
 SS
 NC
 AF
+AFKG
 SI
 )
 
 FormatFlags=(
-'##FORMAT=<ID=ES,Number=A,Type=Float,Description="Effect size estimate relative to the alternative allele">'
-'##FORMAT=<ID=SE,Number=A,Type=Float,Description="Standard error of effect size estimate">'
-'##FORMAT=<ID=EZ,Number=A,Type=Float,Description="Z-score of effect size estimate">'
-'##FORMAT=<ID=EP,Number=A,Type=Float,Description="p-value for effect estimate">'
-'##FORMAT=<ID=SS,Number=A,Type=Integer,Description="Sample size used to estimate genetic effect">'
-'##FORMAT=<ID=NC,Number=A,Type=Integer,Description="Number of cases used to estimate genetic effect">'
-'##FORMAT=<ID=AF,Number=A,Type=Float,Description="Reference allele frequency">'
-'##FORMAT=<ID=SI,Number=A,Type=Float,Description="Accuracy score of summary data imputation">'
+"##FORMAT=<ID=ES,Number=A,Type=Float,Description=\"Effect size estimate relative to the alternative allele\">"
+"##FORMAT=<ID=SE,Number=A,Type=Float,Description=\"Standard error of effect size estimate\">"
+"##FORMAT=<ID=EZ,Number=A,Type=Float,Description=\"Z-score of effect size estimate\">"
+"##FORMAT=<ID=EP,Number=A,Type=Float,Description=\"p-value for effect estimate\">"
+"##FORMAT=<ID=SS,Number=A,Type=Integer,Description=\"Sample size used to estimate genetic effect\">"
+"##FORMAT=<ID=NC,Number=A,Type=Integer,Description=\"Number of cases used to estimate genetic effect\">"
+"##FORMAT=<ID=AF,Number=A,Type=Float,Description=\"${whichAlleleBase} allele frequency\">"
+"##FORMAT=<ID=AFKG,Number=A,Type=Float,Description=\"${whichAlleleBase} allele frequency from 1000 genomes project. Population used is defined in the metadata of the summary stats\">"
+"##FORMAT=<ID=SI,Number=A,Type=Float,Description=\"Accuracy score of summary data imputation\">"
 )
 
 # if not found, then 0
 function var_position_each(){
   var=$1
   fil=$2
-  zcat $fil | head -n1 | awk -vFS="\t" -vvar="${var}" '{for(i=1; i<NF; i++){if($i==var){print i;next}}; print 0}'
+  zcat $fil | head -n1 | awk -vFS="\t" -vvar="${var}" '{for(i=1; i<=NF; i++){if($i==var){print i;next}}; print 0}'
 }
 
 #get position and available names
