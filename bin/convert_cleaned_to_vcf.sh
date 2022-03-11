@@ -45,7 +45,7 @@ SI
 )
 
 FormatFlags=(
-"##FORMAT=<ID=ES,Number=A,Type=Float,Description=\"Effect size estimate relative to the alternative allele\">"
+"##FORMAT=<ID=ES,Number=A,Type=Float,Description=\"Effect size estimate relative to the ${whichAlleleBase} allele\">"
 "##FORMAT=<ID=SE,Number=A,Type=Float,Description=\"Standard error of effect size estimate\">"
 "##FORMAT=<ID=EZ,Number=A,Type=Float,Description=\"Z-score of effect size estimate\">"
 "##FORMAT=<ID=EP,Number=A,Type=Float,Description=\"p-value for effect estimate\">"
