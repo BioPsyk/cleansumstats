@@ -248,8 +248,8 @@ process add_details_to_output {
     path("gbdetectCHRPOS"),
     path("gbdetectSNPCHRPOS"),
     path(selected_source),
-    path(removedlines), 
     path(overviewworkflow),
+    path(removedlines), 
     path(removedlinestable),
     path(emod)
 
