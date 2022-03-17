@@ -80,13 +80,12 @@ workflow prepare_dbsnp_reference {
   dbsnp_reference_rm_duplicates_GRCh36_GRCh35(dbsnp_reference_merge_reference_library_GRCh3x_GRCh38.out)
   dbsnp_reference_rm_liftover_remaining_ambigous_GRCh36_GRCh35(dbsnp_reference_rm_duplicates_GRCh36_GRCh35.out.main)
 
+  ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped = dbsnp_reference_rm_liftover_remaining_ambigous_GRCh36_GRCh35.out.main.groupTuple(by:0)
+
   //// Write dbsnp to reference output
   dbsnp_reference_put_files_in_reference_library_RSID(dbsnp_reference_rm_dup_positions_GRCh38.out)
   dbsnp_reference_put_files_in_reference_library_GRCh38(dbsnp_reference_rm_dup_positions_GRCh38.out)
-
   dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37(dbsnp_reference_rm_liftover_remaining_ambigous_GRCh37.out.main)
-
-  ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped = dbsnp_reference_rm_liftover_remaining_ambigous_GRCh36_GRCh35.out.main.groupTuple(by:0)
   dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GRCh38(ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped)
 }
 
