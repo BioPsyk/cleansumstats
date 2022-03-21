@@ -1,4 +1,4 @@
-dbsnp_chunk=${1}
+infile=${1}
 out=${2}
 out2=${3}
 
@@ -7,14 +7,14 @@ touch $out2
 
 # Remove all duplicated positions in col4 
 # purpose to remove positions, which might have become duplicates after liftover
-mkdir -p tmp
+tmp_dir=$(mktemp -d)
 LC_ALL=C sort -k 4,4 \
 --parallel 4 \
---temporary-directory=/cleansumstats/tmp \
+--temporary-directory=${tmp_dir} \
 --buffer-size=20G \
-${dbsnp_chunk} \
+${infile} \
 > input.sorted
-rm -r tmp
+rm -r ${tmp_dir}
 
 # Remove all versions of the duplicated variants
 awk -vout2="${out2}" '
