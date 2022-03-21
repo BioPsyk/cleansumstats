@@ -10,11 +10,11 @@ touch $out2
 tmp_dir=$(mktemp -d)
 LC_ALL=C sort -k 4,4 \
 --parallel 4 \
---temporary-directory=${tmp_dir} \
+--temporary-directory=/cleansumstats/tmp/${tmp_dir} \
 --buffer-size=20G \
 ${infile} \
 > input.sorted
-rm -r ${tmp_dir}
+rm -r /cleansumstats/tmp/${tmp_dir}
 
 # Remove all versions of the duplicated variants
 awk -vout2="${out2}" '
