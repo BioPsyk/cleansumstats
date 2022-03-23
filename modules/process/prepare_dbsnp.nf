@@ -110,7 +110,7 @@ process dbsnp_reference_rm_dup_positions_GRCh38 {
 
     script:
     """
-    dbsnp_reference_duplicate_position_filter.sh ${GRCh38_all} GRCh38.bed.nodup GRCh38.bed.dup
+    dbsnp_reference_duplicate_position_filter.sh ${GRCh38_all} GRCh38.bed.nodup GRCh38.bed.dup ${params.sort_tmp}
 
     """
 }
@@ -213,7 +213,7 @@ process dbsnp_reference_rm_dup_positions_GRCh37 {
 
     script:
     """
-    dbsnp_reference_duplicate_position_filter.sh GRCh37_all GRCh37_GRCh38.bed.nodup GRCh37_GRCh38.bed.dup
+    dbsnp_reference_duplicate_position_filter.sh GRCh37_all GRCh37_GRCh38.bed.nodup GRCh37_GRCh38.bed.dup ${params.sort_tmp}
     """
 }
 
@@ -347,7 +347,7 @@ process dbsnp_reference_rm_dup_positions_GRCh36_GRCh35 {
     script:
     """
     # Remove all duplicated positions GRCh35 and GRCh36 (as some positions might have become duplicates after the liftover)
-    dbsnp_reference_duplicate_position_filter.sh ${dbsnp_merge} ${build}_GRCh38.bed.nodup ${build}_GRCh38.bed.dup
+    dbsnp_reference_duplicate_position_filter.sh ${dbsnp_merge} ${build}_GRCh38.bed.nodup ${build}_GRCh38.bed.dup ${params.sort_tmp}
     """
 }
 
