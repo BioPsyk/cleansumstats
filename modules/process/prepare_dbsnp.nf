@@ -256,7 +256,8 @@ process dbsnp_reference_liftover_GRCh36 {
     ch_hg19ToHg18chain=file(params.hg19ToHg18chain)
     build = "36"
     """
-    dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg19ToHg18chain} ${cid} GRCh36_GRCh38.bed_${cid}
+    dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg19ToHg18chain} ${cid} "${cid}_tmp2"
+    awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print \$1, \$2, \$3, tmp":"\$2, \$5, \$6, \$7, \$8}' "${cid}_tmp2" > GRCh36_GRCh38.bed_${cid}
     """
 }
 
@@ -276,7 +277,8 @@ process dbsnp_reference_liftover_GRCh35 {
     ch_hg19ToHg17chain=file(params.hg19ToHg17chain)
     build = "35"
     """
-    dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg19ToHg17chain} ${cid} GRCh35_GRCh38.bed_${cid}
+    dbsnp_reference_liftover.sh ${dbsnp_chunk} ${ch_hg19ToHg17chain} ${cid} "${cid}_tmp2"
+    awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print \$1, \$2, \$3, tmp":"\$2, \$5, \$6, \$7, \$8}' "${cid}_tmp2" > GRCh35_GRCh38.bed_${cid}
     """
 }
 
@@ -304,16 +306,14 @@ process dbsnp_reference_rm_liftover_remaining_ambigous_GRCh3x {
 
 process dbsnp_reference_merge_reference_library_GRCh3x_GRCh38 {
 
-    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
     cpus 1
 
     input:
     tuple val(build), path(dbsnp_chunks)
-    //from ch_dbsnp_lifted_to_GRCh3x_grouped)
 
     output:
-    tuple val(build), path("${build}_GRCh38_merge.bed")
-    //into ch_dbsnp_merged_GRCh3x
+    tuple val(build), path("GRCh${build}_GRCh38_merge.bed")
 
     script:
     // join all list elements by whitespace to be able to iterate using bash
@@ -322,8 +322,9 @@ process dbsnp_reference_merge_reference_library_GRCh3x_GRCh38 {
     # Concatenate
     for chunk in ${chunks_all}
     do
-      cat \${chunk} >> ${build}_GRCh38_merge.bed
+      cat \${chunk} >> GRCh${build}_GRCh38_merge.bed
     done
+
     """
 
 }
@@ -443,7 +444,6 @@ process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GR
 
     input:
     tuple val(build), path(dbsnp_chunks)
-    //from ch_dbsnp_rmd_ambig_positions_GRCh3x_grouped
 
     output:
     path("*.bed")
@@ -463,7 +463,7 @@ process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GR
       file.tmp  > "${ch_dbsnp_36_38.baseName}.bed"
       rm -r tmp
 
-    else
+    elif [ "${build}" == "35" ]; then
       awk '{tmp=\$1; sub(/[cC][hH][rR]/, "", tmp); print tmp":"\$2, \$5, \$6, \$7, \$8}' ${dbsnp_chunks} > file.tmp
       mkdir -p tmp
       LC_ALL=C sort -k 1,1 \
@@ -472,6 +472,9 @@ process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GR
       --buffer-size=20G \
       file.tmp > "${ch_dbsnp_35_38.baseName}.bed"
       rm -r tmp
+    else
+      echo "build is not supported"
+      exit 1
     fi
     """
 }
