@@ -7,14 +7,14 @@ touch $out2
 
 # Remove all duplicated positions in col4 
 # purpose to remove positions, which might have become duplicates after liftover
-tmp_dir=$(mktemp -d)
+mkdir -p /cleansumstats/work/sort_tmp
 LC_ALL=C sort -k 4,4 \
 --parallel 4 \
---temporary-directory=${tmp_dir} \
+--temporary-directory=/cleansumstats/work/sort_tmp \
 --buffer-size=20G \
 ${infile} \
 > input.sorted
-rm -r ${tmp_dir}
+#rm -r /cleansumstats/work/${tmp_dir}
 
 # Remove all versions of the duplicated variants
 awk -vout2="${out2}" '
