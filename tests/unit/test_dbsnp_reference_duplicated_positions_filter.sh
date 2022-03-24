@@ -32,7 +32,7 @@ function _check_results {
 
 function _run_script {
 
-  "${test_script}.sh" ./input.txt ./observed-result1.txt ./observed-result2.txt
+  "${test_script}.sh" ./input.txt ./observed-result1.txt ./observed-result2.txt "tmp"
 
   _check_results ./observed-result1.txt ./expected-result1.txt
 

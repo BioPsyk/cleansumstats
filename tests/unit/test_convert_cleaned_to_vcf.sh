@@ -68,7 +68,7 @@ cat <<EOF | gzip -c > ./expected-result1.tsv.gz
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##fileDate=20211208
 ##source=cleansumstats
-##FORMAT=<ID=ES,Number=A,Type=Float,Description="Effect size estimate relative to the alternative allele">
+##FORMAT=<ID=ES,Number=A,Type=Float,Description="Effect size estimate relative to the Reference allele">
 ##FORMAT=<ID=SE,Number=A,Type=Float,Description="Standard error of effect size estimate">
 ##FORMAT=<ID=EZ,Number=A,Type=Float,Description="Z-score of effect size estimate">
 ##FORMAT=<ID=EP,Number=A,Type=Float,Description="p-value for effect estimate">
@@ -104,7 +104,7 @@ cat <<EOF | gzip -c > ./expected-result1.tsv.gz
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##fileDate=20211208
 ##source=cleansumstats
-##FORMAT=<ID=ES,Number=A,Type=Float,Description="Effect size estimate relative to the alternative allele">
+##FORMAT=<ID=ES,Number=A,Type=Float,Description="Effect size estimate relative to the Alternative allele">
 ##FORMAT=<ID=SE,Number=A,Type=Float,Description="Standard error of effect size estimate">
 ##FORMAT=<ID=EZ,Number=A,Type=Float,Description="Z-score of effect size estimate">
 ##FORMAT=<ID=EP,Number=A,Type=Float,Description="p-value for effect estimate">

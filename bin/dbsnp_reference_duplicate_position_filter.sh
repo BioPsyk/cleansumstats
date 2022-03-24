@@ -1,19 +1,21 @@
-dbsnp_chunk=${1}
+infile=${1}
 out=${2}
 out2=${3}
+tmpfold=${4}
 
 touch $out
 touch $out2
 
-# Remove all duplicated positions GRCh37 (as some positions might have become duplicates after the liftover)
-mkdir -p tmp
+# Remove all duplicated positions in col4 
+# purpose to remove positions, which might have become duplicates after liftover
+#mkdir -p /cleansumstats/work/sort_tmp
+mkdir -p ${tmpfold}
 LC_ALL=C sort -k 4,4 \
 --parallel 4 \
---temporary-directory=/cleansumstats/tmp \
+--temporary-directory=${tmpfold} \
 --buffer-size=20G \
-${dbsnp_chunk} \
+${infile} \
 > input.sorted
-rm -r tmp
 
 # Remove all versions of the duplicated variants
 awk -vout2="${out2}" '

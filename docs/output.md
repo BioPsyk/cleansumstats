@@ -19,6 +19,14 @@ If you don't want the raw output, then use:
 
 ## Overview
 
+#### Prepare DbSNP
+To make the lookup in dbsnp fast we need to convert it to our internal format.
+
+The preparation of dbsnp to our internal format does some initial filtering:
+- removes indels
+- removes ambigous chromosomes, i.e., all chromosome names including _ in the name.
+- removes all duplicates for each variant in the builds 35,36,37 and 38. Keeping one of the duplicates.
+
 ### DbSNP and allele flipping
 Briefly, the pipeline first detects the genome build, then map all variants to a dbsnp build to keep only positions with rsids and ref/alt allele information. After mapping to dbsnp the information is used to flip all allele effects in the direction of the ref allele. There are also other filters applied, which remove variants that are:
 - palindromes
