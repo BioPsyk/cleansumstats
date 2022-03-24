@@ -216,6 +216,9 @@ mkdir -p ${outdir}
 # make workdir if it doesn't already exist
 mkdir -p ${workdir}
 
+# make workdir if it doesn't already exist
+mkdir -p ${tmpdir}
+
 infile_host=$(realpath "${infile}")
 outdir_host=$(realpath "${outdir}")
 
