@@ -95,6 +95,7 @@ properties:
       as the metadata file.
     type: "array"
     items:
+      title: "Supplementary file"
       type: "string"
       pattern: "^[a-zA-Z0-9][a-zA-Z0-9_.-]+$"
 
@@ -170,6 +171,7 @@ properties:
       - ["EFO:0000289", "EFO:0009963"]
     minItems: 1
     items:
+      title: "EFO code"
       type: "string"
       pattern: "^EFO:[0-9]{7}$"
 
@@ -220,6 +222,7 @@ properties:
     type: "array"
     uniqueItems: true
     items:
+      title: "Cohort"
       type: "string"
       enum:
         - "iPSYCH2012"
@@ -383,15 +386,15 @@ properties:
   stats_TraitType:
     title: "GWAS trait type"
     description: |
-      "quantitative" =  Quantitative trait (e.g., Height, BMI)
-      "case-control" = Case-control trait (e.g., schizophrenia)
-      "binary"       = Binary trait (e.g., left handed)
-      "ordinal"      = Ordered trait with ranking (e.g., educational level: gradeschool, highschool, college, graduate ).
-                       May be coded as numbers, but the numbers are not on a constant scale
-                       (e.g., income level: 0 ( <35,000 ), 1 (35 to 50,000), 2 ( > 50,000),
-                       where the numbers are rankings, but "2" is not "twice 1").
-      "survival"     = Survival times (e.g., from cox PH models)
-      "other"        = Something else.  describe in stats_Notes
+      - `quantitative` =  Quantitative trait (e.g., Height, BMI)
+      - `case-control` = Case-control trait (e.g., schizophrenia)
+      - `binary`       = Binary trait (e.g., left handed)
+      - `ordinal`      = Ordered trait with ranking (e.g., educational level: gradeschool, highschool, college, graduate ).
+                         May be coded as numbers, but the numbers are not on a constant scale
+                         (e.g., income level: 0 ( <35,000 ), 1 (35 to 50,000), 2 ( > 50,000),
+                         where the numbers are rankings, but "2" is not "twice 1").
+      - `survival`     = Survival times (e.g., from cox PH models)
+      - `other`        = Something else.  describe in stats_Notes
     type: "string"
     enum:
       - "quantitative"
@@ -406,14 +409,13 @@ properties:
     description: |
       What model was used to generate the sum stats?
 
-      - "linear"               = Simple linear regression
-      - "logistic"             = Simple logistic regression
-      - "ordinal"              = Ordinal regression
-      - "linear mixed-model"   = Linear mixed effects model (i.e., controlling for a kinship matrix)
-      - "logistic mixed-model" = Logistic mixed effects model (i.e., controlling for a kinship matrix)
-      - "cox"                  = Used to model survival times
-      - "other"                = Some other model, should be described in `stats_Notes`
-
+      - `linear               = Simple linear regression
+      - `logistic`             = Simple logistic regression
+      - `ordinal`              = Ordinal regression
+      - `linear mixed-model`   = Linear mixed effects model (i.e., controlling for a kinship matrix)
+      - `logistic mixed-model` = Logistic mixed effects model (i.e., controlling for a kinship matrix)
+      - `cox`                  = Used to model survival times
+      - `other`                = Some other model, should be described in `stats_Notes`
     type: "string"
     enum:
       - "linear"
