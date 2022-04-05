@@ -49,9 +49,16 @@ properties:
     format: "date"
 
   cleansumstats_metafile_kind:
+    title: "Metadata kind"
     description: |
-      Whether the metafile is to be used as a library metafile or just a minimal
-      requirements file to run the pipeline.
+      Whether the metadata file only needs to fulfill the requirements (`minimal`)
+      for running it in the `cleansumstats` pipeline, or if it also needs to fulfull
+      the requirements (`library`) of being used as a library file.
+
+      Both kinds of metadata files can be run in the pipeline, the
+      difference is that a library file also contains metadata about the study
+      that the sumstats file originated from. This extra metadata is not used by
+      the pipeline, it's only used for organizing metadata files.
     type: "string"
     enum:
       - "minimal"
@@ -63,9 +70,9 @@ properties:
   path_sumStats:
     title: "GWAS sumstats"
     description: |
-      Name of the sumstats file to clean that is in the same directory as the
-      metadata file. This file must be located in the same directory as the
-      metadata file, be gzipped and have the file extensio `.gz`.
+      Name of the sumstats file to run in the pipeline. This file needs to be
+      located in the same directory as the metadata file, be gzipped and have the
+      file extension `.gz`.
     type: "string"
     pattern: "^[a-zA-Z0-9][a-zA-Z0-9_.-]+\\.gz$"
 
@@ -246,13 +253,28 @@ properties:
 
       - Ontology: https://docs.google.com/spreadsheets/d/1qghudJelGssaTbe8CDAOHOk7fhpyDAwEKGkOBMqGb3M/
       - External inventories: https://docs.google.com/spreadsheets/d/1NtSyTscFL6lI5gQ_00bm0reoT6yS2tDB3SHhgM7WwSE/
-    type: "string"
-    enum:
-      - "AFR"
-      - "AMR"
-      - "EAS"
-      - "EUR"
-      - "SAS"
+    anyOf:
+      - title: "Single ancestry"
+        type: "string"
+        enum:
+          - "AFR"
+          - "AMR"
+          - "EAS"
+          - "EUR"
+          - "SAS"
+      - type: "array"
+        title: "Multiple ancestries"
+        items:
+          title: "Ancestry"
+          type: "string"
+          enum:
+            - "AFR"
+            - "AMR"
+            - "EAS"
+            - "EUR"
+            - "SAS"
+      - title: "Free text"
+        type: "string"
 
   study_Gender:
     title: "Gender of GWAS cohorts"
@@ -688,9 +710,32 @@ dependencies:
     col_P:
       required: ["stats_neglog10P"]
 required:
+  - "cleansumstats_metafile_kind"
   - "path_sumStats"
   - "stats_Model"
   - "col_EffectAllele"
+if:
+  properties:
+    cleansumstats_metafile_kind:
+      const: "library"
+  required:
+    - "cleansumstats_metafile_kind"
+then:
+  required:
+    - "cleansumstats_version"
+    - "cleansumstats_metafile_user"
+    - "cleansumstats_metafile_date"
+    - "study_Title"
+    - "study_PMID"
+    - "study_Year"
+    - "study_PhenoDesc"
+    - "study_PhenoCode"
+    - "study_AccessDate"
+    - "study_Use"
+    - "study_Ancestry"
+    - "study_Gender"
+    - "stats_TraitType"
+    - "stats_TotalN"
 allOf:
   - anyOf:
       - required:
@@ -729,23 +774,3 @@ allOf:
           - "col_INFO"
       - required:
           - "col_Direction"
-if:
-  properties:
-    cleansumstats_metafile_kind:
-      const: "library"
-then:
-  required:
-    - "cleansumstats_version"
-    - "cleansumstats_metafile_user"
-    - "cleansumstats_metafile_date"
-    - "study_Title"
-    - "study_PMID"
-    - "study_Year"
-    - "study_PhenoDesc"
-    - "study_PhenoCode"
-    - "study_AccessDate"
-    - "study_Use"
-    - "study_Ancestry"
-    - "study_Gender"
-    - "stats_TraitType"
-    - "stats_TotalN"
