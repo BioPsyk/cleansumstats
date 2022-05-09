@@ -229,5 +229,6 @@ ENV NXF_CLASSPATH="/cleansumstats/ibp-pipeline-lib.jar"
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
 RUN chown nextflow:users /cleansumstats/external_data -R
 
+ENV LANG=en_US.UTF-8
 
 USER nextflow
