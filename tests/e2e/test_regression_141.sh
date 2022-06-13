@@ -24,7 +24,7 @@ cd "${work_dir}"
 cat <<EOF > ./metadata.yaml
 cleansumstats_metafile_date: '2020-04-27'
 cleansumstats_metafile_user: Andrew Schork
-cleansumstats_version: 1.0.0-alpha
+cleansumstats_metafile_kind: library
 col_BETA: EFFECT_A1
 col_CHR: CHR
 col_EffectAllele: A1

@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Cleansumstats version to output metadata. 
 
+### Changed
+- Removed the need to specify cleansumstats version in the input metadata file
+
 ## [1.3.8] - 2022-04-01
 ### Fixed
 -  Vcf header to be float instead of integer for sample size to give room for the extra precision of the estimated sample sizes.

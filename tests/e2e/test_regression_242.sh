@@ -17,7 +17,7 @@ echo ">> Test regression #242"
 cd "${work_dir}"
 
 cat <<EOF > ./metadata.yaml
-cleansumstats_version: 0.1.0
+cleansumstats_metafile_kind: library
 cleansumstats_metafile_user: webuser
 cleansumstats_metafile_date: '2021-10-29'
 path_sumStats: input.txt.gz
