@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# NOTE: This only works as long as at least one stat field is present. When writing this script, that is also the requirement of the cleansumstats main script.
+
 infile="${1}"
 outfile="${2}"
 
@@ -57,7 +59,12 @@ NR==1{
   print $0
 }
 NR>1{
-  for (i=1;i<NF;++i){
+  for (i=1;i<5;++i){
+    printf "%s%s", $(i), OFS;
+  }
+  printf "%s%s", $(6), OFS;
+  printf "%s%s", $(5), OFS;
+  for (i=7;i<NF;++i){
     if(i in m1){printf "%s%s", -1*$(i), OFS}
     else if(i in m2){printf "%s%s", 1-$(i), OFS}
     else if(i in m3){printf "%s%s", 1/$(i), OFS}

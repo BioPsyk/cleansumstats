@@ -188,11 +188,13 @@ process prepare_cleaned_metadata_file {
     stats_TotalN="${metadata.stats_TotalN ?: "missing"}"
     stats_CaseN="${metadata.stats_CaseN ?: "missing"}"
     stats_ControlN="${metadata.stats_ControlN ?: "missing"}"
-    """
+    pipelineVersion = new File("$projectDir/VERSION").text.trim()
 
+    """
     #Add cleaned output lines
     dateOfCreation="\$(date +%F-%H%M)"
-    echo "cleansumstats_date: \${dateOfCreation}" > mfile_additions
+    echo "cleansumstats_version: ${pipelineVersion}" > mfile_additions
+    echo "cleansumstats_date: \${dateOfCreation}" >> mfile_additions
     echo "cleansumstats_user: \$(id -u -n)" >> mfile_additions
     echo "cleansumstats_cleaned_GRCh38: sumstat_cleaned_GRCh38.gz" >> mfile_additions
     echo "cleansumstats_cleaned_GRCh38_checksum: ${scleanchecksum}" >> mfile_additions
