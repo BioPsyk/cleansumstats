@@ -722,7 +722,6 @@ if:
     - "cleansumstats_metafile_kind"
 then:
   required:
-    - "cleansumstats_version"
     - "cleansumstats_metafile_user"
     - "cleansumstats_metafile_date"
     - "study_Title"

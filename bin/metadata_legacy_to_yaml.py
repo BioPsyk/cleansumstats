@@ -218,6 +218,9 @@ def perform_specific_conversions(input_directory, schema, metadata):
     convert_enums(results)
     convert_paths(results)
 
+    # add metadata kind
+    results['cleansumstats_metafile_kind'] = 'library'
+
     return results
 
 def main(args):

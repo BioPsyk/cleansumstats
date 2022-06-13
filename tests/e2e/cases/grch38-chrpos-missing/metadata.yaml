@@ -1,6 +1,7 @@
 cleansumstats_metafile_date: 2021-01-21
 cleansumstats_metafile_user: riczet
-cleansumstats_version: 1.0.0-dev
+cleansumstats_metafile_kind: library
+
 
 col_EffectAllele: a1
 col_BETA: beta

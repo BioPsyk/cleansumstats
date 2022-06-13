@@ -19,7 +19,7 @@ cd "${work_dir}"
 cat <<EOF > ./metadata.yaml
 cleansumstats_metafile_date: '2020-12-31'
 cleansumstats_metafile_user: username
-cleansumstats_version: 1.0.0-alpha
+cleansumstats_metafile_kind: library
 path_sumStats: input.txt.gz
 col_CHR: CHR
 col_SNP: SNP
