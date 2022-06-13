@@ -46,7 +46,10 @@ To better integrate with other tools we provide a script that converts the clean
 # Convert the cleaned output to vcf (with associated tabix index)
 # Use REF if it is reference based (default), or ALT if is based on the alternative allele(after flipping effect direction).
 mkdir -p vcf
-./clean2vcf.sh out_test/sumstat_1_raw_meta/cleaned_GRCh38.gz vcf/cleaned_GRCh38.gz "REF"
+alleleEffect="REF"
+refAlleleColumn="5"
+altAlleleColumn="6"
+./clean2vcf.sh out_test/sumstat_1_raw_meta/cleaned_GRCh38.gz vcf/cleaned_GRCh38.gz "${alleleEffect}" "${refAlleleColumn}" "${altAlleleColumn}"
 
 ```
 
