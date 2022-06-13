@@ -32,8 +32,9 @@ function _check_results {
 
 function _run_script {
 base="${1}"
-
-  "${test_script}.sh" input.tsv.gz observed-result1.tsv.gz false ${base}
+ref="${2}"
+alt="${3}"
+  "${test_script}.sh" input.tsv.gz observed-result1.tsv.gz false ${base} ${ref} ${alt}
 
   _check_results <(zcat observed-result1.tsv.gz | grep -v "##fileDate=") <(zcat expected-result1.tsv.gz | grep -v "##fileDate=")
 
@@ -82,7 +83,7 @@ cat <<EOF | gzip -c > ./expected-result1.tsv.gz
 10	118368257	rs12767500	C	T	.	PASS	.	ES:SE:EZ:EP:AFKG	-0.052:0.0308:-1.68831:0.09108:1
 EOF
 
-_run_script "Reference"
+_run_script "Reference" "5" "6"
 
 #---------------------------------------------------------------------------------
 # convert sumstat to vcf using ALT
@@ -91,12 +92,12 @@ _setup "Convert sumstat to vcf alternative allele version"
 
 cat <<EOF | gzip -c > input.tsv.gz
 CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	B	Z	EAF_1KG
-10	102814179	1873	rs284858	T	C	0.1592	0.0132	0.0187	1.41667	0.41
-10	10574522	1582	rs2025468	T	C	0.5398	0.0165	0.0101	0.612121	0.82
-10	106371703	1151	rs1409409	C	A	0.7713	0.0171	-0.005	-0.292398	1
-10	107148593	1013	rs12781860	A	C	0.9482	0.0241	0.0016	0.06639	0.92
-10	113128849	1129	rs1362943	G	A	0.187	0.0136	-0.018	-1.32353	1
-10	118368257	1008	rs12767500	C	T	0.09108	0.0308	-0.052	-1.68831	1
+10	102814179	1873	rs284858	C	T	0.1592	0.0132	0.0187	1.41667	0.41
+10	10574522	1582	rs2025468	C	T	0.5398	0.0165	0.0101	0.612121	0.82
+10	106371703	1151	rs1409409	A	C	0.7713	0.0171	-0.005	-0.292398	1
+10	107148593	1013	rs12781860	C	A	0.9482	0.0241	0.0016	0.06639	0.92
+10	113128849	1129	rs1362943	A	G	0.187	0.0136	-0.018	-1.32353	1
+10	118368257	1008	rs12767500	T	C	0.09108	0.0308	-0.052	-1.68831	1
 EOF
 
 cat <<EOF | gzip -c > ./expected-result1.tsv.gz
@@ -118,7 +119,7 @@ cat <<EOF | gzip -c > ./expected-result1.tsv.gz
 10	118368257	rs12767500	C	T	.	PASS	.	ES:SE:EZ:EP:AFKG	-0.052:0.0308:-1.68831:0.09108:1
 EOF
 
-_run_script "Alternative"
+_run_script "Alternative" "6" "5"
 
 #---------------------------------------------------------------------------------
 # Next case

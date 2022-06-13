@@ -4,6 +4,21 @@ sfile=${1}
 out=${2}
 cleanup=${3}
 whichAlleleBase="${4}"
+refAlleleCol="${5}"
+altAlleleCol="${6}"
+
+# ref and altAlleleCol should always be col 5 or 6
+if "${refAlleleCol}" == 5 || "${refAlleleCol}" == 6; then
+  :
+else
+  echo "refAlleleCol needs to be wither col 5 or 6"
+fi
+
+if "${altAlleleCol}" == 5 || "${altAlleleCol}" == 6; then
+  :
+else
+  echo "altAlleleCol needs to be wither col 5 or 6"
+fi
 
 if ${cleanup} ;then
   tmp_dir=$(mktemp -d)
@@ -123,10 +138,10 @@ add_header_format_meta >> tmp1
 echo -e "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sumstats" >> tmp1
 
 # Make remaining rows
-zcat $sfile | awk -vOFS="\t" -vformat="${nam_k}" -vpos="${pos_k}" '
+zcat ${sfile} | awk -vOFS="\t" -vformat="${nam_k}" -vpos="${pos_k}" -vref="${refAlleleCol}" -valt="${altAlleleCol}" '
 NR>1{
   split(pos,sp,"|"); 
-  printf "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", $1,OFS,$2,OFS,$4,OFS,$5,OFS,$6,OFS,".",OFS,"PASS",OFS,".",OFS,format;
+  printf "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", $1,OFS,$2,OFS,$4,OFS,$(ref),OFS,$(alt),OFS,".",OFS,"PASS",OFS,".",OFS,format;
   if(length(sp)>=1){printf "%s%s",OFS, $(sp[1])};
   for (i=2; i <= length(sp); i++){printf "%s%s", ":",$(sp[i])}; 
   printf "\n"}' > tmp2

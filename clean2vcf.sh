@@ -1,6 +1,8 @@
 infile=$1
 outfile=$2
 baseAllele=$3
+refCol=$3
+altCol=$3
 
 if [[ "${baseAllele}" == "REF" ]];
 then
@@ -51,5 +53,7 @@ exec singularity run \
      "${infile_container}" \
      "${outfile_container}" \
      true \
-     "${baseAllele2}"
+     "${baseAllele2}" \
+     "${refCol}" \
+     "${altCol}"
 

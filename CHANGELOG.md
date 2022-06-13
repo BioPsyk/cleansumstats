@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.9] - 2022-06-13
 ### Fixed
-- EffectAllele and OtherAllele to also be flipped when flipping the effects in the post-processing ./cleanflipdirection.sh
+- EffectAllele and OtherAllele to also be flipped when flipping the effects in the post-processing cleanflipdirection.sh
+- clean2vcf.sh so that the right REF allele column can be picked out after the changes to cleanflipdirection.sh
 
 ### Added
 - Cleansumstats version to output metadata. 
