@@ -393,6 +393,7 @@ properties:
     enum:
       - "UK Biobank Axiom"
       - "UKB"
+      - "Infinium_PsychArray_v1.0"
       - "meta"
 
   study_Notes:
