@@ -123,10 +123,11 @@ properties:
   study_PMID:
     title: "Publication ID"
     description: |
-      Pubmed id of associated publication, or if based on a preprint such as biorXiv,
-      provide the DOI link.
+      Pubmed id of associated publication, or DOI link from a preprint such as biorXiv.
 
-      If missing, record extra data in study_Use.
+      If the sumstat have not been published, add an internal ID instead and make a note in the field
+      study considerations and notes, if there e.g., are any restrictions.
+
     oneOf:
       - title: "Pubmed ID"
         type: "integer"
@@ -398,7 +399,7 @@ properties:
       - "meta"
 
   study_Notes:
-    title: "Special considerations and notes"
+    title: "Study considerations and notes"
     description: |
       If there are special notes that you feel need to be included, please add them here.
       If for example a dataset has restriction, add important restriction info here.
@@ -524,7 +525,7 @@ properties:
     minimum: 0
 
   stats_Notes:
-    title: "Special considerations and notes"
+    title: "Stats considerations and notes"
     description: |
       If there are special notes that you feel need to be included, please add them here.
     type: "string"
@@ -698,7 +699,7 @@ properties:
     type: "string"
 
   col_Notes:
-    title: "Special considerations and notes"
+    title: "Column considerations and notes"
     description: |
       If there are special notes that you feel need to be included, please add them here.
       If preprocessing was require due to a really strange format, describe the issue and
