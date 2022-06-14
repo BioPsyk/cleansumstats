@@ -310,9 +310,13 @@ kgpdir_container="/cleansumstats/kgpdir"
 kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
 
-FAKE_HOME="tmp/fake-home"
-export SINGULARITY_HOME="/cleansumstats/${FAKE_HOME}"
-mkdir -p "${FAKE_HOME}"
+# Use outdir as fake home to avoid lock issues for the hidden .nextflow/history file
+FAKE_HOME="${outdir_container}"
+export SINGULARITY_HOME="${FAKE_HOME}"
+
+# Previous fake home, causing #FAKE_HOME="tmp/fake-home"
+#export SINGULARITY_HOME="/cleansumstats/${FAKE_HOME}"
+#mkdir -p "${FAKE_HOME}"
 
 if ${pathquicktest}; then
  echo "cleansumstats.sh to-mount"
@@ -363,7 +367,9 @@ else
      -B "${tmpdir_host}:${tmpdir_container}" \
      -B "${workdir_host}:${workdir_container}" \
      "tmp/${singularity_image_tag}" \
-     nextflow run /cleansumstats ${runtype} \
+     nextflow \
+       -log "${outdir_container}/.nextflow.log" \
+       run /cleansumstats ${runtype} \
        --extrapaths ${extrapaths3} \
        ${devmode} \
        --input "${infile_container}" \
