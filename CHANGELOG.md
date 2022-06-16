@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - clean2vcf.sh bug, not recognizing input ref and alt col numbers
 
+## [1.3.10] - 2022-06-15
+### Changed
+- The metadata field `study_PhenoCode` now supports `EFO` and `MONDO` codes
+
 ## [1.3.9] - 2022-06-14
 ### Fixed
 - EffectAllele and OtherAllele to also be flipped when flipping the effects in the post-processing cleanflipdirection.sh
@@ -15,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - nextflow lock files to be placed within the output directory to not cause lock file issues when running multiple local jobs
 
 ### Added
-- Cleansumstats version to output metadata. 
+- Cleansumstats version to output metadata.
 
 ### Changed
 - Removed the need to specify cleansumstats version in the input metadata file
