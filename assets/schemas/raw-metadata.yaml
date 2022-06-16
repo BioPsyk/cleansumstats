@@ -165,22 +165,24 @@ properties:
   study_PhenoCode:
     title: "Standardized phenotype code"
     description: |
-      List of phenotypes in the format of [EFO](https://www.ebi.ac.uk/efo/) codes:
+      List of phenotypes in the format of [EFO](https://www.ebi.ac.uk/efo/) or [MONDO](https://obofoundry.org/ontology/mondo) codes:
 
       > Experimental Factor Ontology (EFO) provides a systematic description of many experimental
       > variables available in EBI databases, and for projects such as the GWAS catalog.
-
-      EFO has codes for specific traits, diseases and for all the different levels in the
-      hierarchy.
+      
+      > The Mondo Disease Ontology (Mondo) aims to harmonize disease definitions across the world. 
+      > It is a semi-automatically constructed ontology that merges in multiple disease resources 
+      > to yield a coherent merged ontology. 
     type: "array"
     examples:
       - ["EFO:0000692"]
       - ["EFO:0000289", "EFO:0009963"]
+      - ["EFO:0000289", "MONDO:0005090"]
     minItems: 1
     items:
-      title: "EFO code"
+      title: "EFO/MONDO code"
       type: "string"
-      pattern: "^EFO:[0-9]{7}$"
+      pattern: "^EFO|MONDO:[0-9]{7}$"
 
   study_FilePortal:
     title: "URL for GWAS sumstats repository"
