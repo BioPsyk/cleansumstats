@@ -1,8 +1,8 @@
 infile=$1
 outfile=$2
 baseAllele=$3
-refCol=$3
-altCol=$3
+refCol=$4
+altCol=$5
 
 if [[ "${baseAllele}" == "REF" ]];
 then
