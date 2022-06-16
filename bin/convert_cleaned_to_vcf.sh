@@ -8,16 +8,16 @@ refAlleleCol="${5}"
 altAlleleCol="${6}"
 
 # ref and altAlleleCol should always be col 5 or 6
-if "${refAlleleCol}" == 5 || "${refAlleleCol}" == 6; then
+if [ "${refAlleleCol}" == "5" ] || [ "${refAlleleCol}" == "6" ] ; then
   :
 else
-  echo "refAlleleCol needs to be wither col 5 or 6"
+  echo "refAlleleCol needs to be either col 5 or 6, it is now: ${refAlleleCol}"
 fi
 
-if "${altAlleleCol}" == 5 || "${altAlleleCol}" == 6; then
+if [ "${altAlleleCol}" == "5" ] || [ "${altAlleleCol}" == "6" ] ; then
   :
 else
-  echo "altAlleleCol needs to be wither col 5 or 6"
+  echo "altAlleleCol needs to be either col 5 or 6, it is now: ${altAlleleCol}"
 fi
 
 if ${cleanup} ;then
