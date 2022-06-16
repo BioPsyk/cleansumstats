@@ -78,6 +78,7 @@ dbsnpdir_given=false
 kgpdir_given=false
 tmpdir_given=false
 extrapaths_given=false
+devmode_given=false
 pathquicktest=false
 runexampledata=false
 
@@ -134,6 +135,7 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       ;;
     l )
       devmode="--dev"
+      devmode_given=true
       ;;
     t )
       pathquicktest=true
@@ -376,5 +378,15 @@ else
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \
        --kg1000AFGRCh38 "${kgpfile_container}"
+  #remove .nextflow directory by default
+  if ${devmode_given} ; 
+  then 
+    :
+  else
+    rm -r ${outdir_host}/.nextflow
+  fi
+  
+  echo "cleansumstats.sh reached the end: $(date)"
+
 fi
 
