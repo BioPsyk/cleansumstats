@@ -78,6 +78,7 @@ dbsnpdir_given=false
 kgpdir_given=false
 tmpdir_given=false
 extrapaths_given=false
+devmode_given=false
 pathquicktest=false
 runexampledata=false
 
@@ -134,6 +135,7 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       ;;
     l )
       devmode="--dev"
+      devmode_given=true
       ;;
     t )
       pathquicktest=true
@@ -355,7 +357,7 @@ if ${pathquicktest}; then
  echo "--libdirdbsnp ${dbsnpdir_container}"
  echo "--kg1000AFGRCh38 ${kgpfile_container}"
 else
-  exec singularity run \
+  singularity run \
      --contain \
      --cleanenv \
      ${mount_flags} \
@@ -376,5 +378,21 @@ else
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \
        --kg1000AFGRCh38 "${kgpfile_container}"
+  #remove .nextflow directory by default
+  if ${devmode_given} ;
+  then
+    :
+  else
+    function cleanup {
+      echo ">> Cleaning up (disable with -l) "
+      echo ">> Removing ${outdir_host}/.nextflow"
+      rm -r ${outdir_host}/.nextflow
+      echo ">> Done"
+    }
+    trap cleanup EXIT
+fi
+  
+  echo "cleansumstats.sh reached the end: $(date)"
+
 fi
 
