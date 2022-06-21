@@ -75,17 +75,14 @@ process convert_neglogP {
 }
 
 process force_eaf {
-    //publishDir "${params.outdir}/${mID}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
     tuple val(mID), path(sfile)
-    //tuple val(datasetID), path(sfile) from ch_convert_neglog10P
 
     output:
     tuple val(mID), path("force_eaf__st_forced_eaf"), emit: ch_stats_filtered_remain
-    //tuple datasetID, file("force_eaf__st_forced_eaf") into ch_stats_filtered_remain
     tuple val(mID), path("force_eaf__desc_forced_eaf_BA.txt"), emit: ch_desc_forced_eaf_BA
-    //tuple datasetID, file("force_eaf__desc_forced_eaf_BA.txt") into ch_desc_forced_eaf_BA
 
     script:
     def metadata = params.sess.get_metadata(mID)
@@ -111,18 +108,101 @@ process force_eaf {
     echo -e "\$rowsBefore\t\$rowsAfter\tForced Effect Allele Frequency" > force_eaf__desc_forced_eaf_BA.txt
     """
 }
+process rename_stat_col_names {
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+
+    input:
+    tuple val(mID), path(stats)
+
+    output:
+    tuple val(mID), path("rename_stat_col_names__st_renamed_stat_col_names"), emit: renamed_stat_col_names
+    tuple val(mID), path("rename_stat_col_names__st_renamed_stat_col_names_BA.txt"), emit: renamed_stat_col_names_BA
+
+    script:
+    def metadata = params.sess.get_metadata(datasetID)
+    stats_Model="${metadata.stats_Model ?: "missing"}"
+    col_B="${metadata.col_BETA ?: "missing"}"
+    col_SE="${metadata.col_SE ?: "missing"}"
+    col_Z="${metadata.col_Z ?: "missing"}"
+    col_P="${metadata.col_P ?: "missing"}"
+    col_OR="${metadata.col_OR ?: "missing"}"
+    col_ORL95="${metadata.col_ORL95 ?: "missing"}"
+    col_ORU95="${metadata.col_ORU95 ?: "missing"}"
+    col_N="${metadata.col_N ?: "missing"}"
+    col_CaseN="${metadata.col_CaseN ?: "missing"}"
+    col_ControlN="${metadata.col_ControlN ?: "missing"}"
+    col_EAF="${metadata.col_EAF ?: "missing"}"
+    col_OAF="${metadata.col_OAF ?: "missing"}"
+    col_INFO="${metadata.col_INFO ?: "missing"}"
+    col_DIRECTION="${metadata.col_Direction ?: "missing"}"
+    col_StudyN="${metadata.col_StudyN ?: "missing"}"
+    """
+    rename_stat_col_names.sh $sfile > rename_stat_col_names__st_renamed_stat_col_names \
+      "${col_B}" \
+      "${col_SE}" \
+      "${col_Z}" \
+      "${col_P}" \
+      "${col_OR}" \
+      "${col_ORL95}" \
+      "${col_ORU95}" \
+      "${col_N}" \
+      "${col_CaseN}" \
+      "${col_ControlN}" \
+      "${col_INFO}" \
+      "${col_DIRECTION}" \
+      "${col_StudyN}" \
+      "${col_EAF}" \
+      "${col_OAF}"
+
+    #process before and after stats
+    rowsBefore="\$(wc -l ${stats} | awk '{print \$1}')"
+    rowsAfter="\$(wc -l rename_stat_col_names__st_renamed_stat_col_names | awk '{print \$1}')"
+    echo -e "\$rowsBefore\t\$rowsAfter\tRenameing stat colnames" > rename_stat_col_names__st_renamed_stat_col_names_BA.txt
+    """
+}
+
+process flip_effects {
+    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+
+    input:
+    tuple val(mID), path(stats), path(acorr)
+
+    output:
+    tuple val(mID), path("flip_effects__st_flipped_effects"), emit: stats_flipped
+    tuple val(mID), path("flip_effects__st_flipped_effects_BA.txt"), emit: flip_effects_BA
+
+    script:
+    """
+    if [[ \$(wc -l $sfile | awk '{print \$1}') == "1" ]]
+    then
+      echo "[ERROR] The inputted file sfile did not have any data"
+      exit 1
+    fi
+
+    flip_effects.sh ${sfile} ${col_EAF} ${col_OAF} > flip_effects__st_flipped_effects
+
+    if [[ \$(wc -l st_forced_eaf | awk '{print \$1}') == "1" ]]
+    then
+      echo "[ERROR] The outputted file st_forced_eaf did not have any data"
+      exit 1
+    fi
+    #process before and after stats
+    rowsBefore="\$(wc -l ${stats} | awk '{print \$1}')"
+    rowsAfter="\$(wc -l flip_effects__st_flipped_effects | awk '{print \$1}')"
+    echo -e "\$rowsBefore\t\$rowsAfter\tFlipped allele effects" > flip_effects__st_flipped_effects_BA.txt
+    """
+}
 process prep_af_stats {
     publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
-    tuple val(datasetID), val(build), path(sfile)
-    //tuple val(datasetID), val(build), path(sfile) from ch_allele_corrected_mix3
+    tuple val(datasetID), val(build), path(acorr)
 
     output:
     tuple val(datasetID), env(avail), path("prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx"), emit: ch_prep_ref_allele_frequency
     //tuple val(datasetID), env(avail), path("prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx") into ch_prep_ref_allele_frequency
-    //path("prep_af_stats__st_1kg_af_ref_sorted")
-    //path("prep_af_stats__st_1kg_af_ref_sorted_joined")
+    path("prep_af_stats__st_1kg_af_ref_sorted")
+    path("prep_af_stats__st_1kg_af_ref_sorted_joined")
 
     script:
     def metadata = params.sess.get_metadata(datasetID)
@@ -142,7 +222,7 @@ process prep_af_stats {
     # If we have an available ancestry reference frequency
     if [ \${avail} == "true" ]; then
       # Join with AF table using chrpos column (keep only rowindex and allele frequency, merge later)
-      awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$6"-"\$7, \$1}' ${sfile} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')" > prep_af_stats__st_1kg_af_ref_sorted
+      awk -vFS="\t" -vOFS="\t" '{print \$4"-"\$6"-"\$7, \$1}' ${acorr} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')" > prep_af_stats__st_1kg_af_ref_sorted
       awk -vFS=" " -vOFS="\t" -vcount=\${count} '{print \$1"-"\$2"-"\$3,\$count}' ${ch_kg1000AFGRCh38} | LC_ALL=C sort -k 1,1 -t "\$(printf '\t')"| LC_ALL=C join -1 1 -2 1 -t "\$(printf '\t')" -o 2.2 1.2 - prep_af_stats__st_1kg_af_ref_sorted > prep_af_stats__st_1kg_af_ref_sorted_joined
       echo -e "0\tAF_1KG_CS" > prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx
       LC_ALL=C sort -k 1,1 prep_af_stats__st_1kg_af_ref_sorted_joined >> prep_af_stats__st_1kg_af_ref_sorted_joined_sorted_on_inx
@@ -164,13 +244,10 @@ process add_af_stats {
 
     input:
     tuple val(datasetID), path(st_filtered), val(availAF), path(afFreqs)
-    //tuple val(datasetID), path(st_filtered), val(availAF), path(afFreqs) from ch_add_ref_freq
 
     output:
     tuple val(datasetID), val("g1kaf_stats_branch"), path("add_af_stats__st_added_1kg_ref"), emit: ch_added_ref_allele_frequency_kg
-    //tuple datasetID, val("g1kaf_stats_branch"), file("add_af_stats__st_added_1kg_ref"), mfile into ch_added_ref_allele_frequency_kg
     tuple val(datasetID), val("default_stats_branch"), path("add_af_stats__st_added_1kg_ref"), emit: ch_added_ref_allele_frequency_default
-    //tuple datasetID, val("default_stats_branch"), file("add_af_stats__st_added_1kg_ref"), mfile into ch_added_ref_allele_frequency_default
 
     script:
     """
