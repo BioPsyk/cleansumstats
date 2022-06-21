@@ -33,20 +33,7 @@ function _run_script {
 
   branchX=$1
 
-  "${test_script}.sh" ./colfields.txt ./colnames.txt ./colpositions.txt "${branchX}" \
-    "missing" \
-    "se" \
-    "missing" \
-    "p" \
-    "or" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing"
-
+  "${test_script}.sh" ./colfields.txt ./colnames.txt ./colpositions.txt "${branchX}" ./infile.tsv
 
   _check_results ./colfields.txt ./expected-colfields.txt
   _check_results ./colnames.txt ./expected-colnames.txt
@@ -66,14 +53,13 @@ echo ">> Test ${test_script}"
 
 _setup "input P, SE, OR, logistic regression"
 
-cat <<EOF > ./mfile.yaml
-col_P: p
-col_SE: se
-col_OR: or
+cat <<EOF > ./infile.tsv
+0	P	SE	OR
+1	0.001	0.2	0.3
 EOF
 
 cat <<EOF > ./expected-colfields.txt
-0|se|p|or
+0|SE|P|OR
 EOF
 
 cat <<EOF > ./expected-colpositions.txt
@@ -81,7 +67,7 @@ cat <<EOF > ./expected-colpositions.txt
 EOF
 
 cat <<EOF > ./expected-colnames.txt
-0,se,p,or
+0,SE,P,OR
 EOF
 
 
@@ -93,14 +79,13 @@ _run_script "branchX"
 
 _setup "input P, SE, OR, AF(1KGP) linear regression"
 
-cat <<EOF > ./mfile.yaml
-col_P: p
-col_SE: se
-col_OR: or
+cat <<EOF > ./infile.tsv
+0	P	SE	OR	AF_1KG_CS
+1	0.001	0.2	0.3	0.33
 EOF
 
 cat <<EOF > ./expected-colfields.txt
-0|se|p|or|AF_1KG_CS
+0|SE|P|OR|AF_1KG_CS
 EOF
 
 cat <<EOF > ./expected-colpositions.txt
@@ -108,8 +93,7 @@ cat <<EOF > ./expected-colpositions.txt
 EOF
 
 cat <<EOF > ./expected-colnames.txt
-0,se,p,or,AF_1KG_CS
+0,SE,P,OR,AF_1KG_CS
 EOF
-
 
 _run_script "g1kaf_stats_branch"
