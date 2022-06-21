@@ -12,6 +12,8 @@ include {
   infer_stats
   merge_inferred_data
   select_stats_for_output
+  rename_stat_col_names
+  flip_effects
 } from '../process/update_stats.nf' 
 
 workflow update_stats {
@@ -25,8 +27,14 @@ workflow update_stats {
   numeric_filter_stats(input)
   convert_neglogP(numeric_filter_stats.out.ch_stats_filtered_remain00)
   force_eaf(convert_neglogP.out.ch_convert_neglog10P)
+  rename_stat_col_names(force_eaf.out.stats_forced_eaf)
+  rename_stat_col_names.out.renamed_stat_col_names
+    .join(input2, by: 0)
+    .set { ch_to_flip }
+  flip_effects(ch_to_flip)
+
   prep_af_stats(input2)
-    force_eaf.out.ch_stats_filtered_remain
+    flip_effects.out.stats_flipped
     .join(prep_af_stats.out.ch_prep_ref_allele_frequency, by: 0)
     .set { ch_add_ref_freq }
   add_af_stats(ch_add_ref_freq)

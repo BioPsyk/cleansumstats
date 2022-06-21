@@ -1,32 +1,34 @@
 #!/usr/bin/env bash
 
 #meta file
-stdin=${1}
+STATS=${1}
 inferred=${2}
 from_which_source=${3}
 STATM=${4}
-B=${5}
-SE=${6}
-Z=${7}
-P=${8}
-OR=${9}
-ORL95=${10}
-ORU95=${11}
-N=${12}
-CaseN=${13}
-ControlN=${14}
-EAF=${15}
-OAF=${16}
-INFO=${17}
-DIRECTION=${18}
-StudyN=${19}
+#These are previous variables but now set to internal defaults
+B="B"
+SE="SE"
+Z="Z"
+P="P"
+OR="OR"
+ORL95="ORL95"
+ORU95="ORU95"
+N="N"
+CaseN="CaseN"
+ControlN="ControlN"
+EAF="EAF"
+INFO="INFO"
+DIRECTION="DIRECTION"
+StudyN="StudyN"
 
 #recode as true or false
 function recode_to_tf(){
-  if [ "$1" == "missing" ]; then
-    echo false
+  var=$1
+  fl=${STATS}
+  if head -n1 $fl | awk '{print $0" "}'1 | grep -q "[[:space:]]$var[[:space:]]"; then
+    echo "true"
   else
-    echo true
+    echo "false"
   fi
 }
 
@@ -287,7 +289,7 @@ function which_to_select(){
     echo "EAF" 1>&2
     echo -e "EAF\toriginal" >> ${selected_source}
   fi
-  if specfunx_exists "AF_1KG_CS" ${stdin}; then
+  if specfunx_exists "AF_1KG_CS" ${STATS}; then
     echo -e "AF_1KG_CS"
     echo "EAF_1KG" 1>&2
     echo -e "EAF_1KG\tAF_1KG_CS" >> ${selected_source}
@@ -314,9 +316,9 @@ nam=$(which_to_select "/dev/null" 2>&1 > /dev/null | awk '{printf "%s,", $1}' | 
 
 #cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"
 if [ -s $inferred ]; then
-  LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $inferred $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"
+  LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $inferred $STATS | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"
 else
-  cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"
+  cat $STATS | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"
 fi
 
 #cat $inferred | sstools-utils ad-hoc-do -f - -k "0|${Z_fr_B_SE}" -n"0,${Z}"

@@ -13,7 +13,7 @@ process final_assembly {
 
     script:
     """
-    apply_modifier_on_stats.sh $acorrected $stats > final_assembly__cleaned
+    assemble_stats_and_acorrected.sh $acorrected $stats > final_assembly__cleaned
 
     #Extract EMOD
     cut -f 4,8 $acorrected | LC_ALL=C sort -k 1,1 | gzip -c > emod.gz
