@@ -68,9 +68,9 @@ CHR	SNP	BP	A1	A2	FRQ_A_20352	FRQ_U_31358	INFO	OR	SE	P	ngt	Direction	HetISqt	HetC
 EOF
 
 cat <<EOF > ./expected-result1.tsv
-CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	INFO	Direction	B	Z	EAF_1KG	OR
-12	117668628	5	rs645510	C	T	0.9787	0.0147	0.954	--++++-++--+-+--++-------++-+-++	0.0004	0.026699	0.67	1.0004
-3	140461721	1	rs6439928	T	C	0.09239	0.0923	0.67	+--+++++--+?++--+-+-?++++++++--+	0.155404	1.68292	0.68	1.16813
+CHR	POS	0	RSID	EffectAllele	OtherAllele	B	SE	Z	P	OR	EAF_1KG	INFO	Direction
+12	117668628	5	rs645510	C	T	0.000400	0.0147	0.026699	0.9787	1.0004	0.33	0.954	--++++-++--+-+--++-------++-+-++
+3	140461721	1	rs6439928	T	C	0.155404	0.0923	1.682923	0.09239	1.16813	0.68	0.67	+--+++++--+?++--+-+-?++++++++--+
 EOF
 
 time nextflow -q run -offline \

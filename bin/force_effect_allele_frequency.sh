@@ -2,6 +2,10 @@ sfile=$1
 EAF=$2
 OAF=$3
 
+#This function:
+#1) makes a name change to EAF for the allele frequency colname.
+#2) makes a simple 1-af in case OAF has been specified instead of EAF.
+
 #recode as true or false
 function recode_to_tf(){
   if [ "$1" == "missing" ]; then

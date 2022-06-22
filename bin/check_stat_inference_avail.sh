@@ -4,25 +4,28 @@ colf=$1
 coln=$2
 argn=$3
 af_branch=$4
-B=${5}
-SE=${6}
-Z=${7}
-P=${8}
-OR=${9}
-ORL95=${10}
-ORU95=${11}
-N=${12}
-CaseN=${13}
-ControlN=${14}
-EAF=${15}
-OAF=${16}
+STATS=$5
 
-#recode as true or false
+#These are previous variables but now set to internal defaults
+B="B"
+SE="SE"
+Z="Z"
+P="P"
+OR="OR"
+ORL95="ORL95"
+ORU95="ORU95"
+N="N"
+CaseN="CaseN"
+ControlN="ControlN"
+EAF="EAF"
+
 function recode_to_tf(){
-  if [ "$1" == "missing" ]; then
-    echo false
+  var=$1
+  fl=${STATS}
+  if head -n1 $fl | awk '{print $0" "}'1 | grep -q "[[:space:]]$var[[:space:]]"; then
+    echo "true"
   else
-    echo true
+    echo "false"
   fi
 }
 

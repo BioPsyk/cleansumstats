@@ -6,13 +6,13 @@ e2e_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 tests_dir=$(dirname "${e2e_dir}")
 project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
-work_dir="${project_dir}/tmp/regression-242"
+work_dir="${project_dir}/tmp/regression-347"
 outdir="${work_dir}/out"
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
 
-echo ">> Test regression #242"
+echo ">> Test regression #347"
 
 cd "${work_dir}"
 
@@ -42,27 +42,41 @@ stats_neglog10P: true
 col_BETA: EFFECT_A1
 col_CHR: CHR
 col_EffectAllele: A1
+col_OtherAllele: A2
 col_P: P
 col_POS: BP
 col_SE: SE
 col_SNP: SNP
+col_EAF: eurAF
 EOF
 
+#The problem
+#The added 1KG allele frequencies are not flipped when needed
+
+#Manually added real eurAF from 1000G. The idea is that the EAF_1KGP column should contain the same as EAF after cleaning.
+#And as can be seen, it corresponds well with the original sumstats FREQ_A1
 cat <<EOF > ./input.txt
-SNP CHR BP A1 A2 FREQ_A1 EFFECT_A1 SE P
-rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.0141	0.2648
-rs6443624	chr3	180380376	A	C	0.242	0.0027	0.0155	0.8603
-rs6444089	chr3	187159052	A	G	0.55	0.0043	0.0128	0.7394
-rs645184	chr11	73806781	A	G	0.608	0.003	0.0129	0.8169
-rs645510	chr12	116569153	T	C	0.675	-0.0151	0.0143	0.292
-rs6456063	chr6	166624019	A	G	0.783	0.0245	0.018	0.1735
-rs6458154	chr6	40461984	A	G	0.458	0.0126	0.0132	0.3407
+SNP	CHR	BP	A1	A2	FREQ_A1	EFFECT_A1	SE	P	eurAF
+rs12709653	chr18	27735538	A	G	0.775	-0.0142	0.49811951	0.3176	0.7167
+rs12726220	chr1	150984623	A	G	0.948	-0.0315	0.59397106	0.2547	0.9274
+rs12754538	chr1	8408079	T	C	0.308	-6e-04	0.015	0.01488802	0.2167
+rs10197378	chr2	29092758	A	G	0.183	-0.0189	0.65247484	0.2226	0.2068
+rs6439928	chr3	141663261	T	C	0.658	-0.0157	0.57708202	0.2648	0.6869
+rs6463169	chr7	42980893	T	C	0.825	-0.0219	0.69637202	0.2012	0.7913
 EOF
 
+#rs12754538 has flipped effect allele from T to C
+#rs10197378 has flipped effect allele from A to G
+#rs6463169 has flipped effect allele from T to C
+#NOTE: this is a sumstat with -neglog10=true, so P values are not same as input.
 cat <<EOF > ./expected-result1.tsv
-CHR	POS	0	RSID	EffectAllele	OtherAllele	B	SE	Z	P	EAF_1KG
-12	117668628	5	rs645510	C	T	0.0151	0.0143	1.055944	0.510505	0.33
-3	140461721	1	rs6439928	T	C	-0.0157	0.0141	-1.113475	0.543501	0.68
+CHR	POS	0	RSID	EffectAllele	OtherAllele	B	SE	Z	P	EAF	EAF_1KG
+18	31901577	1	rs12709653	A	G	-0.0142	0.49811951	-0.028507	0.481282	0.7167	0.71
+1	154199074	2	rs12726220	A	G	-0.0315	0.59397106	-0.053033	0.556288	0.9274	0.93
+1	8413753	3	rs12754538	C	T	0.0006	0.015	0.040000	0.966300	0.7833	0.78
+2	28958241	4	rs10197378	G	A	0.0189	0.65247484	0.028967	0.598963	0.7932	0.79
+3	140461721	5	rs6439928	T	C	-0.0157	0.57708202	-0.027206	0.543501	0.6869	0.68
+7	43168054	6	rs6463169	C	T	0.0219	0.69637202	0.031449	0.629216	0.2087	0.21
 EOF
 
 gzip "./input.txt"
@@ -102,13 +116,13 @@ function _check_results {
   obs=$1
   exp=$2
   if ! diff -u ${obs} ${exp} &> ./difference; then
-   echo "----------obs---------------"
+   echo "obs------------------------"
    cat $obs
-   echo "----------exp--------------"
+   echo "exp------------------------"
    cat $exp
    echo "---------------------------"
 
-    echo "- [FAIL] regression-242"
+    echo "- [FAIL] regression-347"
     cat ./difference
     exit 1
   fi

@@ -34,21 +34,6 @@ function _run_script {
 
   "${test_script}.sh" ./sfile.tsv ./inferred.tsv ./observed-source \
     "linear" \
-    "EFFECT_A1" \
-    "SE" \
-    "missing" \
-    "P" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
-    "missing" \
     > ./observed-result1.tsv
 
   _check_results ./observed-result1.tsv ./expected-result1.tsv
@@ -70,17 +55,9 @@ echo ">> Test ${test_script}"
 
 _setup "Simple test"
 
-cat <<EOF > ./input.yaml
-col_BETA: EFFECT_A1
-col_P: P
-col_POS: BP
-col_SE: SE
-stats_Model: linear
-EOF
-
 
 cat <<EOF > ./sfile.tsv
-0	EFFECT_A1	SE	P	AF_1KG_CS
+0	B	SE	P	AF_1KG_CS
 1	-0.0157	0.0141	0.2648	0.68
 10	-0.0219	0.0171	0.2012	NA
 100	-0.0321	0.0137	0.0193	NA

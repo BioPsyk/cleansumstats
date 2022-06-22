@@ -1,27 +1,30 @@
 #!/usr/bin/env bash
 
 #meta file
-af_branch=${1}
-STATM=${2}
-B=${3}
-SE=${4}
-Z=${5}
-P=${6}
-OR=${7}
-ORL95=${8}
-ORU95=${9}
-N=${10}
-CaseN=${11}
-ControlN=${12}
-EAF=${13}
-OAF=${14}
+STATS=${1}
+af_branch=${2}
+STATM=${3}
 
-#recode as true or false
+#These are previous variables but now set to internal defaults
+B="B"
+SE="SE"
+Z="Z"
+P="P"
+OR="OR"
+ORL95="ORL95"
+ORU95="ORU95"
+N="N"
+CaseN="CaseN"
+ControlN="ControlN"
+EAF="EAF"
+
 function recode_to_tf(){
-  if [ "$1" == "missing" ]; then
-    echo false
+  var=$1
+  fl=${STATS}
+  if head -n1 $fl | awk '{print $0" "}'1 | grep -q "[[:space:]]$var[[:space:]]"; then
+    echo "true"
   else
-    echo true
+    echo "false"
   fi
 }
 
