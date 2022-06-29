@@ -105,4 +105,22 @@ EOF
 
 _run_script "0|EFFECT_A1|SE|MADEUP|DIRECTION" "0,EFFECT_A1,SE,MADEUP,DIRECTION" "3" "4,5"
 
+#---------------------------------------------------------------------------------
+# a case with two columns to skip
 
+_setup "NA return"
+
+cat <<EOF > ./input1.tsv
+0	chr	pos	ref	alt	af_meta_hq	beta_meta_hq	se_meta_hq	pval_meta_hq
+1	1	11063	T	G	4.801e-05	-2.451e-01	2.759e-01	-9.829e-01
+10	1	64658	A	T	NA	NA	NA	NA
+100	1	736736	A	G	3.749e-02	-3.815e-03	3.096e-03	-1.524e+00
+EOF
+
+cat <<EOF > ./expected-result1.tsv
+0	beta_meta_hq	se_meta_hq	pval_meta_hq
+1	-2.451e-01	2.759e-01	-9.829e-01
+100	-3.815e-03	3.096e-03	-1.524e+00
+EOF
+
+_run_script "0|beta_meta_hq|se_meta_hq|pval_meta_hq" "0,beta_meta_hq,se_meta_hq,pval_meta_hq" "3" ""
