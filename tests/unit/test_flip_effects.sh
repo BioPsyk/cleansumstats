@@ -118,3 +118,25 @@ EOF
 
 _run_script
 
+#---------------------------------------------------------------------------------
+# Case 4 - bugfix-352, zero-division and wrong modification of ORU and ORL
+
+_setup "OR, ORU95 and ORL95"
+
+cat <<EOF > ./stat.tsv
+0	SE	P	OR	ORL95	ORU95	CaseN	ControlN	INFO	DIRECTION
+10000093	2048	0.9937	10921020.75888	0.00153	0	1062	1062	0.928	???????+??
+EOF
+
+cat <<EOF > ./acor.tsv
+0	A1	A2	CHRPOS	RSID	EffectAllele	OtherAllele	EMOD
+10000093	A	G	12:126406434	rs1000000	G	A	-1
+EOF
+
+cat <<EOF > ./expected-result1.tsv
+0	SE	P	OR	ORL95	ORU95	CaseN	ControlN	INFO	DIRECTION
+10000093	2048	0.9937	9.15665e-08	653.595	0	1062	1062	0.928	???????+??
+EOF
+
+_run_script
+
