@@ -169,10 +169,10 @@ properties:
 
       > Experimental Factor Ontology (EFO) provides a systematic description of many experimental
       > variables available in EBI databases, and for projects such as the GWAS catalog.
-      
-      > The Mondo Disease Ontology (Mondo) aims to harmonize disease definitions across the world. 
-      > It is a semi-automatically constructed ontology that merges in multiple disease resources 
-      > to yield a coherent merged ontology. 
+
+      > The Mondo Disease Ontology (Mondo) aims to harmonize disease definitions across the world.
+      > It is a semi-automatically constructed ontology that merges in multiple disease resources
+      > to yield a coherent merged ontology.
     type: "array"
     examples:
       - ["EFO:0000692"]
@@ -711,8 +711,8 @@ properties:
 
 additionalProperties: false
 dependencies:
-    col_P:
-      required: ["stats_neglog10P"]
+  col_P:
+    required: ["stats_neglog10P"]
 required:
   - "cleansumstats_metafile_kind"
   - "path_sumStats"
@@ -741,39 +741,39 @@ then:
     - "stats_TotalN"
 allOf:
   - anyOf:
-      - required:
-          - "col_SNP"
-      - required:
-          - "col_CHR"
-          - "col_POS"
+    - required:
+      - "col_SNP"
+    - required:
+      - "col_CHR"
+      - "col_POS"
   - anyOf:
-      - required:
-          - "col_BETA"
-      - required:
-          - "col_SE"
-      - required:
-          - "col_Z"
-      - required:
-          - "col_P"
-      - required:
-          - "col_OR"
-      - required:
-          - "col_ORL95"
-      - required:
-          - "col_ORU95"
-      - required:
-          - "col_N"
-      - required:
-          - "col_CaseN"
-      - required:
-          - "col_ControlN"
-      - required:
-          - "col_StudyN"
-      - required:
-          - "col_EAF"
-      - required:
-          - "col_OAF"
-      - required:
-          - "col_INFO"
-      - required:
-          - "col_Direction"
+    - required:
+      - "col_BETA"
+    - required:
+      - "col_SE"
+    - required:
+      - "col_Z"
+    - required:
+      - "col_P"
+    - required:
+      - "col_OR"
+    - required:
+      - "col_ORL95"
+    - required:
+      - "col_ORU95"
+    - required:
+      - "col_N"
+    - required:
+      - "col_CaseN"
+    - required:
+      - "col_ControlN"
+    - required:
+      - "col_StudyN"
+    - required:
+      - "col_EAF"
+    - required:
+      - "col_OAF"
+    - required:
+      - "col_INFO"
+    - required:
+      - "col_Direction"
