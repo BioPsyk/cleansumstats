@@ -29,7 +29,7 @@ WORKDIR /cleansumstats
 #---------------------------------------------------------------------------------
 # Installing rmath
 
-RUN apt-get install -y cmake build-essential
+RUN apt-get update --fix-missing -y && apt-get install -y cmake build-essential
 
 ARG RMATH_REVISION="d816ef8d1719810288afd848e18b2a8d00c2ccd2"
 
@@ -210,14 +210,13 @@ RUN mv nextflow/build/releases/nextflow-21.12.1-edge-all /usr/bin/nextflow && \
   chmod +x /usr/bin/nextflow
 
 RUN apt-get update --fix-missing && \
-  apt-get install python3 python3-pip python gawk graphviz dos2unix pigz -y && \
-  pip3 install CrossMap && \
+    apt-get install python3 python3-pip python gawk graphviz dos2unix pigz \
+    libbz2-dev liblzma-dev vim -y
+
+RUN pip3 install CrossMap && \
   pip3 install jsonschema && \
   pip3 install pyyaml && \
   apt-get remove --purge python3-pip -y
-
-RUN apt-get update --fix-missing && \
-  apt-get install vim -y
 
 RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
 RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
@@ -228,6 +227,5 @@ ENV NXF_CLASSPATH="/cleansumstats/ibp-pipeline-lib.jar"
 
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
 RUN chown nextflow:users /cleansumstats/external_data -R
-
 
 USER nextflow

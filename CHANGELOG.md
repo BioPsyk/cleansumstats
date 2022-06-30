@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 -  Raw input as output no longer default. Can be set in nextflow.config
 
+## [1.5.0] - 2022-06-30
+### Added
+- Script that converts metadata files into a delimiter separated table, where:
+  - Each metadata field is a column
+  - Each row is a single metadata file
+
 ## [1.4.1] - 2022-06-27
 ### Fixed
 - The issue for when ORs are 0, and added a more explicit modification of ORU and ORL
