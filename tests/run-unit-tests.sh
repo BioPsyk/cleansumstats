@@ -24,7 +24,7 @@ echo "==================================================================="
 cd "${tmp_dir}"
 
 # Test only one case (for dev purposes)
-#"${test_dir}/unit/test_flip_effects.sh"
+#"${test_dir}/unit/test_numeric_filter_stats.sh"
 #exit 0
 
 for test_file in "${test_dir}/unit/"test_*.sh

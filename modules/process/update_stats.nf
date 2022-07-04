@@ -91,7 +91,7 @@ process force_eaf {
     """
     if [[ \$(wc -l $sfile | awk '{print \$1}') == "1" ]]
     then
-      echo "[ERROR] The inputted file sfile did not have any data"
+      echo "[ERROR] The input file sfile did not have any data"
       exit 1
     fi
 
@@ -99,7 +99,7 @@ process force_eaf {
 
     if [[ \$(wc -l st_forced_eaf | awk '{print \$1}') == "1" ]]
     then
-      echo "[ERROR] The outputted file st_forced_eaf did not have any data"
+      echo "[ERROR] The output file st_forced_eaf did not have any data"
       exit 1
     fi
     #process before and after stats
@@ -175,15 +175,15 @@ process flip_effects {
     """
     if [[ \$(wc -l $stats | awk '{print \$1}') == "1" ]]
     then
-      echo "[ERROR] The inputted file stats did not have any data"
+      echo "[ERROR] The input file stats did not have any data"
       exit 1
     fi
 
     flip_effects.sh ${stats} ${acorr} > flip_effects__st_flipped_effects
 
-    if [[ \$(wc -l st_forced_eaf | awk '{print \$1}') == "1" ]]
+    if [[ \$(wc -l flip_effects__st_flipped_effects | awk '{print \$1}') == "1" ]]
     then
-      echo "[ERROR] The outputted file flip_effects__st_flipped_effects did not have any data"
+      echo "[ERROR] The output file flip_effects__st_flipped_effects did not have any data"
       exit 1
     fi
     #process before and after stats

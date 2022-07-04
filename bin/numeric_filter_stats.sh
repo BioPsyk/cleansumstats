@@ -13,9 +13,8 @@ fi
 
 touch numeric_filter_stats__removed_stat_non_numeric_in_awk
 touch numeric_filter_stats__removed_stat_non_numeric_in_awk_ix
-
 sstools-utils ad-hoc-do -f $sfile -k "${select}" -n "${select_return_names}" | \
-  filter_stat_values_awk.sh \
+filter_stat_values_awk.sh \
     -vzeroSE="${se_column_id}" \
     -vcolumskip="${exclude_columns_ids}" \
     > numeric_filter_stats__st_filtered_remains \
