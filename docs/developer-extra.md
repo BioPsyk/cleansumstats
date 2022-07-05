@@ -75,10 +75,9 @@ As an extra failsafe when updating the code, we have added unit and e2e tests, w
 ```
 
 ### Run the library-table-generator
-To create a table describing an inventory of raw sumstats. This is the internal function, but also exists as a singularity wrapper, which mounts the correct directory
+To create a table describing an inventory of raw sumstats. This is the wrapper, which can be directly applied. Specify dorectory of library and the suffix for the metadata files.
 ```
-#Tabularize a set of metafiles
-./scripts/singularity-run.sh /cleansumstats/bin/metadata_to_table.py /cleansumstats/*.yaml > table.csv
+./tablefromsumstatlibrary.sh tests/example_data "raw_meta.txt" > table_test.csv
 ```
 
 
