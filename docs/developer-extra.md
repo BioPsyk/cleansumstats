@@ -74,7 +74,14 @@ As an extra failsafe when updating the code, we have added unit and e2e tests, w
 ./scripts/singularity-run.sh /cleansumstats/tests/run-tests.sh
 ```
 
-### Runn the alpha -> beta converter
+### Run the library-table-generator
+To create a table describing an inventory of raw sumstats. This is the wrapper, which can be directly applied. Specify dorectory of library and the suffix for the metadata files.
+```
+./tablefromsumstatlibrary.sh tests/example_data "raw_meta.txt" > table_test.csv
+```
+
+
+### Run the alpha -> beta converter
 Here and example looping over alpha id numbers. Storing the results in PWD=sumstat_conv, which does not have to be mounted. The files to convert do however need to e mounted
 ```
 #convert a set of IDs
