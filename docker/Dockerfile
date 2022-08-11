@@ -54,7 +54,7 @@ RUN rm -rf rmath
 #---------------------------------------------------------------------------------
 # Installing r-stats-c-streamer
 
-ARG R_STATS_C_STREAMER_REVISION="a3ef08bef1e45c9135400b42aea798e3bf0dbf0f"
+ARG R_STATS_C_STREAMER_REVISION="17bc896827c49965f529567331f7ffc3840b8c45"
 
 RUN wget "https://github.com/pappewaio/r-stats-c-streamer/archive/${R_STATS_C_STREAMER_REVISION}.zip" \
   --quiet -O r-stats-c-streamer.zip && \

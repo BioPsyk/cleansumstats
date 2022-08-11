@@ -645,6 +645,10 @@ properties:
     title: "Is p-value -log10 transformed?"
     type: "boolean"
 
+  stats_log10P:
+    title: "Is p-value log10 transformed?"
+    type: "boolean"
+
   col_N:
     title: "Per SNP total sample size"
     description: |

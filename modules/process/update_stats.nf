@@ -41,6 +41,7 @@ process numeric_filter_stats {
   """
 }
 
+// Despite the name it converts log10P also
 process convert_neglogP {
 
     publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
@@ -59,10 +60,13 @@ process convert_neglogP {
     def metadata = params.sess.get_metadata(datasetID)
     """
     colneglog10P="${metadata.stats_neglog10P ?: "missing"}"
+    collog10P="${metadata.stats_log10P ?: "missing"}"
     colP="${metadata.col_P ?: "missing"}"
 
     if [ "\${colneglog10P}" == 'true' ]; then
       convert_neglogP.sh ${sfile} "\${colP}" > convert_neglogP
+    else if [ "\${collog10P}" == 'true' ]; then
+      convert_logP.sh ${sfile} "\${colP}" > convert_neglogP
     else
       cp ${sfile} convert_neglogP
     fi
