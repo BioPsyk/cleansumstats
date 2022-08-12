@@ -10,6 +10,7 @@ col_OR: or
 col_OtherAllele: a2
 col_P: p
 stats_neglog10P: false
+stats_log10P: false
 col_POS: bp
 col_SE: se
 col_SNP: snp

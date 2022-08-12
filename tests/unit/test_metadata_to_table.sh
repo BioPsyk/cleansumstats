@@ -54,8 +54,8 @@ study_Use: open
 EOF
 
 cat <<EOF > ./expected
-metadata_dir,cleansumstats_version,cleansumstats_metafile_user,cleansumstats_metafile_date,cleansumstats_metafile_kind,path_sumStats,path_readMe,path_pdf,path_supplementary,study_Title,study_PMID,study_Year,study_PhenoDesc,study_PhenoCode,study_FilePortal,study_FileURL,study_AccessDate,study_Use,study_includedCohorts,study_Ancestry,study_Gender,study_PhasePanel,study_PhaseSoftware,study_ImputePanel,study_ImputeSoftware,study_Array,study_Notes,stats_TraitType,stats_Model,stats_TotalN,stats_CaseN,stats_ControlN,stats_GCMethod,stats_GCValue,stats_Notes,col_CHR,col_POS,col_SNP,col_EffectAllele,col_OtherAllele,col_BETA,col_SE,col_OR,col_ORL95,col_ORU95,col_Z,col_P,stats_neglog10P,col_N,col_CaseN,col_ControlN,col_StudyN,col_INFO,col_EAF,col_OAF,col_Direction,col_Notes
-single file,1.0.0,,,,,,,,,,,,,,,,open,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+metadata_dir,cleansumstats_version,cleansumstats_metafile_user,cleansumstats_metafile_date,cleansumstats_metafile_kind,path_sumStats,path_readMe,path_pdf,path_supplementary,study_Title,study_PMID,study_Year,study_PhenoDesc,study_PhenoCode,study_FilePortal,study_FileURL,study_AccessDate,study_Use,study_includedCohorts,study_Ancestry,study_Gender,study_PhasePanel,study_PhaseSoftware,study_ImputePanel,study_ImputeSoftware,study_Array,study_Notes,stats_TraitType,stats_Model,stats_TotalN,stats_CaseN,stats_ControlN,stats_GCMethod,stats_GCValue,stats_Notes,col_CHR,col_POS,col_SNP,col_EffectAllele,col_OtherAllele,col_BETA,col_SE,col_OR,col_ORL95,col_ORU95,col_Z,col_P,stats_neglog10P,stats_log10P,col_N,col_CaseN,col_ControlN,col_StudyN,col_INFO,col_EAF,col_OAF,col_Direction,col_Notes
+single file,1.0.0,,,,,,,,,,,,,,,,open,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 EOF
 
 _run_script ./metadata.yaml
@@ -77,9 +77,9 @@ study_Use: restricted
 EOF
 
 cat <<EOF > ./expected
-metadata_dir,cleansumstats_version,cleansumstats_metafile_user,cleansumstats_metafile_date,cleansumstats_metafile_kind,path_sumStats,path_readMe,path_pdf,path_supplementary,study_Title,study_PMID,study_Year,study_PhenoDesc,study_PhenoCode,study_FilePortal,study_FileURL,study_AccessDate,study_Use,study_includedCohorts,study_Ancestry,study_Gender,study_PhasePanel,study_PhaseSoftware,study_ImputePanel,study_ImputeSoftware,study_Array,study_Notes,stats_TraitType,stats_Model,stats_TotalN,stats_CaseN,stats_ControlN,stats_GCMethod,stats_GCValue,stats_Notes,col_CHR,col_POS,col_SNP,col_EffectAllele,col_OtherAllele,col_BETA,col_SE,col_OR,col_ORL95,col_ORU95,col_Z,col_P,stats_neglog10P,col_N,col_CaseN,col_ControlN,col_StudyN,col_INFO,col_EAF,col_OAF,col_Direction,col_Notes
-multiple files,1.0.0,,,,,,,,,,,,,,,,open,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-multiple files,1.0.0,riczet,,,,,,,,,,,,,,,restricted,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+metadata_dir,cleansumstats_version,cleansumstats_metafile_user,cleansumstats_metafile_date,cleansumstats_metafile_kind,path_sumStats,path_readMe,path_pdf,path_supplementary,study_Title,study_PMID,study_Year,study_PhenoDesc,study_PhenoCode,study_FilePortal,study_FileURL,study_AccessDate,study_Use,study_includedCohorts,study_Ancestry,study_Gender,study_PhasePanel,study_PhaseSoftware,study_ImputePanel,study_ImputeSoftware,study_Array,study_Notes,stats_TraitType,stats_Model,stats_TotalN,stats_CaseN,stats_ControlN,stats_GCMethod,stats_GCValue,stats_Notes,col_CHR,col_POS,col_SNP,col_EffectAllele,col_OtherAllele,col_BETA,col_SE,col_OR,col_ORL95,col_ORU95,col_Z,col_P,stats_neglog10P,stats_log10P,col_N,col_CaseN,col_ControlN,col_StudyN,col_INFO,col_EAF,col_OAF,col_Direction,col_Notes
+multiple files,1.0.0,,,,,,,,,,,,,,,,open,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+multiple files,1.0.0,riczet,,,,,,,,,,,,,,,restricted,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 EOF
 
 _run_script *.yaml
@@ -105,9 +105,9 @@ study_includedCohorts:
 EOF
 
 cat <<EOF > ./expected
-metadata_dir,cleansumstats_version,cleansumstats_metafile_user,cleansumstats_metafile_date,cleansumstats_metafile_kind,path_sumStats,path_readMe,path_pdf,path_supplementary,study_Title,study_PMID,study_Year,study_PhenoDesc,study_PhenoCode,study_FilePortal,study_FileURL,study_AccessDate,study_Use,study_includedCohorts,study_Ancestry,study_Gender,study_PhasePanel,study_PhaseSoftware,study_ImputePanel,study_ImputeSoftware,study_Array,study_Notes,stats_TraitType,stats_Model,stats_TotalN,stats_CaseN,stats_ControlN,stats_GCMethod,stats_GCValue,stats_Notes,col_CHR,col_POS,col_SNP,col_EffectAllele,col_OtherAllele,col_BETA,col_SE,col_OR,col_ORL95,col_ORU95,col_Z,col_P,stats_neglog10P,col_N,col_CaseN,col_ControlN,col_StudyN,col_INFO,col_EAF,col_OAF,col_Direction,col_Notes
-"multiple files, list values",1.0.0,,,,,,,,,,,,"EFO:0000289,EFO:0009963",,,,open,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-"multiple files, list values",1.0.0,riczet,,,,,,,,,,,,,,,restricted,"iPSYCH2012,iPSYCH2015",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+metadata_dir,cleansumstats_version,cleansumstats_metafile_user,cleansumstats_metafile_date,cleansumstats_metafile_kind,path_sumStats,path_readMe,path_pdf,path_supplementary,study_Title,study_PMID,study_Year,study_PhenoDesc,study_PhenoCode,study_FilePortal,study_FileURL,study_AccessDate,study_Use,study_includedCohorts,study_Ancestry,study_Gender,study_PhasePanel,study_PhaseSoftware,study_ImputePanel,study_ImputeSoftware,study_Array,study_Notes,stats_TraitType,stats_Model,stats_TotalN,stats_CaseN,stats_ControlN,stats_GCMethod,stats_GCValue,stats_Notes,col_CHR,col_POS,col_SNP,col_EffectAllele,col_OtherAllele,col_BETA,col_SE,col_OR,col_ORL95,col_ORU95,col_Z,col_P,stats_neglog10P,stats_log10P,col_N,col_CaseN,col_ControlN,col_StudyN,col_INFO,col_EAF,col_OAF,col_Direction,col_Notes
+"multiple files, list values",1.0.0,,,,,,,,,,,,"EFO:0000289,EFO:0009963",,,,open,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+"multiple files, list values",1.0.0,riczet,,,,,,,,,,,,,,,restricted,"iPSYCH2012,iPSYCH2015",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 EOF
 
 _run_script *.yaml
@@ -141,6 +141,7 @@ stats_Notes: Discovery sample only, I think. This sumstat_ID was used to test me
 stats_TotalN: 12441
 stats_TraitType: quantitative
 stats_neglog10P: false
+stats_log10P: false
 study_AccessDate: '2020-04-27'
 study_Ancestry: EUR
 study_Array: meta
@@ -161,8 +162,8 @@ study_Year: 2014
 EOF
 
 cat <<EOF > ./expected
-metadata_dir,cleansumstats_version,cleansumstats_metafile_user,cleansumstats_metafile_date,cleansumstats_metafile_kind,path_sumStats,path_readMe,path_pdf,path_supplementary,study_Title,study_PMID,study_Year,study_PhenoDesc,study_PhenoCode,study_FilePortal,study_FileURL,study_AccessDate,study_Use,study_includedCohorts,study_Ancestry,study_Gender,study_PhasePanel,study_PhaseSoftware,study_ImputePanel,study_ImputeSoftware,study_Array,study_Notes,stats_TraitType,stats_Model,stats_TotalN,stats_CaseN,stats_ControlN,stats_GCMethod,stats_GCValue,stats_Notes,col_CHR,col_POS,col_SNP,col_EffectAllele,col_OtherAllele,col_BETA,col_SE,col_OR,col_ORL95,col_ORU95,col_Z,col_P,stats_neglog10P,col_N,col_CaseN,col_ControlN,col_StudyN,col_INFO,col_EAF,col_OAF,col_Direction,col_Notes
-PR 358 regression,1.0.0-alpha,Andrew Schork,2020-04-27,library,sumstat_1_raw.gz,,sumstat_1_pmid_23358156.pdf,sumstat_1_pmid_23358156_supp_1.pdf,sumstat_1,23358156,2014,Childhood Intelligence (old phenocode: Childhood IQ),EFO:0000000,http://ssgac.org/data,http://ssgac.org/documents/CHIC_Summary_Benyamin2014.txt.gz,2020-04-27,open,,EUR,mixed,meta,meta,HapMap,meta,meta,,quantitative,linear,12441,,,none,,"Discovery sample only, I think. This sumstat_ID was used to test meta file update functionality.",CHR,BP,SNP,A1,A2,EFFECT_A1,SE,,,,,P,False,,,,,,,,,
+metadata_dir,cleansumstats_version,cleansumstats_metafile_user,cleansumstats_metafile_date,cleansumstats_metafile_kind,path_sumStats,path_readMe,path_pdf,path_supplementary,study_Title,study_PMID,study_Year,study_PhenoDesc,study_PhenoCode,study_FilePortal,study_FileURL,study_AccessDate,study_Use,study_includedCohorts,study_Ancestry,study_Gender,study_PhasePanel,study_PhaseSoftware,study_ImputePanel,study_ImputeSoftware,study_Array,study_Notes,stats_TraitType,stats_Model,stats_TotalN,stats_CaseN,stats_ControlN,stats_GCMethod,stats_GCValue,stats_Notes,col_CHR,col_POS,col_SNP,col_EffectAllele,col_OtherAllele,col_BETA,col_SE,col_OR,col_ORL95,col_ORU95,col_Z,col_P,stats_neglog10P,stats_log10P,col_N,col_CaseN,col_ControlN,col_StudyN,col_INFO,col_EAF,col_OAF,col_Direction,col_Notes
+PR 358 regression,1.0.0-alpha,Andrew Schork,2020-04-27,library,sumstat_1_raw.gz,,sumstat_1_pmid_23358156.pdf,sumstat_1_pmid_23358156_supp_1.pdf,sumstat_1,23358156,2014,Childhood Intelligence (old phenocode: Childhood IQ),EFO:0000000,http://ssgac.org/data,http://ssgac.org/documents/CHIC_Summary_Benyamin2014.txt.gz,2020-04-27,open,,EUR,mixed,meta,meta,HapMap,meta,meta,,quantitative,linear,12441,,,none,,"Discovery sample only, I think. This sumstat_ID was used to test meta file update functionality.",CHR,BP,SNP,A1,A2,EFFECT_A1,SE,,,,,P,False,False,,,,,,,,,
 EOF
 
 _run_script *.yaml

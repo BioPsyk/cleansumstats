@@ -21,6 +21,7 @@ stats_Notes: Discovery sample only, I think. This sumstat_ID was used to test me
 stats_TotalN: 12441
 stats_TraitType: quantitative
 stats_neglog10P: false
+stats_log10P: false
 study_AccessDate: '2020-04-27'
 study_Ancestry: EUR
 study_Array: meta
