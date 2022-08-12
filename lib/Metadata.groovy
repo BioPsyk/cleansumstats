@@ -63,6 +63,7 @@ class Metadata extends BaseMetadata {
   String col_Z = null
   String col_P = null
   boolean stats_neglog10P = false
+  boolean stats_log10P = false
   String col_N = null
   String col_CaseN = null
   String col_ControlN = null

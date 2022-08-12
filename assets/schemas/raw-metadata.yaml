@@ -644,6 +644,12 @@ properties:
   stats_neglog10P:
     title: "Is p-value -log10 transformed?"
     type: "boolean"
+    default: false
+
+  stats_log10P:
+    title: "Is p-value log10 transformed?"
+    type: "boolean"
+    default: false
 
   col_N:
     title: "Per SNP total sample size"
@@ -710,36 +716,53 @@ properties:
     type: "string"
 
 additionalProperties: false
-dependencies:
-  col_P:
-    required: ["stats_neglog10P"]
 required:
   - "cleansumstats_metafile_kind"
   - "path_sumStats"
   - "stats_Model"
   - "col_EffectAllele"
-if:
-  properties:
-    cleansumstats_metafile_kind:
-      const: "library"
-  required:
-    - "cleansumstats_metafile_kind"
-then:
-  required:
-    - "cleansumstats_metafile_user"
-    - "cleansumstats_metafile_date"
-    - "study_Title"
-    - "study_PMID"
-    - "study_Year"
-    - "study_PhenoDesc"
-    - "study_PhenoCode"
-    - "study_AccessDate"
-    - "study_Use"
-    - "study_Ancestry"
-    - "study_Gender"
-    - "stats_TraitType"
-    - "stats_TotalN"
 allOf:
+  - if:
+      properties:
+        cleansumstats_metafile_kind:
+          const: "library"
+      required:
+        - "cleansumstats_metafile_kind"
+    then:
+      required:
+        - "cleansumstats_metafile_user"
+        - "cleansumstats_metafile_date"
+        - "study_Title"
+        - "study_PMID"
+        - "study_Year"
+        - "study_PhenoDesc"
+        - "study_PhenoCode"
+        - "study_AccessDate"
+        - "study_Use"
+        - "study_Ancestry"
+        - "study_Gender"
+        - "stats_TraitType"
+        - "stats_TotalN"
+  - if:
+      properties:
+        stats_neglog10P:
+          const: true
+      required:
+        - "stats_neglog10P"
+    then:
+      properties:
+        stats_log10P:
+          const: false
+  - if:
+      properties:
+        stats_log10P:
+          const: true
+      required:
+        - "stats_log10P"
+    then:
+      properties:
+        stats_neglog10P:
+          const: false
   - anyOf:
     - required:
       - "col_SNP"
