@@ -65,7 +65,7 @@ process convert_neglogP {
 
     if [ "\${colneglog10P}" == 'true' ]; then
       convert_neglogP.sh ${sfile} "\${colP}" > convert_neglogP
-    else if [ "\${collog10P}" == 'true' ]; then
+    elif [ "\${collog10P}" == 'true' ]; then
       convert_logP.sh ${sfile} "\${colP}" > convert_neglogP
     else
       cp ${sfile} convert_neglogP

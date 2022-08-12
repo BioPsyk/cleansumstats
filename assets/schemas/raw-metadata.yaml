@@ -644,10 +644,12 @@ properties:
   stats_neglog10P:
     title: "Is p-value -log10 transformed?"
     type: "boolean"
+    default: false
 
   stats_log10P:
     title: "Is p-value log10 transformed?"
     type: "boolean"
+    default: false
 
   col_N:
     title: "Per SNP total sample size"
@@ -714,9 +716,6 @@ properties:
     type: "string"
 
 additionalProperties: false
-dependencies:
-  col_P:
-    required: ["stats_neglog10P", "stats_log10P"]
 required:
   - "cleansumstats_metafile_kind"
   - "path_sumStats"
