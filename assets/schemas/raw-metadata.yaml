@@ -747,6 +747,8 @@ allOf:
       properties:
         stats_neglog10P:
           const: true
+      required:
+        - "stats_neglog10P"
     then:
       properties:
         stats_log10P:
@@ -755,6 +757,8 @@ allOf:
       properties:
         stats_log10P:
           const: true
+      required:
+        - "stats_log10P"
     then:
       properties:
         stats_neglog10P:
