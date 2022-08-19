@@ -222,6 +222,7 @@ process prep_af_stats {
       fi
       count=\$((count+1))
     done
+    echo "\$avail"
 
     # If we have an available ancestry reference frequency
     if [ \${avail} == "true" ]; then
@@ -255,18 +256,19 @@ process add_af_stats {
 
     script:
     """
-    if [[ \$(wc -l $st_filtered | awk '{print \$1}') == "1" ]]
-    then
-      echo "[ERROR] The inputted file st_filtered did not have any data"
-      exit 1
-    fi
+   # Obsolete check. This will always happen when we do not have the correct ancestry.
+   # if [[ \$(wc -l $st_filtered | awk '{print \$1}') == "1" ]]
+   # then
+   #   echo "[ERROR] The input file st_filtered did not have any data"
+   #   exit 1
+   # fi
 
-    # If we have an available ancestry reference frequency
+    # If we have an available ancestry reference frequency, else just forward the file
     if [ "${availAF}" == "true" ]; then
       # Join with AF table using chrpos column add NA for missing fields
      LC_ALL=C join -e "NA" -t "\$(printf '\t')" -a 1 -1 1 -2 1 -o auto ${st_filtered} ${afFreqs} > add_af_stats__st_added_1kg_ref
     else
-      head -n1 ${st_filtered} > add_af_stats__st_added_1kg_ref
+     cp ${st_filtered} add_af_stats__st_added_1kg_ref
     fi
 
     """
