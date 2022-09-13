@@ -52,6 +52,7 @@ STUDY_SOFTWARES = {
     '^Beagle1\.0.*': 'Beagle1.0',
     '^minimac2.*': 'minimac2',
     '^minimac3.*': 'minimac3',
+    '^minimac4.*': 'minimac4',
     '^eagle': 'eagle',
     '^eagle2.*': 'eagle2',
     '^meta.*': 'meta'
