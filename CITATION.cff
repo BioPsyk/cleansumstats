@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Gadin"
+  given-names: "Jesper Robert"
+  orcid: "https://orcid.org/0000-0002-9210-9534"
+- family-names: "Zetterberg"
+  given-names: "Richard"
+  orcid: "https://orcid.org/0000-0002-4284-4063"
+- family-names: "Meijsen"
+  given-names: "Joeri"
+  orcid: "https://orcid.org/0000-0002-4161-2199"
+- family-names: "Schork"
+  given-names: "Andrew Joseph"
+  orcid: "https://orcid.org/0000-0003-4164-9335"
+title: "Cleansumstats: Converting GWAS sumstats to a common format to facilitate downstream applications"
+version: 1.5.4
+date-released: 2022-12-15
+url: "https://github.com/BioPsyk/cleansumstats"
