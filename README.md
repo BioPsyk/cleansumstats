@@ -2,7 +2,8 @@
 
 **Convert GWAS sumstat files into a common format with a common reference for positions, rsids and effect alleles**
 
-[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.32.0-brightgreen.svg)](https://www.nextflow.io/)
+[![DOI](https://zenodo.org/badge/231274941.svg)](https://zenodo.org/badge/latestdoi/231274941)
+
 
 ## Introduction
 The cleansumstats pipeline takes a typical genomic sumstat file as input(normally the output from a GWAS), together with specifiers for chr, pos and available stats.
