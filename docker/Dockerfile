@@ -71,16 +71,6 @@ RUN mkdir -p build && \
 
 WORKDIR /cleansumstats
 
-#---------------------------------------------------------------------------------
-# Installing sumstat-tools
-
-ARG SUMSTAT_TOOLS_REVISION="be12f3b9dea0dbf454a94d7e917e12462acaad11"
-
-RUN wget "https://github.com/BioPsyk/sumstat-tools/archive/${SUMSTAT_TOOLS_REVISION}.zip" \
-  --quiet -O sumstat-tools.zip && \
-  unzip -q sumstat-tools.zip && \
-  mv "sumstat-tools-${SUMSTAT_TOOLS_REVISION}" sumstat-tools && \
-  rm sumstat-tools.zip
 
 #---------------------------------------------------------------------------------
 # Downloading liftOver chain files
@@ -175,10 +165,22 @@ WORKDIR /cleansumstats
 #WORKDIR /cleansumstats
 
 #---------------------------------------------------------------------------------
+# Installing sumstat-tools
+
+ARG SUMSTAT_TOOLS_REVISION="83d25a5b23ce938eeeff78354fc7544e113d31a0"
+
+RUN wget "https://github.com/BioPsyk/sumstat-tools/archive/${SUMSTAT_TOOLS_REVISION}.zip" \
+  --quiet -O sumstat-tools.zip && \
+  unzip -q sumstat-tools.zip && \
+  mv "sumstat-tools-${SUMSTAT_TOOLS_REVISION}" sumstat-tools && \
+  rm sumstat-tools.zip
+
+#---------------------------------------------------------------------------------
 # Compiling b3sum since it is not packaged for debian
 
 # Represents docker.io/library/rust:1.49.0-slim at 2021-01-21
-FROM rust@sha256:f46e703b7a0efd836690ed488edc55f8f84f4a161aa9a2724e0cffd59646f5a5 AS rust_builder
+#FROM rust@sha256:f46e703b7a0efd836690ed488edc55f8f84f4a161aa9a2724e0cffd59646f5a5 AS rust_builder
+FROM rust@sha256:f72949bcf1daf8954c0e0ed8b7e10ac4c641608f6aa5f0ef7c172c49f35bd9b5 AS rust_builder
 
 RUN cargo install --version 0.3.8 b3sum
 

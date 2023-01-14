@@ -144,3 +144,4 @@ CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE
 EOF
 
 _run_script
+
