@@ -378,6 +378,10 @@ else
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \
        --kg1000AFGRCh38 "${kgpfile_container}"
+
+  #Set correct permissions to pipeline_info files
+  chmod -R ugo+rwX ${outdir_host}/pipeline_info
+
   #remove .nextflow directory by default
   if ${devmode_given} ;
   then
