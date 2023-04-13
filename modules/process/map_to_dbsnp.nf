@@ -158,30 +158,23 @@ process reformat_chromosome_information {
 
   input:
   tuple val(datasetID), val(dID2), path(sfile), val(chrposexist)
-  //tuple datasetID, dID2, mfile, sfile, chrposexist from ch_liftover_snpchrpos_chrpos_mixed1
 
   output:
   tuple val(datasetID), val(dID2), path("gb_ready_to_join_to_detect_build_sorted"), emit: ch_chromosome_fixed
-  //tuple val(datasetID), val(dID2), path(mfile), path("gb_ready_to_join_to_detect_build_sorted") into ch_chromosome_fixed
-  //tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_2
   tuple val(datasetID), env(rowsAfter), emit: ch_rowsAfter_number_of_lines
-  //tuple datasetID, env(rowsAfter) into ch_rowsAfter_number_of_lines
   path('new_chr_sex_format*'), emit: intermediate
 
   script:
   def metadata = params.sess.get_metadata(datasetID)
   ch_regexp_lexicon=file(params.ch_regexp_lexicon)
   """
- # if [ "$dID2" == "liftover_branch_chrpos" ];then
- #   echo "$dID2"
- #   head $sfile
- #   exit 1
- # fi
 
   if [ "${dID2}" == "liftover_branch_markername_chrpos" ];then
     map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "Markername" > adhoc_func
+    map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "bp" "Markername" > adhoc_func1
   elif [ "${dID2}" == "liftover_branch_chrpos" ];then
     map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "chr" "${metadata.col_CHR ?: "missing"}" > adhoc_func
+    map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "bp" "${metadata.col_POS ?: "missing"}" > adhoc_func1
   else
     echo 2>1 "neither Markername nor Chromosome position information used"
     exit 1;
@@ -191,8 +184,6 @@ process reformat_chromosome_information {
   cat $sfile | sstools-utils ad-hoc-do -k "0|\${colCHR}" -n"0,CHR" > new_chr_sex_format0
   reformat_chromosome_information.sh new_chr_sex_format0 "CHR" prep_sfile_forced_sex_chromosome_format
 
-  colPOS="${metadata.col_POS ?: "missing"}"
-  map_to_adhoc_function.sh ${ch_regexp_lexicon} ${sfile} "bp" "\${colPOS}" > adhoc_func1
   colPOS="\$(cat adhoc_func1)"
   cat ${sfile} | sstools-utils ad-hoc-do -k "0|\${colPOS}" -n"0,BP" > prep_sfile_selected_pos_prep
 
@@ -205,6 +196,13 @@ process reformat_chromosome_information {
   rowsBefore="\$(wc -l $sfile | awk '{print \$1-1}')"
   rowsAfter="\$(wc -l gb_ready_to_join_to_detect_build_sorted | awk '{print \$1-1}')"
   echo -e "\$rowsBefore\t\$rowsAfter\tforced sex chromosomes and mitochondria chr annotation to the numbers 23-26" > desc_sex_chrom_formatting_BA.txt
+
+  #if [ "$dID2" == "liftover_branch_markername_chrpos" ];then
+  #  echo "dID2 $dID2"
+  #  echo "chrposexist $chrposexist"
+  #  head $sfile
+  #  exit 1
+  #fi
 
   """
 }
