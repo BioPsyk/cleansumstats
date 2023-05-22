@@ -51,7 +51,58 @@ refAlleleColumn="5"
 altAlleleColumn="6"
 ./clean2vcf.sh out_test/sumstat_1_raw_meta/cleaned_GRCh38.gz vcf/cleaned_GRCh38.gz "${alleleEffect}" "${refAlleleColumn}" "${altAlleleColumn}"
 
+## Add extra data field
+
+Data that does not depend on anything else than the variant position can safely be added by first constructing a fake sumstat file for cleaning using the info field. That wil make sure we use the same positions when joining with the real sumstat data.
+
 ```
+# Make fake sumstat
+mkdir -p add_extra_field
+echo -e "SNP\tCHR\tPOS\tEA\tOA\tBETA\tINFO" > add_extra_field/sumstat_1_raw
+zcat tests/example_data/sumstat_1/sumstat_1_raw.gz | LC_ALL=C awk -vFS="\t" -vOFS="\t" 'BEGIN{srand(66)}; NR>1{print $1,$2,$3,$4,$5,"1.5",int(rand()*100)/100}' >> add_extra_field/sumstat_1_raw
+gzip add_extra_field/sumstat_1_raw 
 
+cat <<EOF > add_extra_field/sumstat_1_fake.yaml 
+cleansumstats_version: 1.0.0
+cleansumstats_metafile_user: webform
+cleansumstats_metafile_date: '2023-05-17'
+cleansumstats_metafile_kind: minimal
+path_sumStats: sumstat_1_raw.gz
+stats_TraitType: quantitative
+stats_Model: linear
+stats_TotalN: 10000
+stats_GCMethod: none
+col_CHR: CHR
+col_POS: POS
+col_SNP: SNP
+col_EffectAllele: EA
+col_OtherAllele: OA
+col_BETA: BETA
+col_INFO: INFO
+col_Notes: The beta is made up
+EOF
 
+# Clean the fake data we just created
+./cleansumstats.sh -e -i add_extra_field/sumstat_1_fake.yaml  -o out_extra_fields_fake
+
+# Clean real data using the example data
+./cleansumstats.sh  -e -o out_extra_fields_real
+
+# Add the fake data to the real data using unix join
+# Preprocess the files to create a composite field
+awk -v OFS="\t" '{print $1"-"$2"-"$5"-"$6,$0}' <(zcat out_extra_fields_fake/cleaned_GRCh38.gz) > temp1
+awk -v OFS="\t" '{print $1"-"$2"-"$5"-"$6,$0}' <(zcat out_extra_fields_real/cleaned_GRCh38.gz) > temp2
+
+# Perform the join(keep head unsorted)
+(head -n 1 temp1 && tail -n +2 temp1 | sort -k1) > sorted_temp1
+(head -n 1 temp2 && tail -n +2 temp2 | sort -k1) > sorted_temp2
+join -t $'\t' -1 1 -2 1 sorted_temp2 sorted_temp1 > joined_file
+
+# remove unwanted columns
+cut -f 2-12,20 joined_file | gzip -c > final_file.gz
+
+# Clean up temporary files
+rm temp1 temp2 sorted_temp1 sorted_temp2 joined_file
+
+```
 
