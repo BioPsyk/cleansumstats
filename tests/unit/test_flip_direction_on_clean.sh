@@ -31,8 +31,13 @@ function _check_results {
 }
 
 function _run_script {
-
+maf=$1
+if [ "${maf}" == "maf" ]; then
+  "${test_script}.sh" input.gz observed-output.gz $maf
+else
   "${test_script}.sh" input.gz observed-output.gz
+fi
+
 
   _check_results <(zcat observed-output.gz) <(zcat expected-output.gz)
 
@@ -79,7 +84,7 @@ CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	OR	B	Z	EAF_1KG
 10	123446414	2251	rs4980192	A	G	0.5813	0.0241	75.188	-0.0133	-0.551867	1
 EOF
 
-_run_script
+_run_script "placeholder"
 
 #---------------------------------------------------------------------------------
 # test with added 1kg pops
@@ -111,7 +116,7 @@ CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	B	Z	EAF_1KG	EAS	EUR	AFR	AMR	SAS
 10	123446414	2251	rs4980192	A	G	0.5813	0.0241	-0.0133	-0.551867	1	1	0.91	0.98	0.94	0.99
 EOF
 
-_run_script
+_run_script "placeholder"
 
 #---------------------------------------------------------------------------------
 # test with missing flip types
@@ -143,5 +148,37 @@ CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE
 10	123446414	2251	rs4980192	A	G	0.5813	0.0241
 EOF
 
-_run_script
+_run_script "placeholder"
+
+#---------------------------------------------------------------------------------
+# test with maf argument
+_setup "test with maf argument"
+
+cat <<EOF | gzip -c > input.gz
+CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	EAF
+10	102814179	1873	rs284858	T	C	0.1592	0.0132	0.3
+10	10574522	1582	rs2025468	T	C	0.5398	0.0165	0.2
+10	106371703	1151	rs1409409	C	A	0.7713	0.0171	0.7
+10	107148593	1013	rs12781860	A	C	0.9482	0.0241	0.8
+10	113128849	1129	rs1362943	G	A	0.187	0.0136	0.9
+10	118368257	1008	rs12767500	C	T	0.09108	0.0308	0.5
+10	119204075	232	rs10886419	T	C	0.784	0.0141	0.6
+10	123360107	534	rs9423334	G	A	0.6824	0.0268	0.8
+10	123446414	2251	rs4980192	G	A	0.5813	0.0241	0.2
+EOF
+
+cat <<EOF | gzip -c > expected-output.gz
+CHR	POS	0	RSID	EffectAllele	OtherAllele	P	SE	EAF
+10	102814179	1873	rs284858	T	C	0.1592	0.0132	0.3
+10	10574522	1582	rs2025468	T	C	0.5398	0.0165	0.2
+10	106371703	1151	rs1409409	A	C	0.7713	0.0171	0.3
+10	107148593	1013	rs12781860	C	A	0.9482	0.0241	0.2
+10	113128849	1129	rs1362943	A	G	0.187	0.0136	0.1
+10	118368257	1008	rs12767500	C	T	0.09108	0.0308	0.5
+10	119204075	232	rs10886419	C	T	0.784	0.0141	0.4
+10	123360107	534	rs9423334	A	G	0.6824	0.0268	0.2
+10	123446414	2251	rs4980192	G	A	0.5813	0.0241	0.2
+EOF
+
+_run_script "maf"
 

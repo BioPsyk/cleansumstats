@@ -22,11 +22,22 @@ awk -vFS="\t" -vOFS="\t" -vntot="${NTOT}" 'NR==1{print $0, "N"}; NR>1{print $0, 
 ```
 
 ## Flip effect direction
+
+### flip effect allele from ref to alt allele
 The output allele frequency will be reference allele based, i.e., the reference allele will always be the effect allele, with the direction reflected in Z,Beta and OR. If you want to flip all of them you can use the provided post-process script. Be aware that any multiallelics in the original sumstats are sensitive to this flipping, which there is no support for at the moment.
 ```
 ./cleansumstats -e -o out_test
 ./cleanflipdirection.sh out_test/cleaned_GRCh38.gz out_test/cleaned_GRCh38_flipped.gz
 ```
+
+### flip effect allele to become the maf allele
+Requires EAF to be present, and flips if >0.5
+
+```
+./cleansumstats -e -o out_test
+./cleanflipdirection.sh out_test/cleaned_GRCh38.gz out_test/cleaned_GRCh38_flipped_maf.gz maf
+```
+
 
 ## Add 5 main pop AF from 1kgp
 Everything that doesn't match gets NA. The output will always be .gz. To get the right direction of effects in respect to effect allele and other allele, we need to apply the effect modifier.
