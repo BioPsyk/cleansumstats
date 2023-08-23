@@ -349,10 +349,6 @@ function which_to_select(){
 var=$(which_to_select "${from_which_source}" 2> /dev/null | awk '{printf "%s|", $1}' | sed 's/|$//')
 nam=$(which_to_select "/dev/null" 2>&1 > /dev/null | awk '{printf "%s,", $1}' | sed 's/,$//')
 
-echo $var > var_debug
-echo $nam > nam_debug
-head $STATS > stats_debug
-
 #cat $stdin | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"
 if [ -s $inferred ]; then
   LC_ALL=C join -t "$(printf '\t')" -1 1 -2 1 $inferred $STATS | sstools-utils ad-hoc-do -f - -k "0|${var}" -n"0,${nam}"

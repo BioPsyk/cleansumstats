@@ -386,8 +386,6 @@ process select_stats_for_output {
     tuple val(datasetID), path("select_stats__selected_source.txt"), emit: ch_stats_for_output_selected_source
     tuple val(datasetID), path("select_stats__desc_from_inferred_to_joined_selection_BA.txt"), emit: ch_desc_from_inferred_to_joined_selection_BA
     tuple val(datasetID), path("select_stats__desc_from_sumstats_to_joined_selection_BA.txt"), emit: ch_desc_from_sumstats_to_joined_selection_BA
-    path('*debug')
-
     script:
     def metadata = params.sess.get_metadata(datasetID)
     stats_Model="${metadata.stats_Model ?: "missing"}"
