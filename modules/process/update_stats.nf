@@ -85,13 +85,19 @@ process force_eaf {
     tuple val(mID), path(sfile)
 
     output:
-    tuple val(mID), path("force_eaf__st_forced_eaf"), emit: stats_forced_eaf
+    tuple val(mID), path("force_eaf__st_forced_eaf_controls"), emit: stats_forced_eaf
     tuple val(mID), path("force_eaf__desc_forced_eaf_BA.txt"), emit: ch_desc_forced_eaf_BA
+    path("force_eaf__st_forced_eaf")
+    path("force_eaf__st_forced_eaf_cases")
 
     script:
     def metadata = params.sess.get_metadata(mID)
     col_EAF="${metadata.col_EAF ?: "missing"}"
     col_OAF="${metadata.col_OAF ?: "missing"}"
+    col_CaseEAF="${metadata.col_CaseEAF ?: "missing"}"
+    col_CaseOAF="${metadata.col_CaseOAF ?: "missing"}"
+    col_ControlEAF="${metadata.col_ControlEAF ?: "missing"}"
+    col_ControlOAF="${metadata.col_ControlOAF ?: "missing"}"
     """
     if [[ \$(wc -l $sfile | awk '{print \$1}') == "1" ]]
     then
@@ -99,16 +105,18 @@ process force_eaf {
       exit 1
     fi
 
-    force_effect_allele_frequency.sh ${sfile} ${col_EAF} ${col_OAF}  > force_eaf__st_forced_eaf
+    force_effect_allele_frequency.sh ${sfile} ${col_EAF} ${col_OAF} "EAF" > force_eaf__st_forced_eaf
+    force_effect_allele_frequency.sh force_eaf__st_forced_eaf ${col_CaseEAF} ${col_CaseOAF} "CaseEAF" > force_eaf__st_forced_eaf_cases
+    force_effect_allele_frequency.sh force_eaf__st_forced_eaf_cases ${col_ControlEAF} ${col_ControlOAF} "ControlEAF" > force_eaf__st_forced_eaf_controls
 
-    if [[ \$(wc -l st_forced_eaf | awk '{print \$1}') == "1" ]]
+    if [[ \$(wc -l force_eaf__st_forced_eaf_controls | awk '{print \$1}') == "1" ]]
     then
-      echo "[ERROR] The output file st_forced_eaf did not have any data"
+      echo "[ERROR] The output file force_eaf__st_forced_eaf_controls did not have any data"
       exit 1
     fi
     #process before and after stats
     rowsBefore="\$(wc -l ${sfile} | awk '{print \$1}')"
-    rowsAfter="\$(wc -l force_eaf__st_forced_eaf | awk '{print \$1}')"
+    rowsAfter="\$(wc -l force_eaf__st_forced_eaf_controls | awk '{print \$1}')"
     echo -e "\$rowsBefore\t\$rowsAfter\tForced Effect Allele Frequency" > force_eaf__desc_forced_eaf_BA.txt
     """
 }
@@ -136,6 +144,10 @@ process rename_stat_col_names {
     col_ControlN="${metadata.col_ControlN ?: "missing"}"
     col_EAF="${metadata.col_EAF ?: "missing"}"
     col_OAF="${metadata.col_OAF ?: "missing"}"
+    col_CaseEAF="${metadata.col_CaseEAF ?: "missing"}"
+    col_CaseOAF="${metadata.col_CaseOAF ?: "missing"}"
+    col_ControlEAF="${metadata.col_ControlEAF ?: "missing"}"
+    col_ControlOAF="${metadata.col_ControlOAF ?: "missing"}"
     col_INFO="${metadata.col_INFO ?: "missing"}"
     col_DIRECTION="${metadata.col_Direction ?: "missing"}"
     col_StudyN="${metadata.col_StudyN ?: "missing"}"
@@ -155,7 +167,11 @@ process rename_stat_col_names {
       "${col_DIRECTION}" \
       "${col_StudyN}" \
       "${col_EAF}" \
-      "${col_OAF}"
+      "${col_OAF}" \
+      "${col_CaseEAF}" \
+      "${col_CaseOAF}" \
+      "${col_ControlEAF}" \
+      "${col_ControlOAF}"
 
     #process before and after stats
     rowsBefore="\$(wc -l ${stats} | awk '{print \$1}')"
@@ -370,6 +386,7 @@ process select_stats_for_output {
     tuple val(datasetID), path("select_stats__selected_source.txt"), emit: ch_stats_for_output_selected_source
     tuple val(datasetID), path("select_stats__desc_from_inferred_to_joined_selection_BA.txt"), emit: ch_desc_from_inferred_to_joined_selection_BA
     tuple val(datasetID), path("select_stats__desc_from_sumstats_to_joined_selection_BA.txt"), emit: ch_desc_from_sumstats_to_joined_selection_BA
+    path('*debug')
 
     script:
     def metadata = params.sess.get_metadata(datasetID)

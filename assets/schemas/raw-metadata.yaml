@@ -697,6 +697,30 @@ properties:
       Description needed
     type: "string"
 
+  col_CaseEAF:
+    title: "EA Cases frequency in the GWAS cohorts"
+    description: |
+      Description needed
+    type: "string"
+
+  col_CaseOAF:
+    title: "OA Cases frequency in the GWAS cohorts"
+    description: |
+      Description needed
+    type: "string"
+
+  col_ControlEAF:
+    title: "EA Controls frequency in the GWAS cohorts"
+    description: |
+      Description needed
+    type: "string"
+
+  col_ControlOAF:
+    title: "OA Controls frequency in the GWAS cohorts"
+    description: |
+      Description needed
+    type: "string"
+
   col_Direction:
     title: "Cohort effect directions"
     description: |
@@ -796,6 +820,14 @@ allOf:
       - "col_EAF"
     - required:
       - "col_OAF"
+    - required:
+      - "col_CaseEAF"
+    - required:
+      - "col_CaseOAF"
+    - required:
+      - "col_ControlEAF"
+    - required:
+      - "col_ControlOAF"
     - required:
       - "col_INFO"
     - required:

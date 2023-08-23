@@ -17,6 +17,10 @@ DIRECTION=${13}
 StudyN=${14}
 EAF=${15}
 OAF=${16}
+CaseEAF=${17}
+CaseOAF=${18}
+ControlEAF=${19}
+ControlOAF=${20}
 
 #recode as true or false
 function recode_to_tf(){
@@ -43,6 +47,10 @@ tfDIRECTION="$(recode_to_tf $DIRECTION)"
 tfStudyN="$(recode_to_tf $StudyN)"
 tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
+tfCaseEAF="$(recode_to_tf $CaseEAF)"
+tfCaseOAF="$(recode_to_tf $CaseOAF)"
+tfControlEAF="$(recode_to_tf $ControlEAF)"
+tfControlOAF="$(recode_to_tf $ControlOAF)"
 
 #Special treatment to EAF as it has been forced to be EAF already
 if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
@@ -51,6 +59,24 @@ if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
 else
   EAF2="missing"
   tfEAF2="false"
+fi
+
+#Special treatment to EAF as it has been forced to be EAF already
+if [ "$tfCaseEAF" == true ] || [ "$tfCaseOAF" == true ]; then
+  CaseEAF2="CaseEAF"
+  tfCaseEAF2="true"
+else
+  CaseEAF2="missing"
+  tfCaseEAF2="false"
+fi
+
+#Special treatment to EAF as it has been forced to be EAF already
+if [ "$tfControlEAF" == true ] || [ "$tfControlOAF" == true ]; then
+  ControlEAF2="ControlEAF"
+  tfControlEAF2="true"
+else
+  ControlEAF2="missing"
+  tfControlEAF2="false"
 fi
 
 #This is the order the columns will show up
@@ -98,6 +124,14 @@ function which_to_select(){
   if [ ${tfEAF2} == "true" ]; then
     echo -e "${EAF2}"
     echo "EAF" 1>&2
+  fi
+  if [ ${tfCaseEAF2} == "true" ]; then
+    echo -e "${CaseEAF2}"
+    echo "CaseEAF" 1>&2
+  fi
+  if [ ${tfControlEAF2} == "true" ]; then
+    echo -e "${ControlEAF2}"
+    echo "ControlEAF" 1>&2
   fi
   if [ ${tfINFO} == "true" ]; then
     echo -e "${INFO}"
