@@ -17,6 +17,11 @@ N="N"
 CaseN="CaseN"
 ControlN="ControlN"
 EAF="EAF"
+OAF="OAF"
+CaseEAF="CaseEAF"
+CaseOAF="CaseOAF"
+ControlEAF="ControlEAF"
+ControlOAF="ControlOAF"
 INFO="INFO"
 DIRECTION="DIRECTION"
 StudyN="StudyN"
@@ -55,6 +60,10 @@ tfCaseN="$(recode_to_tf $CaseN)"
 tfControlN="$(recode_to_tf $ControlN)"
 tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
+tfCaseEAF="$(recode_to_tf $CaseEAF)"
+tfCaseOAF="$(recode_to_tf $CaseOAF)"
+tfControlEAF="$(recode_to_tf $ControlEAF)"
+tfControlOAF="$(recode_to_tf $ControlOAF)"
 tfINFO="$(recode_to_tf $INFO)"
 tfDIRECTION="$(recode_to_tf $DIRECTION)"
 tfStudyN="$(recode_to_tf $StudyN)"
@@ -65,6 +74,22 @@ if [ "$tfEAF" == true ] || [ "$tfOAF" == true ]; then
 else
   EAF2="missing"
   tfEAF2="false"
+fi
+
+if [ "$tfCaseEAF" == true ] || [ "$tfCaseOAF" == true ]; then
+  CaseEAF2="CaseEAF"
+  tfCaseEAF2="true"
+else
+  CaseEAF2="missing"
+  tfCaseEAF2="false"
+fi
+
+if [ "$tfControlEAF" == true ] || [ "$tfControlOAF" == true ]; then
+  ControlEAF2="ControlEAF"
+  tfControlEAF2="true"
+else
+  ControlEAF2="missing"
+  tfControlEAF2="false"
 fi
 
 
@@ -288,6 +313,16 @@ function which_to_select(){
     echo -e "${EAF2}"
     echo "EAF" 1>&2
     echo -e "EAF\toriginal" >> ${selected_source}
+  fi
+  if [ ${tfCaseEAF2} == "true" ]; then
+    echo -e "${CaseEAF2}"
+    echo "CaseEAF" 1>&2
+    echo -e "CaseEAF\toriginal" >> ${selected_source}
+  fi
+  if [ ${tfControlEAF2} == "true" ]; then
+    echo -e "${ControlEAF2}"
+    echo "ControlEAF" 1>&2
+    echo -e "ControlEAF\toriginal" >> ${selected_source}
   fi
   if specfunx_exists "AF_1KG_CS" ${STATS}; then
     echo -e "AF_1KG_CS"

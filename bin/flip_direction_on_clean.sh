@@ -30,7 +30,7 @@ done | awk '{printf "%s|", $1}' | sed 's/|$//')"
 
 
 #1-var
-modc2="$(for var in EAF EAF_1KG EAS EUR AFR AMR SAS; do
+modc2="$(for var in EAF CaseEAF ControlEAF EAF_1KG EAS EUR AFR AMR SAS; do
 if var_exists "${var}"; then
   var_col "${var}"
 fi

@@ -46,6 +46,10 @@ function _run_script {
     "missing" \
     "EAF" \
     "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
+    "missing" \
     > ./observed-result1.txt
 
   _check_results ./observed-result1.txt ./expected-result1.tsv

@@ -71,6 +71,10 @@ class Metadata extends BaseMetadata {
   String col_INFO = null
   String col_EAF = null
   String col_OAF = null
+  String col_CaseEAF = null
+  String col_CaseOAF = null
+  String col_ControlEAF = null
+  String col_ControlOAF = null
   String col_Direction = null
   String col_Notes = null
   // End of auto-generated code
@@ -180,6 +184,10 @@ class Metadata extends BaseMetadata {
       "ControlN": this.col_ControlN,
       "EAF": this.col_EAF,
       "OAF": this.col_OAF,
+      "CaseEAF": this.col_CaseEAF,
+      "CaseOAF": this.col_CaseOAF,
+      "ControlEAF": this.col_ControlEAF,
+      "ControlOAF": this.col_ControlOAF,
       "INFO": this.col_INFO,
       "DIRECTION": this.col_Direction,
       "StudyN": this.col_StudyN
