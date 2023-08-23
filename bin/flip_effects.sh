@@ -39,6 +39,12 @@ function which_to_mod2(){
     if stat_exists "EAF" ${STAT}; then
       stat_coln "EAF" ${STAT}
     fi
+    if stat_exists "CaseEAF" ${STAT}; then
+      stat_coln "CaseEAF" ${STAT}
+    fi
+    if stat_exists "ControlEAF" ${STAT}; then
+      stat_coln "ControlEAF" ${STAT}
+    fi
 }
 
 function which_to_mod3(){

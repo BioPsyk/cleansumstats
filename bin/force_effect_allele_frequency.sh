@@ -23,11 +23,11 @@ tfOAF="$(recode_to_tf $OAF)"
 #make new var EAF if possible
 if [ ${tfEAF} == "true" ]; then
   # Just change colname
-  awk -vFS="\t" -vOFS="\t" -vtochange="${EAF}" -vnewh=${NEW_COL_NAME} '
+  awk -vFS="\t" -vOFS="\t" -vtochange="${EAF}" -vnewh="${NEW_COL_NAME}" '
   NR==1{for(k=1; k <= NF-1; k++){if($k==tochange){printf "%s%s", newh, OFS}else{printf "%s%s", $(k), OFS }}; if($NF==tochange){print newh}else{print $NF}}; NR>1{print $0}' $sfile
 elif [ ${tfOAF} == "true" ]; then
   # Mod and change colname
-  head -n1  $sfile | awk -vFS="\t" -vOFS="\t" -vtochange="${EAF}" -vnewh=${NEW_COL_NAME} '
+  head -n1  $sfile | awk -vFS="\t" -vOFS="\t" -vtochange="${OAF}" -vnewh="${NEW_COL_NAME}" '
   NR==1{for(k=1; k <= NF-1; k++){if($k==tochange){printf "%s%s", newh, OFS}else{printf "%s%s", $(k), OFS }}; if($NF==tochange){print newh}else{print $NF}; exit}'
   whichToChange="$(head -n1  $sfile | awk -vFS="\t" -vOFS="\t" -vtochange="${OAF}" '{for(k=1; k <= NF; k++){if($k==tochange){print k}}}' )"
   awk -vFS="\t" -vOFS="\t" -vtochange="${whichToChange}" '
