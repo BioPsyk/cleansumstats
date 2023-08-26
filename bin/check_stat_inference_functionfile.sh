@@ -17,6 +17,11 @@ N="N"
 CaseN="CaseN"
 ControlN="ControlN"
 EAF="EAF"
+OAF="OAF"
+CaseEAF="CaseEAF"
+CaseOAF="CaseOAF"
+ControlEAF="ControlEAF"
+ControlOAF="ControlOAF"
 
 function recode_to_tf(){
   var=$1
@@ -41,6 +46,10 @@ tfCaseN="$(recode_to_tf $CaseN)"
 tfControlN="$(recode_to_tf $ControlN)"
 tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
+tfCaseEAF="$(recode_to_tf $CaseEAF)"
+tfCaseOAF="$(recode_to_tf $CaseOAF)"
+tfControlEAF="$(recode_to_tf $ControlEAF)"
+tfControlOAF="$(recode_to_tf $ControlOAF)"
 
 #Check if either EAF or OAF is specified in meta, if so, use the new variable with fixed name: EAF
 if [ "$af_branch" == "g1kaf_stats_branch" ]; then
@@ -55,6 +64,22 @@ else
     tfEAF2="false"
   fi
 
+fi
+
+if [ "$tfCaseEAF" == true ] || [ "$tCasefOAF" == true ]; then
+  CaseEAF2="CaseEAF"
+  tfCaseEAF2="true"
+else
+  CaseEAF2="missing"
+  tfCaseEAF2="false"
+fi
+
+if [ "$tfControlEAF" == true ] || [ "$tControlfOAF" == true ]; then
+  ControlEAF2="ControlEAF"
+  tfControlEAF2="true"
+else
+  ControlEAF2="missing"
+  tfControlEAF2="false"
 fi
 
 #which variables to infer (linear)
@@ -116,6 +141,9 @@ if [ ${STATM} == "logistic" ]; then
   fi
   if [ ${tfControlN} == "true" ] && [ ${tfCaseN} == "true" ]; then
     echo -e "Neff_from_Nca_Nco"
+  fi
+  if [ ${tfControlN} == "true" ] && [ ${tfCaseN} == "true" ] && [ ${tfCaseEAF2} == "true" ] && [ ${tfControlEAF2} == "true" ]; then
+    echo -e "AF_from_CaseAF_ControlAF"
   fi
 fi
 

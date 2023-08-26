@@ -313,6 +313,18 @@ function which_to_select(){
     echo -e "${EAF2}"
     echo "EAF" 1>&2
     echo -e "EAF\toriginal" >> ${selected_source}
+  else
+    if [ "${STATM}" == "linear" ]; then
+      :
+    elif [ "${STATM}" == "logistic" ]; then
+      if specfunx_exists "AF_from_CaseAF_ControlAF" ${inferred}; then
+        echo "AF_from_CaseAF_ControlAF"
+        echo -e "EAF\tAF_from_CaseAF_ControlAF" >> ${selected_source}
+        echo "EAF" 1>&2
+      else
+        :
+      fi
+    fi
   fi
   if [ ${tfCaseEAF2} == "true" ]; then
     echo -e "${CaseEAF2}"

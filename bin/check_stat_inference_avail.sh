@@ -18,6 +18,11 @@ N="N"
 CaseN="CaseN"
 ControlN="ControlN"
 EAF="EAF"
+OAF="OAF"
+CaseEAF="CaseEAF"
+CaseOAF="CaseOAF"
+ControlEAF="ControlEAF"
+ControlOAF="ControlOAF"
 
 function recode_to_tf(){
   var=$1
@@ -42,6 +47,10 @@ tfCaseN="$(recode_to_tf $CaseN)"
 tfControlN="$(recode_to_tf $ControlN)"
 tfEAF="$(recode_to_tf $EAF)"
 tfOAF="$(recode_to_tf $OAF)"
+tfCaseEAF="$(recode_to_tf $CaseEAF)"
+tfCaseOAF="$(recode_to_tf $CaseOAF)"
+tfControlEAF="$(recode_to_tf $ControlEAF)"
+tfControlOAF="$(recode_to_tf $ControlOAF)"
 
 #Check if either EAF or OAF is specified in meta, if so, use the new variable with fixed name: EAF
 if [ "$af_branch" == "g1kaf_stats_branch" ]; then
@@ -57,6 +66,22 @@ else
   fi
 fi
 
+if [ "$tfCaseEAF" == true ] || [ "$tCasefOAF" == true ]; then
+  CaseEAF2="CaseEAF"
+  tfCaseEAF2="true"
+else
+  CaseEAF2="missing"
+  tfCaseEAF2="false"
+fi
+
+if [ "$tfControlEAF" == true ] || [ "$tControlfOAF" == true ]; then
+  ControlEAF2="ControlEAF"
+  tfControlEAF2="true"
+else
+  ControlEAF2="missing"
+  tfControlEAF2="false"
+fi
+
 #which args to use
 cat <<EOF > argsfile.txt
 $B
@@ -70,6 +95,8 @@ $N
 $CaseN
 $ControlN
 $EAF2
+$CaseEAF2
+$ControlEAF2
 EOF
 
 cat <<EOF > argsfileTF.txt
@@ -84,6 +111,8 @@ $tfN
 $tfCaseN
 $tfControlN
 $tfEAF2
+$tfCaseEAF2
+$tfControlEAF2
 EOF
 
 cat <<EOF > argsfile2.txt
@@ -98,6 +127,8 @@ Nindividuals
 Ncases
 Ncontrols
 allelefreq
+CaseAF
+ControlAF
 EOF
 
 nrows=$( cat argsfile2.txt | wc -l )
