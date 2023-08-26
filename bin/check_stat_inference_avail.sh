@@ -111,7 +111,6 @@ $tfN
 $tfCaseN
 $tfControlN
 $tfEAF2
-$tfEAF2
 $tfCaseEAF2
 $tfControlEAF2
 EOF

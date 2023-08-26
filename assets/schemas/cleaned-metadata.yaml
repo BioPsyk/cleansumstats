@@ -207,30 +207,17 @@ properties:
       Description needed
     type: "string"
 
-  col_CaseEAF:
+  cleansumstats_col_CaseEAF:
     title: "EA Cases frequency in the GWAS cohorts"
     description: |
       Description needed
     type: "string"
 
-  col_CaseOAF:
-    title: "OA Cases frequency in the GWAS cohorts"
-    description: |
-      Description needed
-    type: "string"
-
-  col_ControlEAF:
+  cleansumstats_col_ControlEAF:
     title: "EA Controls frequency in the GWAS cohorts"
     description: |
       Description needed
     type: "string"
-
-  col_ControlOAF:
-    title: "OA Controls frequency in the GWAS cohorts"
-    description: |
-      Description needed
-    type: "string"
-
 
   cleansumstats_col_Direction:
     description: |

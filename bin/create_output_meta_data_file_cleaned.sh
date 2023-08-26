@@ -26,6 +26,8 @@ colNeededInMetaOutfile4=(
   'cleansumstats_col_CaseN: CaseN'
   'cleansumstats_col_ControlN: ControlN'
   'cleansumstats_col_EAF: EAF'
+  'cleansumstats_col_CaseEAF: CaseEAF'
+  'cleansumstats_col_ControlEAF: ControlEAF'
   'cleansumstats_col_INFO: INFO'
   'cleansumstats_col_Direction: Direction'
 )
