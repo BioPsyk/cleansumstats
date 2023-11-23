@@ -207,6 +207,18 @@ properties:
       Description needed
     type: "string"
 
+  cleansumstats_col_CaseEAF:
+    title: "EA Cases frequency in the GWAS cohorts"
+    description: |
+      Description needed
+    type: "string"
+
+  cleansumstats_col_ControlEAF:
+    title: "EA Controls frequency in the GWAS cohorts"
+    description: |
+      Description needed
+    type: "string"
+
   cleansumstats_col_Direction:
     description: |
       Column that describes effects across contributing studies to meta-analyses.
