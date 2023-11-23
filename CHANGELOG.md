@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.7] - 2023-11-23
+### Fixed
+- cleaned metadata output. It now only give caseN or controlN if they are actually present in header of the output sumstat file.
+
+### Added
+- unit test for cleaned metadata output
+
 ## [1.6.6] - 2023-08-26
 ### Added
 - varinat specific EAF to be inferred from AF and N from Case and Control 
