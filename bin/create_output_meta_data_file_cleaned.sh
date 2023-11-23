@@ -32,19 +32,23 @@ colNeededInMetaOutfile4=(
   'cleansumstats_col_Direction: Direction'
 )
 
-header=($(cat ${newSumstatHeaderFile} | awk '
-  function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
-  function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
-  function trim(s)  { return rtrim(ltrim(s)); }
+function trimwhitespace(){
+  awk '
+    function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+    function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+    function trim(s)  { return rtrim(ltrim(s)); }
+  
+    {tr=trim($0); print tr}'
+}
 
-  NR==1{tr=trim($0); print tr}'))
+header=($(cat ${newSumstatHeaderFile} | trimwhitespace))
 
 function selRightHand(){
-  echo "${1#*: }"
+  echo "${1}" | awk '{gsub(/.*: /,""); print}'
 }
 
 function selLeftHand(){
-  echo "${1%: *}"
+  echo "${1}" | awk '{gsub(/: .*/,""); print}'
 }
 
 function existInHeader(){
@@ -57,14 +61,16 @@ function existInHeader(){
 }
 
 for var in "${colNeededInMetaOutfile4[@]}"; do
-  right="$(selRightHand ${var})"
-  left="$(selLeftHand ${var})"
+  right="$(selRightHand "${var}" | trimwhitespace)"
+  left="$(selLeftHand "${var}" | trimwhitespace)"
   gotHit="false"
+  #echo "$left AND $right"
   for hc in "${header[@]}"; do
-    #echo $hc
-    if [ $(existInHeader "${hc}" "${right}") == "true" ]
+    #echo "test:$hc,with:"${left}""
+    if [ "${hc}" == "${right}" ]
     then
       gotHit="true"
+      #echo "hit: $hc, with: "${right}""
     else
       :
     fi
