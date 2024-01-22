@@ -315,6 +315,7 @@ kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 # Use outdir as fake home to avoid lock issues for the hidden .nextflow/history file
 FAKE_HOME="${outdir_container}"
 export SINGULARITY_HOME="${FAKE_HOME}"
+export APPTAINER_HOME="${FAKE_HOME}"
 
 # Previous fake home, causing #FAKE_HOME="tmp/fake-home"
 #export SINGULARITY_HOME="/cleansumstats/${FAKE_HOME}"

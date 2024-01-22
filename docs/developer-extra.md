@@ -29,6 +29,7 @@ Read more [here](https://semver.org/spec/v2.0.0.html)
 We have a docker image repository at [dockerhub](https://hub.docker.com/repository/docker/biopsyk/ibp-cleansumstats). To push new images to dockehub, use the following commands:
 ```
 # login to dockerhub
+#WARNING! Using --password via the CLI is insecure. Use --password-stdin.
 docker login -u "myusername" -p "mypassword" dockerPasw
 
 # build and push
