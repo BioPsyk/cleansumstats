@@ -1,11 +1,13 @@
 process dbsnp_reference_convert_and_split {
   
   publishDir "${params.outdir}/intermediates/dbsnp_reference_convert_and_split", mode: 'rellink', overwrite: true, enabled: params.dev
-  cpus 3
+  cpus 4
   
   input:
   tuple val(basefilename), path(dbsnpvcf)
   val(dbsnpsplits)
+  val(mapfile)
+  val(chromtype)
   
   output:
   path("chunk_*"), emit: dbsnp_split
@@ -13,10 +15,16 @@ process dbsnp_reference_convert_and_split {
   
   script:
   """
-  #reformat (pigz can't use parallel processes when decompressing)
-  pigz --decompress --stdout --processes 2 ${dbsnpvcf} | grep -v "#" > dbsnp_GRCh38
+  #reformat (pigz can't use parallel processes when decompressing right now)
+  cat ${mapfile} > mapfile
+  echo ${chromtype} > chromtype
+  pigz --decompress --stdout --processes 2 ${dbsnpvcf} | \
+  grep -v "#" | \
+  dbsnp_reference_filter_and_convert.sh ${mapfile} ${chromtype} > dbsnp_GRCh38
+
   #split into dbsnpsplit number of unix split files
   split -d -n l/${dbsnpsplits} dbsnp_GRCh38 chunk_
+
   """
 }
 
