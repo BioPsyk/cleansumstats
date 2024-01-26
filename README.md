@@ -42,18 +42,18 @@ In the cleaning all positions are compared to a reference to confirm or add miss
 The preparation of the dbsnp reference only has to be done once, and can be reused for all sumstats that needs cleaning.
 
 ```bash
-# i. Download the dbsnp reference: size 15GB (and the readme, etc for future reference)
+# i. Download the dbsnp reference and supplemental files: size 25GB 
 mkdir -p dbsnp
-wget -P dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/README.txt
-wget -P dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.md5
-wget -P dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz.tbi
-wget -P dbsnp ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/All_20180418.vcf.gz
+wget -P dbsnp https://ftp.ncbi.nlm.nih.gov/snp/archive/b156/VCF/CHECKSUMS
+wget -P dbsnp https://ftp.ncbi.nlm.nih.gov/snp/archive/b156/VCF/GCF_000001405.40.gz.md5
+wget -P dbsnp https://ftp.ncbi.nlm.nih.gov/snp/archive/b156/VCF/GCF_000001405.40.gz.tbi
+wget -P dbsnp https://ftp.ncbi.nlm.nih.gov/snp/archive/b156/VCF/GCF_000001405.40.gz
 
 # ii. If you are on a HPC Start your interactive session (below SLURM settings took about 5h to run)
 srun --mem=400g --ntasks 1 --cpus-per-task 60 --time=10:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./cleansumstats.sh \
   prepare-dbsnp \
-  -i dbsnp/All_20180418.vcf.gz \
+  -i dbsnp/GCF_000001405.40.gz \
   -o out_dbsnp
 ```
 

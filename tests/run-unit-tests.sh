@@ -23,8 +23,8 @@ echo "| Running unit tests in: ${tmp_dir}"
 echo "==================================================================="
 cd "${tmp_dir}"
 
-# Test only one case (for dev purposes)
-#"${test_dir}/unit/test_numeric_filter_stats.sh"
+# #Test only one case (for dev purposes)
+#"${test_dir}/unit/test_dbsnp_reference_filter_and_convert.sh"
 #exit 0
 
 for test_file in "${test_dir}/unit/"test_*.sh

@@ -213,6 +213,20 @@ process prepare_cleaned_metadata_file {
     ${stats_ControlN} \
     >> mfile_additions
 
+    #Add these stats if available
+    if [ "${stats_TraitType}" != "missing" ];then
+      echo "stats_TraitType: ${stats_TraitType}" >> mfile_additions
+    fi
+    if [ "${stats_TotalN}" != "missing" ];then
+      echo "stats_TotalN: ${stats_TotalN}" >> mfile_additions
+    fi
+    if [ "${stats_CaseN}" != "missing" ];then
+      echo "stats_CaseN: ${stats_CaseN}" >> mfile_additions
+    fi
+    if [ "${stats_ControlN}" != "missing" ];then
+      echo "stats_ControlN: ${stats_ControlN}" >> mfile_additions
+    fi
+      
     # Apply additions to make the cleaned meta file ready
     create_output_meta_data_file_cleaned.sh mfile_additions ${cleanedheader} > prepare_cleaned_metadata_file__prepared_cleaned_metafile
       """
