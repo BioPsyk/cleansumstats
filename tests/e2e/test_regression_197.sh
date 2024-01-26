@@ -52,6 +52,7 @@ time nextflow -q run -offline \
      --generateDbSNPreference \
      --input "input.vcf.gz" \
      --outdir "${outdir}" \
+     --dbsnp_chr_type "integer" \
      --libdirdbsnp "${outdir}" 
 if [[ $? != 0 ]]
 then

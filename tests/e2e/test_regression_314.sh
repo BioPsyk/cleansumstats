@@ -129,6 +129,7 @@ time nextflow -q run -offline \
        --input "input.vcf.gz" \
        --dev true \
        --outdir "${outdir}" \
+       --dbsnp_chr_type "integer" \
        --libdirdbsnp "${outdir}"
 
 if [[ $? != 0 ]]
