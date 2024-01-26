@@ -15,6 +15,6 @@ NR==FNR {
   print $0 }
 ' ${mapfile} - 
 else
-  :
+  cat
 fi
 
