@@ -64,9 +64,31 @@ properties:
   # stats properties
 
   stats_EffectiveN:
+    title: "N effective"
     description: |
       TBD
     type: "number"
+    minimum: 0
+
+  stats_TotalN:
+    title: "Total sample size"
+    description: |
+       TBD
+    type: "integer"
+    minimum: 0
+
+  stats_CaseN:
+    title: "Case sample size"
+    description: |
+       TBD
+    type: "integer"
+    minimum: 0
+
+  stats_ControlN:
+    title: "Control sample size"
+    description: |
+       TBD
+    type: "integer"
     minimum: 0
 
   #---------------------------------------------------------------------------------

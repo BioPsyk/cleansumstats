@@ -42,7 +42,7 @@ workflow prepare_dbsnp_reference {
     .set { ch_file }
 
   dbsnpsplits=10
-  dbsnp_reference_convert_and_split(ch_file, "${dbsnpsplits}")
+  dbsnp_reference_convert_and_split(ch_file, "${dbsnpsplits}", "${params.dbsnp_chr_mapfile}", "${params.dbsnp_chr_type}")
 
   dbsnp_reference_convert_and_split.out.dbsnp_split
     .flatten()

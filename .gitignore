@@ -14,6 +14,7 @@ scratch-buffer.sh
 source_data
 sumstat_reference
 output
+out*
 vcf
 GRCh37-switch
 
