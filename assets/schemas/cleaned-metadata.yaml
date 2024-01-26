@@ -91,6 +91,19 @@ properties:
     type: "integer"
     minimum: 0
 
+  stats_TraitType:
+    title: "GWAS trait type"
+    description: |
+       TBD
+    type: "string"
+    enum:
+      - "quantitative"
+      - "case-control"
+      - "binary"
+      - "ordinal"
+      - "survival"
+      - "other"
+
   #---------------------------------------------------------------------------------
   # col properties
 
@@ -266,6 +279,7 @@ required:
   - "cleansumstats_cleaned_GRCh37_coordinates_checksum"
   - "cleansumstats_removed_lines"
   - "cleansumstats_removed_lines_checksum"
+  - "stats_TotalN"
   - "stats_EffectiveN"
   - "cleansumstats_col_RAWROWINDEX"
   - "cleansumstats_col_CHR"
