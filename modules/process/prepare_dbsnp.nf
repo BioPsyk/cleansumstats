@@ -19,7 +19,7 @@ process dbsnp_reference_convert_and_split {
   cat ${mapfile} > mapfile
   echo ${chromtype} > chromtype
   pigz --decompress --stdout --processes 2 ${dbsnpvcf} | \
-  grep -v "#" | \
+  grep -v "^#" | \
   dbsnp_reference_filter_and_convert.sh ${mapfile} ${chromtype} > dbsnp_GRCh38
 
   #split into dbsnpsplit number of unix split files
