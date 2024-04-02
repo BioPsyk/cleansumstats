@@ -89,7 +89,7 @@ cat <<EOF > ./expected-result3.tsv
 duplicated_dbsnpkey
 EOF
 
-_run_script "true" "duplicated_keys"
+_run_script "true" "duplicated_rsid_keys"
 
 #---------------------------------------------------------------------------------
 # Next case

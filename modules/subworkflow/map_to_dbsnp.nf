@@ -56,8 +56,9 @@ workflow map_to_dbsnp {
   build_warning(ch_failsafe)
 
   ch_liftover_3=decide_genome_build.out.ch_known_genome_build.join(reformat_chromosome_information.out.ch_chromosome_fixed, by: [0,1])
-  rm_dup_chrpos_before_maplift(ch_liftover_3)
-  maplift_dbsnp_GRCh38_chrpos(rm_dup_chrpos_before_maplift.out.ch_liftover_333)
+  //rm_dup_chrpos_before_maplift(ch_liftover_3)
+  maplift_dbsnp_GRCh38_chrpos(ch_liftover_3)
+  //maplift_dbsnp_GRCh38_chrpos(rm_dup_chrpos_before_maplift.out.ch_liftover_333)
   ch_chrpos_snp_filter=maplift_dbsnp_GRCh38_chrpos.out.ch_liftover_44.branch { key, value, liftedGRCh38 ->
                   liftover_branch_markername_chrpos: value == "liftover_branch_markername_chrpos"
                   liftover_branch_chrpos: value == "liftover_branch_chrpos"

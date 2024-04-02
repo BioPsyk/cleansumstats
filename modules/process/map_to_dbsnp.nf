@@ -29,15 +29,10 @@ process prepare_dbsnp_mapping_for_rsid {
 
     input:
     tuple val(datasetID), path(sfile), val(chrposExists), val(snpExists), val(pointsToDifferentCols)
-    //tuple datasetID, mfile, sfile, chrposExists, snpExists, pointsToDifferentCols from ch_present_markers_1
 
     output:
     tuple val(datasetID), path("prepare_dbsnp_mapping_for_rsid__db_maplift"), val(snpExists), emit: ch_liftover_33
-    //tuple datasetID, mfile, file("prepare_dbsnp_mapping_for_rsid__db_maplift"), snpExists into ch_liftover_33
     tuple val(datasetID), env(dID2), path("prepare_dbsnp_mapping_for_rsid__gb_lift2"), val(snpExists), emit: ch_liftover_snpchrpos
-    //tuple datasetID, env(dID2), mfile, file("prepare_dbsnp_mapping_for_rsid__gb_lift2"), snpExists into ch_liftover_snpchrpos
-    //tuple datasetID, file("desc_prepare_format_for_dbsnp_mapping_BA.txt") into ch_desc_prep_for_dbsnp_mapping_BA_chrpos_rsid
-    //tuple datasetID, file("desc_sex_chrom_formatting_BA.txt") into ch_desc_sex_chrom_formatting_BA_1
 
     script:
     def metadata = params.sess.get_metadata(datasetID)
@@ -131,11 +126,9 @@ process is_chrpos_different_from_snp_and_assign_dID2 {
 
     input:
     tuple val(datasetID), path(sfile), val(chrposExists), val(snpExists), val(pointsToDifferentCols)
-    //tuple datasetID, mfile, sfile, chrposExists, snpExists, pointsToDifferentCols from ch_present_markers_2
 
     output:
     tuple val(datasetID), env(dID2), path("is_chrpos_different_from_snp_and_assign_dID2__prep_chrpos"), val(snpExists)
-    //tuple datasetID, env(dID2), mfile, file("is_chrpos_different_from_snp_and_assign_dID2__prep_chrpos"), snpExists into ch_chrpos_init
 
     script:
     """
@@ -214,11 +207,9 @@ process detect_genome_build {
     input:
     tuple val(datasetID), val(dID2), val(sfile_chrpos)
     each build
-    //tuple val(datasetID), val(dID2), val(mfile), val(sfile_chrpos) from ch_chromosome_fixed1
 
     output:
     tuple val(datasetID), val(dID2), path("detect_genome_build__*.res"), emit: ch_genome_build_stats
-    //tuple datasetID, dID2, file("detect_genome_build__*.res") into ch_genome_build_stats
     //file("gb_*")
 
     script:
@@ -304,20 +295,17 @@ process build_warning {
 
 process rm_dup_chrpos_before_maplift {
 
-    publishDir "${params.outdir}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/${dID2}/debugging", mode: 'rellink', overwrite: true, enabled: params.dev
     publishDir "${params.outdir}/intermediates/${dID2}/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
     input:
     tuple val(datasetID), val(dID2), val(gbmax), path(chrposprep)
-    //tuple datasetID, dID2, gbmax, mfile, chrposprep from ch_liftover_3
 
     output:
     tuple val(datasetID), val(dID2), path("gb_unique_rows_2"), val(gbmax), emit: ch_liftover_333
-    //tuple datasetID, dID2, mfile, file("gb_unique_rows_2"), gbmax into ch_liftover_333
-    //tuple datasetID, file("desc_removed_duplicated_rows") into ch_removed_rows_before_liftover_chrpos
     tuple val(datasetID), path("removed_duplicated_rows_2"), emit: ch_removed_rows_before_liftover_ix_chrpos
-    //tuple datasetID, file("removed_duplicated_rows_2") into ch_removed_rows_before_liftover_ix_chrpos
     path("beforeLiftoverFiltering_executionorder_2"), emit: intermediate
+    path("*"), emit: intermediate2
 
     script:
     out1="gb_unique_rows_2"
@@ -326,7 +314,6 @@ process rm_dup_chrpos_before_maplift {
     beforeLiftoverFilter=params.beforeLiftoverFilter
     """
     rm_dup_chrpos_before_maplift.sh $chrposprep $beforeLiftoverFilter $out1 $out2 $out3
-
     """
 }
 
@@ -336,7 +323,8 @@ process maplift_dbsnp_GRCh38_chrpos {
   publishDir "${params.outdir}/intermediates/${dID2}/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
 
   input:
-  tuple val(datasetID), val(dID2), path(fsorted), val(gbmax) 
+  tuple val(datasetID), val(dID2), val(gbmax), path(fsorted)
+  //tuple val(datasetID), val(dID2), path(fsorted), val(gbmax) 
   //tuple datasetID, dID2, mfile, fsorted, gbmax from ch_liftover_333
 
   output:
