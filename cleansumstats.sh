@@ -32,6 +32,12 @@ function general_usage(){
  echo "-v  	 	 get the version number"
 }
 
+# If no arguments are provided, display usage and exit
+if [ "$#" -eq 0 ]; then
+    general_usage
+    exit 0
+fi
+
 ################################################################################
 # Prepare path parsing
 ################################################################################
