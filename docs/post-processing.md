@@ -10,6 +10,10 @@ The cleaned stats are using the GRCh38 reference build, but it is easy to switch
 mkdir -p GRCh37-switch
 paste <(zcat out_test/sumstat_1_raw_meta/cleaned_GRCh37.gz) <(zcat out_test/sumstat_1_raw_meta/cleaned_GRCh38.gz) | cut -f1-2,6- | gzip -c >  GRCh37-switch/cleaned_GRCh37.gz
 ```
+For some positions in GRCh38 there is no representative position for GRCh37. These positions have NA. You can extend the code above to remove these in the same command.
+```
+paste <(zcat out_test/sumstat_1_raw_meta/cleaned_GRCh37.gz) <(zcat out_test/sumstat_1_raw_meta/cleaned_GRCh38.gz) | cut -f1-2,6- | awk '$1 != "NA"' | gzip -c >  GRCh37-switch/cleaned_GRCh37.gz
+```
 
 ## Add total N (effectiveN) from metafile as column N
 
