@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2024-04-17
+### Changed
+- New default for raw metafile, which now forwarded to the raw folder in output. If the other raw files are to be forwarded, then it has to be set in the nextflow config file. 
+
 ## [1.7.0] - 2024-01-26
 ### Changed
 - Updated the dbsnp reference in the README.md
