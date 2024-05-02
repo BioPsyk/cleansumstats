@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - e2e test for previously missing variant, due to indels in input sumstat.
 - More fast example options using -e 1 or -e 2, etc. 
 
+## [1.7.1] - 2024-04-17
+### Changed
+- New default for raw metafile, which now forwarded to the raw folder in output. If the other raw files are to be forwarded, then it has to be set in the nextflow config file. 
+
 ## [1.7.0] - 2024-01-26
 ### Changed
 - Updated the dbsnp reference in the README.md

@@ -307,27 +307,31 @@ process add_raw_to_output {
     mkdir -p ${params.rawoutput}
 
     # copy all raw stuff into rawinput
-    cp ${rawfile} ${params.rawoutput}/.
     cp ${usermfile} ${params.rawoutput}/.
 
-    if [ "${readme}" != "missing" ]
-    then
-      cp ${readme} ${params.rawoutput}/.
-    fi
+    if [ "${params.rawall}" == "true" ];then
 
-    if [ "${pdfpath}" != "missing" ]
-    then
-      cp ${pdfpath} ${params.rawoutput}/.
-    fi
+      cp ${rawfile} ${params.rawoutput}/.
 
-    for supp in ${pdfsuppdir};do
-       if [ "\${supp}" != "missing" ]
-       then
-         cp \$supp ${params.rawoutput}/.
-       else
-         :
-       fi
-    done
+      if [ "${readme}" != "missing" ]
+      then
+        cp ${readme} ${params.rawoutput}/.
+      fi
+
+      if [ "${pdfpath}" != "missing" ]
+      then
+        cp ${pdfpath} ${params.rawoutput}/.
+      fi
+
+      for supp in ${pdfsuppdir};do
+         if [ "\${supp}" != "missing" ]
+         then
+           cp \$supp ${params.rawoutput}/.
+         else
+           :
+         fi
+      done
+    fi
     """
 }
 
