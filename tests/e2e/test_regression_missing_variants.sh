@@ -32,7 +32,7 @@ study_PhenoCode:
   - EFO:0003761
 study_AccessDate: '2021-10-29'
 study_Use: restricted
-study_Ancestry: EUR
+study_Ancestry: EUR, EAS
 study_Gender: mixed
 stats_Model: linear
 stats_TraitType: quantitative
@@ -61,6 +61,8 @@ chr3:10391:SG	3	10391	T	C	0.0187	0.001	140	1257	0.9
 EOF
 
 cat <<EOF > ./expected-result1.tsv
+CHR	POS	0	RSID	EffectAllele	OtherAllele	B	Z	P	CaseN	ControlN	CaseEAF
+3	10391	2	rs1260592493	C	T	-0.0187	-3.290527	0.001	140	1257	0.1
 EOF
 
 
@@ -105,10 +107,10 @@ function _check_results {
   obs=$1
   exp=$2
   if ! diff -u ${obs} ${exp} &> ./difference; then
-   echo "----------obs---------------"
-   cat $obs
-   echo "----------exp--------------"
-   cat $exp
+   echo "----------obs cat -A ---------------"
+   cat -A $obs
+   echo "----------exp cat -A --------------"
+   cat -A $exp
    echo "---------------------------"
 
     echo "- [FAIL] regression_missing_variants"

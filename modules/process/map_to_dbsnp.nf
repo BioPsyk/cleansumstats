@@ -441,33 +441,27 @@ process select_chrpos_or_snpchrpos {
 }
 
 
-
-process rm_dup_chrpos_allele_rows {
-
-    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
-    publishDir "${params.outdir}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
-
-    input:
-    tuple val(datasetID), path(liftedandmapped)
-    //tuple datasetID, mfile, liftedandmapped from ch_liftover_final
-
-    output:
-    tuple val(datasetID), path("rm_dup_chrpos_allele_rows__gb_unique_rows_sorted"), emit: ch_liftover_4
-    //tuple datasetID, mfile, file("rm_dup_chrpos_allele_rows__gb_unique_rows_sorted") into ch_liftover_4
-    tuple val(datasetID), path("rm_dup_chrpos_allele_rows__desc_removed_duplicated_rows"), emit: ch_desc_removed_duplicates_after_liftover
-    //tuple datasetID, file("rm_dup_chrpos_allele_rows__desc_removed_duplicated_rows") into ch_desc_removed_duplicates_after_liftover
-    tuple val(datasetID), path("rm_dup_chrpos_allele_rows__removed_duplicated_rows"), emit: ch_removed_duplicates_after_liftover_ix
-    //tuple datasetID, file("rm_dup_chrpos_allele_rows__removed_duplicated_rows") into ch_removed_duplicates_after_liftover_ix
-    //file("removed_*")
-    //file("afterLiftoverFiltering_executionorder")
-
-    script:
-    afterLiftoverFilter=params.afterLiftoverFilter
-    """
-    filter_after_liftover.sh $liftedandmapped "${afterLiftoverFilter} " "rm_dup_chrpos_allele_rows__"
-
-    """
-}
+// Causes more harm than good now when multi-allelics are allowed
+//process rm_dup_chrpos_allele_rows {
+//
+//    publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
+//    publishDir "${params.outdir}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+//
+//    input:
+//    tuple val(datasetID), path(liftedandmapped)
+//
+//    output:
+//    tuple val(datasetID), path("rm_dup_chrpos_allele_rows__gb_unique_rows_sorted"), emit: ch_liftover_4
+//    tuple val(datasetID), path("rm_dup_chrpos_allele_rows__desc_removed_duplicated_rows"), emit: ch_desc_removed_duplicates_after_liftover
+//    tuple val(datasetID), path("rm_dup_chrpos_allele_rows__removed_duplicated_rows"), emit: ch_removed_duplicates_after_liftover_ix
+//
+//    script:
+//    afterLiftoverFilter=params.afterLiftoverFilter
+//    """
+//    filter_after_liftover.sh $liftedandmapped "${afterLiftoverFilter} " "rm_dup_chrpos_allele_rows__"
+//
+//    """
+//}
 
 
 process reformat_sumstat {
