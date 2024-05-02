@@ -1,6 +1,7 @@
 cleansumstats_metafile_date: '2020-04-28'
 cleansumstats_metafile_user: Andrew Schork
 cleansumstats_version: 1.0.0-alpha
+cleansumstats_metafile_kind: library
 col_CHR: hg19chrc
 col_EffectAllele: a1
 col_INFO: info

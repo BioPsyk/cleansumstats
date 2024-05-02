@@ -60,10 +60,8 @@ process collect_rmd_lines {
 
     input:
     tuple val(datasetID), path(step1), path(step2), path(step3)
-    //from ch_collected_removed_lines
     output:
     tuple val(datasetID), path("collect_rmd_lines__removed_lines_collected.txt"), emit: ch_collected_removed_lines2
-    //tuple datasetID, file("collect_rmd_lines__removed_lines_collected.txt") into ch_collected_removed_lines2
 
     script:
     """
@@ -78,7 +76,6 @@ process desc_rmd_lines_as_table {
 
     input:
     tuple val(datasetID), path(filtered_stats_removed)
-    //tuple val(datasetID), path(filtered_stats_removed) from ch_collected_removed_lines3
 
     output:
     tuple val(datasetID), path("desc_rmd_lines_as_table__desc_removed_lines_table.txt"), emit: ch_removed_lines_table

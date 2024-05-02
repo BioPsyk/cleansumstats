@@ -5,12 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.8.0] - 2024-05-02
+### Fixed
+- Reporting of variants not possible to map, which was previously always returned empty.
+
 ### Changed
 - Removed the duplicated chrpos filter before dbsnp mapping
 - Removed the duplicated chrpos filter after dbsnp mapping
 
 ### Added
 - e2e test for previously missing variant, due to indels in input sumstat.
+- More fast example options using -e 1 or -e 2, etc. 
 
 ## [1.7.0] - 2024-01-26
 ### Changed

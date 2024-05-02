@@ -54,11 +54,9 @@ process remove_duplicated_rsid_before_liftmap {
 
     input:
     tuple val(datasetID), path(rsidprep), val(snpExists)
-    //tuple val(datasetID), path(mfile), path(rsidprep), val(snpExists) from ch_liftover_33
 
     output:
     tuple val(datasetID), path("gb_unique_rows_2"), val(snpExists), emit: ch_liftover_3333
-    //tuple datasetID, file("desc_removed_duplicated_rows_2") into ch_removed_rows_before_liftover_rsids
     tuple val(datasetID), path("removed_duplicated_rows_2"), emit: ch_removed_rows_before_liftover_ix_rsids
     path("beforeLiftoverFiltering_executionorder_2"), emit: intermediate
 
@@ -80,15 +78,10 @@ process maplift_dbsnp_GRCh38_rsid {
 
    input:
    tuple val(datasetID), path(fsorted), val(snpExists)
-   //tuple val(datasetID), path(mfile), path(fsorted), val(snpExists) from ch_liftover_3333
 
    output:
    tuple val(datasetID), path("maplift_dbsnp_GRCh38_rsid__gb_lifted_and_mapped_to_GRCh38"), emit: ch_liftover_rsid
-   //tuple val(datasetID), path(mfile), path("maplift_dbsnp_GRCh38_rsid__gb_lifted_and_mapped_to_GRCh38") into ch_liftover_rsid
-   //tuple datasetID, file("desc_liftover_to_GRCh38_and_map_to_dbsnp_BA") into ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA_rsid
-   //tuple datasetID, file("${datasetID}.stats") into ch_stats_genome_build_rsid
    tuple val(datasetID), path("maplift_dbsnp_GRCh38_rsid__removed_not_matching_during_liftover_ix"), emit: ch_not_matching_during_liftover_rsid
-   //tuple datasetID, file("maplift_dbsnp_GRCh38_rsid__removed_not_matching_during_liftover_ix") into ch_not_matching_during_liftover_rsid
 
    script:
    dbsnp_RSID_38=file(params.dbsnp_RSID_38)
@@ -399,15 +392,11 @@ process select_chrpos_or_snpchrpos {
 
   input:
   tuple val(datasetID), val(dID2), path("liftedGRCh38"), val(dID2SNP), path("liftedGRCh38SNP"), path(liftedGRCh38RSID), path(beforeLiftover)
-  //tuple val(datasetID), val(dID2), path(liftedGRCh38), val(dID2SNP), path(liftedGRCh38SNP), path(liftedGRCh38RSID), path(beforeLiftover) from ch_combined_chrpos_snpchrpos_rsid
 
   output:
   tuple val(datasetID), path("select_chrpos_or_snpchrpos__combined_set_from_the_three_liftover_branches_sorted"), emit: ch_liftover_final
-  //tuple datasetID, mfile, file("select_chrpos_or_snpchrpos__combined_set_from_the_three_liftover_branches_sorted") into ch_liftover_final
   tuple val(datasetID), path("select_chrpos_or_snpchrpos__beforeAndAfterFile"), emit: ch_desc_combined_set_after_liftover
-  //tuple datasetID, file("select_chrpos_or_snpchrpos__beforeAndAfterFile") into ch_desc_combined_set_after_liftover
   tuple val(datasetID), path("select_chrpos_or_snpchrpos__removed_not_possible_to_lift_over_for_combined_set_ix"), emit: ch_removed_not_possible_to_lift_over_for_combined_set_ix
-  //tuple datasetID, file("select_chrpos_or_snpchrpos__removed_not_possible_to_lift_over_for_combined_set_ix") into ch_removed_not_possible_to_lift_over_for_combined_set_ix
  // file("liftedGRCh38_sorted")
  // file("rsid_to_add")
  // file("snpchrpos_unique")
@@ -416,7 +405,7 @@ process select_chrpos_or_snpchrpos {
 
   script:
   """
-  cp ${beforeLiftover} tmp_test
+  LC_ALL=C sort -k1,1 ${beforeLiftover} > beforeLiftover_sorted
   #any row inx from rsid or snpchrpos not in chrpos
   LC_ALL=C sort -k2,2 "liftedGRCh38" > liftedGRCh38_sorted
   LC_ALL=C sort -k2,2 ${liftedGRCh38RSID} > liftedGRCh38RSID_sorted
@@ -430,13 +419,14 @@ process select_chrpos_or_snpchrpos {
   LC_ALL=C sort -k2,2 combined_set_from_the_three_liftover_branches > select_chrpos_or_snpchrpos__combined_set_from_the_three_liftover_branches_sorted
 
   # Lines not possible to map for the combined set
-  LC_ALL=C join -t "\$(printf '\t')" -v 1 -1 2 -2 1 -o 2.1 select_chrpos_or_snpchrpos__combined_set_from_the_three_liftover_branches_sorted ${beforeLiftover} > select_chrpos_or_snpchrpos__removed_not_possible_to_lift_over_for_combined_set
+  LC_ALL=C join -v 1 -1 1 -2 2 beforeLiftover_sorted select_chrpos_or_snpchrpos__combined_set_from_the_three_liftover_branches_sorted > select_chrpos_or_snpchrpos__removed_not_possible_to_lift_over_for_combined_set
   awk -vOFS="\t" '{print \$1,"not_available_for_any_of_the_three_liftover_branches"}' select_chrpos_or_snpchrpos__removed_not_possible_to_lift_over_for_combined_set > select_chrpos_or_snpchrpos__removed_not_possible_to_lift_over_for_combined_set_ix
 
   #process before and after stats
   rowsBefore="\$(wc -l ${beforeLiftover} | awk '{print \$1-1}')"
   rowsAfter="\$(wc -l select_chrpos_or_snpchrpos__combined_set_from_the_three_liftover_branches_sorted | awk '{print \$1}')"
   echo -e "\$rowsBefore\t\$rowsAfter\tAfter creating the combined set from the three liftover paths" > select_chrpos_or_snpchrpos__beforeAndAfterFile
+
   """
 }
 

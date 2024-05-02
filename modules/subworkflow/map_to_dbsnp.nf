@@ -105,6 +105,7 @@ workflow map_to_dbsnp {
   //output
   split_multiallelics_resort_rowindex.out.ch_allele_correction.set { dbsnp_mapped }
   select_chrpos_or_snpchrpos.out.ch_removed_not_possible_to_lift_over_for_combined_set_ix.set { dbsnp_rm_ix }
+
   emit: 
   dbsnp_mapped
   dbsnp_rm_ix
