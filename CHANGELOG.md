@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.0] - 2024-04-02
+## [1.8.0] - 2024-05-02
 ### Changed
 - Removed the duplicated chrpos filter before dbsnp mapping
+- Removed the duplicated chrpos filter after dbsnp mapping
+
+### Added
+- e2e test for previously missing variant, due to indels in input sumstat.
 
 ## [1.7.0] - 2024-01-26
 ### Changed
