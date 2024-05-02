@@ -15,7 +15,6 @@ include {
   rm_dup_chrpos_before_maplift
   maplift_dbsnp_GRCh38_chrpos
   select_chrpos_or_snpchrpos
-  rm_dup_chrpos_allele_rows
   reformat_sumstat
   split_multiallelics_resort_rowindex
 } from '../process/map_to_dbsnp.nf' 
@@ -56,8 +55,9 @@ workflow map_to_dbsnp {
   build_warning(ch_failsafe)
 
   ch_liftover_3=decide_genome_build.out.ch_known_genome_build.join(reformat_chromosome_information.out.ch_chromosome_fixed, by: [0,1])
-  rm_dup_chrpos_before_maplift(ch_liftover_3)
-  maplift_dbsnp_GRCh38_chrpos(rm_dup_chrpos_before_maplift.out.ch_liftover_333)
+  //rm_dup_chrpos_before_maplift(ch_liftover_3)
+  maplift_dbsnp_GRCh38_chrpos(ch_liftover_3)
+  //maplift_dbsnp_GRCh38_chrpos(rm_dup_chrpos_before_maplift.out.ch_liftover_333)
   ch_chrpos_snp_filter=maplift_dbsnp_GRCh38_chrpos.out.ch_liftover_44.branch { key, value, liftedGRCh38 ->
                   liftover_branch_markername_chrpos: value == "liftover_branch_markername_chrpos"
                   liftover_branch_chrpos: value == "liftover_branch_chrpos"
@@ -71,8 +71,8 @@ workflow map_to_dbsnp {
     .set{ ch_combined_chrpos_snpchrpos_rsid }
   //ch_combined_chrpos_snpchrpos_rsid.view()
   select_chrpos_or_snpchrpos(ch_combined_chrpos_snpchrpos_rsid)
-  rm_dup_chrpos_allele_rows(select_chrpos_or_snpchrpos.out.ch_liftover_final)
-  reformat_sumstat(rm_dup_chrpos_allele_rows.out.ch_liftover_4)
+  //rm_dup_chrpos_allele_rows(select_chrpos_or_snpchrpos.out.ch_liftover_final)
+  reformat_sumstat(select_chrpos_or_snpchrpos.out.ch_liftover_final)
   split_multiallelics_resort_rowindex(reformat_sumstat.out.ch_mapped_GRCh38)
 
   //branch the stats_genome_build
@@ -91,10 +91,10 @@ workflow map_to_dbsnp {
 
   //join desc_BA   
   select_chrpos_or_snpchrpos.out.ch_desc_combined_set_after_liftover
-  .join(rm_dup_chrpos_allele_rows.out.ch_desc_removed_duplicates_after_liftover, by: 0)
   .join(reformat_sumstat.out.ch_desc_keep_a_GRCh38_reference_BA, by: 0)
   .join(split_multiallelics_resort_rowindex.out.ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
   .set { rows_before_after }
+  //.join(rm_dup_chrpos_allele_rows.out.ch_desc_removed_duplicates_after_liftover, by: 0)
 
 // //Some that now are part of the branched workflow. Unclear how to save the the stepwise branched workflow before after steps, but all info should be exported in channels.
 // //  .combine(ch_desc_sex_chrom_formatting_BA, by: 0)
@@ -105,6 +105,7 @@ workflow map_to_dbsnp {
   //output
   split_multiallelics_resort_rowindex.out.ch_allele_correction.set { dbsnp_mapped }
   select_chrpos_or_snpchrpos.out.ch_removed_not_possible_to_lift_over_for_combined_set_ix.set { dbsnp_rm_ix }
+
   emit: 
   dbsnp_mapped
   dbsnp_rm_ix

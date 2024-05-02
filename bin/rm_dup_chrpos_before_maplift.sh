@@ -6,3 +6,4 @@ out3=$5
 
 filter_before_liftover.sh ${chrposprep} ${beforeLiftoverFilter} "${out1}" "${out2}" "${out3}"
 
+

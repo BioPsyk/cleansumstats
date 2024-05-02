@@ -3,6 +3,7 @@ filtering=$2
 out1=$3
 out2=$4
 out3=$5
+IDtype=$6
 
 #split comma separated list into bash array
 filterArr=($(echo "${filtering}" | awk '{gsub(/ /, "", $0); print}' | awk '{gsub(/,/, "\n", $0); print}' ))
@@ -25,9 +26,8 @@ LC_ALL=C sort -k1,1 gb_unique_rows > gb_unique_rows_sorted
 
 #loop over bash array applying each correspondinng filtering type in the samee order
 for var in ${filterArr[@]}; do
-
   #the data will be having either chrpos or rsids as first column
-  if [ "${var}" == "duplicated_keys" ]
+  if [ "${var}" == "duplicated_rsid_keys" ]
   then
     touch removed_duplicated_rows_keys
     awk 'BEGIN{r0="initrowhere"} {var=$1; if(r0!=var){print $0}else{print $0 > "removed_duplicated_rows_keys"}; r0=var}' gb_unique_rows_sorted > gb_unique_rows2

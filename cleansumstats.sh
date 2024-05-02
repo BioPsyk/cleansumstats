@@ -32,6 +32,12 @@ function general_usage(){
  echo "-v  	 	 get the version number"
 }
 
+# If no arguments are provided, display usage and exit
+if [ "$#" -eq 0 ]; then
+    general_usage
+    exit 0
+fi
+
 ################################################################################
 # Prepare path parsing
 ################################################################################
@@ -60,7 +66,7 @@ fi
 
 
 # starting getops with :, puts the checking in silent mode for errors.
-getoptsstring=":hvi:o:d:k:b:w:p:tle"
+getoptsstring=":hvi:o:d:k:b:w:p:tle:"
 
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
@@ -131,6 +137,7 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       extrapaths_given=true
       ;;
     e )
+      runexampledatanr="$OPTARG"
       runexampledata=true
       ;;
     l )
@@ -193,7 +200,13 @@ if $runexampledata; then
     if ${infile_given}; then
       :
     else
-      infile="${project_dir}/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
+      if [ "${runexampledatanr}" == "1" ] ; then
+        infile="${project_dir}/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
+      elif [ "${runexampledatanr}" == "2" ] ; then
+        infile="${project_dir}/tests/example_data/sumstat_2/sumstat_2_raw_meta.txt"
+      else
+        infile="${project_dir}/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
+      fi
     fi
     if ${outdir_given}; then
       :

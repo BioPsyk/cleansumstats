@@ -24,6 +24,7 @@ workflow update_stats {
 
   main:
 
+
   numeric_filter_stats(input)
   convert_neglogP(numeric_filter_stats.out.ch_stats_filtered_remain00)
   force_eaf(convert_neglogP.out.ch_convert_neglog10P)
