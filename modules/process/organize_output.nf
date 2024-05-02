@@ -60,10 +60,8 @@ process collect_rmd_lines {
 
     input:
     tuple val(datasetID), path(step1), path(step2), path(step3)
-    //from ch_collected_removed_lines
     output:
     tuple val(datasetID), path("collect_rmd_lines__removed_lines_collected.txt"), emit: ch_collected_removed_lines2
-    //tuple datasetID, file("collect_rmd_lines__removed_lines_collected.txt") into ch_collected_removed_lines2
 
     script:
     """
@@ -78,7 +76,6 @@ process desc_rmd_lines_as_table {
 
     input:
     tuple val(datasetID), path(filtered_stats_removed)
-    //tuple val(datasetID), path(filtered_stats_removed) from ch_collected_removed_lines3
 
     output:
     tuple val(datasetID), path("desc_rmd_lines_as_table__desc_removed_lines_table.txt"), emit: ch_removed_lines_table
@@ -155,16 +152,14 @@ process collect_and_prep_stepwise_readme {
     path(step9), 
     path(step10), 
     path(step11), 
-    path(step12), 
-    path(step13) 
-    //from ch_collected_workflow_stepwise_stats
+    path(step12) 
 
     output:
     tuple val(datasetID), path("collect_and_prep_stepwise_readme__desc_collected_workflow_stepwise_stats.txt"), emit: ch_overview_workflow_steps
 
     script:
     """
-    cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11 $step12 $step13 > all_removed_steps
+    cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11 $step12 > all_removed_steps
 
     echo -e "Steps\tBefore\tAfter\tDescription" > collect_and_prep_stepwise_readme__desc_collected_workflow_stepwise_stats.txt
     awk -vFS="\t" -vOFS="\t" '{print "Step"NR, \$1, \$2, \$3}' all_removed_steps >> collect_and_prep_stepwise_readme__desc_collected_workflow_stepwise_stats.txt

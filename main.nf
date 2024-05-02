@@ -45,14 +45,6 @@ def helpMessage() {
                                       duplicated_keys
                                     Example(default): --beforeLiftoverFilter duplicated_keys
 
-      --afterLiftoverFilter         A comma separated list ordered by filtering exclusion order including any of the following:
-                                      duplicated_chrpos_refalt_in_GRCh37
-                                      duplicated_chrpos_refalt_in_GRCh38
-                                      duplicated_chrpos_in_GRCh37
-                                      duplicated_chrpos_in_GRCh38
-                                      multiallelics_in_dbsnp
-                                    Example(default): --afterLiftoverFilter duplicated_chrpos_refalt_in_GRCh37,duplicated_chrpos_refalt_in_GRCh38,duplicated_chrpos_in_GRCh37,duplicated_chrpos_in_GRCh38,multiallelics_in_dbsnp
-
 
       --afterAlleleCorrectionFilter A comma separated list ordered by filtering exclusion order including any of the following:
                                       duplicated_chrpos_in_GRCh37
@@ -99,7 +91,7 @@ if(params.checkonly){
 
 // check filter
 beforeLiftoverFilter = params.beforeLiftoverFilter
-afterLiftoverFilter = params.afterLiftoverFilter
+//afterLiftoverFilter = params.afterLiftoverFilter
 afterAlleleCorrectionFilter = params.afterAlleleCorrectionFilter
 
 // Set channels
@@ -291,11 +283,11 @@ workflow {
       "${baseDir}/assets/allowed_names_beforeLiftoverFilter.txt"
     )
 
-    ParametersValidator.validate_filters_allowed(
-      "after",
-      params.afterLiftoverFilter,
-      "${baseDir}/assets/allowed_names_afterLiftoverFilter.txt"
-    )
+  //  ParametersValidator.validate_filters_allowed(
+  //    "after",
+  //    params.afterLiftoverFilter,
+  //    "${baseDir}/assets/allowed_names_afterLiftoverFilter.txt"
+  //  )
 
     log.info("All pipeline parameters validated")
 
