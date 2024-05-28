@@ -20,6 +20,7 @@ mounts=(
   "VERSION"
 )
 
+image_tag_deployed="biopsyk/ibp-cleansumstats:"$(cat "docker/VERSION")
 image_tag="ibp-cleansumstats-base:"$(cat "docker/VERSION")
 deploy_image_tag="ibp-cleansumstats:"$(cat "docker/VERSION")
 

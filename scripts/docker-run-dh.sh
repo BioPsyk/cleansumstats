@@ -5,4 +5,5 @@ source "${script_dir}/init-containerization.sh"
 
 mount_flags=$(format_mount_flags "-v")
 
-exec docker run --rm ${mount_flags} "${image_tag}" "$@"
+exec docker run --rm ${mount_flags} "${image_tag_deployed}" "$@"
+
