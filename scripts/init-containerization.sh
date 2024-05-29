@@ -20,9 +20,9 @@ mounts=(
   "VERSION"
 )
 
-image_tag_deployed="biopsyk/ibp-cleansumstats:"$(cat "docker/VERSION")
 image_tag="ibp-cleansumstats-base:"$(cat "docker/VERSION")
 deploy_image_tag="ibp-cleansumstats:"$(cat "docker/VERSION")
+deploy_image_tag_docker_hub="biopsyk/ibp-cleansumstats:"$(cat "docker/VERSION")
 
 #singularity build
 singularity_image_tag="ibp-cleansumstats-base_version-$(cat "docker/VERSION").sif"
