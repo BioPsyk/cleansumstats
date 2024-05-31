@@ -365,7 +365,7 @@ process dbsnp_reference_put_files_in_reference_library_RSID {
     path(GRCh38_all) 
 
     output:
-    path("${ch_dbsnp_RSID_38.baseName}.bed"), emit: main
+    path("${ch_dbsnp_RSID_38.baseName}.txt"), emit: main
     path("*.map"), emit: intermediates
 
     script:
@@ -381,7 +381,7 @@ process dbsnp_reference_put_files_in_reference_library_RSID {
     --temporary-directory=/cleansumstats/tmp \
     --buffer-size=20G \
     RSID_GRCh38.map \
-    > "${ch_dbsnp_RSID_38.baseName}"
+    > "${ch_dbsnp_RSID_38.baseName}.txt"
     rm -r tmp
 
     """
@@ -397,12 +397,12 @@ process dbsnp_reference_put_files_in_reference_library_GRCh38 {
     path(dbsnp_final)
 
     output:
-    path("${ch_dbsnp_38.baseName}")
+    path("*")
 
     script:
     ch_dbsnp_38=file(params.dbsnp_38)
     """
-    awk '{print \$4, \$5, \$6, \$7}' ${dbsnp_final} > "${ch_dbsnp_38.baseName}"
+    awk '{print \$4, \$5, \$6, \$7}' ${dbsnp_final} > "${ch_dbsnp_38.baseName}.txt"
     """
 }
 
@@ -416,15 +416,13 @@ process dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37 {
     path("GRCh38_GRCh37_tmp.map")
 
     output:
-    path("${ch_dbsnp_38_37.baseName}")
-    path("${ch_dbsnp_37_38.baseName}")
-    path("*map")
+    path("*")
 
     script:
     ch_dbsnp_38_37=file(params.dbsnp_38_37)
     ch_dbsnp_37_38=file(params.dbsnp_37_38)
     """
-    awk '{print \$4, \$5, \$6, \$7, \$8}' GRCh38_GRCh37_tmp.map > "${ch_dbsnp_37_38.baseName}"
+    awk '{print \$4, \$5, \$6, \$7, \$8}' GRCh38_GRCh37_tmp.map > "${ch_dbsnp_37_38.baseName}.txt"
     awk '{print \$5, \$4, \$6, \$7, \$8}' GRCh38_GRCh37_tmp.map > GRCh38_GRCh37.map
 
     # Sort
@@ -434,7 +432,7 @@ process dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37 {
     --temporary-directory=tmp \
     --buffer-size=20G \
     GRCh38_GRCh37.map \
-    > "${ch_dbsnp_38_37.baseName}"
+    > "${ch_dbsnp_38_37.baseName}.txt"
     rm -r tmp
     """
 }
@@ -462,7 +460,7 @@ process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GR
       --parallel 4 \
       --temporary-directory=tmp \
       --buffer-size=20G \
-      file.tmp  > "${ch_dbsnp_36_38.baseName}"
+      file.tmp  > "${ch_dbsnp_36_38.baseName}.txt"
       rm -r tmp
 
     elif [ "${build}" == "35" ]; then
@@ -472,7 +470,7 @@ process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GR
       --parallel 4 \
       --temporary-directory=tmp \
       --buffer-size=20G \
-      file.tmp > "${ch_dbsnp_35_38.baseName}"
+      file.tmp > "${ch_dbsnp_35_38.baseName}.txt"
       rm -r tmp
     else
       echo "build is not supported"
