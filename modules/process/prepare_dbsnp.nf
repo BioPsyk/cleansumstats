@@ -254,11 +254,9 @@ process dbsnp_reference_liftover_GRCh36 {
 
     input:
     tuple val(cid), path(dbsnp_chunk)
-    //from ch_dbsnp_split6a
 
     output:
     tuple val("36"), val(cid), path("GRCh36_GRCh38.bed_*")
-    //into ch_dbsnp_lifted_to_GRCh36
 
     script:
     ch_hg19ToHg18chain=file(params.hg19ToHg18chain)
@@ -276,10 +274,9 @@ process dbsnp_reference_liftover_GRCh35 {
 
     input:
     tuple val(cid), path(dbsnp_chunk)
-    //from ch_dbsnp_split6b
+
     output:
     tuple val("35"), val(cid), path("GRCh35_GRCh38.bed*")
-    //into ch_dbsnp_lifted_to_GRCh35
 
     script:
     ch_hg19ToHg17chain=file(params.hg19ToHg17chain)
@@ -349,7 +346,6 @@ process dbsnp_reference_rm_dup_positions_GRCh36_GRCh35 {
 
     output:
     tuple val(build), path("${build}_GRCh38.bed.nodup"), emit: nodup
-    //into ch_dbsnp_rmd_dup_positions_GRCh3x
     path("${build}_GRCh38.bed.dup"), emit: dups
 
     script:
@@ -361,13 +357,12 @@ process dbsnp_reference_rm_dup_positions_GRCh36_GRCh35 {
 
 process dbsnp_reference_put_files_in_reference_library_RSID {
 
+    publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.txt'
     publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev, pattern: '*.map'
-    publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
     cpus 4
 
     input:
     path(GRCh38_all) 
-    //from ch_dbsnp_rmd_dup_positions_GRCh38_2)
 
     output:
     path("${ch_dbsnp_RSID_38.baseName}.bed"), emit: main
@@ -377,7 +372,7 @@ process dbsnp_reference_put_files_in_reference_library_RSID {
     ch_dbsnp_RSID_38=file(params.dbsnp_RSID_38)
     """
     # Make version sorted on RSID to get correct coordinates
-    awk '{print \$5, \$4, \$6, \$7}' ${GRCh38_all} > All_20180418_RSID_GRCh38.map
+    awk '{print \$5, \$4, \$6, \$7}' ${GRCh38_all} > RSID_GRCh38.map
 
     # Sort
     mkdir -p tmp
@@ -385,8 +380,8 @@ process dbsnp_reference_put_files_in_reference_library_RSID {
     --parallel 4 \
     --temporary-directory=/cleansumstats/tmp \
     --buffer-size=20G \
-    All_20180418_RSID_GRCh38.map \
-    > "${ch_dbsnp_RSID_38.baseName}.bed"
+    RSID_GRCh38.map \
+    > "${ch_dbsnp_RSID_38.baseName}"
     rm -r tmp
 
     """
@@ -395,43 +390,42 @@ process dbsnp_reference_put_files_in_reference_library_RSID {
 
 process dbsnp_reference_put_files_in_reference_library_GRCh38 {
 
-    publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
+    publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.txt'
     cpus 4
 
     input:
     path(dbsnp_final)
-    //from ch_dbsnp_rmd_dup_positions_GRCh38_3
 
     output:
-    path("${ch_dbsnp_38.baseName}.bed")
+    path("${ch_dbsnp_38.baseName}")
 
     script:
     ch_dbsnp_38=file(params.dbsnp_38)
     """
-    awk '{print \$4, \$5, \$6, \$7}' ${dbsnp_final} > "${ch_dbsnp_38.baseName}.bed"
+    awk '{print \$4, \$5, \$6, \$7}' ${dbsnp_final} > "${ch_dbsnp_38.baseName}"
     """
 }
 
 process dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37 {
 
-    publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
+    publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.txt'
     publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, pattern: '*.map', enabled: params.dev
     cpus 4
 
     input:
-    path("All_20180418_GRCh38_GRCh37_tmp.map")
+    path("GRCh38_GRCh37_tmp.map")
 
     output:
-    path("${ch_dbsnp_38_37.baseName}.bed")
-    path("${ch_dbsnp_37_38.baseName}.bed")
+    path("${ch_dbsnp_38_37.baseName}")
+    path("${ch_dbsnp_37_38.baseName}")
     path("*map")
 
     script:
     ch_dbsnp_38_37=file(params.dbsnp_38_37)
     ch_dbsnp_37_38=file(params.dbsnp_37_38)
     """
-    awk '{print \$4, \$5, \$6, \$7, \$8}' All_20180418_GRCh38_GRCh37_tmp.map > "${ch_dbsnp_37_38.baseName}.bed"
-    awk '{print \$5, \$4, \$6, \$7, \$8}' All_20180418_GRCh38_GRCh37_tmp.map > All_20180418_GRCh38_GRCh37.map
+    awk '{print \$4, \$5, \$6, \$7, \$8}' GRCh38_GRCh37_tmp.map > "${ch_dbsnp_37_38.baseName}"
+    awk '{print \$5, \$4, \$6, \$7, \$8}' GRCh38_GRCh37_tmp.map > GRCh38_GRCh37.map
 
     # Sort
     mkdir -p tmp
@@ -439,22 +433,22 @@ process dbsnp_reference_put_files_in_reference_library_GRCh38_GRCh37 {
     --parallel 8 \
     --temporary-directory=tmp \
     --buffer-size=20G \
-    All_20180418_GRCh38_GRCh37.map \
-    > "${ch_dbsnp_38_37.baseName}.bed"
+    GRCh38_GRCh37.map \
+    > "${ch_dbsnp_38_37.baseName}"
     rm -r tmp
     """
 }
 
 process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GRCh38 {
 
-    publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.bed'
+    publishDir "${params.libdirdbsnp}", mode: 'copy', overwrite: false, pattern: '*.txt'
     cpus 4
 
     input:
     tuple val(build), path(dbsnp_chunks)
 
     output:
-    path("*.bed")
+    path("*")
 
     script:
     ch_dbsnp_36_38=file(params.dbsnp_36_38)
@@ -468,7 +462,7 @@ process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GR
       --parallel 4 \
       --temporary-directory=tmp \
       --buffer-size=20G \
-      file.tmp  > "${ch_dbsnp_36_38.baseName}.bed"
+      file.tmp  > "${ch_dbsnp_36_38.baseName}"
       rm -r tmp
 
     elif [ "${build}" == "35" ]; then
@@ -478,7 +472,7 @@ process dbsnp_reference_select_sort_and_put_files_in_reference_library_GRCh3x_GR
       --parallel 4 \
       --temporary-directory=tmp \
       --buffer-size=20G \
-      file.tmp > "${ch_dbsnp_35_38.baseName}.bed"
+      file.tmp > "${ch_dbsnp_35_38.baseName}"
       rm -r tmp
     else
       echo "build is not supported"

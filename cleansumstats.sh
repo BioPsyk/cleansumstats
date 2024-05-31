@@ -174,7 +174,7 @@ if $runexampledata; then
     if ${infile_given}; then
       :
     else
-      infile="${project_dir}/tests/example_data/dbsnp/All_20180418_example_data.vcf.gz"
+      infile="${project_dir}/tests/example_data/dbsnp/GCF_000001405.40_reduced.gz"
     fi
     if ${outdir_given}; then
       :
@@ -327,7 +327,7 @@ tmpdir_container="/tmp"
 workdir_container="/cleansumstats/work"
 
 # kgpdir
-kgpfile_name="1kg_af_ref.sorted.joined"
+kgpfile_name="1kg_af_ref.txt"
 kgpdir_container="/cleansumstats/kgpdir"
 kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 

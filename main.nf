@@ -262,8 +262,8 @@ workflow {
   }else if(params.generate1KgAfSNPreference){
     prepare_1kgaf_reference("${params.input}", ch_dbsnp_38)
     //#check for not agreeing ref alleles and alt alleles
-    // awk '{if($2!=$10){print $0}}' 1kg_af_ref.sorted.joined | head
-    // awk '{if($3!=$11){print $0}}' 1kg_af_ref.sorted.joined | head
+    // awk '{if($2!=$10){print $0}}' 1kg_af_ref.txt | head
+    // awk '{if($3!=$11){print $0}}' 1kg_af_ref.txt | head
   }else {
 
     //=================================================================================
