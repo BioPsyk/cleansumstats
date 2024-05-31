@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2024-05-31
+### Added
+-  New options to run cleansumstats.sh using docker images, both locally built or pulled from dockerhub
+
+### Changed
+-  The names of dbsnp reference files to something more general and representative. The previous names could be misleading. 
+
+
 ## [1.8.0] - 2024-05-02
 ### Fixed
 - Reporting of variants not possible to map, which was previously always returned empty.
