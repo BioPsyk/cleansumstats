@@ -29,6 +29,7 @@ function general_usage(){
  echo "-t  	 	 quick test for all paths and params"
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
  echo "-l  	 	 dev mode, saving intermediate files, no cleanup of workdir(default: not active)"
+ echo "-j  	 	 docker mode, run docker instead of singularity (default: not active)"
  echo "-v  	 	 get the version number"
 }
 
@@ -66,7 +67,7 @@ fi
 
 
 # starting getops with :, puts the checking in silent mode for errors.
-getoptsstring=":hvi:o:d:k:b:w:p:tle:"
+getoptsstring=":hvi:o:d:k:b:w:p:e:j:tl"
 
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
@@ -76,6 +77,7 @@ dbsnpdir="${project_dir}/out_dbsnp"
 kgpdir="${project_dir}/out_1kgp"
 infile=""
 outdir="out"
+container_image="singularity"
 
 # some logical defaults
 infile_given=false
@@ -85,6 +87,7 @@ kgpdir_given=false
 tmpdir_given=false
 extrapaths_given=false
 devmode_given=false
+container_image_given=false
 pathquicktest=false
 runexampledata=false
 
@@ -144,6 +147,10 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       devmode="--dev"
       devmode_given=true
       ;;
+    j )
+      container_image="$OPTARG"
+      container_image_given=true
+      ;;
     t )
       pathquicktest=true
       ;;
@@ -167,7 +174,7 @@ if $runexampledata; then
     if ${infile_given}; then
       :
     else
-      infile="${project_dir}/tests/example_data/dbsnp/All_20180418_example_data.vcf.gz"
+      infile="${project_dir}/tests/example_data/dbsnp/GCF_000001405.40_reduced.gz"
     fi
     if ${outdir_given}; then
       :
@@ -320,7 +327,7 @@ tmpdir_container="/tmp"
 workdir_container="/cleansumstats/work"
 
 # kgpdir
-kgpfile_name="1kg_af_ref.sorted.joined"
+kgpfile_name="1kg_af_ref.txt"
 kgpdir_container="/cleansumstats/kgpdir"
 kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
@@ -363,6 +370,7 @@ if ${pathquicktest}; then
  echo "Singularity image used"
  echo "------------------"
  echo "tmp/${singularity_image_tag}" 
+ echo "tmp/${docker_image_tag}" 
  echo ""
  echo "Nextflow flags"
  echo "------------------"
@@ -370,7 +378,52 @@ if ${pathquicktest}; then
  echo "--outdir ${outdir_container}"
  echo "--libdirdbsnp ${dbsnpdir_container}"
  echo "--kg1000AFGRCh38 ${kgpfile_container}"
+elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
+  echo "container: $container_image"
+  mount_flags=$(format_mount_flags "-v")
+  exec docker run \
+     --rm \
+     ${mount_flags} \
+     -v "${indir_host}:${indir_container}" \
+     -v "${outdir_host}:${outdir_container}" \
+     -v "${dbsnpdir_host}:${dbsnpdir_container}" \
+     -v "${kgpdir_host}:${kgpdir_container}" \
+     -v "${tmpdir_host}:${tmpdir_container}" \
+     -v "${workdir_host}:${workdir_container}" \
+     "${deploy_image_tag_docker_hub}" \
+     nextflow \
+       -log "${outdir_container}/.nextflow.log" \
+       run /cleansumstats ${runtype} \
+       --extrapaths ${extrapaths3} \
+       ${devmode} \
+       --input "${infile_container}" \
+       --outdir "${outdir_container}" \
+       --libdirdbsnp "${dbsnpdir_container}" \
+       --kg1000AFGRCh38 "${kgpfile_container}"
+elif [ "${container_image}" == "docker" ]; then
+  echo "container: $container_image"
+  mount_flags=$(format_mount_flags "-v")
+  exec docker run \
+     --rm \
+     ${mount_flags} \
+     -v "${indir_host}:${indir_container}" \
+     -v "${outdir_host}:${outdir_container}" \
+     -v "${dbsnpdir_host}:${dbsnpdir_container}" \
+     -v "${kgpdir_host}:${kgpdir_container}" \
+     -v "${tmpdir_host}:${tmpdir_container}" \
+     -v "${workdir_host}:${workdir_container}" \
+     "${image_tag}" \
+     nextflow \
+       -log "${outdir_container}/.nextflow.log" \
+       run /cleansumstats ${runtype} \
+       --extrapaths ${extrapaths3} \
+       ${devmode} \
+       --input "${infile_container}" \
+       --outdir "${outdir_container}" \
+       --libdirdbsnp "${dbsnpdir_container}" \
+       --kg1000AFGRCh38 "${kgpfile_container}"
 else
+  echo "container: $container_image"
   singularity run \
      --contain \
      --cleanenv \
@@ -393,6 +446,10 @@ else
        --libdirdbsnp "${dbsnpdir_container}" \
        --kg1000AFGRCh38 "${kgpfile_container}"
 
+fi
+if ${pathquicktest}; then
+  :
+else
   #Set correct permissions to pipeline_info files
   chmod -R ugo+rwX ${outdir_host}/pipeline_info
 
@@ -408,9 +465,7 @@ else
       echo ">> Done"
     }
     trap cleanup EXIT
-fi
   
-  echo "cleansumstats.sh reached the end: $(date)"
-
 fi
 
+echo "cleansumstats.sh reached the end: $(date)"
