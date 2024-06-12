@@ -10,6 +10,6 @@ For example it is not uncommon that the input format is comma separated. This is
 zcat inputfile.gz | head
 
 # Replace all commas with tab separation
-zcat  inputfile.gz | awk -FS="," -vOFS="\t" '{for(k=1; k <= NF-1; k++){printf "%s%s", $(k), OFS }; print $(NF)}' | gzip -c > newinputfile.gz
+zcat  inputfile.gz | awk -vFS="," -vOFS="\t" '{for(k=1; k <= NF-1; k++){printf "%s%s", $(k), OFS }; print $(NF)}' | gzip -c > newinputfile.gz
 
 ```
