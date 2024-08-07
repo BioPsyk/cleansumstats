@@ -435,7 +435,7 @@ else
      -B "${kgpdir_host}:${kgpdir_container}" \
      -B "${tmpdir_host}:${tmpdir_container}" \
      -B "${workdir_host}:${workdir_container}" \
-     "tmp/${singularity_image_tag}" \
+     "${container_image}" \
      nextflow \
        -log "${outdir_container}/.nextflow.log" \
        run /cleansumstats ${runtype} \
