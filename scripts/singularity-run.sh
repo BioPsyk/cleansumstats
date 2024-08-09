@@ -14,5 +14,5 @@ exec singularity run \
      --contain \
      --cleanenv \
      ${mount_flags} \
-     "tmp/${singularity_image_tag}" \
+     "sif/${singularity_image_tag}" \
      "$@"

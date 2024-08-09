@@ -54,15 +54,24 @@ paramarray=($@)
 
 # check for modifiers
 if [ ${paramarray[0]} == "prepare-dbsnp" ] ; then
-  runtype="--generateDbSNPreference"
+  runtype="prepare-dbsnp"
   # remove modifier, 1st element
   paramarray=("${paramarray[@]:1}")
 elif [ ${paramarray[0]} == "prepare-1kgp" ] ; then
-  runtype="--generate1KgAfSNPreference"
+  runtype="prepare-1kgp"
   # remove modifier, 1st element
   paramarray=("${paramarray[@]:1}")
+elif [ ${paramarray[0]} == "test" ] ; then
+  runtype="test"
+  paramarray=("${paramarray[@]:1}")
+elif [ ${paramarray[0]} == "utest" ] ; then
+  runtype="utest"
+  paramarray=("${paramarray[@]:1}")
+elif [ ${paramarray[0]} == "etest" ] ; then
+  runtype="etest"
+  paramarray=("${paramarray[@]:1}")
 else
-  runtype=""
+  runtype="default"
 fi
 
 
@@ -170,7 +179,7 @@ done
 ################################################################################
 # give path to example data
 if $runexampledata; then
-  if [ "${runtype}" == "--generateDbSNPreference" ] ; then
+  if [ "${runtype}" == "generateDbSNPreference" ] ; then
     if ${infile_given}; then
       :
     else
@@ -185,7 +194,7 @@ if $runexampledata; then
     #won't be used, but needs to be set
     kgpdir="${project_dir}/tests/example_data/1kgp/generated_reference"
 
-  elif [ "${runtype}" == "--generate1KgAfSNPreference" ] ; then
+  elif [ "${runtype}" == "generate1KgAfSNPreference" ] ; then
     if ${infile_given}; then
       :
     else
@@ -203,7 +212,7 @@ if $runexampledata; then
     fi
     kgpdir=${outdir}
 
-  elif [ "${runtype}" == "" ] ; then
+  elif [ "${runtype}" == "default" ] ; then
     if ${infile_given}; then
       :
     else
@@ -226,6 +235,12 @@ if $runexampledata; then
     echo "${runtype}"
     echo "unknown runtype"
   fi
+elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
+  # All are placeholders and not used
+  infile="${project_dir}/VERSION"
+  outdir="${outdir}"
+  dbsnpdir="${outdir}"
+  kgpdir="${outdir}"
 fi
 
 ################################################################################
@@ -304,9 +319,6 @@ fi
 # All paths we see will start from the project root, even if the command is called from somewhere else
 project_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source "${project_dir}/scripts/init-containerization.sh"
-
-mount_flags=$(format_mount_flags "-B")
 
 # indir
 indir_host=$(dirname "${infile_host}")
@@ -340,6 +352,27 @@ export APPTAINER_HOME="${FAKE_HOME}"
 # Previous fake home, causing #FAKE_HOME="tmp/fake-home"
 #export SINGULARITY_HOME="/cleansumstats/${FAKE_HOME}"
 #mkdir -p "${FAKE_HOME}"
+
+if [ "${runtype}" == "default" ]; then
+  run_script="/cleansumstats/main.nf"
+elif [ "${runtype}" == "test" ]; then
+  run_script="/cleansumstats/tests/run-tests.sh"
+elif [ "${runtype}" == "utest" ]; then
+  run_script="/cleansumstats/tests/run-unit-tests.sh"
+elif [ "${runtype}" == "etest" ]; then
+  mkdir -p tmp
+  run_script="/cleansumstats/tests/run-e2e-tests.sh"
+elif [ "${runtype}" == "prepare-dbsnp" ]; then
+  run_script="/cleansumstats --generateDbSNPreference"
+elif [ "${runtype}" == "prepare-1kgp" ]; then
+  run_script="/cleansumstats --generate1KgAfSNPreference"
+else
+  echo "option not available"
+  exit 1
+fi
+
+source "${project_dir}/scripts/init-containerization.sh"
+
 
 if ${pathquicktest}; then
  echo "cleansumstats.sh to-mount"
@@ -378,6 +411,21 @@ if ${pathquicktest}; then
  echo "--outdir ${outdir_container}"
  echo "--libdirdbsnp ${dbsnpdir_container}"
  echo "--kg1000AFGRCh38 ${kgpfile_container}"
+elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
+  if [ "${container_image}" == "dockerhub_biopsyk" ]; then
+    echo "container: $container_image"
+    mount_flags=$(format_mount_flags "-v")
+    #exec docker run --rm "${deploy_image_tag_docker_hub}" "${run_script}"
+    exec docker run --rm ${mount_flags} "${deploy_image_tag_docker_hub}" ${run_script}
+  elif [ "${container_image}" == "docker" ]; then
+    echo "container: $container_image"
+    mount_flags=$(format_mount_flags "-v")
+    exec docker run --rm ${mount_flags} "${image_tag}" ${run_script}
+  else
+    echo "container: $container_image"
+    mount_flags=$(format_mount_flags "-B")
+    singularity run --contain --cleanenv ${mount_flags} "${container_image}" ${run_script}
+  fi
 elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
   echo "container: $container_image"
   mount_flags=$(format_mount_flags "-v")
@@ -393,7 +441,7 @@ elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
      "${deploy_image_tag_docker_hub}" \
      nextflow \
        -log "${outdir_container}/.nextflow.log" \
-       run /cleansumstats ${runtype} \
+       run ${run_script} \
        --extrapaths ${extrapaths3} \
        ${devmode} \
        --input "${infile_container}" \
@@ -415,7 +463,7 @@ elif [ "${container_image}" == "docker" ]; then
      "${image_tag}" \
      nextflow \
        -log "${outdir_container}/.nextflow.log" \
-       run /cleansumstats ${runtype} \
+       run ${run_script} \
        --extrapaths ${extrapaths3} \
        ${devmode} \
        --input "${infile_container}" \
@@ -424,6 +472,7 @@ elif [ "${container_image}" == "docker" ]; then
        --kg1000AFGRCh38 "${kgpfile_container}"
 else
   echo "container: $container_image"
+  mount_flags=$(format_mount_flags "-B")
   singularity run \
      --contain \
      --cleanenv \
@@ -435,10 +484,10 @@ else
      -B "${kgpdir_host}:${kgpdir_container}" \
      -B "${tmpdir_host}:${tmpdir_container}" \
      -B "${workdir_host}:${workdir_container}" \
-     "tmp/${singularity_image_tag}" \
+     "${container_image}" \
      nextflow \
        -log "${outdir_container}/.nextflow.log" \
-       run /cleansumstats ${runtype} \
+       run ${run_script} \
        --extrapaths ${extrapaths3} \
        ${devmode} \
        --input "${infile_container}" \
@@ -448,6 +497,8 @@ else
 
 fi
 if ${pathquicktest}; then
+  :
+elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
   :
 else
   #Set correct permissions to pipeline_info files
