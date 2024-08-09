@@ -27,7 +27,8 @@ cd cleansumstats
 using singularity (use path to image)
 ```bash
 ## pull singularity image returning the image as a file)
-singularity pull ibp-cleansumstats-base_version-1.2.2.sif docker://biopsyk/ibp-cleansumstats:1.2.2
+mkdir -p sif
+singularity pull sif/ibp-cleansumstats-base_version-1.2.2.sif docker://biopsyk/ibp-cleansumstats:1.2.2
 
 # clean a sumstat using shrinked example data for dbsnp and 1kgp (-e flag)
 ./cleansumstats.sh \
@@ -38,7 +39,7 @@ singularity pull ibp-cleansumstats-base_version-1.2.2.sif docker://biopsyk/ibp-c
 ```
 
 ### Docker
-using docker image (use the docker tag: dockerhub_biopsyk)
+using docker image (use the tag: dockerhub_biopsyk)
 ```bash
 ## pull docker image
 docker pull biopsyk/ibp-cleansumstats:1.2.2
