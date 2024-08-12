@@ -29,7 +29,7 @@ function general_usage(){
  echo "-t  	 	 quick test for all paths and params"
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
  echo "-l  	 	 dev mode, saving intermediate files, no cleanup of workdir(default: not active)"
- echo "-j  	 	 image mode, run docker or singularity (default: singularity)"
+ echo "-j  	 	 image mode, run docker, dockerhub_biopsyk or singularity (if unset or empty: singularity)"
  echo "-v  	 	 get the version number"
 }
 
@@ -86,7 +86,7 @@ dbsnpdir="${project_dir}/out_dbsnp"
 kgpdir="${project_dir}/out_1kgp"
 infile=""
 outdir="out"
-container_image="singularity"
+container_image=""
 
 # some logical defaults
 infile_given=false
@@ -373,6 +373,17 @@ fi
 
 source "${project_dir}/scripts/init-containerization.sh"
 
+# Which image is to be used
+if [ "${container_image}" == "docker" ]; then
+  runimage="${image_tag}" 
+elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
+  runimage="${deploy_image_tag_docker_hub}" 
+elif [ "${container_image}" == "" ]; then
+  #if not set, assume image is in sif folder
+  runimage="sif/${singularity_image_tag}" 
+else
+  runimage="${container_image}" 
+fi
 
 if ${pathquicktest}; then
  echo "cleansumstats.sh to-mount"
@@ -416,15 +427,15 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
     echo "container: $container_image"
     mount_flags=$(format_mount_flags "-v")
     #exec docker run --rm "${deploy_image_tag_docker_hub}" "${run_script}"
-    exec docker run --rm ${mount_flags} "${deploy_image_tag_docker_hub}" ${run_script}
+    exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   elif [ "${container_image}" == "docker" ]; then
     echo "container: $container_image"
     mount_flags=$(format_mount_flags "-v")
-    exec docker run --rm ${mount_flags} "${image_tag}" ${run_script}
+    exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   else
     echo "container: $container_image"
     mount_flags=$(format_mount_flags "-B")
-    singularity run --contain --cleanenv ${mount_flags} "${container_image}" ${run_script}
+    singularity run --contain --cleanenv ${mount_flags} "${runimage}" ${run_script}
   fi
 elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
   echo "container: $container_image"
@@ -438,7 +449,7 @@ elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
      -v "${kgpdir_host}:${kgpdir_container}" \
      -v "${tmpdir_host}:${tmpdir_container}" \
      -v "${workdir_host}:${workdir_container}" \
-     "${deploy_image_tag_docker_hub}" \
+     "${runimage}" \
      nextflow \
        -log "${outdir_container}/.nextflow.log" \
        run ${run_script} \
@@ -460,7 +471,7 @@ elif [ "${container_image}" == "docker" ]; then
      -v "${kgpdir_host}:${kgpdir_container}" \
      -v "${tmpdir_host}:${tmpdir_container}" \
      -v "${workdir_host}:${workdir_container}" \
-     "${image_tag}" \
+     "${runimage}" \
      nextflow \
        -log "${outdir_container}/.nextflow.log" \
        run ${run_script} \
@@ -484,7 +495,7 @@ else
      -B "${kgpdir_host}:${kgpdir_container}" \
      -B "${tmpdir_host}:${tmpdir_container}" \
      -B "${workdir_host}:${workdir_container}" \
-     "${container_image}" \
+     "${runimage}" \
      nextflow \
        -log "${outdir_container}/.nextflow.log" \
        run ${run_script} \
