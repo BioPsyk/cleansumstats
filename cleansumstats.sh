@@ -496,10 +496,11 @@ else
        --kg1000AFGRCh38 "${kgpfile_container}"
 
 fi
+
 if ${pathquicktest}; then
-  :
+  echo "When running quick test we do not clean"
 elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
-  :
+  echo "When running tests there is nothing to clean"
 else
   #Set correct permissions to pipeline_info files
   chmod -R ugo+rwX ${outdir_host}/pipeline_info
@@ -516,7 +517,7 @@ else
       echo ">> Done"
     }
     trap cleanup EXIT
-  
-fi
+  fi  # Close the if ${devmode_given} block
+fi  # Close the outer if ${pathquicktest} block
 
 echo "cleansumstats.sh reached the end: $(date)"
