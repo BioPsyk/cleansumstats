@@ -424,21 +424,21 @@ if ${pathquicktest}; then
  echo "--kg1000AFGRCh38 ${kgpfile_container}"
 elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
   if [ "${container_image}" == "dockerhub_biopsyk" ]; then
-    echo "container: $container_image"
+    echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
     #exec docker run --rm "${deploy_image_tag_docker_hub}" "${run_script}"
     exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   elif [ "${container_image}" == "docker" ]; then
-    echo "container: $container_image"
+    echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
     exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   else
-    echo "container: $container_image"
+    echo "container: $runimage"
     mount_flags=$(format_mount_flags "-B")
     singularity run --contain --cleanenv ${mount_flags} "${runimage}" ${run_script}
   fi
 elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
-  echo "container: $container_image"
+  echo "container: $runimage"
   mount_flags=$(format_mount_flags "-v")
   exec docker run \
      --rm \
@@ -460,7 +460,7 @@ elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
        --libdirdbsnp "${dbsnpdir_container}" \
        --kg1000AFGRCh38 "${kgpfile_container}"
 elif [ "${container_image}" == "docker" ]; then
-  echo "container: $container_image"
+  echo "container: $runimage"
   mount_flags=$(format_mount_flags "-v")
   exec docker run \
      --rm \
@@ -482,7 +482,7 @@ elif [ "${container_image}" == "docker" ]; then
        --libdirdbsnp "${dbsnpdir_container}" \
        --kg1000AFGRCh38 "${kgpfile_container}"
 else
-  echo "container: $container_image"
+  echo "container: $runimage"
   mount_flags=$(format_mount_flags "-B")
   singularity run \
      --contain \
