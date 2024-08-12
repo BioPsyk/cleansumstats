@@ -29,7 +29,7 @@ function general_usage(){
  echo "-t  	 	 quick test for all paths and params"
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
  echo "-l  	 	 dev mode, saving intermediate files, no cleanup of workdir(default: not active)"
- echo "-j  	 	 docker mode, run docker instead of singularity (default: not active)"
+ echo "-j  	 	 image mode, run docker or singularity (default: singularity)"
  echo "-v  	 	 get the version number"
 }
 

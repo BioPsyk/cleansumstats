@@ -32,7 +32,7 @@ singularity pull sif/ibp-cleansumstats-base_version-1.2.2.sif docker://biopsyk/i
 
 # clean a sumstat using shrinked example data for dbsnp and 1kgp (-e flag)
 ./cleansumstats.sh \
-  -j ibp-cleansumstats-base_version-1.2.2.sif \
+  -j sif/ibp-cleansumstats-base_version-1.2.2.sif \
   -i tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   -o out_example \
   -e 1
