@@ -29,6 +29,7 @@ function general_usage(){
  echo "-t  	 	 quick test for all paths and params"
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
  echo "-l  	 	 dev mode, saving intermediate files, no cleanup of workdir(default: not active)"
+ echo "-j  	 	 image mode, run docker, dockerhub_biopsyk or singularity (if unset or empty: singularity)"
  echo "-v  	 	 get the version number"
 }
 
@@ -53,20 +54,29 @@ paramarray=($@)
 
 # check for modifiers
 if [ ${paramarray[0]} == "prepare-dbsnp" ] ; then
-  runtype="--generateDbSNPreference"
+  runtype="prepare-dbsnp"
   # remove modifier, 1st element
   paramarray=("${paramarray[@]:1}")
 elif [ ${paramarray[0]} == "prepare-1kgp" ] ; then
-  runtype="--generate1KgAfSNPreference"
+  runtype="prepare-1kgp"
   # remove modifier, 1st element
   paramarray=("${paramarray[@]:1}")
+elif [ ${paramarray[0]} == "test" ] ; then
+  runtype="test"
+  paramarray=("${paramarray[@]:1}")
+elif [ ${paramarray[0]} == "utest" ] ; then
+  runtype="utest"
+  paramarray=("${paramarray[@]:1}")
+elif [ ${paramarray[0]} == "etest" ] ; then
+  runtype="etest"
+  paramarray=("${paramarray[@]:1}")
 else
-  runtype=""
+  runtype="default"
 fi
 
 
 # starting getops with :, puts the checking in silent mode for errors.
-getoptsstring=":hvi:o:d:k:b:w:p:tle:"
+getoptsstring=":hvi:o:d:k:b:w:p:e:j:tl"
 
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
@@ -76,6 +86,7 @@ dbsnpdir="${project_dir}/out_dbsnp"
 kgpdir="${project_dir}/out_1kgp"
 infile=""
 outdir="out"
+container_image=""
 
 # some logical defaults
 infile_given=false
@@ -85,6 +96,7 @@ kgpdir_given=false
 tmpdir_given=false
 extrapaths_given=false
 devmode_given=false
+container_image_given=false
 pathquicktest=false
 runexampledata=false
 
@@ -144,6 +156,10 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       devmode="--dev"
       devmode_given=true
       ;;
+    j )
+      container_image="$OPTARG"
+      container_image_given=true
+      ;;
     t )
       pathquicktest=true
       ;;
@@ -163,11 +179,11 @@ done
 ################################################################################
 # give path to example data
 if $runexampledata; then
-  if [ "${runtype}" == "--generateDbSNPreference" ] ; then
+  if [ "${runtype}" == "generateDbSNPreference" ] ; then
     if ${infile_given}; then
       :
     else
-      infile="${project_dir}/tests/example_data/dbsnp/All_20180418_example_data.vcf.gz"
+      infile="${project_dir}/tests/example_data/dbsnp/GCF_000001405.40_reduced.gz"
     fi
     if ${outdir_given}; then
       :
@@ -178,7 +194,7 @@ if $runexampledata; then
     #won't be used, but needs to be set
     kgpdir="${project_dir}/tests/example_data/1kgp/generated_reference"
 
-  elif [ "${runtype}" == "--generate1KgAfSNPreference" ] ; then
+  elif [ "${runtype}" == "generate1KgAfSNPreference" ] ; then
     if ${infile_given}; then
       :
     else
@@ -196,7 +212,7 @@ if $runexampledata; then
     fi
     kgpdir=${outdir}
 
-  elif [ "${runtype}" == "" ] ; then
+  elif [ "${runtype}" == "default" ] ; then
     if ${infile_given}; then
       :
     else
@@ -219,6 +235,12 @@ if $runexampledata; then
     echo "${runtype}"
     echo "unknown runtype"
   fi
+elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
+  # All are placeholders and not used
+  infile="${project_dir}/VERSION"
+  outdir="${outdir}"
+  dbsnpdir="${outdir}"
+  kgpdir="${outdir}"
 fi
 
 ################################################################################
@@ -297,9 +319,6 @@ fi
 # All paths we see will start from the project root, even if the command is called from somewhere else
 project_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source "${project_dir}/scripts/init-containerization.sh"
-
-mount_flags=$(format_mount_flags "-B")
 
 # indir
 indir_host=$(dirname "${infile_host}")
@@ -320,7 +339,7 @@ tmpdir_container="/tmp"
 workdir_container="/cleansumstats/work"
 
 # kgpdir
-kgpfile_name="1kg_af_ref.sorted.joined"
+kgpfile_name="1kg_af_ref.txt"
 kgpdir_container="/cleansumstats/kgpdir"
 kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
@@ -333,6 +352,38 @@ export APPTAINER_HOME="${FAKE_HOME}"
 # Previous fake home, causing #FAKE_HOME="tmp/fake-home"
 #export SINGULARITY_HOME="/cleansumstats/${FAKE_HOME}"
 #mkdir -p "${FAKE_HOME}"
+
+if [ "${runtype}" == "default" ]; then
+  run_script="/cleansumstats/main.nf"
+elif [ "${runtype}" == "test" ]; then
+  run_script="/cleansumstats/tests/run-tests.sh"
+elif [ "${runtype}" == "utest" ]; then
+  run_script="/cleansumstats/tests/run-unit-tests.sh"
+elif [ "${runtype}" == "etest" ]; then
+  mkdir -p tmp
+  run_script="/cleansumstats/tests/run-e2e-tests.sh"
+elif [ "${runtype}" == "prepare-dbsnp" ]; then
+  run_script="/cleansumstats --generateDbSNPreference"
+elif [ "${runtype}" == "prepare-1kgp" ]; then
+  run_script="/cleansumstats --generate1KgAfSNPreference"
+else
+  echo "option not available"
+  exit 1
+fi
+
+source "${project_dir}/scripts/init-containerization.sh"
+
+# Which image is to be used
+if [ "${container_image}" == "docker" ]; then
+  runimage="${image_tag}" 
+elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
+  runimage="${deploy_image_tag_docker_hub}" 
+elif [ "${container_image}" == "" ]; then
+  #if not set, assume image is in sif folder
+  runimage="sif/${singularity_image_tag}" 
+else
+  runimage="${container_image}" 
+fi
 
 if ${pathquicktest}; then
  echo "cleansumstats.sh to-mount"
@@ -363,6 +414,7 @@ if ${pathquicktest}; then
  echo "Singularity image used"
  echo "------------------"
  echo "tmp/${singularity_image_tag}" 
+ echo "tmp/${docker_image_tag}" 
  echo ""
  echo "Nextflow flags"
  echo "------------------"
@@ -370,7 +422,68 @@ if ${pathquicktest}; then
  echo "--outdir ${outdir_container}"
  echo "--libdirdbsnp ${dbsnpdir_container}"
  echo "--kg1000AFGRCh38 ${kgpfile_container}"
+elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
+  if [ "${container_image}" == "dockerhub_biopsyk" ]; then
+    echo "container: $runimage"
+    mount_flags=$(format_mount_flags "-v")
+    #exec docker run --rm "${deploy_image_tag_docker_hub}" "${run_script}"
+    exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
+  elif [ "${container_image}" == "docker" ]; then
+    echo "container: $runimage"
+    mount_flags=$(format_mount_flags "-v")
+    exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
+  else
+    echo "container: $runimage"
+    mount_flags=$(format_mount_flags "-B")
+    singularity run --contain --cleanenv ${mount_flags} "${runimage}" ${run_script}
+  fi
+elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
+  echo "container: $runimage"
+  mount_flags=$(format_mount_flags "-v")
+  exec docker run \
+     --rm \
+     ${mount_flags} \
+     -v "${indir_host}:${indir_container}" \
+     -v "${outdir_host}:${outdir_container}" \
+     -v "${dbsnpdir_host}:${dbsnpdir_container}" \
+     -v "${kgpdir_host}:${kgpdir_container}" \
+     -v "${tmpdir_host}:${tmpdir_container}" \
+     -v "${workdir_host}:${workdir_container}" \
+     "${runimage}" \
+     nextflow \
+       -log "${outdir_container}/.nextflow.log" \
+       run ${run_script} \
+       --extrapaths ${extrapaths3} \
+       ${devmode} \
+       --input "${infile_container}" \
+       --outdir "${outdir_container}" \
+       --libdirdbsnp "${dbsnpdir_container}" \
+       --kg1000AFGRCh38 "${kgpfile_container}"
+elif [ "${container_image}" == "docker" ]; then
+  echo "container: $runimage"
+  mount_flags=$(format_mount_flags "-v")
+  exec docker run \
+     --rm \
+     ${mount_flags} \
+     -v "${indir_host}:${indir_container}" \
+     -v "${outdir_host}:${outdir_container}" \
+     -v "${dbsnpdir_host}:${dbsnpdir_container}" \
+     -v "${kgpdir_host}:${kgpdir_container}" \
+     -v "${tmpdir_host}:${tmpdir_container}" \
+     -v "${workdir_host}:${workdir_container}" \
+     "${runimage}" \
+     nextflow \
+       -log "${outdir_container}/.nextflow.log" \
+       run ${run_script} \
+       --extrapaths ${extrapaths3} \
+       ${devmode} \
+       --input "${infile_container}" \
+       --outdir "${outdir_container}" \
+       --libdirdbsnp "${dbsnpdir_container}" \
+       --kg1000AFGRCh38 "${kgpfile_container}"
 else
+  echo "container: $runimage"
+  mount_flags=$(format_mount_flags "-B")
   singularity run \
      --contain \
      --cleanenv \
@@ -382,10 +495,10 @@ else
      -B "${kgpdir_host}:${kgpdir_container}" \
      -B "${tmpdir_host}:${tmpdir_container}" \
      -B "${workdir_host}:${workdir_container}" \
-     "tmp/${singularity_image_tag}" \
+     "${runimage}" \
      nextflow \
        -log "${outdir_container}/.nextflow.log" \
-       run /cleansumstats ${runtype} \
+       run ${run_script} \
        --extrapaths ${extrapaths3} \
        ${devmode} \
        --input "${infile_container}" \
@@ -393,6 +506,13 @@ else
        --libdirdbsnp "${dbsnpdir_container}" \
        --kg1000AFGRCh38 "${kgpfile_container}"
 
+fi
+
+if ${pathquicktest}; then
+  echo "When running quick test we do not clean"
+elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
+  echo "When running tests there is nothing to clean"
+else
   #Set correct permissions to pipeline_info files
   chmod -R ugo+rwX ${outdir_host}/pipeline_info
 
@@ -408,9 +528,7 @@ else
       echo ">> Done"
     }
     trap cleanup EXIT
-fi
-  
-  echo "cleansumstats.sh reached the end: $(date)"
+  fi  # Close the if ${devmode_given} block
+fi  # Close the outer if ${pathquicktest} block
 
-fi
-
+echo "cleansumstats.sh reached the end: $(date)"

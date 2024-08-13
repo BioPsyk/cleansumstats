@@ -10,28 +10,45 @@ The cleansumstats pipeline takes a typical genomic sumstat file as input(normall
 
 
 ## Quick Start
-To run a quick test using provided example and test data
+To run a quick test using provided example and test data. Use either singularity or docker depending on what is available on your system. Note that Singularity has been renamed Apptainer.
 
 ```bash
-# i. Make sure git and singularity are installed, see [singularity installation](docs/singularity-installation.md)
-singularity --version
+# Make sure git and either singularity or docker are installed
 git --version
+singularity --version
+docker --version
 
-# ii. clone and enter the cleansumstats github project
+# clone and enter the cleansumstats github project
 git clone https://github.com/BioPsyk/cleansumstats.git
 cd cleansumstats
+```
 
-# iii. Download our container image, move it to a folder called tmp within the repo (<1GB)
-singularity pull ibp-cleansumstats-base_version-1.2.2.sif docker://biopsyk/ibp-cleansumstats:1.2.2
-mkdir -p tmp
-chmod ug+rwX tmp
-mv ibp-cleansumstats-base_version-1.2.2.sif tmp/
+### Singularity
+using singularity (use path to image)
+```bash
+## pull singularity image returning the image as a file)
+mkdir -p sif
+singularity pull sif/ibp-cleansumstats-base_version-1.2.2.sif docker://biopsyk/ibp-cleansumstats:1.2.2
 
-# iv. clean a sumstat using shrinked example data for dbsnp and 1kgp (-e flag)
+# clean a sumstat using shrinked example data for dbsnp and 1kgp (-e flag)
 ./cleansumstats.sh \
+  -j sif/ibp-cleansumstats-base_version-1.2.2.sif \
   -i tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   -o out_example \
-  -e
+  -e 1
+```
+
+### Docker
+using docker image (use the tag: dockerhub_biopsyk)
+```bash
+## pull docker image
+docker pull biopsyk/ibp-cleansumstats:1.2.2
+## using docker (using flag -j)
+./cleansumstats.sh \
+  -j dockerhub_biopsyk \
+  -i tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
+  -o out_example \
+  -e 1
 
 ```
 

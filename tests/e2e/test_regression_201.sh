@@ -80,5 +80,5 @@ function _check_results {
 
 }
 
-mv ${outdir}/All_20180418_GRCh37_GRCh38.sorted.bed ./observed-result1.txt
+mv ${outdir}/dbsnp_cleansumstat_reference_GRCh37_GRCh38.txt ./observed-result1.txt
 _check_results ./observed-result1.txt ./expected-result-grch37-grch38.txt

@@ -66,16 +66,14 @@ process join_frequency_data_on_dbsnp_reference {
     input:
     tuple val(basefilename), path(ref1kgsorted)
     path(ch_dbsnp_38)
-    //tuple basefilename, ref1kgsorted from ch_1kg_af_ref_sorted
 
     output:
-    tuple val(basefilename), path("1kg_af_ref.sorted.joined")
-    //tuple basefilename, path("1kg_af_ref.sorted.joined")
+    tuple val(basefilename), path("1kg_af_ref.txt")
 
     script:
     """
     #join the two datasets
-    LC_ALL=C join -1 1 -2 1 ${ref1kgsorted} ${ch_dbsnp_38} > 1kg_af_ref.sorted.joined
+    LC_ALL=C join -1 1 -2 1 ${ref1kgsorted} ${ch_dbsnp_38} > 1kg_af_ref.txt
 
     """
 }

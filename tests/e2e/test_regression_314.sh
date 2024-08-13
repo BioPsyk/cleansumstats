@@ -156,7 +156,7 @@ function _check_results {
   fi
 
 }
-mv ${outdir}/All_20180418_GRCh35_GRCh38.sorted.bed ./observed-result1.tsv
+mv ${outdir}/dbsnp_cleansumstat_reference_GRCh35_GRCh38.txt ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv
 
 echo "-- Pipeline done, specific test"

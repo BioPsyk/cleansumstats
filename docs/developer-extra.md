@@ -291,7 +291,7 @@ cp tmp/fake-home/source_data/1kgp/tmp_1kg/1kg_example_data.vcf.chrpos_sorted_joi
 
 # Move the generated reference files into 'tests/example_data/1kgp/generated_reference/'
 mkdir -p tests/example_data/1kgp/generated_reference
-cp tmp/fake-home/out/1kg_af_ref.sorted.joined tests/example_data/1kgp/generated_reference/
+cp tmp/fake-home/out/1kg_af_ref.txt tests/example_data/1kgp/generated_reference/
 
 ```
 
@@ -300,7 +300,7 @@ Test a complete run using all example data together
 # Full test run
 ./scripts/singularity-run.sh nextflow run /cleansumstats \
   --input /cleansumstats/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
-  --kg1000AFGRCh38 /cleansumstats/tests/example_data/1kgp/generated_reference/1kg_af_ref.sorted.joined \
+  --kg1000AFGRCh38 /cleansumstats/tests/example_data/1kgp/generated_reference/1kg_af_ref.txt \
   --libdirdbsnp /cleansumstats/tests/example_data/dbsnp/generated_reference \
   --dev \
   --outdir ./out_run
