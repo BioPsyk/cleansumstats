@@ -12,7 +12,7 @@ process extract_frequency_data {
 
     script:
     """
-    gendb_1kaf_extract_freq_data.sh ${af1kgvcf} > 1kg_af_ref
+    gendb_1kaf_extract_freq_data.sh ${af1kgvcf} "2024-09-11-1000GENOMES-phase_3.vcf" > 1kg_af_ref
 
     """
 }
