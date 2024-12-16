@@ -87,7 +87,7 @@ srun --mem=80g --ntasks 1 --cpus-per-task 5 --time=1:00:00 --account ibp_pipelin
   prepare-1kgp \
   -i 1kgp/1000GENOMES-phase_3.vcf.gz \
   -d out_dbsnp \
-  -o out_1kgp
+  -o out_1kgp_test
 ```
 
 ## Prepare meta data files

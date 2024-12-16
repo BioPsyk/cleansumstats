@@ -4,11 +4,9 @@ process extract_frequency_data {
 
     input:
     tuple val(basefilename), path(af1kgvcf)
-    //tuple basefilename, af1kgvcf from ch_file
 
     output:
     tuple val(basefilename), path("1kg_af_ref")
-    //tuple basefilename, path("1kg_af_ref") into ch_1kg_af_ref
 
     script:
     """
@@ -24,11 +22,9 @@ process flip_frequency_data {
 
     input:
     tuple val(basefilename), path(ref1kg)
-    //tuple basefilename, ref1kg from ch_1kg_af_ref
 
     output:
     tuple val(basefilename), path("1kg_af_ref.flipped")
-    //tuple basefilename, path("1kg_af_ref.flipped") into ch_1kg_af_ref_tosort
 
     script:
     """
@@ -45,11 +41,9 @@ process sort_frequency_data {
 
     input:
     tuple val(basefilename), path(ref1kg)
-    //tuple basefilename, ref1kg from ch_1kg_af_ref_tosort
 
     output:
     tuple val(basefilename), path("1kg_af_ref.sorted")
-    //tuple basefilename, path("1kg_af_ref.sorted") into ch_1kg_af_ref_sorted
 
     script:
     """
