@@ -78,14 +78,14 @@ srun --mem=400g --ntasks 1 --cpus-per-task 60 --time=10:00:00 --account ibp_pipe
 ```bash
 # i. Download
 mkdir -p 1kgp
-wget -P 1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz
-wget -P 1kgp http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz.tbi
+wget -P 1kgp https://ftp.ensembl.org/pub/release-112/variation/vcf/homo_sapiens/1000GENOMES-phase_3.vcf.gz
+wget -P 1kgp https://ftp.ensembl.org/pub/release-112/variation/vcf/homo_sapiens/1000GENOMES-phase_3.vcf.gz.csi
 
 # ii. If you are on a HPC Start your interactive session (below SLURM settings took about 5min to run)
 srun --mem=80g --ntasks 1 --cpus-per-task 5 --time=1:00:00 --account ibp_pipeline_cleansumstats --pty /bin/bash
 ./cleansumstats.sh \
   prepare-1kgp \
-  -i 1kgp/ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz \
+  -i 1kgp/1000GENOMES-phase_3.vcf.gz \
   -d out_dbsnp \
   -o out_1kgp
 ```

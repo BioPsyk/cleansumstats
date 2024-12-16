@@ -143,32 +143,16 @@ def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
 summary['Input']            = params.input
-//if (params.dbsnp38) summary['dbSNP38'] = params.dbsnp38
-//if (params.dbsnp37) summary['dbSNP37'] = params.dbsnp37
-//if (params.dbsnp36) summary['dbSNP36'] = params.dbsnp36
-//if (params.dbsnp35) summary['dbSNP35'] = params.dbsnp35
-//if (params.dbsnpRSID) summary['dbsnpRSID'] = params.dbsnpRSID
-
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
-if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
 summary['Launch dir']       = workflow.launchDir
 summary['Working dir']      = workflow.workDir
 summary['Script dir']       = workflow.projectDir
 summary['User']             = workflow.userName
-if (workflow.profile == 'awsbatch') {
-  summary['AWS Region']     = params.awsregion
-  summary['AWS Queue']      = params.awsqueue
-}
 summary['Config Profile'] = workflow.profile
-if (params.config_profile_description) summary['Config Description'] = params.config_profile_description
-if (params.config_profile_contact)     summary['Config Contact']     = params.config_profile_contact
-if (params.config_profile_url)         summary['Config URL']         = params.config_profile_url
 log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
 log.info "-\033[2m--------------------------------------------------\033[0m-"
 
-// Check the hostnames against configured profiles
-//checkHostname()
 
 def create_workflow_summary(summary) {
     def yaml_file = workDir.resolve('workflow_summary_mqc.yaml')
@@ -362,43 +346,49 @@ workflow {
 }
 
 
-def cleansumstatsHeader(){
-    // Log colors ANSI codes
-    c_reset = params.monochrome_logs ? '' : "\033[0m";
-    c_dim = params.monochrome_logs ? '' : "\033[2m";
-    c_black = params.monochrome_logs ? '' : "\033[0;30m";
-    c_green = params.monochrome_logs ? '' : "\033[0;32m";
-    c_yellow = params.monochrome_logs ? '' : "\033[0;33m";
-    c_blue = params.monochrome_logs ? '' : "\033[0;34m";
-    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
-    c_cyan = params.monochrome_logs ? '' : "\033[0;36m";
-    c_white = params.monochrome_logs ? '' : "\033[0;37m";
 
-    return """    -${c_dim}--------------------------------------------------${c_reset}-
-                                            ${c_green},--.${c_black}/${c_green},-.${c_reset}
-                                            ${c_cyan}`._,._,\'${c_reset}
-    ${c_purple} cleansumstats v${pipelineVersion}${c_reset}
+//def cleansumstatsHeader(){
+//    // Log colors ANSI codes
+//    c_reset = params.monochrome_logs ? '' : "\033[0m";
+//    c_dim = params.monochrome_logs ? '' : "\033[2m";
+//    c_black = params.monochrome_logs ? '' : "\033[0;30m";
+//    c_green = params.monochrome_logs ? '' : "\033[0;32m";
+//    c_yellow = params.monochrome_logs ? '' : "\033[0;33m";
+//    c_blue = params.monochrome_logs ? '' : "\033[0;34m";
+//    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
+//    c_cyan = params.monochrome_logs ? '' : "\033[0;36m";
+//    c_white = params.monochrome_logs ? '' : "\033[0;37m";
+//
+//    return """    -${c_dim}--------------------------------------------------${c_reset}-
+//                                            ${c_green},--.${c_black}/${c_green},-.${c_reset}
+//                                            ${c_cyan}`._,._,\'${c_reset}
+//    ${c_purple} cleansumstats v${pipelineVersion}${c_reset}
+//    -${c_dim}--------------------------------------------------${c_reset}-
+//    """.stripIndent()
+//}
+
+def cleansumstatsHeader() {
+    // Log colors ANSI codes
+    c_reset = params.monochrome_logs ? '' : "\033[0m"
+    c_dim = params.monochrome_logs ? '' : "\033[2m"
+    c_black = params.monochrome_logs ? '' : "\033[0;30m"
+    c_green = params.monochrome_logs ? '' : "\033[0;32m"
+    c_yellow = params.monochrome_logs ? '' : "\033[0;33m"
+    c_blue = params.monochrome_logs ? '' : "\033[0;34m"
+    c_purple = params.monochrome_logs ? '' : "\033[0;35m"
+    c_cyan = params.monochrome_logs ? '' : "\033[0;36m"
+    c_white = params.monochrome_logs ? '' : "\033[0;37m"
+
+    return """
+    -${c_dim}--------------------------------------------------${c_reset}-
+    ${c_blue} _____ _                 ${c_green}                   _        _       ${c_reset}
+    ${c_blue}/ ____| |                ${c_green}                  | |      | |      ${c_reset}
+    ${c_blue}| |    | | ___  __ _ _ __${c_green}___  _   _ _ __ ___| |_ __ _| |_ ___ ${c_reset}
+    ${c_blue}| |    | |/ _ \\/ _` | '_ ${c_green}\\_  / | | | '_ \\___| __/ _` | __/ __|${c_reset}
+    ${c_blue}| |____| |  __/ (_| | | |${c_green} / /| |_| | | | |  | || (_| | |_\\__ \\${c_reset}
+    ${c_blue}\\_____|_|\\___|\\__,_|_| |${c_green}/_/  \\__,_|_| |_|   \\__\\__,_|\\__|___/${c_reset}
+    ${c_yellow}      |A|C|G|T| ${c_cyan}=> ${c_green}|1|2|3|4|      ${c_purple}v${pipelineVersion}${c_reset}
     -${c_dim}--------------------------------------------------${c_reset}-
     """.stripIndent()
 }
 
-def checkHostname(){
-    def c_reset = params.monochrome_logs ? '' : "\033[0m"
-    def c_white = params.monochrome_logs ? '' : "\033[0;37m"
-    def c_red = params.monochrome_logs ? '' : "\033[1;91m"
-    def c_yellow_bold = params.monochrome_logs ? '' : "\033[1;93m"
-    if (params.hostnames) {
-        def hostname = "hostname".execute().text.trim()
-        params.hostnames.each { prof, hnames ->
-            hnames.each { hname ->
-                if (hostname.contains(hname) && !workflow.profile.contains(prof)) {
-                    log.error "====================================================\n" +
-                            "  ${c_red}WARNING!${c_reset} You are running with `-profile $workflow.profile`\n" +
-                            "  but your machine hostname is ${c_white}'$hostname'${c_reset}\n" +
-                            "  ${c_yellow_bold}It's highly recommended that you use `-profile $prof${c_reset}`\n" +
-                            "============================================================"
-                }
-            }
-        }
-    }
-}
