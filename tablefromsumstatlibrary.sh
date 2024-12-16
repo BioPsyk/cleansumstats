@@ -39,7 +39,7 @@ exec singularity run \
    ${mount_flags} \
    -B "${indir_host}:${indir_container}" \
    -B "/tmp:/tmp" \
-   "tmp/${singularity_image_tag}" \
+   "sif/${singularity_image_tag}" \
    /cleansumstats/bin/table_from_sumstat_library.sh \
      "${indir_container}" \
      "${suffix}"
