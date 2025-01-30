@@ -17,6 +17,7 @@ include {
   select_chrpos_or_snpchrpos
   reformat_sumstat
   split_multiallelics_resort_rowindex
+  remove_chrpos_allele_duplicates
 } from '../process/map_to_dbsnp.nf' 
 
 workflow map_to_dbsnp {
@@ -73,7 +74,11 @@ workflow map_to_dbsnp {
   select_chrpos_or_snpchrpos(ch_combined_chrpos_snpchrpos_rsid)
   //rm_dup_chrpos_allele_rows(select_chrpos_or_snpchrpos.out.ch_liftover_final)
   reformat_sumstat(select_chrpos_or_snpchrpos.out.ch_liftover_final)
-  split_multiallelics_resort_rowindex(reformat_sumstat.out.ch_mapped_GRCh38)
+
+  // Add duplicate removal step
+  remove_chrpos_allele_duplicates(reformat_sumstat.out.ch_mapped_GRCh38)
+
+  split_multiallelics_resort_rowindex(remove_chrpos_allele_duplicates.out.filtered_records)
 
   //branch the stats_genome_build
   ch_stats_genome_build_filter=decide_genome_build.out.ch_stats_genome_build_chrpos.branch { key, value, file ->
@@ -111,6 +116,7 @@ workflow map_to_dbsnp {
   dbsnp_rm_ix
   rows_before_after
   ch_gb_stats_combined
+  removed_chrpos_duplicates = remove_chrpos_allele_duplicates.out.removed_records
 }
 
 

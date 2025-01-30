@@ -508,3 +508,20 @@ process split_multiallelics_resort_rowindex {
 
     """
 }
+
+process remove_chrpos_allele_duplicates {
+    publishDir "${params.outdir}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/${dID2}/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+
+    input:
+    tuple val(datasetID), val(dID2), val(gbmax), path(chrposprep)
+
+    output:
+    tuple val(datasetID), val(dID2), val(gbmax), path("unique_records"), emit: filtered_records
+    tuple val(datasetID), path("removed_duplicates"), emit: removed_records
+
+    script:
+    """
+    remove_chrpos_allele_duplicates.sh $chrposprep unique_records removed_duplicates
+    """
+}
