@@ -1,28 +1,23 @@
-# Represents docker.io/library/gradle:jdk11-openj9 at 2021-01-14
-FROM gradle@sha256:7e07e513b83e6a7790f0cb30820f4142b96ab7ceaac67865965b2127734c2c3d AS java_builder
+FROM gradle:8.5-jdk11 AS java_builder
 
 RUN apt-get update --fix-missing
 
 #---------------------------------------------------------------------------------
 # Installing nextflow
 
-ARG NEXTFLOW_REVISION="a96233af6fb505a1716a70408d46218f7d45dc96"
+ARG NEXTFLOW_REVISION="v24.10.4"
 
 WORKDIR /cleansumstats
 
 RUN wget "https://github.com/nextflow-io/nextflow/archive/${NEXTFLOW_REVISION}.zip" \
   --quiet -O nextflow.zip && \
   unzip -q nextflow.zip && \
-  mv "nextflow-${NEXTFLOW_REVISION}" "nextflow" && \
+  mv "nextflow-${NEXTFLOW_REVISION#v}" "nextflow" && \
   rm nextflow.zip
 
 WORKDIR /cleansumstats/nextflow
 
-RUN apt-get install -y patch
-COPY patches/json-schema-dependency.patch json-schema-dependency.patch
-RUN patch -p1 < json-schema-dependency.patch
-
-RUN gradle --daemon && BUILD_PACK=1 gradle compile packAll
+RUN gradle --daemon && BUILD_PACK=1 gradle compile pack
 
 WORKDIR /cleansumstats
 
@@ -75,10 +70,10 @@ WORKDIR /cleansumstats
 #---------------------------------------------------------------------------------
 # Downloading liftOver chain files
 
-ENV HG_URL "https://hgdownload.cse.ucsc.edu/goldenpath"
-ENV HG_38_19_CHECKSUM "14a712e8e147d9fc8e9d87d51977b46f6f8ddb93efbe5d0843d86b6205f587b1"
-ENV HG_19_17_CHECKSUM "8cf79945bf5d65342568ee1007bcb427fe7fc7b6fe0168401d452a82d5e129a2"
-ENV HG_19_18_CHECKSUM "fc312e924e970dee936a69972768c6f84591d3a6daddbe598e49321c5fb1d253"
+ENV HG_URL="https://hgdownload.cse.ucsc.edu/goldenpath"
+ENV HG_38_19_CHECKSUM="14a712e8e147d9fc8e9d87d51977b46f6f8ddb93efbe5d0843d86b6205f587b1"
+ENV HG_19_17_CHECKSUM="8cf79945bf5d65342568ee1007bcb427fe7fc7b6fe0168401d452a82d5e129a2"
+ENV HG_19_18_CHECKSUM="fc312e924e970dee936a69972768c6f84591d3a6daddbe598e49321c5fb1d253"
 
 RUN mkdir -p external_data/chain_files && \
   cd external_data && \
@@ -89,80 +84,6 @@ RUN mkdir -p external_data/chain_files && \
   echo "${HG_38_19_CHECKSUM}  hg38ToHg19.over.chain.gz" | sha256sum -c && \
   echo "${HG_19_17_CHECKSUM}  hg19ToHg17.over.chain.gz" | sha256sum -c && \
   echo "${HG_19_18_CHECKSUM}  hg19ToHg18.over.chain.gz" | sha256sum -c
-
-#---------------------------------------------------------------------------------
-# Installing htslib, samtools and bcftools
-
-ARG HTSLIB_VERSION="1.9"
-ARG BCFTOOLS_VERSION="1.9"
-ARG SAMTOOLS_VERSION="1.3.1"
-
-RUN apt-get update --fix-missing
-RUN apt-get install -y autoconf automake make zlib1g-dev libbz2-dev \
-  liblzma-dev libcurl4-gnutls-dev libssl-dev libncurses5-dev
-
-WORKDIR /cleansumstats
-
-RUN wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2 \
-  --quiet -O htslib.tar.bz2 && \
-  tar -xjvf htslib.tar.bz2 && \
-  mv "htslib-${HTSLIB_VERSION}" "htslib"
-
-WORKDIR /cleansumstats/htslib
-RUN make
-RUN make install
-
-WORKDIR /cleansumstats
-
-RUN wget https://github.com/samtools/samtools/releases/download/1.3.1/samtools-1.3.1.tar.bz2 \
-  --quiet -O samtools.tar.bz2 && \
-  tar -vxjf samtools.tar.bz2 && \
-  mv "samtools-${SAMTOOLS_VERSION}" "samtools"
-
-WORKDIR /cleansumstats/samtools
-RUN make
-
-WORKDIR /cleansumstats
-
-RUN wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2 \
-  --quiet -O bcftools.tar.bz2 && \
-  tar -vxjf bcftools.tar.bz2 && \
-  mv "bcftools-${BCFTOOLS_VERSION}" "bcftools"
-
-WORKDIR /cleansumstats/bcftools
-RUN make
-
-WORKDIR /cleansumstats
-
-#---------------------------------------------------------------------------------
-# Downloading fasta reference for GRCh38 and GRCh37 (suboptimal to have them in image, because of size ~1G each, but now it is like this for simplicity)
-# Use samtools to make fasta index (requires samtools to already be installed)
-# https://www.ncbi.nlm.nih.gov/genome/guide/human/
-
-#ENV HG_38_FASTA_CHECKSUM "4ef2a29c6425b2b99086aac23d70194704ec67b3ade730d40d96a831e9740777"
-#ENV HG_37_FASTA_CHECKSUM "190f35a382668f0e0280539657cbb20ae1182fc71ddb97914185ef2a18eacbea"
-#
-#RUN mkdir -p external_data/fasta_reference && \
-#  cd external_data && \
-#  wget -qP fasta_reference "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_genomic.fna.gz" && \
-#  wget -qP fasta_reference "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh37_latest/refseq_identifiers/GRCh37_latest_genomic.fna.gz" && \
-#  cd fasta_reference && \
-#  echo "${HG_38_FASTA_CHECKSUM}  GRCh38_latest_genomic.fna.gz" | sha256sum -c && \
-#  echo "${HG_37_FASTA_CHECKSUM}  GRCh37_latest_genomic.fna.gz" | sha256sum -c
-#
-## Recompress using bgzip and make indices .fai and .gzi (compressed version)
-#WORKDIR /cleansumstats/external_data/fasta_reference
-#
-#RUN zcat GRCh38_latest_genomic.fna.gz | bgzip -c > GRCh38_latest_genomic.fna.bgz && \
-#  zcat GRCh37_latest_genomic.fna.gz | bgzip -c > GRCh37_latest_genomic.fna.bgz && \
-#  /cleansumstats/samtools/samtools faidx GRCh38_latest_genomic.fna.bgz && \
-#  /cleansumstats/samtools/samtools faidx GRCh37_latest_genomic.fna.bgz
-#
-## Remove the pure gz files to save space
-#RUN rm GRCh38_latest_genomic.fna.gz && \
-#  rm GRCh37_latest_genomic.fna.gz
-#
-#WORKDIR /cleansumstats
 
 #---------------------------------------------------------------------------------
 # Installing sumstat-tools
@@ -177,28 +98,20 @@ RUN wget "https://github.com/BioPsyk/sumstat-tools/archive/${SUMSTAT_TOOLS_REVIS
 
 #---------------------------------------------------------------------------------
 # Compiling b3sum since it is not packaged for debian
-
-# Represents docker.io/library/rust:1.49.0-slim at 2021-01-21
-#FROM rust@sha256:f46e703b7a0efd836690ed488edc55f8f84f4a161aa9a2724e0cffd59646f5a5 AS rust_builder
-FROM rust@sha256:f72949bcf1daf8954c0e0ed8b7e10ac4c641608f6aa5f0ef7c172c49f35bd9b5 AS rust_builder
+FROM rust:1.84-slim-bookworm AS rust_builder
 
 RUN cargo install --version 0.3.8 b3sum
 
 #---------------------------------------------------------------------------------
 # Creating runtime image with software built in builder image
+FROM eclipse-temurin:11
 
-# Represents docker.io/library/adoptopenjdk:11-jre-openj9 at 2021-01-14
-FROM adoptopenjdk@sha256:477d0c53aca999692d2432e529af1f7abd715205fcfc36534ac9ff490f4da0e8
 
 COPY --from=java_builder /cleansumstats /cleansumstats
 COPY --from=rust_builder /usr/local/cargo/bin/b3sum /usr/bin/b3sum
 
-WORKDIR /cleansumstats
 
-RUN mv /cleansumstats/htslib/tabix /usr/bin/tabix
-RUN mv /cleansumstats/htslib/bgzip /usr/bin/bgzip
-RUN mv /cleansumstats/samtools/samtools /usr/bin/samtools
-RUN mv /cleansumstats/bcftools/bcftools /usr/bin/bcftools
+WORKDIR /cleansumstats
 
 RUN mv r-stats-c-streamer/build/r-stats-c-streamer /usr/bin/ && \
   rm -rf r-stats-c-streamer
@@ -208,26 +121,56 @@ COPY install-sumstat-tools.sh .
 RUN mv sumstat-tools /usr/lib/ && \
   ./install-sumstat-tools.sh /usr/lib/sumstat-tools/bin /usr/bin
 
-RUN mv nextflow/build/releases/nextflow-21.12.1-edge-all /usr/bin/nextflow && \
-  chmod +x /usr/bin/nextflow
+# Create /usr/bin directory first and then move the nextflow executable
+RUN mkdir -p /usr/bin && \
+    ls -la nextflow/build/ || true && \
+    ls -la nextflow/build/releases/ || true && \
+    find nextflow/build -name "nextflow-*" -type f && \
+    mv nextflow/build/releases/nextflow-24.10.4-dist /usr/bin/nextflow && \
+    chmod +x /usr/bin/nextflow
 
+# Create a virtual environment for Python packages
 RUN apt-get update --fix-missing && \
-    apt-get install python3 python3-pip python gawk graphviz dos2unix pigz \
-    libbz2-dev liblzma-dev vim -y
+    apt-get install python3 python3-pip python3-venv gawk graphviz dos2unix pigz \
+    libbz2-dev liblzma-dev vim -y && \
+    python3 -m venv /opt/venv
 
-RUN pip3 install CrossMap && \
-  pip3 install jsonschema && \
-  pip3 install pyyaml && \
-  apt-get remove --purge python3-pip -y
+# Make sure we use the virtualenv
+ENV PATH="/opt/venv/bin:$PATH"
 
-RUN useradd -rm -s /bin/bash -g users -u 1000 nextflow
-RUN rm -rf /cleansumstats/* && chown nextflow:users /cleansumstats && chmod g+s /cleansumstats
+# Install Python packages in the virtualenv
+RUN pip3 install --no-cache-dir CrossMap jsonschema pyyaml && \
+    apt-get remove --purge python3-pip -y
 
-COPY ibp-pipeline-lib-1.0.0.jar /cleansumstats/ibp-pipeline-lib.jar
+# Install json-schema-validator, jackson libraries, and commons-lang3
+#RUN mkdir -p /usr/share/java && \
+#    wget -O /usr/share/java/json-schema-validator.jar \
+#    "https://repo1.maven.org/maven2/com/networknt/json-schema-validator/1.0.72/json-schema-validator-1.0.72.jar" && \
+#    wget -O /usr/share/java/jackson-dataformat-yaml.jar \
+#    "https://repo1.maven.org/maven2/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.13.5/jackson-dataformat-yaml-2.13.5.jar" && \
+#    wget -O /usr/share/java/jackson-core.jar \
+#    "https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.13.5/jackson-core-2.13.5.jar" && \
+#    wget -O /usr/share/java/jackson-databind.jar \
+#    "https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.13.5/jackson-databind-2.13.5.jar" && \
+#    wget -O /usr/share/java/jackson-annotations.jar \
+#    "https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.13.5/jackson-annotations-2.13.5.jar" && \
+#    wget -O /usr/share/java/commons-lang3.jar \
+#    "https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar"
 
-ENV NXF_CLASSPATH="/cleansumstats/ibp-pipeline-lib.jar"
+# Use existing ubuntu user and group
+RUN rm -rf /cleansumstats/* && chown ubuntu:ubuntu /cleansumstats && chmod g+s /cleansumstats
+
+# First, copy the JAR file into the image
+#COPY ibp-pipeline-lib-1.0.0.jar /cleansumstats/lib/ibp-pipeline-lib.jar
+
+# Set permissions
+#RUN chmod 644 /cleansumstats/lib/ibp-pipeline-lib.jar
+
+# Set both classpaths
+#ENV CLASSPATH="/usr/share/java/*"
+#ENV NXF_CLASSPATH="/usr/share/java/*"
 
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
-RUN chown nextflow:users /cleansumstats/external_data -R
+RUN chown ubuntu:ubuntu /cleansumstats/external_data -R
 
-USER nextflow
+USER ubuntu
