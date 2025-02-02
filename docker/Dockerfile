@@ -135,40 +135,25 @@ RUN apt-get update --fix-missing && \
     libbz2-dev liblzma-dev vim -y && \
     python3 -m venv /opt/venv
 
-# Make sure we use the virtualenv
+# Make sure we use the virtualenv and make it available system-wide
 ENV PATH="/opt/venv/bin:$PATH"
+ENV VIRTUAL_ENV="/opt/venv"
 
 # Install Python packages in the virtualenv
 RUN pip3 install --no-cache-dir CrossMap jsonschema pyyaml && \
-    apt-get remove --purge python3-pip -y
+    apt-get remove --purge python3-pip -y && \
+    ln -sf /opt/venv/bin/CrossMap /usr/local/bin/CrossMap.py && \
+    ln -sf /opt/venv/bin/CrossMap /usr/bin/CrossMap.py && \
+    chmod +x /opt/venv/bin/CrossMap
 
-# Install json-schema-validator, jackson libraries, and commons-lang3
-#RUN mkdir -p /usr/share/java && \
-#    wget -O /usr/share/java/json-schema-validator.jar \
-#    "https://repo1.maven.org/maven2/com/networknt/json-schema-validator/1.0.72/json-schema-validator-1.0.72.jar" && \
-#    wget -O /usr/share/java/jackson-dataformat-yaml.jar \
-#    "https://repo1.maven.org/maven2/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.13.5/jackson-dataformat-yaml-2.13.5.jar" && \
-#    wget -O /usr/share/java/jackson-core.jar \
-#    "https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.13.5/jackson-core-2.13.5.jar" && \
-#    wget -O /usr/share/java/jackson-databind.jar \
-#    "https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.13.5/jackson-databind-2.13.5.jar" && \
-#    wget -O /usr/share/java/jackson-annotations.jar \
-#    "https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.13.5/jackson-annotations-2.13.5.jar" && \
-#    wget -O /usr/share/java/commons-lang3.jar \
-#    "https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar"
+# Verify CrossMap installation and location
+#RUN which CrossMap.py && \
+#    ls -l /usr/local/bin/CrossMap.py && \
+#    ls -l /usr/bin/CrossMap.py && \
+#    ls -l /opt/venv/bin/CrossMap.py
 
 # Use existing ubuntu user and group
 RUN rm -rf /cleansumstats/* && chown ubuntu:ubuntu /cleansumstats && chmod g+s /cleansumstats
-
-# First, copy the JAR file into the image
-#COPY ibp-pipeline-lib-1.0.0.jar /cleansumstats/lib/ibp-pipeline-lib.jar
-
-# Set permissions
-#RUN chmod 644 /cleansumstats/lib/ibp-pipeline-lib.jar
-
-# Set both classpaths
-#ENV CLASSPATH="/usr/share/java/*"
-#ENV NXF_CLASSPATH="/usr/share/java/*"
 
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
 RUN chown ubuntu:ubuntu /cleansumstats/external_data -R
