@@ -9,7 +9,6 @@ if [ "${ftype}" == "" ] || [ "${ftype}" == "original" ]; then
   awk '
     BEGIN { FS="\t" }
     /^[^#]/ {
-      split($1, chr, ":")  # Split CHROM:POS
       ref=$4
       alt=$5
       
@@ -25,7 +24,7 @@ if [ "${ftype}" == "" ] || [ "${ftype}" == "original" ]; then
       
       if (length(ref)==1 && length(alt)==1) {
         printf "%s:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", 
-          chr[1], chr[2], ref, alt, eas, eur, afr, amr, sas
+          $1, $2, ref, alt, eas, eur, afr, amr, sas
       }
     }
   ' ${af1kgvcf}
@@ -34,7 +33,6 @@ elif [ "${ftype}" == "2024-09-11-1000GENOMES-phase_3.vcf" ]; then
   awk '
     BEGIN { FS="\t" }
     /^[^#]/ {
-      split($1, chr, ":")  # Split CHROM:POS
       ref=$4
       alt=$5
       
@@ -49,14 +47,14 @@ elif [ "${ftype}" == "2024-09-11-1000GENOMES-phase_3.vcf" ]; then
       }
       
       # Track seen variants to remove duplicates
-      key = chr[1] ":" chr[2] SUBSEP ref SUBSEP alt
+      key = $1 ":" $2 SUBSEP ref SUBSEP alt
       if (length(ref)==1 && length(alt)==1 && !seen[key]++) {
         printf "%s:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", 
-          chr[1], chr[2], ref, alt, eas, eur, afr, amr, sas
+          $1, $2, ref, alt, eas, eur, afr, amr, sas
       }
     }
   ' ${af1kgvcf}
 else
-  echo "not valid ftype for allele frequency extraction"
+  echo "not valid ftype for allele frequency extraction" >&2
   exit 1
 fi

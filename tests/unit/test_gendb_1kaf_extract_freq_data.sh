@@ -31,9 +31,8 @@ function _check_results {
 
 function _run_script {
   "${test_script}.sh" ./input.vcf "${1}" > ./observed-result1.txt
-
   _check_results ./observed-result1.txt ./expected-result1.txt
-
+  echo "- [OK] ${curr_case}"
   cd "${initial_dir}"
 }
 
@@ -102,8 +101,11 @@ cat <<EOF > ./expected-result1.txt
 not valid ftype for allele frequency extraction
 EOF
 
-if ! "${test_script}.sh" ./input.vcf "invalid" 2>&1 | grep -q "not valid ftype for allele frequency extraction"; then
-  echo "- [FAIL] ${curr_case}: Expected error message not found"
+if ! "${test_script}.sh" ./input.vcf "invalid" 2> ./observed-result1.txt; then
+  _check_results ./observed-result1.txt ./expected-result1.txt
+  echo "- [OK] ${curr_case}"
+else
+  echo "- [FAIL] ${curr_case}: Command should have failed"
   exit 1
 fi
 
