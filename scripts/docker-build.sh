@@ -10,15 +10,12 @@ echo ">> Setting up docker buildx for multi-arch support"
 docker buildx create --name multiarch --driver docker-container --use || true
 docker buildx inspect --bootstrap
 
-echo ">> Building multi-arch base docker image"
+echo ">> Building multi-arch base docker image locally"
 
-# Build and load the image locally
+# Build and load locally
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   --tag "${image_tag}" \
+  --tag "ibp-cleansumstats-base:latest" \
   --load \
   ./docker "$@"
-
-# If you want to push to Docker Hub, uncomment these lines and run docker login first
-# docker tag "${image_tag}" "biopsyk/${image_tag}"
-# docker push "biopsyk/${image_tag}"
