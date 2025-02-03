@@ -3,23 +3,19 @@ FROM gradle:8.5-jdk11 AS java_builder
 RUN apt-get update --fix-missing
 
 #---------------------------------------------------------------------------------
-# Installing nextflow
+# Installing nextflow using pre-built binary
 
-ARG NEXTFLOW_REVISION="v24.10.4"
-
-WORKDIR /cleansumstats
-
-RUN wget "https://github.com/nextflow-io/nextflow/archive/${NEXTFLOW_REVISION}.zip" \
-  --quiet -O nextflow.zip && \
-  unzip -q nextflow.zip && \
-  mv "nextflow-${NEXTFLOW_REVISION#v}" "nextflow" && \
-  rm nextflow.zip
-
-WORKDIR /cleansumstats/nextflow
-
-RUN gradle --daemon && BUILD_PACK=1 gradle compile pack
+ARG NEXTFLOW_VERSION="24.10.4"
 
 WORKDIR /cleansumstats
+
+# Download and install nextflow
+RUN mkdir -p /usr/local/bin && \
+    cd /tmp && \
+    wget --no-verbose https://github.com/nextflow-io/nextflow/releases/download/v${NEXTFLOW_VERSION}/nextflow && \
+    mv nextflow /usr/local/bin/nextflow && \
+    chmod +x /usr/local/bin/nextflow && \
+    nextflow -version
 
 #---------------------------------------------------------------------------------
 # Installing rmath
@@ -106,10 +102,9 @@ RUN cargo install --version 0.3.8 b3sum
 # Creating runtime image with software built in builder image
 FROM eclipse-temurin:11
 
-
+COPY --from=java_builder /usr/local/bin/nextflow /usr/local/bin/nextflow
 COPY --from=java_builder /cleansumstats /cleansumstats
 COPY --from=rust_builder /usr/local/cargo/bin/b3sum /usr/bin/b3sum
-
 
 WORKDIR /cleansumstats
 
@@ -120,14 +115,6 @@ COPY install-sumstat-tools.sh .
 
 RUN mv sumstat-tools /usr/lib/ && \
   ./install-sumstat-tools.sh /usr/lib/sumstat-tools/bin /usr/bin
-
-# Create /usr/bin directory first and then move the nextflow executable
-RUN mkdir -p /usr/bin && \
-    ls -la nextflow/build/ || true && \
-    ls -la nextflow/build/releases/ || true && \
-    find nextflow/build -name "nextflow-*" -type f && \
-    mv nextflow/build/releases/nextflow-24.10.4-dist /usr/bin/nextflow && \
-    chmod +x /usr/bin/nextflow
 
 # Create a virtual environment for Python packages
 RUN apt-get update --fix-missing && \

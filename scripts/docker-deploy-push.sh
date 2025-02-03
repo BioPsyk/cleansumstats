@@ -8,8 +8,14 @@ cd "${project_dir}"
 
 target="biopsyk/${deploy_image_tag}"
 
-echo ">> Pushing deployment docker image"
+echo ">> Pushing multi-arch deployment docker image to Docker Hub"
 
-docker tag "${deploy_image_tag}" "${target}"
-docker push "${target}"
+# Create manifest for multi-arch image
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -f ./docker/Dockerfile.deploy \
+  --tag "${target}" \
+  --build-arg BASE_IMAGE="${image_tag}" \
+  --push \
+  .
 

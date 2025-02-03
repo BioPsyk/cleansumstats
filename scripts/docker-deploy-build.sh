@@ -6,10 +6,12 @@ source "${script_dir}/init-containerization.sh"
 
 cd "${project_dir}"
 
-echo ">> Building deployment docker image"
+echo ">> Building multi-arch deployment docker image"
 
-docker build \
-       -f ./docker/Dockerfile.deploy \
-       -t "${deploy_image_tag}" \
-       --build-arg BASE_IMAGE="${image_tag}" \
-       .
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -f ./docker/Dockerfile.deploy \
+  --tag "${deploy_image_tag}" \
+  --build-arg BASE_IMAGE="${image_tag}" \
+  --push \
+  .
