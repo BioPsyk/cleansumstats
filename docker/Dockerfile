@@ -14,13 +14,28 @@ RUN mkdir -p /usr/local/bin && \
     cd /tmp && \
     wget --no-verbose https://github.com/nextflow-io/nextflow/releases/download/v${NEXTFLOW_VERSION}/nextflow && \
     mv nextflow /usr/local/bin/nextflow && \
-    chmod +x /usr/local/bin/nextflow && \
-    nextflow -version
+    chmod +x /usr/local/bin/nextflow
+
+# Create nextflow cache directory
+RUN mkdir -p /root/.nextflow
+
+# Ensure the cache is preserved in the final image
+VOLUME /root/.nextflow
 
 #---------------------------------------------------------------------------------
 # Installing rmath
-
-RUN apt-get update --fix-missing -y && apt-get install -y cmake build-essential
+# Retry mechanism for apt-get to handle temporary network issues
+# Installs cmake and build-essential required for building rmath
+RUN for i in {1..3}; do \
+      apt-get update --fix-missing -y && \
+      DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        cmake \
+        build-essential \
+        --no-install-recommends && \
+      rm -rf /var/lib/apt/lists/* && \
+      break || \
+      { echo "Retry $i of 3..."; sleep 5; } \
+    done
 
 ARG RMATH_REVISION="d816ef8d1719810288afd848e18b2a8d00c2ccd2"
 
@@ -146,3 +161,13 @@ COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_da
 RUN chown ubuntu:ubuntu /cleansumstats/external_data -R
 
 USER ubuntu
+
+# Initialize Nextflow in the final image
+RUN nextflow -version && \
+    nextflow info && \
+    # Run a simple workflow to ensure dependencies are downloaded
+    echo "workflow { println 'Hello' }" > test.nf && \
+    nextflow run test.nf && \
+    rm test.nf && \
+    # Pre-download basic plugin dependencies
+    nextflow plugin install nf-validation
