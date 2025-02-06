@@ -511,6 +511,7 @@ else
                    echo \"NXF_OFFLINE=\${NXF_OFFLINE}\" && \
                    export NXF_OFFLINE=true && \
                    nextflow \
+                     -offline \
                      -log \"${outdir_container}/.nextflow.log\" \
                      run \"${run_script}\" \
                      --extrapaths \"${extrapaths3}\" \
