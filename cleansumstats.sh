@@ -350,10 +350,10 @@ export SINGULARITY_HOME="${FAKE_HOME}"
 export APPTAINER_HOME="${FAKE_HOME}"
 
 # Set Nextflow environment variables for the launching environment
-export NXF_OFFLINE="true"
+export NXF_OFFLINE='true'
 # Set both SINGULARITYENV and APPTAINERENV for better compatibility
-export SINGULARITYENV_NXF_OFFLINE="true"
-export APPTAINERENV_NXF_OFFLINE="true"
+export SINGULARITYENV_NXF_OFFLINE='true'
+export APPTAINERENV_NXF_OFFLINE='true'
 
 
 # Previous fake home, causing #FAKE_HOME="tmp/fake-home"
@@ -493,7 +493,9 @@ else
   echo "container: $runimage"
   mount_flags=$(format_mount_flags "-B")
   
-  SINGULARITYENV_NXF_OFFLINE="${NXF_OFFLINE}" singularity run \
+  SINGULARITYENV_NXF_OFFLINE='true' \
+  APPTAINERENV_NXF_OFFLINE='true' \
+  singularity run \
      --contain \
      --cleanenv \
      ${mount_flags} \
