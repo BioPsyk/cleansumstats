@@ -493,7 +493,10 @@ else
   echo "container: $runimage"
   mount_flags=$(format_mount_flags "-B")
   
+  # Add SSL/certificate bypass attempts
   export SINGULARITYENV_NXF_OFFLINE='true'
+  export SINGULARITYENV_CURL_INSECURE='true'
+  export SINGULARITYENV_SSL_VERIFY='false'
   singularity run \
      --contain \
      --cleanenv \
