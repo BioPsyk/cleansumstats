@@ -510,6 +510,12 @@ else
      /bin/bash -c "echo 'DEBUG: Environment check' && \
                    echo \"NXF_OFFLINE=\${NXF_OFFLINE}\" && \
                    export NXF_OFFLINE=true && \
+                   mkdir -p ${outdir_container}/.nextflow/framework/24.10.4 && \
+                   if [ ! -f ${outdir_container}/.nextflow/framework/24.10.4/nextflow-24.10.4-one.jar ]; then \
+                     echo 'ERROR: Nextflow launcher not found. Please ensure the launcher JAR is present at:' && \
+                     echo '${outdir_container}/.nextflow/framework/24.10.4/nextflow-24.10.4-one.jar' && \
+                     exit 1; \
+                   fi && \
                    nextflow \
                      -offline \
                      -log \"${outdir_container}/.nextflow.log\" \
