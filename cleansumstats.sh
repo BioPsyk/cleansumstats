@@ -351,6 +351,9 @@ export APPTAINER_HOME="${FAKE_HOME}"
 
 # Set Nextflow environment variables for the launching environment
 export NXF_OFFLINE="true"
+# Set both SINGULARITYENV and APPTAINERENV for better compatibility
+export SINGULARITYENV_NXF_OFFLINE="true"
+export APPTAINERENV_NXF_OFFLINE="true"
 
 
 # Previous fake home, causing #FAKE_HOME="tmp/fake-home"
