@@ -507,21 +507,18 @@ else
      -B "${tmpdir_host}:${tmpdir_container}" \
      -B "${workdir_host}:${workdir_container}" \
      "${runimage}" \
-     bash -c 'echo "DEBUG: Environment inside container before Nextflow:" && \
-              echo "NXF_OFFLINE=${NXF_OFFLINE}" && \
-              env | grep NXF && \
-              export NXF_OFFLINE=true && \
-              echo "After explicit export:" && \
-              echo "NXF_OFFLINE=${NXF_OFFLINE}" && \
-              nextflow \
-                -log "${outdir_container}/.nextflow.log" \
-                run ${run_script} \
-                --extrapaths ${extrapaths3} \
-                ${devmode} \
-                --input "${infile_container}" \
-                --outdir "${outdir_container}" \
-                --libdirdbsnp "${dbsnpdir_container}" \
-                --kg1000AFGRCh38 "${kgpfile_container}"'
+     /bin/bash -c "echo 'DEBUG: Environment check' && \
+                   echo \"NXF_OFFLINE=\${NXF_OFFLINE}\" && \
+                   export NXF_OFFLINE=true && \
+                   nextflow \
+                     -log \"${outdir_container}/.nextflow.log\" \
+                     run \"${run_script}\" \
+                     --extrapaths \"${extrapaths3}\" \
+                     ${devmode} \
+                     --input \"${infile_container}\" \
+                     --outdir \"${outdir_container}\" \
+                     --libdirdbsnp \"${dbsnpdir_container}\" \
+                     --kg1000AFGRCh38 \"${kgpfile_container}\""
 fi
 
 if ${pathquicktest}; then
