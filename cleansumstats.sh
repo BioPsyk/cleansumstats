@@ -493,8 +493,8 @@ else
   echo "container: $runimage"
   mount_flags=$(format_mount_flags "-B")
   
-  SINGULARITYENV_NXF_OFFLINE='true' \
-  APPTAINERENV_NXF_OFFLINE='true' \
+  # Set the environment variable with SINGULARITYENV_ prefix
+  export SINGULARITYENV_NXF_OFFLINE='true'
   singularity run \
      --contain \
      --cleanenv \
