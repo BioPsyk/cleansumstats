@@ -465,7 +465,6 @@ elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
      -v "${workdir_host}:${workdir_container}" \
      "${runimage}" \
      nextflow \
-       -offline \
        -log "${outdir_container}/.nextflow.log" \
        run ${run_script} \
        --extrapaths ${extrapaths3} \
@@ -488,7 +487,6 @@ elif [ "${container_image}" == "docker" ]; then
      -v "${workdir_host}:${workdir_container}" \
      "${runimage}" \
      nextflow \
-       -offline \
        -log "${outdir_container}/.nextflow.log" \
        run ${run_script} \
        --extrapaths ${extrapaths3} \
@@ -518,7 +516,6 @@ else
      -B "${workdir_host}:${workdir_container}" \
      "${runimage}" \
      nextflow \
-       -offline \
        -log "${outdir_container}/.nextflow.log" \
        run ${run_script} \
        --extrapaths ${extrapaths3} \
