@@ -345,15 +345,15 @@ kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
 
 # Use outdir as fake home to avoid lock issues for the hidden .nextflow/history file
-FAKE_HOME="${outdir_container}"
-export SINGULARITY_HOME="${FAKE_HOME}"
-export APPTAINER_HOME="${FAKE_HOME}"
+#FAKE_HOME="${outdir_container}"
+#export SINGULARITY_HOME="${FAKE_HOME}"
+#export APPTAINER_HOME="${FAKE_HOME}"
 
-# Set Nextflow environment variables for the launching environment
-export NXF_OFFLINE='true'
-# Set both SINGULARITYENV and APPTAINERENV for better compatibility
-export SINGULARITYENV_NXF_OFFLINE='true'
-export APPTAINERENV_NXF_OFFLINE='true'
+## Set Nextflow environment variables for the launching environment
+#export NXF_OFFLINE='true'
+## Set both SINGULARITYENV and APPTAINERENV for better compatibility
+#export SINGULARITYENV_NXF_OFFLINE='true'
+#export APPTAINERENV_NXF_OFFLINE='true'
 
 
 # Previous fake home, causing #FAKE_HOME="tmp/fake-home"
@@ -442,8 +442,11 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
     echo "container: $runimage"
     mount_flags=$(format_mount_flags "-B")
     singularity run \
-       --contain \
+       --net \
+       --network none \
        --cleanenv \
+       --contain \
+       --home "${outdir_container}" \
        ${mount_flags} \
        "${runimage}" \
        ${run_script}
@@ -499,8 +502,11 @@ else
   mount_flags=$(format_mount_flags "-B")
   
   singularity run \
-     --contain \
+     --net \
+     --network none \
      --cleanenv \
+     --contain \
+     --home "${outdir_container}" \
      ${mount_flags} \
      ${extrapaths2} \
      -B "${indir_host}:${indir_container}" \
