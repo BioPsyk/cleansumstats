@@ -171,3 +171,6 @@ RUN nextflow -version && \
     rm test.nf && \
     # Pre-download basic plugin dependencies
     nextflow plugin install nf-validation
+
+# Then set nextflow for offline mode
+ENV NXF_OFFLINE=true

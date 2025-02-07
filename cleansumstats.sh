@@ -433,22 +433,26 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
   if [ "${container_image}" == "dockerhub_biopsyk" ]; then
     echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
-    exec docker run --rm ${mount_flags} -e NXF_OFFLINE="${NXF_OFFLINE}" "${runimage}" ${run_script}
+    exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   elif [ "${container_image}" == "docker" ]; then
     echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
-    exec docker run --rm ${mount_flags} -e NXF_OFFLINE="${NXF_OFFLINE}" "${runimage}" ${run_script}
+    exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   else
     echo "container: $runimage"
     mount_flags=$(format_mount_flags "-B")
-    SINGULARITYENV_NXF_OFFLINE="${NXF_OFFLINE}" singularity run --contain --cleanenv ${mount_flags} "${runimage}" ${run_script}
+    singularity run \
+       --contain \
+       --cleanenv \
+       ${mount_flags} \
+       "${runimage}" \
+       ${run_script}
   fi
 elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
   echo "container: $runimage"
   mount_flags=$(format_mount_flags "-v")
   exec docker run \
      --rm \
-     -e NXF_OFFLINE="${NXF_OFFLINE}" \
      ${mount_flags} \
      -v "${indir_host}:${indir_container}" \
      -v "${outdir_host}:${outdir_container}" \
@@ -471,7 +475,6 @@ elif [ "${container_image}" == "docker" ]; then
   mount_flags=$(format_mount_flags "-v")
   exec docker run \
      --rm \
-     -e NXF_OFFLINE="${NXF_OFFLINE}" \
      ${mount_flags} \
      -v "${indir_host}:${indir_container}" \
      -v "${outdir_host}:${outdir_container}" \
@@ -493,10 +496,6 @@ else
   echo "container: $runimage"
   mount_flags=$(format_mount_flags "-B")
   
-  # Add SSL/certificate bypass attempts
-  export SINGULARITYENV_NXF_OFFLINE='true'
-  export SINGULARITYENV_CURL_INSECURE='true'
-  export SINGULARITYENV_SSL_VERIFY='false'
   singularity run \
      --contain \
      --cleanenv \
