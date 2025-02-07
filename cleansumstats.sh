@@ -345,15 +345,15 @@ kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
 
 # Use outdir as fake home to avoid lock issues for the hidden .nextflow/history file
-FAKE_HOME="${outdir_container}"
-export SINGULARITY_HOME="${FAKE_HOME}"
-export APPTAINER_HOME="${FAKE_HOME}"
+#FAKE_HOME="${outdir_container}"
+#export SINGULARITY_HOME="${FAKE_HOME}"
+#export APPTAINER_HOME="${FAKE_HOME}"
 
-# Set Nextflow environment variables for the launching environment
-export NXF_OFFLINE="true"
-# Set both SINGULARITYENV and APPTAINERENV for better compatibility
-export SINGULARITYENV_NXF_OFFLINE="true"
-export APPTAINERENV_NXF_OFFLINE="true"
+## Set Nextflow environment variables for the launching environment
+#export NXF_OFFLINE='true'
+## Set both SINGULARITYENV and APPTAINERENV for better compatibility
+#export SINGULARITYENV_NXF_OFFLINE='true'
+#export APPTAINERENV_NXF_OFFLINE='true'
 
 
 # Previous fake home, causing #FAKE_HOME="tmp/fake-home"
@@ -441,7 +441,31 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
   else
     echo "container: $runimage"
     mount_flags=$(format_mount_flags "-B")
-    SINGULARITYENV_NXF_OFFLINE="${NXF_OFFLINE}" singularity run --contain --cleanenv ${mount_flags} "${runimage}" ${run_script}
+    SINGULARITYENV_NXF_OFFLINE="${NXF_OFFLINE}" singularity run \
+       --net \
+       --network none \
+       --no-eval \
+       --cleanenv \
+       --containall \
+       --home "${outdir_container}" \
+       ${mount_flags} \
+       ${extrapaths2} \
+       -B "${indir_host}:${indir_container}" \
+       -B "${outdir_host}:${outdir_container}" \
+       -B "${dbsnpdir_host}:${dbsnpdir_container}" \
+       -B "${kgpdir_host}:${kgpdir_container}" \
+       -B "${tmpdir_host}:${tmpdir_container}" \
+       -B "${workdir_host}:${workdir_container}" \
+       "${runimage}" \
+       nextflow \
+         -log "${outdir_container}/.nextflow.log" \
+         run ${run_script} \
+         --extrapaths ${extrapaths3} \
+         ${devmode} \
+         --input "${infile_container}" \
+         --outdir "${outdir_container}" \
+         --libdirdbsnp "${dbsnpdir_container}" \
+         --kg1000AFGRCh38 "${kgpfile_container}"
   fi
 elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
   echo "container: $runimage"
@@ -494,8 +518,12 @@ else
   mount_flags=$(format_mount_flags "-B")
   
   SINGULARITYENV_NXF_OFFLINE="${NXF_OFFLINE}" singularity run \
-     --contain \
+     --net \
+     --network none \
+     --no-eval \
      --cleanenv \
+     --containall \
+     --home "${outdir_container}" \
      ${mount_flags} \
      ${extrapaths2} \
      -B "${indir_host}:${indir_container}" \

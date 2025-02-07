@@ -9,12 +9,14 @@ ARG NEXTFLOW_VERSION="24.10.4"
 
 WORKDIR /cleansumstats
 
-# Download and install nextflow
-RUN mkdir -p /usr/local/bin && \
-    cd /tmp && \
-    wget --no-verbose https://github.com/nextflow-io/nextflow/releases/download/v${NEXTFLOW_VERSION}/nextflow && \
-    mv nextflow /usr/local/bin/nextflow && \
-    chmod +x /usr/local/bin/nextflow
+# Download and install Nextflow standalone distribution
+RUN curl -fsSL https://github.com/nextflow-io/nextflow/releases/download/v24.10.4/nextflow-24.10.4-dist > /usr/local/bin/nextflow && \
+    chmod +x /usr/local/bin/nextflow && \
+    # Pre-download basic plugin dependencies
+    nextflow plugin install nf-validation
+
+# Then set nextflow for offline mode
+ENV NXF_OFFLINE=true
 
 # Create nextflow cache directory
 RUN mkdir -p /root/.nextflow
@@ -162,12 +164,11 @@ RUN chown ubuntu:ubuntu /cleansumstats/external_data -R
 
 USER ubuntu
 
+
 # Initialize Nextflow in the final image
 RUN nextflow -version && \
     nextflow info && \
     # Run a simple workflow to ensure dependencies are downloaded
     echo "workflow { println 'Hello' }" > test.nf && \
     nextflow run test.nf && \
-    rm test.nf && \
-    # Pre-download basic plugin dependencies
-    nextflow plugin install nf-validation
+    rm test.nf
