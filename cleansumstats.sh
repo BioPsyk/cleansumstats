@@ -504,6 +504,7 @@ else
   singularity run \
      --net \
      --network none \
+     --no-eval \
      --cleanenv \
      --containall \
      --home "${outdir_container}" \
