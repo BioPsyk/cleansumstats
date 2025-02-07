@@ -445,7 +445,7 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
        --net \
        --network none \
        --cleanenv \
-       --contain \
+       --containall \
        --home "${outdir_container}" \
        ${mount_flags} \
        "${runimage}" \
@@ -505,7 +505,7 @@ else
      --net \
      --network none \
      --cleanenv \
-     --contain \
+     --containall \
      --home "${outdir_container}" \
      ${mount_flags} \
      ${extrapaths2} \
