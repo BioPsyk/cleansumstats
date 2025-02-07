@@ -162,13 +162,26 @@ RUN rm -rf /cleansumstats/* && chown ubuntu:ubuntu /cleansumstats && chmod g+s /
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
 RUN chown ubuntu:ubuntu /cleansumstats/external_data -R
 
+# Copy lib files
+COPY lib/ /cleansumstats/lib/
+
+# Download additional library dependencies
+RUN mkdir -p /cleansumstats/lib && \
+    cd /cleansumstats/lib && \
+    wget -q https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar && \
+    wget -q https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.13.5/jackson-annotations-2.13.5.jar && \
+    wget -q https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.13.5/jackson-core-2.13.5.jar && \
+    wget -q https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.13.5/jackson-databind-2.13.5.jar && \
+    wget -q https://repo1.maven.org/maven2/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.13.5/jackson-dataformat-yaml-2.13.5.jar && \
+    wget -q https://repo1.maven.org/maven2/com/networknt/json-schema-validator/1.0.87/json-schema-validator-1.0.87.jar
+
 USER ubuntu
 
 
-# Initialize Nextflow in the final image
-RUN nextflow -version && \
-    nextflow info && \
-    # Run a simple workflow to ensure dependencies are downloaded
-    echo "workflow { println 'Hello' }" > test.nf && \
-    nextflow run test.nf && \
-    rm test.nf
+## Initialize Nextflow in the final image
+#RUN nextflow -version && \
+#    nextflow info && \
+#    # Run a simple workflow to ensure dependencies are downloaded
+#    echo "workflow { println 'Hello' }" > test.nf && \
+#    nextflow run test.nf && \
+#    rm test.nf
