@@ -15,9 +15,6 @@ RUN curl -fsSL https://github.com/nextflow-io/nextflow/releases/download/v24.10.
     # Pre-download basic plugin dependencies
     nextflow plugin install nf-validation
 
-# Then set nextflow for offline mode
-ENV NXF_OFFLINE=true
-
 # Create nextflow cache directory
 RUN mkdir -p /root/.nextflow
 
@@ -174,6 +171,10 @@ RUN mkdir -p /cleansumstats/lib && \
     wget -q https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.13.5/jackson-databind-2.13.5.jar && \
     wget -q https://repo1.maven.org/maven2/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.13.5/jackson-dataformat-yaml-2.13.5.jar && \
     wget -q https://repo1.maven.org/maven2/com/networknt/json-schema-validator/1.0.87/json-schema-validator-1.0.87.jar
+
+
+# Then set nextflow for offline mode
+ENV NXF_OFFLINE=true
 
 USER ubuntu
 
