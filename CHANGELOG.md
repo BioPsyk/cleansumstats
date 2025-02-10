@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2015-02-07
+
+### Added
+- Multi-architecture support for AMD64 and ARM64 systems
+- Architecture-specific Docker image tags (e.g., 1.3.0-amd64, 1.3.0-arm64)
+- Improved Docker build system using buildx for multi-arch builds
+
+### Changed
+- Updated base images to latest stable versions
+- Switched to Ubuntu user from nextflow user in containers
+- Improved Python package management using virtual environments
+- Updated Nextflow to version 24.10.4
+
+### Fixed
+- CrossMap.py installation and path issues
+- Various Docker build and deployment improvements
+
 ## [1.9.0] - 2024-09-11
 ### Changed
 -  1kgp reference to latest release

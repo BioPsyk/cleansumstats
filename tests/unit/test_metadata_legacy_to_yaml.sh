@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Add this line to suppress INFO messages during tests
+export QUIET=1
+
 test_script="metadata_legacy_to_yaml"
 initial_dir=$(pwd)"/${test_script}"
 curr_case=""

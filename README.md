@@ -26,13 +26,13 @@ cd cleansumstats
 ### Singularity
 using singularity (use path to image)
 ```bash
-## pull singularity image returning the image as a file)
+## pull singularity image for AMD64/x86_64 systems (most common)
 mkdir -p sif
-singularity pull sif/ibp-cleansumstats-base_version-1.2.2.sif docker://biopsyk/ibp-cleansumstats:1.2.2
+singularity pull sif/ibp-cleansumstats-base_version-1.3.0.sif docker://biopsyk/ibp-cleansumstats:1.3.0-amd64
 
 # clean a sumstat using shrinked example data for dbsnp and 1kgp (-e flag)
 ./cleansumstats.sh \
-  -j sif/ibp-cleansumstats-base_version-1.2.2.sif \
+  -j sif/ibp-cleansumstats-base_version-1.3.0.sif \
   -i tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   -o out_example \
   -e 1
@@ -41,16 +41,18 @@ singularity pull sif/ibp-cleansumstats-base_version-1.2.2.sif docker://biopsyk/i
 ### Docker
 using docker image (use the tag: dockerhub_biopsyk)
 ```bash
-## pull docker image
-docker pull biopsyk/ibp-cleansumstats:1.2.2
+## pull docker image for AMD64/x86_64 systems (most common)
+docker pull biopsyk/ibp-cleansumstats:1.3.0-amd64
+
 ## using docker (using flag -j)
 ./cleansumstats.sh \
   -j dockerhub_biopsyk \
   -i tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   -o out_example \
   -e 1
-
 ```
+
+> **Note**: For ARM64 systems (e.g., Apple Silicon Macs), append `-arm64` to the version tag instead of `-amd64`. For example: `1.3.0-arm64`.
 
 ## Add full size reference data
 In the cleaning all positions are compared to a reference to confirm or add missing annotation.
@@ -87,7 +89,7 @@ srun --mem=80g --ntasks 1 --cpus-per-task 5 --time=1:00:00 --account ibp_pipelin
   prepare-1kgp \
   -i 1kgp/1000GENOMES-phase_3.vcf.gz \
   -d out_dbsnp \
-  -o out_1kgp
+  -o out_1kgp_test
 ```
 
 ## Prepare meta data files

@@ -1,6 +1,10 @@
-ARG BASE_IMAGE=ibp-cleansumstats-base:latest
+ARG VERSION=1.3.0
+ARG BASE_IMAGE=ibp-cleansumstats-base:${VERSION}
 
 FROM $BASE_IMAGE
+
+# We start as root
+USER root
 
 WORKDIR /cleansumstats
 
@@ -14,6 +18,13 @@ COPY main.nf ./main.nf
 COPY nextflow.config ./nextflow.config
 COPY README.md ./README.md
 
-WORKDIR /home/nextflow
+# Set ownership while still root
+RUN chown -R ubuntu:ubuntu /cleansumstats
+
+# Switch to ubuntu user
+USER ubuntu
+
+# Stay in ubuntu's home directory
+WORKDIR /home/ubuntu
 
 

@@ -22,40 +22,40 @@ SCHEMA_PATH = os.path.join(
 
 
 STUDY_PANELS = {
-    '^HapMap.*': 'HapMap',
-    '^HapMap2.*': 'HapMap2',
-    '^HapMap3.*': 'HapMap3',
-    '^1KGP.*': '1KGP',
-    '^TOPMED.*': 'TOPMED',
-    '^HRC.*': 'HRC',
-    '^meta.*': 'meta',
-    '^UKB.*': 'UKB',
-    '^UK10K.*': 'UK10K',
-    '^SISu.*3': 'SISu3',
-    '^SISu.*4': 'SISu4',
+    r'^HapMap.*': 'HapMap',
+    r'^HapMap2.*': 'HapMap2',
+    r'^HapMap3.*': 'HapMap3',
+    r'^1KGP.*': '1KGP',
+    r'^TOPMED.*': 'TOPMED',
+    r'^HRC.*': 'HRC',
+    r'^meta.*': 'meta',
+    r'^UKB.*': 'UKB',
+    r'^UK10K.*': 'UK10K',
+    r'^SISu.*3': 'SISu3',
+    r'^SISu.*4': 'SISu4',
     'other': 'other'
 }
 
 STUDY_SOFTWARES = {
-    '^plink.*': 'plink',
-    '^impute.*': 'impute',
-    '^impute2.*': 'impute2',
-    '^impute3.*': 'impute3',
-    '^shapeIt.*': 'shapeIt',
-    '^shapeIt2.*': 'shapeIt2',
-    '^shapeIt3.*': 'shapeIt3',
-    '^shapeIt4.*': 'shapeIt4',
-    '^shapeIt5.*': 'shapeIt5',
-    '^MaCH.*': 'MaCH',
-    '^Bealge.*': 'Beagle',
-    '^Beagle.*': 'Beagle',
-    '^Beagle1\.0.*': 'Beagle1.0',
-    '^minimac2.*': 'minimac2',
-    '^minimac3.*': 'minimac3',
-    '^minimac4.*': 'minimac4',
-    '^eagle': 'eagle',
-    '^eagle2.*': 'eagle2',
-    '^meta.*': 'meta'
+    r'^plink.*': 'plink',
+    r'^impute.*': 'impute',
+    r'^impute2.*': 'impute2',
+    r'^impute3.*': 'impute3',
+    r'^shapeIt.*': 'shapeIt',
+    r'^shapeIt2.*': 'shapeIt2',
+    r'^shapeIt3.*': 'shapeIt3',
+    r'^shapeIt4.*': 'shapeIt4',
+    r'^shapeIt5.*': 'shapeIt5',
+    r'^MaCH.*': 'MaCH',
+    r'^Bealge.*': 'Beagle',
+    r'^Beagle.*': 'Beagle',
+    r'^Beagle1\.0.*': 'Beagle1.0',
+    r'^minimac2.*': 'minimac2',
+    r'^minimac3.*': 'minimac3',
+    r'^minimac4.*': 'minimac4',
+    r'^eagle': 'eagle',
+    r'^eagle2.*': 'eagle2',
+    r'^meta.*': 'meta'
 }
 
 CONVERSION_TABLE = {
@@ -92,7 +92,11 @@ basic_formatter = logging.Formatter(
 )
 
 stream_handler = logging.StreamHandler(sys.stderr)
-stream_handler.setLevel(logging.INFO)
+# Set level based on environment variable
+if os.environ.get('QUIET', '').lower() in ('1', 'true', 'yes'):
+    stream_handler.setLevel(logging.ERROR)
+else:
+    stream_handler.setLevel(logging.INFO)
 
 stream_handler.setFormatter(basic_formatter)
 logger.addHandler(stream_handler)

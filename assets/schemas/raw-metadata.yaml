@@ -182,7 +182,7 @@ properties:
     items:
       title: "EFO/MONDO code"
       type: "string"
-      pattern: "^EFO|MONDO:[0-9]{7}$"
+      pattern: "^(EFO|MONDO):[0-9]{7}$"
 
   study_FilePortal:
     title: "URL for GWAS sumstats repository"
