@@ -510,18 +510,22 @@ process split_multiallelics_resort_rowindex {
 }
 
 process remove_chrpos_allele_duplicates {
-    publishDir "${params.outdir}/intermediates/${dID2}", mode: 'rellink', overwrite: true, enabled: params.dev
-    publishDir "${params.outdir}/intermediates/${dID2}/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_*', enabled: params.dev
+    publishDir "${params.outdir}/intermediates/remove_chrpos_allele_duplicates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
-    tuple val(datasetID), val(dID2), val(gbmax), path(chrposprep)
+    tuple val(datasetID), val(build), path(sumstats_file)  // Changed to match reformat_sumstat output
 
     output:
-    tuple val(datasetID), val(dID2), val(gbmax), path("unique_records"), emit: filtered_records
-    tuple val(datasetID), path("removed_duplicates"), emit: removed_records
+    tuple val(datasetID), val(build), path("filtered_records.txt"), emit: filtered_records
+    tuple val(datasetID), path("removed_records.txt"), emit: removed_records
 
     script:
     """
-    remove_chrpos_allele_duplicates.sh $chrposprep unique_records removed_duplicates
+    # Your duplicate removal script here
+    # Input file: ${sumstats_file}
+    # Output filtered records to: filtered_records.txt
+    # Output removed records to: removed_records.txt
+    
+    remove_chrpos_allele_duplicates.sh ${sumstats_file} filtered_records.txt removed_records.txt
     """
 }
