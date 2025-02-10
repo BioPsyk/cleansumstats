@@ -55,20 +55,20 @@ cat <<EOF > ./input.tsv
 1	1:1000	rs123	A	G
 2	1:1000	rs456	A	G
 3	1:2000	rs789	T	C
-4	2:1000	rs321	G	A
+4	2:1000	rs321	A	G
 5	2:1000	rs654	A	G
 EOF
 
 cat <<EOF > ./expected-unique.tsv
 0	CHRPOS	RSID	A1	A2
 3	1:2000	rs789	T	C
-4	2:1000	rs321	G	A
 EOF
 
 cat <<EOF > ./expected-removed.tsv
 0	CHRPOS	RSID	A1	A2
 1	1:1000	rs123	A	G
 2	1:1000	rs456	A	G
+4	2:1000	rs321	A	G
 5	2:1000	rs654	A	G
 EOF
 
@@ -83,14 +83,14 @@ cat <<EOF > ./input.tsv
 0	CHRPOS	RSID	A1	A2
 1	1:1000	rs123	A	G
 2	1:2000	rs456	T	C
-3	2:1000	rs789	G	A
+3	2:1000	rs789	C	T
 EOF
 
 cat <<EOF > ./expected-unique.tsv
 0	CHRPOS	RSID	A1	A2
 1	1:1000	rs123	A	G
 2	1:2000	rs456	T	C
-3	2:1000	rs789	G	A
+3	2:1000	rs789	C	T
 EOF
 
 cat <<EOF > ./expected-removed.tsv
