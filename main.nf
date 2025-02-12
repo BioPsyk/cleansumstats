@@ -303,6 +303,7 @@ workflow {
       map_to_dbsnp.out.dbsnp_rm_ix
        .join(allele_correction.out.removed_by_allele_filter_ix, by: 0)
        .join(update_stats.out.stats_rm_by_filter_ix, by: 0)
+       .join(map_to_dbsnp.out.removed_chrpos_duplicates, by: 0)
        .set{ ch_collected_removed_lines }
 
       //Collect desc_BA info

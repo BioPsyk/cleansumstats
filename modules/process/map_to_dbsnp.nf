@@ -511,21 +511,24 @@ process split_multiallelics_resort_rowindex {
 
 process remove_chrpos_allele_duplicates {
     publishDir "${params.outdir}/intermediates/remove_chrpos_allele_duplicates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_records.txt', enabled: params.dev
 
     input:
-    tuple val(datasetID), val(build), path(sumstats_file)  // Changed to match reformat_sumstat output
+    tuple val(datasetID), val(build), path(sumstats_file)
 
     output:
     tuple val(datasetID), val(build), path("filtered_records.txt"), emit: filtered_records
     tuple val(datasetID), path("removed_records.txt"), emit: removed_records
+    tuple val(datasetID), path("desc_removed_duplicates_BA.txt"), emit: desc_removed_duplicates_BA
 
     script:
     """
-    # Your duplicate removal script here
-    # Input file: ${sumstats_file}
-    # Output filtered records to: filtered_records.txt
-    # Output removed records to: removed_records.txt
-    
+    # Remove duplicates and output filtered and removed records
     remove_chrpos_allele_duplicates.sh ${sumstats_file} filtered_records.txt removed_records.txt
+
+    # Generate before/after stats
+    rowsBefore="\$(wc -l ${sumstats_file} | awk '{print \$1-1}')"
+    rowsAfter="\$(wc -l filtered_records.txt | awk '{print \$1-1}')"
+    echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicate chr:pos entries" > desc_removed_duplicates_BA.txt
     """
 }

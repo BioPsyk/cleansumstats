@@ -80,6 +80,13 @@ workflow map_to_dbsnp {
 
   split_multiallelics_resort_rowindex(remove_chrpos_allele_duplicates.out.filtered_records)
 
+  // Join the before/after descriptions
+  select_chrpos_or_snpchrpos.out.ch_desc_combined_set_after_liftover
+  .join(reformat_sumstat.out.ch_desc_keep_a_GRCh38_reference_BA, by: 0)
+  .join(remove_chrpos_allele_duplicates.out.desc_removed_duplicates_BA, by: 0)
+  .join(split_multiallelics_resort_rowindex.out.ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
+  .set { rows_before_after }
+
   //branch the stats_genome_build
   ch_stats_genome_build_filter=decide_genome_build.out.ch_stats_genome_build_chrpos.branch { key, value, file ->
                   liftover_branch_markername_chrpos: value == "liftover_branch_markername_chrpos"
@@ -92,20 +99,6 @@ workflow map_to_dbsnp {
     .join(ch_stats_snpchrpos_gb, by: 0)
     .map { key, val, file, val2, file2 -> tuple(key, file, file2) }
     .set{ ch_gb_stats_combined }
-
-
-  //join desc_BA   
-  select_chrpos_or_snpchrpos.out.ch_desc_combined_set_after_liftover
-  .join(reformat_sumstat.out.ch_desc_keep_a_GRCh38_reference_BA, by: 0)
-  .join(split_multiallelics_resort_rowindex.out.ch_desc_split_multi_allelics_and_sort_on_rowindex_BA, by: 0)
-  .set { rows_before_after }
-  //.join(rm_dup_chrpos_allele_rows.out.ch_desc_removed_duplicates_after_liftover, by: 0)
-
-// //Some that now are part of the branched workflow. Unclear how to save the the stepwise branched workflow before after steps, but all info should be exported in channels.
-// //  .combine(ch_desc_sex_chrom_formatting_BA, by: 0)
-// //  .combine(ch_desc_prep_for_dbsnp_mapping_BA, by: 0)
-// //  .combine(ch_removed_rows_before_liftover, by: 0)
-// //  .combine(ch_desc_liftover_to_GRCh38_and_map_to_dbsnp_BA, by: 0)
 
   //output
   split_multiallelics_resort_rowindex.out.ch_allele_correction.set { dbsnp_mapped }
