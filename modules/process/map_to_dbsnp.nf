@@ -524,7 +524,10 @@ process remove_chrpos_allele_duplicates {
     script:
     """
     # Remove duplicates and output filtered and removed records
-    remove_chrpos_allele_duplicates.sh ${sumstats_file} filtered_records.txt removed_records.txt
+    remove_chrpos_allele_duplicates.sh ${sumstats_file} filtered_records.txt removed_records_temp.txt
+
+    # Format the removed records with proper exclusion reason
+    awk -vOFS="\t" '{print \$1,"duplicated_chr_pos_a1_a2_after_mapping"}' removed_records_temp.txt > removed_records.txt
 
     # Generate before/after stats
     rowsBefore="\$(wc -l ${sumstats_file} | awk '{print \$1-1}')"
