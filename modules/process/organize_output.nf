@@ -59,14 +59,15 @@ process collect_rmd_lines {
     publishDir "${params.outdir}/intermediates", mode: 'rellink', overwrite: true, enabled: params.dev
 
     input:
-    tuple val(datasetID), path(step1), path(step2), path(step3)
+    tuple val(datasetID), path(step1), path(step2), path(step3), path(step4)
+
     output:
     tuple val(datasetID), path("collect_rmd_lines__removed_lines_collected.txt"), emit: ch_collected_removed_lines2
 
     script:
     """
     echo -e "RowIndex\tExclusionReason" > collect_rmd_lines__removed_lines_collected.txt
-    cat ${step1} ${step2} ${step3} >> collect_rmd_lines__removed_lines_collected.txt
+    cat ${step1} ${step2} ${step3} ${step4} >> collect_rmd_lines__removed_lines_collected.txt
     """
 }
 
@@ -141,29 +142,29 @@ process collect_and_prep_stepwise_readme {
 
     input:
     tuple val(datasetID), 
-    path(step1),
-    path(step2), 
-    path(step3), 
-    path(step4), 
-    path(step5), 
-    path(step6), 
-    path(step7), 
-    path(step8), 
-    path(step9), 
-    path(step10), 
-    path(step11), 
-    path(step12) 
+          path(step1),
+          path(step2), 
+          path(step3), 
+          path(step4), 
+          path(step5), 
+          path(step6), 
+          path(step7), 
+          path(step8), 
+          path(step9), 
+          path(step10), 
+          path(step11), 
+          path(step12),
+          path(step13)
 
     output:
     tuple val(datasetID), path("collect_and_prep_stepwise_readme__desc_collected_workflow_stepwise_stats.txt"), emit: ch_overview_workflow_steps
 
     script:
     """
-    cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11 $step12 > all_removed_steps
-
+    cat $step1 $step2 $step3 $step4 $step5 $step6 $step7 $step8 $step9 $step10 $step11 $step12 $step13 > all_removed_steps
+    
     echo -e "Steps\tBefore\tAfter\tDescription" > collect_and_prep_stepwise_readme__desc_collected_workflow_stepwise_stats.txt
     awk -vFS="\t" -vOFS="\t" '{print "Step"NR, \$1, \$2, \$3}' all_removed_steps >> collect_and_prep_stepwise_readme__desc_collected_workflow_stepwise_stats.txt
-
     """
 }
 

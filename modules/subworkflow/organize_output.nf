@@ -40,7 +40,11 @@ workflow organize_output {
   final_assembly(ch_allele_corrected_and_outstats)
   prep_GRCh37_coord(final_assembly.out.cleaned_file)
 
-  collect_rmd_lines(rmd_lines)
+  rmd_lines
+    .map { it -> tuple(it[0], it[1], it[2], it[3], it[4]) }
+    .set { rmd_lines_formatted }
+
+  collect_rmd_lines(rmd_lines_formatted)
   desc_rmd_lines_as_table(collect_rmd_lines.out.ch_collected_removed_lines2)
 
   prep_GRCh37_coord.out.ch_cleaned_file
