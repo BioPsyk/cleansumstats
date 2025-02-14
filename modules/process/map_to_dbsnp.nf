@@ -508,3 +508,30 @@ process split_multiallelics_resort_rowindex {
 
     """
 }
+
+process remove_chrpos_allele_duplicates {
+    publishDir "${params.outdir}/intermediates/remove_chrpos_allele_duplicates", mode: 'rellink', overwrite: true, enabled: params.dev
+    publishDir "${params.outdir}/intermediates/removed_lines", mode: 'rellink', overwrite: true, pattern: 'removed_records.txt', enabled: params.dev
+
+    input:
+    tuple val(datasetID), val(build), path(sumstats_file)
+
+    output:
+    tuple val(datasetID), val(build), path("filtered_records.txt"), emit: filtered_records
+    tuple val(datasetID), path("removed_records.txt"), emit: removed_records
+    tuple val(datasetID), path("desc_removed_duplicates_BA.txt"), emit: desc_removed_duplicates_BA
+
+    script:
+    """
+    # Remove duplicates and output filtered and removed records
+    remove_chrpos_allele_duplicates.sh ${sumstats_file} filtered_records.txt removed_records_temp.txt
+
+    # Format the removed records with proper exclusion reason
+    awk -vOFS="\t" '{print \$1,"duplicated_chr_pos_a1_a2_after_mapping"}' removed_records_temp.txt > removed_records.txt
+
+    # Generate before/after stats
+    rowsBefore="\$(wc -l ${sumstats_file} | awk '{print \$1-1}')"
+    rowsAfter="\$(wc -l filtered_records.txt | awk '{print \$1-1}')"
+    echo -e "\$rowsBefore\t\$rowsAfter\tRemoved duplicate chr:pos entries" > desc_removed_duplicates_BA.txt
+    """
+}

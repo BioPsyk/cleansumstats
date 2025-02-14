@@ -147,17 +147,18 @@ RUN pip3 install --no-cache-dir CrossMap jsonschema pyyaml && \
     ln -sf /opt/venv/bin/CrossMap /usr/bin/CrossMap.py && \
     chmod +x /opt/venv/bin/CrossMap
 
-# Verify CrossMap installation and location
-#RUN which CrossMap.py && \
-#    ls -l /usr/local/bin/CrossMap.py && \
-#    ls -l /usr/bin/CrossMap.py && \
-#    ls -l /opt/venv/bin/CrossMap.py
+# Create ubuntu user and group if they don't exist
+#RUN groupadd -r ubuntu && useradd -r -g ubuntu ubuntu
 
-# Use existing ubuntu user and group
-RUN rm -rf /cleansumstats/* && chown ubuntu:ubuntu /cleansumstats && chmod g+s /cleansumstats
+# Set up directories with correct permissions
+RUN rm -rf /cleansumstats/* && \
+    mkdir -p /cleansumstats/.nextflow && \
+    chown -R ubuntu:ubuntu /cleansumstats && \
+    chmod -R 777 /cleansumstats && \
+    chmod g+s /cleansumstats
 
 COPY --from=java_builder /cleansumstats/external_data /cleansumstats/external_data
-RUN chown ubuntu:ubuntu /cleansumstats/external_data -R
+RUN chown -R ubuntu:ubuntu /cleansumstats/external_data
 
 # Copy lib files
 COPY lib/ /cleansumstats/lib/
