@@ -28,11 +28,11 @@ using singularity (use path to image)
 ```bash
 ## pull singularity image for AMD64/x86_64 systems (most common)
 mkdir -p sif
-singularity pull sif/ibp-cleansumstats-base_version-1.3.0.sif docker://biopsyk/ibp-cleansumstats:1.3.0-amd64
+singularity pull sif/ibp-cleansumstats-base_version-1.3.1.sif docker://biopsyk/ibp-cleansumstats:1.3.1-amd64
 
 # clean a sumstat using shrinked example data for dbsnp and 1kgp (-e flag)
 ./cleansumstats.sh \
-  -j sif/ibp-cleansumstats-base_version-1.3.0.sif \
+  -j sif/ibp-cleansumstats-base_version-1.3.1.sif \
   -i tests/example_data/sumstat_1/sumstat_1_raw_meta.txt \
   -o out_example \
   -e 1
@@ -42,7 +42,7 @@ singularity pull sif/ibp-cleansumstats-base_version-1.3.0.sif docker://biopsyk/i
 using docker image (use the tag: dockerhub_biopsyk)
 ```bash
 ## pull docker image for AMD64/x86_64 systems (most common)
-docker pull biopsyk/ibp-cleansumstats:1.3.0-amd64
+docker pull biopsyk/ibp-cleansumstats:1.3.1-amd64
 
 ## using docker (using flag -j)
 ./cleansumstats.sh \
