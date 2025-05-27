@@ -25,16 +25,14 @@ VOLUME /root/.nextflow
 # Installing rmath
 # Retry mechanism for apt-get to handle temporary network issues
 # Installs cmake and build-essential required for building rmath
-RUN for i in {1..3}; do \
-      apt-get update --fix-missing -y && \
-      DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        cmake \
-        build-essential \
-        --no-install-recommends && \
-      rm -rf /var/lib/apt/lists/* && \
-      break || \
-      { echo "Retry $i of 3..."; sleep 5; } \
-    done
+RUN apt-get update --fix-missing -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      cmake \
+      build-essential \
+      wget \
+      unzip \
+      --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
 ARG RMATH_REVISION="d816ef8d1719810288afd848e18b2a8d00c2ccd2"
 
@@ -59,7 +57,7 @@ RUN rm -rf rmath
 #---------------------------------------------------------------------------------
 # Installing r-stats-c-streamer
 
-ARG R_STATS_C_STREAMER_REVISION="cdd497488f1dd8c5a33cf5da27fe6af86c5b7c11"
+ARG R_STATS_C_STREAMER_REVISION="e56512fb9b3161a4a43a1f0c26147eb8d299730b"
 
 RUN wget "https://github.com/pappewaio/r-stats-c-streamer/archive/${R_STATS_C_STREAMER_REVISION}.zip" \
   --quiet -O r-stats-c-streamer.zip && \
