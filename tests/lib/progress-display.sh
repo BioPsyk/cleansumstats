@@ -27,12 +27,16 @@ init_progress_display() {
         TERMINAL_WIDTH=$(get_terminal_width)
         
         # Save terminal state (ignore failures) - use subshell for safety
-        if ! (bash -c 'tput smcup' 2>/dev/null); then
+        if timeout 2 bash -c 'tput smcup 2>/dev/null' 2>/dev/null; then
+            # tput smcup succeeded
+            :
+        else
+            # tput smcup failed or timed out, fall back to simple mode
             PROGRESS_MODE="simple"
         fi
         
         # Hide cursor (ignore failures) - use subshell for safety
-        (bash -c 'tput civis' 2>/dev/null) || true
+        timeout 2 bash -c 'tput civis 2>/dev/null' 2>/dev/null || true
         
         # Setup cleanup trap only if fancy mode succeeded
         if [[ "$PROGRESS_MODE" == "fancy" ]]; then
@@ -40,7 +44,7 @@ init_progress_display() {
         fi
         
         # Clear screen (ignore failures) - use subshell for safety
-        (bash -c 'tput clear' 2>/dev/null) || true
+        timeout 2 bash -c 'tput clear 2>/dev/null' 2>/dev/null || true
     else
         PROGRESS_MODE="simple"
     fi

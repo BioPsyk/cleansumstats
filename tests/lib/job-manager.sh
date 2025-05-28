@@ -164,19 +164,26 @@ EOF
 # Monitor running jobs and handle completions
 monitor_running_jobs() {
     local updated=false
+    local jobs_to_remove=()
     
+    # First pass: identify completed jobs
     for i in "${!RUNNING_JOBS[@]}"; do
-        local test_name="${RUNNING_JOBS[$i]}"
-        local pid="${JOB_PIDS[$test_name]}"
+        local test_name="${RUNNING_JOBS[$i]:-}"
+        [[ -z "$test_name" ]] && continue
+        
+        local pid="${JOB_PIDS[$test_name]:-}"
+        [[ -z "$pid" ]] && continue
         
         # Check if process is still running
         if ! is_process_running "$pid"; then
+            jobs_to_remove+=("$i")
+            
             # Process completed, check exit status
             wait "$pid" 2>/dev/null
             local exit_code=$?
             
             # Calculate duration
-            local start_time="${JOB_START_TIMES[$test_name]}"
+            local start_time="${JOB_START_TIMES[$test_name]:-$(get_timestamp)}"
             local end_time=$(get_timestamp)
             local duration=$((end_time - start_time))
             
@@ -195,16 +202,31 @@ monitor_running_jobs() {
             
             log_test_timing "$test_name" "$duration"
             
-            # Remove from running jobs
-            unset RUNNING_JOBS[$i]
-            RUNNING_JOBS=("${RUNNING_JOBS[@]}")  # Reindex array
-            
             # Clean up
             unset JOB_PIDS["$test_name"]
             
             updated=true
         fi
     done
+    
+    # Second pass: remove completed jobs from running list
+    if [[ ${#jobs_to_remove[@]} -gt 0 ]]; then
+        local new_running_jobs=()
+        for i in "${!RUNNING_JOBS[@]}"; do
+            local should_remove=false
+            for remove_idx in "${jobs_to_remove[@]}"; do
+                if [[ "$i" == "$remove_idx" ]]; then
+                    should_remove=true
+                    break
+                fi
+            done
+            
+            if [[ "$should_remove" == "false" ]]; then
+                new_running_jobs+=("${RUNNING_JOBS[$i]}")
+            fi
+        done
+        RUNNING_JOBS=("${new_running_jobs[@]}")
+    fi
     
     return $([ "$updated" = true ] && echo 0 || echo 1)
 }

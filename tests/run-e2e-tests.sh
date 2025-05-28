@@ -22,12 +22,13 @@ show_progress=true
 verbose=false
 
 # Enhanced argument parsing
-for arg in "$@"; do
+while [[ $# -gt 0 ]]; do
+  arg="$1"
   case $arg in
     --parallel)
       parallel_mode=true
-      # Check if next argument is a number
       shift
+      # Check if next argument is a number
       if [[ $# -gt 0 && $1 =~ ^[0-9]+$ ]]; then
         max_parallel_jobs=$1
         shift
@@ -35,18 +36,20 @@ for arg in "$@"; do
       ;;
     --no-progress)
       show_progress=false
+      shift
       ;;
     --verbose|-v)
       verbose=true
       export VERBOSE=true
+      shift
       ;;
     *)
       if [ -z "$specific_test" ]; then
         specific_test="$arg"
       fi
+      shift
       ;;
   esac
-  shift
 done
 
 # Enhanced parallel execution using new infrastructure
@@ -55,12 +58,20 @@ run_enhanced_parallel() {
     local show_progress="$2"
     
     # Initialize test environment
-    init_test_environment || return 1
+    echo "DEBUG: About to call init_test_environment" >&2
+    if init_test_environment; then
+        echo "DEBUG: init_test_environment succeeded" >&2
+    else
+        echo "DEBUG: init_test_environment failed, returning" >&2
+        return 1
+    fi
     
     # Setup session logging
+    echo "DEBUG: Setting up session logging" >&2
     local session_id=$(date +%Y%m%d-%H%M%S)
     local log_dir=$(create_session_dir "${test_dir}/test_logs" "$session_id")
     export SESSION_LOG_DIR="$log_dir"
+    echo "DEBUG: Session log dir: $log_dir" >&2
     
     if [[ "$verbose" == "true" ]]; then
         log_info "Starting enhanced parallel e2e test execution (session: $session_id)"
@@ -69,25 +80,35 @@ run_enhanced_parallel() {
     fi
     
     # Initialize progress display
+    echo "DEBUG: Initializing progress display" >&2
     if [[ "$show_progress" == "true" ]]; then
         init_progress_display true
     else
         init_progress_display false
     fi
+    echo "DEBUG: Progress display initialized" >&2
     
     # Initialize job manager
+    echo "DEBUG: Initializing job manager" >&2
     init_job_queue "$max_jobs" "$log_dir"
+    echo "DEBUG: Job manager initialized" >&2
     
     # Queue all tests
     local test_files=("${test_dir}/e2e/"test_*.sh)
+    echo "DEBUG: Found ${#test_files[@]} test files" >&2
     for test_file in "${test_files[@]}"; do
         local test_name=$(extract_test_name "$test_file")
+        echo "DEBUG: Queuing test: $test_name from $test_file" >&2
         add_job_to_queue "$test_name" "$test_file"
     done
+    echo "DEBUG: Queued $TOTAL_JOBS tests" >&2
     
     # Start execution with progress monitoring
+    echo "DEBUG: About to start execution with progress monitoring" >&2
     local start_time=$(get_timestamp)
+    echo "DEBUG: Calling execute_job_queue_with_progress with show_progress=$show_progress" >&2
     execute_job_queue_with_progress "$show_progress"
+    echo "DEBUG: execute_job_queue_with_progress completed" >&2
     local end_time=$(get_timestamp)
     local total_duration=$((end_time - start_time))
     

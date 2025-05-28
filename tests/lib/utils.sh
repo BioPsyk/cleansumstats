@@ -79,6 +79,11 @@ create_session_dir() {
 
 # Check if terminal supports fancy output
 supports_fancy_output() {
+    # In container environments, disable fancy output to avoid tput issues
+    if [[ -n "${SINGULARITY_NAME:-}" ]] || [[ -n "${APPTAINER_NAME:-}" ]] || [[ -f "/.dockerenv" ]]; then
+        return 1
+    fi
+    
     # Check if we have a terminal, not a dumb terminal, and tput is available
     [[ -t 1 ]] && [[ "${TERM:-dumb}" != "dumb" ]] && {
         # Use a subshell to safely check tput availability
