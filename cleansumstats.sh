@@ -379,8 +379,8 @@ kgpdir_container="/cleansumstats/kgpdir"
 kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
 # test_logs (for test modes)
-testlogs_host="${project_dir}/test_logs"
-testlogs_container="/cleansumstats/test_logs"
+testlogs_host="${project_dir}/tests/test_logs"
+testlogs_container="/cleansumstats/tests/test_logs"
 
 # Use outdir as fake home to avoid lock issues for the hidden .nextflow/history file
 #FAKE_HOME="${outdir_container}"
@@ -401,7 +401,7 @@ testlogs_container="/cleansumstats/test_logs"
 if [ "${runtype}" == "default" ]; then
   run_script="/cleansumstats/main.nf"
 elif [ "${runtype}" == "test" ]; then
-  mkdir -p test_logs
+  mkdir -p tests/test_logs
   if [ -n "${specific_test}" ]; then
     if [ -n "${parallel_option}" ]; then
       run_script="/cleansumstats/tests/run-tests.sh ${specific_test} --parallel ${parallel_option}"
@@ -416,7 +416,7 @@ elif [ "${runtype}" == "test" ]; then
     fi
   fi
 elif [ "${runtype}" == "utest" ]; then
-  mkdir -p test_logs
+  mkdir -p tests/test_logs
   if [ -n "${specific_test}" ]; then
     run_script="/cleansumstats/tests/run-unit-tests.sh ${specific_test}"
   else
@@ -424,7 +424,7 @@ elif [ "${runtype}" == "utest" ]; then
   fi
 elif [ "${runtype}" == "etest" ]; then
   mkdir -p tmp
-  mkdir -p test_logs
+  mkdir -p tests/test_logs
   if [ -n "${specific_test}" ]; then
     if [ -n "${parallel_option}" ]; then
       run_script="/cleansumstats/tests/run-e2e-tests.sh ${specific_test} --parallel ${parallel_option}"
