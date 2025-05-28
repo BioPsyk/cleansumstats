@@ -8,11 +8,18 @@ project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
 work_dir="${project_dir}/tmp/regression-438"
 outdir="${work_dir}/out"
+log_dir="${project_dir}/test_logs"
+
+# Create log directory if it doesn't exist
+mkdir -p "${log_dir}"
+
+echo "regression-438-started"
+
+# Redirect all output to log file
+exec > "${log_dir}/regression-438.log" 2>&1
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
-
-echo ">> Test regression #438"
 
 cd "${work_dir}"
 
@@ -92,10 +99,9 @@ time nextflow -q run -offline \
 if [[ $? != 0 ]]
 then
   cat .nextflow.log
+  echo "regression-438-failed" > /dev/stderr
   exit 1
 fi
-
-echo "-- Pipeline done, general validation"
 
 for f in ./out/cleaned_metadata.yaml
 do
@@ -110,8 +116,6 @@ do
     "${schemas_dir}/cleaned-sumstats.yaml" "${f%.gz}"
 done
 
-echo "-- Pipeline done, specific validation"
-
 function _check_results {
   obs=$1
   exp=$2
@@ -121,23 +125,21 @@ function _check_results {
    echo "----------exp--------------"
    cat $exp
    echo "---------------------------"
-
-    echo "- [FAIL] regression-438: P-value conversion from -log10 scale produces incorrect values"
-    echo "Expected p-values should be:"
-    echo "  -log10(p) = 6.07331 -> p = 8.446757e-07"
-    echo "  -log10(p) = 6.0381  -> p = 9.160095e-07"
-    echo "  -log10(p) = 6.1179  -> p = 7.622545e-07"
-    echo "  -log10(p) = 6.37513 -> p = 4.215703e-07"
-    echo "  -log10(p) = 6.36296 -> p = 4.335508e-07"
-    echo ""
-    echo "Differences found:"
-    cat ./difference
-    exit 1
+   echo "Expected p-values should be:"
+   echo "  -log10(p) = 6.07331 -> p = 8.446757e-07"
+   echo "  -log10(p) = 6.0381  -> p = 9.160095e-07"
+   echo "  -log10(p) = 6.1179  -> p = 7.622545e-07"
+   echo "  -log10(p) = 6.37513 -> p = 4.215703e-07"
+   echo "  -log10(p) = 6.36296 -> p = 4.335508e-07"
+   echo ""
+   echo "Differences found:"
+   cat ./difference
+   echo "regression-438-failed" > /dev/stderr
+   exit 1
   fi
-
 }
 
 mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv
 
-echo "- [PASS] regression-438"
+echo "regression-438-succeeded" > /dev/stderr

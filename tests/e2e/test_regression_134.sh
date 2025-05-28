@@ -8,11 +8,18 @@ project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
 case_name="grch38-all-cols"
 work_dir="${project_dir}/tmp/regression-134"
+log_dir="${project_dir}/test_logs"
+
+# Create log directory if it doesn't exist
+mkdir -p "${log_dir}"
+
+echo "regression-134-started"
+
+# Redirect all output to log file
+exec > "${log_dir}/regression-134.log" 2>&1
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
-
-echo ">> Test regression #134"
 
 cd "${work_dir}"
 
@@ -32,6 +39,7 @@ time nextflow -q run -offline \
 if [[ $? != 0 ]]
 then
   cat .nextflow.log
+  echo "regression-134-failed" > /dev/stderr
   exit 1
 fi
 
@@ -49,3 +57,5 @@ do
   "${tests_dir}/validators/validate-cleaned-sumstats.py" \
     "${schemas_dir}/cleaned-sumstats.yaml" "${f%.gz}"
 done
+
+echo "regression-134-succeeded" > /dev/stderr

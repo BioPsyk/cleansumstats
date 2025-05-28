@@ -7,6 +7,15 @@ test_dir=$(dirname "${e2e_dir}")
 tmp_dir=$(dirname "${test_dir}")/tmp/e2e
 reports_dir=$(dirname "${test_dir}")/tmp/reports
 schemas_dir=$(dirname "${test_dir}")/assets/schemas
+log_dir=$(dirname "${test_dir}")/test_logs
+
+# Create log directory if it doesn't exist
+mkdir -p "${log_dir}"
+
+echo "test-cases-started"
+
+# Redirect all output to log file
+exec > "${log_dir}/test-cases.log" 2>&1
 
 rm -rf "${reports_dir}"
 mkdir "${reports_dir}"
@@ -52,6 +61,7 @@ do
     if [[ $? != 0 ]]
     then
       cat .nextflow.log
+      echo "test-cases-failed" > /dev/stderr
       exit 1
     fi
 
@@ -75,3 +85,5 @@ do
     cd "${tmp_dir}"
   fi
 done
+
+echo "test-cases-succeeded" > /dev/stderr

@@ -8,11 +8,18 @@ project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
 work_dir="${project_dir}/tmp/regression_missing_variants"
 outdir="${work_dir}/out"
+log_dir="${project_dir}/test_logs"
+
+# Create log directory if it doesn't exist
+mkdir -p "${log_dir}"
+
+echo "regression-missing-variants-started"
+
+# Redirect all output to log file
+exec > "${log_dir}/regression-missing-variants.log" 2>&1
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
-
-echo ">> Test regression regression_missing_variants"
 
 cd "${work_dir}"
 
@@ -65,7 +72,6 @@ CHR	POS	0	RSID	EffectAllele	OtherAllele	B	Z	P	CaseN	ControlN	CaseEAF
 3	10391	2	rs1260592493	C	T	-0.0187	-3.290527	0.001	140	1257	0.1
 EOF
 
-
 gzip "./input.txt"
 
 time nextflow -q run -offline \
@@ -79,14 +85,9 @@ time nextflow -q run -offline \
 if [[ $? != 0 ]]
 then
   cat .nextflow.log
+  echo "regression-missing-variants-failed" > /dev/stderr
   exit 1
 fi
-
-echo "-- Pipeline done, general validation"
-
-# check top rows
-#ls ${outdir}
-#zcat ${outdir}/cleaned_GRCh38.gz | head -n3
 
 for f in ./out/cleaned_metadata.yaml
 do
@@ -101,8 +102,6 @@ do
     "${schemas_dir}/cleaned-sumstats.yaml" "${f%.gz}"
 done
 
-echo "-- Pipeline done, specific validation"
-
 function _check_results {
   obs=$1
   exp=$2
@@ -112,14 +111,14 @@ function _check_results {
    echo "----------exp cat -A --------------"
    cat -A $exp
    echo "---------------------------"
-
-    echo "- [FAIL] regression_missing_variants"
-    cat ./difference
-    exit 1
+   cat ./difference
+   echo "regression-missing-variants-failed" > /dev/stderr
+   exit 1
   fi
-
 }
 
 mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv
+
+echo "regression-missing-variants-succeeded" > /dev/stderr
 

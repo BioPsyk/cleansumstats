@@ -11,11 +11,18 @@ project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
 work_dir="${project_dir}/tmp/regression-106"
 outdir="${work_dir}/out"
+log_dir="${project_dir}/test_logs"
+
+# Create log directory if it doesn't exist
+mkdir -p "${log_dir}"
+
+echo "regression-106-started"
+
+# Redirect all output to log file
+exec > "${log_dir}/regression-106.log" 2>&1
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
-
-echo ">> Test regression #106"
 
 cd "${work_dir}"
 
@@ -92,10 +99,9 @@ time nextflow -q run -offline \
 if [[ $? != 0 ]]
 then
   cat .nextflow.log
+  echo "regression-106-failed" > /dev/stderr
   exit 1
 fi
-
-echo "-- Pipeline done, general validation"
 
 for f in ./out/cleaned_metadata.yaml
 do
@@ -110,8 +116,6 @@ do
     "${schemas_dir}/cleaned-sumstats.yaml" "${f%.gz}"
 done
 
-echo "-- Pipeline done, specific validation"
-
 function _check_results {
   obs=$1
   exp=$2
@@ -121,13 +125,13 @@ function _check_results {
    echo "exp------------------------"
    cat $exp
    echo "---------------------------"
-
-    echo "- [FAIL] regression-106"
-    cat ./difference
-    exit 1
+   cat ./difference
+   echo "regression-106-failed" > /dev/stderr
+   exit 1
   fi
-
 }
 
 mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv
+
+echo "regression-106-succeeded" > /dev/stderr
