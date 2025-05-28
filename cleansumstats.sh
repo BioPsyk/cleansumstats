@@ -17,6 +17,14 @@ function general_usage(){
  echo " ./cleansumstats.sh prepare-dbsnp -i <file> -o <dir>"
  echo " ./cleansumstats.sh prepare-1kgp -i <file> -d <dir> -o <dir>"
  echo ""
+ echo "Run tests:"
+ echo " ./cleansumstats.sh test                    # Run all tests (unit + e2e)"
+ echo " ./cleansumstats.sh test <test_name>        # Run specific test"
+ echo " ./cleansumstats.sh utest                   # Run all unit tests"
+ echo " ./cleansumstats.sh utest <test_name>       # Run specific unit test"
+ echo " ./cleansumstats.sh etest                   # Run all e2e tests"
+ echo " ./cleansumstats.sh etest <test_name>       # Run specific e2e test"
+ echo ""
  echo "options:"
  echo "-h		 Display help message for cleansumstats"
  echo "-i <file> 	 path to infile"
@@ -30,6 +38,7 @@ function general_usage(){
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
  echo "-l  	 	 dev mode, saving intermediate files, no cleanup of workdir(default: not active)"
  echo "-j  	 	 image mode, run docker, dockerhub_biopsyk or singularity (if unset or empty: singularity)"
+ echo "-P <num> 	 run tests in parallel with max <num> jobs (only for test/etest modes, default: 2)"
  echo "-v  	 	 get the version number"
 }
 
@@ -63,20 +72,42 @@ elif [ ${paramarray[0]} == "prepare-1kgp" ] ; then
   paramarray=("${paramarray[@]:1}")
 elif [ ${paramarray[0]} == "test" ] ; then
   runtype="test"
-  paramarray=("${paramarray[@]:1}")
+  # Check if a specific test is specified
+  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
+    specific_test="${paramarray[1]}"
+    paramarray=("${paramarray[@]:2}")
+  else
+    specific_test=""
+    paramarray=("${paramarray[@]:1}")
+  fi
 elif [ ${paramarray[0]} == "utest" ] ; then
   runtype="utest"
-  paramarray=("${paramarray[@]:1}")
+  # Check if a specific test is specified
+  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
+    specific_test="${paramarray[1]}"
+    paramarray=("${paramarray[@]:2}")
+  else
+    specific_test=""
+    paramarray=("${paramarray[@]:1}")
+  fi
 elif [ ${paramarray[0]} == "etest" ] ; then
   runtype="etest"
-  paramarray=("${paramarray[@]:1}")
+  # Check if a specific test is specified
+  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
+    specific_test="${paramarray[1]}"
+    paramarray=("${paramarray[@]:2}")
+  else
+    specific_test=""
+    paramarray=("${paramarray[@]:1}")
+  fi
 else
   runtype="default"
+  specific_test=""
 fi
 
 
 # starting getops with :, puts the checking in silent mode for errors.
-getoptsstring=":hvi:o:d:k:b:w:p:e:j:tl"
+getoptsstring=":hvi:o:d:k:b:w:p:e:j:tlP:"
 
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
@@ -99,6 +130,7 @@ devmode_given=false
 container_image_given=false
 pathquicktest=false
 runexampledata=false
+parallel_option=""
 
 # default extrapaths values
 unset extrapaths
@@ -162,6 +194,9 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       ;;
     t )
       pathquicktest=true
+      ;;
+    P )
+      parallel_option="$OPTARG"
       ;;
     \? )
       echo "Invalid Option: -$OPTARG" 1>&2
@@ -343,6 +378,9 @@ kgpfile_name="1kg_af_ref.txt"
 kgpdir_container="/cleansumstats/kgpdir"
 kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
+# test_logs (for test modes)
+testlogs_host="${project_dir}/test_logs"
+testlogs_container="/cleansumstats/test_logs"
 
 # Use outdir as fake home to avoid lock issues for the hidden .nextflow/history file
 #FAKE_HOME="${outdir_container}"
@@ -363,12 +401,43 @@ kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 if [ "${runtype}" == "default" ]; then
   run_script="/cleansumstats/main.nf"
 elif [ "${runtype}" == "test" ]; then
-  run_script="/cleansumstats/tests/run-tests.sh"
+  mkdir -p test_logs
+  if [ -n "${specific_test}" ]; then
+    if [ -n "${parallel_option}" ]; then
+      run_script="/cleansumstats/tests/run-tests.sh ${specific_test} --parallel ${parallel_option}"
+    else
+      run_script="/cleansumstats/tests/run-tests.sh ${specific_test}"
+    fi
+  else
+    if [ -n "${parallel_option}" ]; then
+      run_script="/cleansumstats/tests/run-tests.sh --parallel ${parallel_option}"
+    else
+      run_script="/cleansumstats/tests/run-tests.sh"
+    fi
+  fi
 elif [ "${runtype}" == "utest" ]; then
-  run_script="/cleansumstats/tests/run-unit-tests.sh"
+  mkdir -p test_logs
+  if [ -n "${specific_test}" ]; then
+    run_script="/cleansumstats/tests/run-unit-tests.sh ${specific_test}"
+  else
+    run_script="/cleansumstats/tests/run-unit-tests.sh"
+  fi
 elif [ "${runtype}" == "etest" ]; then
   mkdir -p tmp
-  run_script="/cleansumstats/tests/run-e2e-tests.sh"
+  mkdir -p test_logs
+  if [ -n "${specific_test}" ]; then
+    if [ -n "${parallel_option}" ]; then
+      run_script="/cleansumstats/tests/run-e2e-tests.sh ${specific_test} --parallel ${parallel_option}"
+    else
+      run_script="/cleansumstats/tests/run-e2e-tests.sh ${specific_test}"
+    fi
+  else
+    if [ -n "${parallel_option}" ]; then
+      run_script="/cleansumstats/tests/run-e2e-tests.sh --parallel ${parallel_option}"
+    else
+      run_script="/cleansumstats/tests/run-e2e-tests.sh"
+    fi
+  fi
 elif [ "${runtype}" == "prepare-dbsnp" ]; then
   run_script="/cleansumstats --generateDbSNPreference"
 elif [ "${runtype}" == "prepare-1kgp" ]; then
@@ -456,16 +525,9 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
        -B "${kgpdir_host}:${kgpdir_container}" \
        -B "${tmpdir_host}:${tmpdir_container}" \
        -B "${workdir_host}:${workdir_container}" \
+       -B "${testlogs_host}:${testlogs_container}" \
        "${runimage}" \
-       nextflow \
-         -log "${outdir_container}/.nextflow.log" \
-         run ${run_script} \
-         --extrapaths ${extrapaths3} \
-         ${devmode} \
-         --input "${infile_container}" \
-         --outdir "${outdir_container}" \
-         --libdirdbsnp "${dbsnpdir_container}" \
-         --kg1000AFGRCh38 "${kgpfile_container}"
+       ${run_script}
   fi
 elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
   echo "container: $runimage"
@@ -530,16 +592,9 @@ else
      -B "${kgpdir_host}:${kgpdir_container}" \
      -B "${tmpdir_host}:${tmpdir_container}" \
      -B "${workdir_host}:${workdir_container}" \
+     -B "${testlogs_host}:${testlogs_container}" \
      "${runimage}" \
-     nextflow \
-       -log "${outdir_container}/.nextflow.log" \
-       run ${run_script} \
-       --extrapaths ${extrapaths3} \
-       ${devmode} \
-       --input "${infile_container}" \
-       --outdir "${outdir_container}" \
-       --libdirdbsnp "${dbsnpdir_container}" \
-       --kg1000AFGRCh38 "${kgpfile_container}"
+     ${run_script}
 fi
 
 if ${pathquicktest}; then
