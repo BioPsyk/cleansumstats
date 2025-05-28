@@ -8,6 +8,15 @@ project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
 work_dir="${project_dir}/tmp/regression-347"
 outdir="${work_dir}/out"
+log_dir="${project_dir}/test_logs"
+
+# Create log directory if it doesn't exist
+mkdir -p "${log_dir}"
+
+echo "regression-347-started"
+
+# Redirect all output to log file
+exec > "${log_dir}/regression-347.log" 2>&1
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
@@ -71,12 +80,12 @@ EOF
 #NOTE: this is a sumstat with -neglog10=true, so P values are not same as input.
 cat <<EOF > ./expected-result1.tsv
 CHR	POS	0	RSID	EffectAllele	OtherAllele	B	SE	Z	P	EAF	EAF_1KG
-18	31901577	1	rs12709653	A	G	-0.0142	0.49811951	-0.028507	0.481282	0.7167	0.71
-1	154199074	2	rs12726220	A	G	-0.0315	0.59397106	-0.053033	0.556288	0.9274	0.93
-1	8413753	3	rs12754538	C	T	0.0006	0.015	0.040000	0.966300	0.7833	0.78
-2	28958241	4	rs10197378	G	A	0.0189	0.65247484	0.028967	0.598963	0.7932	0.79
-3	140461721	5	rs6439928	T	C	-0.0157	0.57708202	-0.027206	0.543501	0.6869	0.68
-7	43168054	6	rs6463169	C	T	0.0219	0.69637202	0.031449	0.629216	0.2087	0.21
+18	31901577	1	rs12709653	A	G	-0.0142	0.49811951	-0.028507	4.81282e-01	0.7167	0.71
+1	154199074	2	rs12726220	A	G	-0.0315	0.59397106	-0.053033	5.56288e-01	0.9274	0.93
+1	8413753	3	rs12754538	C	T	0.0006	0.015	0.040000	9.66300e-01	0.7833	0.78
+2	28958241	4	rs10197378	G	A	0.0189	0.65247484	0.028967	5.98963e-01	0.7932	0.79
+3	140461721	5	rs6439928	T	C	-0.0157	0.57708202	-0.027206	5.43501e-01	0.6869	0.68
+7	43168054	6	rs6463169	C	T	0.0219	0.69637202	0.031449	6.29216e-01	0.2087	0.21
 EOF
 
 gzip "./input.txt"
@@ -92,6 +101,7 @@ time nextflow -q run -offline \
 if [[ $? != 0 ]]
 then
   cat .nextflow.log
+  echo "regression-347-failed" > /dev/stderr
   exit 1
 fi
 
@@ -121,13 +131,13 @@ function _check_results {
    echo "exp------------------------"
    cat $exp
    echo "---------------------------"
-
-    echo "- [FAIL] regression-347"
-    cat ./difference
-    exit 1
+   cat ./difference
+   echo "regression-347-failed" > /dev/stderr
+   exit 1
   fi
-
 }
 
 mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv
+
+echo "regression-347-succeeded" > /dev/stderr

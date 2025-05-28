@@ -8,6 +8,15 @@ project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
 work_dir="${project_dir}/tmp/regression-282"
 outdir="${work_dir}/out"
+log_dir="${project_dir}/test_logs"
+
+# Create log directory if it doesn't exist
+mkdir -p "${log_dir}"
+
+echo "regression-282-started"
+
+# Redirect all output to log file
+exec > "${log_dir}/regression-282.log" 2>&1
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
@@ -63,8 +72,8 @@ EOF
 
 cat <<EOF > ./expected-result1.tsv
 CHR	POS	0	RSID	EffectAllele	OtherAllele	B	SE	Z	P	EAF_1KG	Direction	StudyN
-12	117668628	5	rs645510	C	T	0.0151	0.0143	1.055944	0.510505	0.33	+-+	3
-3	140461721	1	rs6439928	T	C	-0.0157	0.0141	-1.113475	0.543501	0.68	+-?	3
+12	117668628	5	rs645510	C	T	0.0151	0.0143	1.055944	5.10505e-01	0.33	+-+	3
+3	140461721	1	rs6439928	T	C	-0.0157	0.0141	-1.113475	5.43501e-01	0.68	+-?	3
 EOF
 
 gzip "./input.txt"
@@ -80,6 +89,7 @@ time nextflow -q run -offline \
 if [[ $? != 0 ]]
 then
   cat .nextflow.log
+  echo "regression-282-failed" > /dev/stderr
   exit 1
 fi
 
@@ -109,14 +119,14 @@ function _check_results {
    echo "----------exp--------------"
    cat $exp
    echo "---------------------------"
-
-    echo "- [FAIL] regression-282"
-    cat ./difference
-    exit 1
+   cat ./difference
+   echo "regression-282-failed" > /dev/stderr
+   exit 1
   fi
-
 }
 
 mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv
+
+echo "regression-282-succeeded" > /dev/stderr
 
