@@ -79,16 +79,21 @@ create_session_dir() {
 
 # Check if terminal supports fancy output
 supports_fancy_output() {
-    [[ -t 1 ]] && [[ "$TERM" != "dumb" ]] && command -v tput >/dev/null 2>&1
+    # Check if we have a terminal, not a dumb terminal, and tput is available
+    [[ -t 1 ]] && [[ "${TERM:-dumb}" != "dumb" ]] && {
+        # Use a subshell to safely check tput availability
+        bash -c 'command -v tput >/dev/null 2>&1 && tput colors >/dev/null 2>&1' 2>/dev/null || false
+    }
 }
 
 # Get terminal width
 get_terminal_width() {
+    local width=80
     if supports_fancy_output; then
-        tput cols 2>/dev/null || echo 80
-    else
-        echo 80
+        # Use a subshell to prevent set -euo pipefail from affecting tput
+        width=$(bash -c 'tput cols 2>/dev/null || echo 80' 2>/dev/null || echo 80)
     fi
+    echo "$width"
 }
 
 # Extract test name from file path

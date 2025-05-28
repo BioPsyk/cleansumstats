@@ -16,42 +16,60 @@ declare -g LAST_UPDATE_TIME=0
 init_progress_display() {
     local show_progress="${1:-true}"
     
+    echo "DEBUG: init_progress_display called with show_progress=$show_progress" >&2
+    
     if [[ "$show_progress" != "true" ]]; then
         PROGRESS_MODE="none"
+        echo "DEBUG: Progress mode set to none" >&2
         return 0
     fi
     
+    echo "DEBUG: Checking terminal capabilities" >&2
     # Detect terminal capabilities
     if supports_fancy_output; then
+        echo "DEBUG: Fancy output supported" >&2
         PROGRESS_MODE="fancy"
         TERMINAL_WIDTH=$(get_terminal_width)
+        echo "DEBUG: Terminal width: $TERMINAL_WIDTH" >&2
         
-        # Save terminal state
-        tput smcup 2>/dev/null || PROGRESS_MODE="simple"
+        # Save terminal state (ignore failures) - use subshell for safety
+        echo "DEBUG: Attempting tput smcup" >&2
+        if ! (bash -c 'tput smcup' 2>/dev/null); then
+            echo "DEBUG: tput smcup failed, falling back to simple mode" >&2
+            PROGRESS_MODE="simple"
+        fi
+        echo "DEBUG: Progress mode after tput smcup: $PROGRESS_MODE" >&2
         
-        # Hide cursor
-        tput civis 2>/dev/null || true
+        # Hide cursor (ignore failures) - use subshell for safety
+        echo "DEBUG: Attempting tput civis" >&2
+        (bash -c 'tput civis' 2>/dev/null) || true
         
-        # Setup cleanup trap
-        trap cleanup_progress_display EXIT
+        # Setup cleanup trap only if fancy mode succeeded
+        if [[ "$PROGRESS_MODE" == "fancy" ]]; then
+            echo "DEBUG: Setting up cleanup trap" >&2
+            trap cleanup_progress_display EXIT
+        fi
         
-        # Clear screen
-        tput clear 2>/dev/null || true
+        # Clear screen (ignore failures) - use subshell for safety
+        echo "DEBUG: Attempting tput clear" >&2
+        (bash -c 'tput clear' 2>/dev/null) || true
     else
+        echo "DEBUG: Fancy output not supported, using simple mode" >&2
         PROGRESS_MODE="simple"
     fi
     
     PROGRESS_ACTIVE=true
+    echo "DEBUG: Progress display initialized in $PROGRESS_MODE mode" >&2
     log_debug "Progress display initialized in $PROGRESS_MODE mode"
 }
 
 # Cleanup progress display
 cleanup_progress_display() {
     if [[ "$PROGRESS_MODE" == "fancy" ]]; then
-        # Show cursor
-        tput cnorm 2>/dev/null || true
-        # Restore terminal state
-        tput rmcup 2>/dev/null || true
+        # Show cursor - use subshell for safety
+        (bash -c 'tput cnorm' 2>/dev/null) || true
+        # Restore terminal state - use subshell for safety
+        (bash -c 'tput rmcup' 2>/dev/null) || true
     fi
     PROGRESS_ACTIVE=false
 }
@@ -116,9 +134,9 @@ draw_fancy_progress_display() {
         percent=$(( (completed + failed) * 100 / total ))
     fi
     
-    # Clear screen and position cursor
-    tput clear 2>/dev/null || true
-    tput cup 0 0 2>/dev/null || true
+    # Clear screen and position cursor - use subshells for safety
+    (bash -c 'tput clear' 2>/dev/null) || true
+    (bash -c 'tput cup 0 0' 2>/dev/null) || true
     
     # Calculate box width based on terminal
     local box_width=$((TERMINAL_WIDTH > 80 ? 80 : TERMINAL_WIDTH - 2))
