@@ -23,11 +23,36 @@ echo "| Running unit tests in: ${tmp_dir}"
 echo "==================================================================="
 cd "${tmp_dir}"
 
-# #Test only one case (for dev purposes)
-#"${test_dir}/unit/test_dbsnp_reference_filter_and_convert.sh"
-#exit 0
+# Parse arguments - only look for specific test name
+specific_test=""
 
-for test_file in "${test_dir}/unit/"test_*.sh
-do
-  "${test_file}"
+for arg in "$@"; do
+  if [ -z "$specific_test" ]; then
+    specific_test="$arg"
+  fi
 done
+
+# Check if a specific test is provided
+if [ -n "$specific_test" ]; then
+  test_file="${test_dir}/unit/test_${specific_test}.sh"
+  
+  if [ -f "${test_file}" ]; then
+    echo "Running specific unit test: ${specific_test}"
+    "${test_file}"
+  else
+    echo "Error: Unit test file ${test_file} not found"
+    echo "Available unit tests:"
+    ls "${test_dir}/unit/"test_*.sh | sed 's/.*test_//' | sed 's/\.sh$//' | sort
+    exit 1
+  fi
+else
+  # Run all unit tests sequentially
+  # #Test only one case (for dev purposes)
+  #"${test_dir}/unit/test_dbsnp_reference_filter_and_convert.sh"
+  #exit 0
+
+  for test_file in "${test_dir}/unit/"test_*.sh
+  do
+    "${test_file}"
+  done
+fi

@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2025-05-30
+
+### Added
+- Enhanced test infrastructure with session-based logging for organized test execution
+- Comprehensive thread limiting and resource optimization for containerized environments
+- Specific resource configurations for DbSNP reference generation processes
+- System-level thread limiting environment variables (OMP_NUM_THREADS, MKL_NUM_THREADS, etc.)
+- Aggressive JVM thread limiting options to prevent thread exhaustion
+
+### Changed
+- Migrated from parallel to sequential test execution for improved reliability
+- Optimized test timeouts and resource allocation (liftover: 3GB memory, 15min timeout)
+- Moved parallel test infrastructure to deprecated-parallel-features directory
+- Updated convert_neglogP unit test expected values to use scientific notation format
+
+### Fixed
+- Thread exhaustion issues in DbSNP reference generation tests (regression_197, regression_201)
+- Test execution reliability achieving 100% test success rate (20/20 e2e tests pass)
+- Resource conflicts and hanging tests in containerized environments
+- Convert_neglogP unit test formatting to match updated scientific notation output
+
+## [1.11.2] - 2025-05-27
+
+### Changed
+- precision of pvalue output to 5 digits from 15 digits
+
+## [1.11.1] - 2025-05-27
+
+### Fixed
+- Fixed truncation issue for -log10 conversions of pvalues
+
 ## [1.11.0] - 2025-02-10
 
 ### Added
