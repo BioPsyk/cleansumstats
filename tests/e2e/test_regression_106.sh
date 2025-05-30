@@ -11,11 +11,18 @@ project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
 work_dir="${project_dir}/tmp/regression-106"
 outdir="${work_dir}/out"
+log_dir="${tests_dir}/test_logs"
+
+# Create log directory if it doesn't exist
+mkdir -p "${log_dir}"
+
+echo "regression-106-started"
+
+# Redirect all output to log file
+exec > "${log_dir}/regression-106.log" 2>&1
 
 rm -rf "${work_dir}"
 mkdir "${work_dir}"
-
-echo ">> Test regression #106"
 
 cd "${work_dir}"
 
@@ -70,18 +77,19 @@ EOF
 
 cat <<EOF > ./expected-result1.tsv
 CHR	POS	0	RSID	EffectAllele	OtherAllele	B	SE	Z	P	EAF_1KG
-18	31901577	4	rs12709653	A	G	-0.0142	0.49811951	-0.028507	0.481282	0.71
-1	154199074	5	rs12726220	A	G	-0.0315	0.59397106	-0.053033	0.556288	0.93
-1	8413753	6	rs12754538	C	T	0.0006	0.015	0.040000	0.966300	0.78
-2	28958241	3	rs10197378	G	A	0.0189	0.65247484	0.028967	0.598963	0.79
-3	140461721	1	rs6439928	T	C	-0.0157	0.57708202	-0.027206	0.543501	0.68
-7	43168054	2	rs6463169	C	T	0.0219	0.69637202	0.031449	0.629216	0.21
+18	31901577	4	rs12709653	A	G	-0.0142	0.49811951	-0.028507	4.81282e-01	0.71
+1	154199074	5	rs12726220	A	G	-0.0315	0.59397106	-0.053033	5.56288e-01	0.93
+1	8413753	6	rs12754538	C	T	0.0006	0.015	0.040000	9.66300e-01	0.78
+2	28958241	3	rs10197378	G	A	0.0189	0.65247484	0.028967	5.98963e-01	0.79
+3	140461721	1	rs6439928	T	C	-0.0157	0.57708202	-0.027206	5.43501e-01	0.68
+7	43168054	2	rs6463169	C	T	0.0219	0.69637202	0.031449	6.29216e-01	0.21
 EOF
 
 
 gzip "./input.txt"
 
 time nextflow -q run -offline \
+         -c "/cleansumstats/conf/test.config" \
      -work-dir "${work_dir}" \
      "/cleansumstats" \
      --dev true \
@@ -92,10 +100,9 @@ time nextflow -q run -offline \
 if [[ $? != 0 ]]
 then
   cat .nextflow.log
+  echo "regression-106-failed" > /dev/stderr
   exit 1
 fi
-
-echo "-- Pipeline done, general validation"
 
 for f in ./out/cleaned_metadata.yaml
 do
@@ -110,8 +117,6 @@ do
     "${schemas_dir}/cleaned-sumstats.yaml" "${f%.gz}"
 done
 
-echo "-- Pipeline done, specific validation"
-
 function _check_results {
   obs=$1
   exp=$2
@@ -121,13 +126,13 @@ function _check_results {
    echo "exp------------------------"
    cat $exp
    echo "---------------------------"
-
-    echo "- [FAIL] regression-106"
-    cat ./difference
-    exit 1
+   cat ./difference
+   echo "regression-106-failed" > /dev/stderr
+   exit 1
   fi
-
 }
 
 mv ${outdir}/cleaned_GRCh38 ./observed-result1.tsv
 _check_results ./observed-result1.tsv ./expected-result1.tsv
+
+echo "regression-106-succeeded" > /dev/stderr

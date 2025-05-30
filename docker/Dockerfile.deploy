@@ -13,7 +13,6 @@ COPY bin ./bin
 COPY CHANGELOG.md ./CHANGELOG.md
 COPY conf ./conf
 COPY docs ./docs
-COPY lib ./lib
 COPY main.nf ./main.nf
 COPY nextflow.config ./nextflow.config
 COPY README.md ./README.md

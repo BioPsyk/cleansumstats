@@ -17,6 +17,14 @@ function general_usage(){
  echo " ./cleansumstats.sh prepare-dbsnp -i <file> -o <dir>"
  echo " ./cleansumstats.sh prepare-1kgp -i <file> -d <dir> -o <dir>"
  echo ""
+ echo "Run tests:"
+ echo " ./cleansumstats.sh test                    # Run all tests (unit + e2e)"
+ echo " ./cleansumstats.sh test <test_name>        # Run specific test"
+ echo " ./cleansumstats.sh utest                   # Run all unit tests"
+ echo " ./cleansumstats.sh utest <test_name>       # Run specific unit test"
+ echo " ./cleansumstats.sh etest                   # Run all e2e tests"
+ echo " ./cleansumstats.sh etest <test_name>       # Run specific e2e test"
+ echo ""
  echo "options:"
  echo "-h		 Display help message for cleansumstats"
  echo "-i <file> 	 path to infile"
@@ -63,20 +71,42 @@ elif [ ${paramarray[0]} == "prepare-1kgp" ] ; then
   paramarray=("${paramarray[@]:1}")
 elif [ ${paramarray[0]} == "test" ] ; then
   runtype="test"
-  paramarray=("${paramarray[@]:1}")
+  # Check if a specific test is specified
+  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
+    specific_test="${paramarray[1]}"
+    paramarray=("${paramarray[@]:2}")
+  else
+    specific_test=""
+    paramarray=("${paramarray[@]:1}")
+  fi
 elif [ ${paramarray[0]} == "utest" ] ; then
   runtype="utest"
-  paramarray=("${paramarray[@]:1}")
+  # Check if a specific test is specified
+  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
+    specific_test="${paramarray[1]}"
+    paramarray=("${paramarray[@]:2}")
+  else
+    specific_test=""
+    paramarray=("${paramarray[@]:1}")
+  fi
 elif [ ${paramarray[0]} == "etest" ] ; then
   runtype="etest"
-  paramarray=("${paramarray[@]:1}")
+  # Check if a specific test is specified
+  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
+    specific_test="${paramarray[1]}"
+    paramarray=("${paramarray[@]:2}")
+  else
+    specific_test=""
+    paramarray=("${paramarray[@]:1}")
+  fi
 else
   runtype="default"
+  specific_test=""
 fi
 
 
 # starting getops with :, puts the checking in silent mode for errors.
-getoptsstring=":hvi:o:d:k:b:w:p:e:j:tl"
+getoptsstring=":hvi:o:d:k:b:w:p:e:j:tl:"
 
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
@@ -343,6 +373,9 @@ kgpfile_name="1kg_af_ref.txt"
 kgpdir_container="/cleansumstats/kgpdir"
 kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
+# test_logs (for test modes)
+testlogs_host="${project_dir}/tests/test_logs"
+testlogs_container="/cleansumstats/tests/test_logs"
 
 # Use outdir as fake home to avoid lock issues for the hidden .nextflow/history file
 #FAKE_HOME="${outdir_container}"
@@ -363,12 +396,27 @@ kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 if [ "${runtype}" == "default" ]; then
   run_script="/cleansumstats/main.nf"
 elif [ "${runtype}" == "test" ]; then
-  run_script="/cleansumstats/tests/run-tests.sh"
+  mkdir -p tests/test_logs
+  if [ -n "${specific_test}" ]; then
+    run_script="/cleansumstats/tests/run-tests.sh ${specific_test}"
+  else
+    run_script="/cleansumstats/tests/run-tests.sh"
+  fi
 elif [ "${runtype}" == "utest" ]; then
-  run_script="/cleansumstats/tests/run-unit-tests.sh"
+  mkdir -p tests/test_logs
+  if [ -n "${specific_test}" ]; then
+    run_script="/cleansumstats/tests/run-unit-tests.sh ${specific_test}"
+  else
+    run_script="/cleansumstats/tests/run-unit-tests.sh"
+  fi
 elif [ "${runtype}" == "etest" ]; then
   mkdir -p tmp
-  run_script="/cleansumstats/tests/run-e2e-tests.sh"
+  mkdir -p tests/test_logs
+  if [ -n "${specific_test}" ]; then
+    run_script="/cleansumstats/tests/run-e2e-tests.sh ${specific_test}"
+  else
+    run_script="/cleansumstats/tests/run-e2e-tests.sh"
+  fi
 elif [ "${runtype}" == "prepare-dbsnp" ]; then
   run_script="/cleansumstats --generateDbSNPreference"
 elif [ "${runtype}" == "prepare-1kgp" ]; then
@@ -430,42 +478,28 @@ if ${pathquicktest}; then
  echo "--libdirdbsnp ${dbsnpdir_container}"
  echo "--kg1000AFGRCh38 ${kgpfile_container}"
 elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
+  # Dedicated simplified flow for test modes
+  # Use existing mount infrastructure for clean, minimal mounting
+  
+  echo "container: $runimage"
+  
   if [ "${container_image}" == "dockerhub_biopsyk" ]; then
-    echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
     exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   elif [ "${container_image}" == "docker" ]; then
-    echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
     exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   else
-    echo "container: $runimage"
+    # Singularity - use existing mount infrastructure
     mount_flags=$(format_mount_flags "-B")
     singularity run \
-       --net \
-       --network none \
        --no-eval \
        --cleanenv \
        --containall \
-       --home "${outdir_container}" \
+       --home "/cleansumstats/tmp" \
        ${mount_flags} \
-       ${extrapaths2} \
-       -B "${indir_host}:${indir_container}" \
-       -B "${outdir_host}:${outdir_container}" \
-       -B "${dbsnpdir_host}:${dbsnpdir_container}" \
-       -B "${kgpdir_host}:${kgpdir_container}" \
-       -B "${tmpdir_host}:${tmpdir_container}" \
-       -B "${workdir_host}:${workdir_container}" \
        "${runimage}" \
-       nextflow \
-         -log "${outdir_container}/.nextflow.log" \
-         run ${run_script} \
-         --extrapaths ${extrapaths3} \
-         ${devmode} \
-         --input "${infile_container}" \
-         --outdir "${outdir_container}" \
-         --libdirdbsnp "${dbsnpdir_container}" \
-         --kg1000AFGRCh38 "${kgpfile_container}"
+       ${run_script}
   fi
 elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
   echo "container: $runimage"
@@ -516,30 +550,13 @@ else
   mount_flags=$(format_mount_flags "-B")
   
   singularity run \
-     --net \
-     --network none \
      --no-eval \
      --cleanenv \
      --containall \
-     --home "${outdir_container}" \
+     --home "/cleansumstats/tmp" \
      ${mount_flags} \
-     ${extrapaths2} \
-     -B "${indir_host}:${indir_container}" \
-     -B "${outdir_host}:${outdir_container}" \
-     -B "${dbsnpdir_host}:${dbsnpdir_container}" \
-     -B "${kgpdir_host}:${kgpdir_container}" \
-     -B "${tmpdir_host}:${tmpdir_container}" \
-     -B "${workdir_host}:${workdir_container}" \
      "${runimage}" \
-     nextflow \
-       -log "${outdir_container}/.nextflow.log" \
-       run ${run_script} \
-       --extrapaths ${extrapaths3} \
-       ${devmode} \
-       --input "${infile_container}" \
-       --outdir "${outdir_container}" \
-       --libdirdbsnp "${dbsnpdir_container}" \
-       --kg1000AFGRCh38 "${kgpfile_container}"
+     ${run_script}
 fi
 
 if ${pathquicktest}; then
