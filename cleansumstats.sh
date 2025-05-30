@@ -38,7 +38,6 @@ function general_usage(){
  echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
  echo "-l  	 	 dev mode, saving intermediate files, no cleanup of workdir(default: not active)"
  echo "-j  	 	 image mode, run docker, dockerhub_biopsyk or singularity (if unset or empty: singularity)"
- echo "-P <num> 	 run tests in parallel with max <num> jobs (only for test/etest modes, default: 2)"
  echo "-v  	 	 get the version number"
 }
 
@@ -107,7 +106,7 @@ fi
 
 
 # starting getops with :, puts the checking in silent mode for errors.
-getoptsstring=":hvi:o:d:k:b:w:p:e:j:tlP:"
+getoptsstring=":hvi:o:d:k:b:w:p:e:j:tl:"
 
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
@@ -130,7 +129,6 @@ devmode_given=false
 container_image_given=false
 pathquicktest=false
 runexampledata=false
-parallel_option=""
 
 # default extrapaths values
 unset extrapaths
@@ -194,9 +192,6 @@ while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
       ;;
     t )
       pathquicktest=true
-      ;;
-    P )
-      parallel_option="$OPTARG"
       ;;
     \? )
       echo "Invalid Option: -$OPTARG" 1>&2
@@ -403,17 +398,9 @@ if [ "${runtype}" == "default" ]; then
 elif [ "${runtype}" == "test" ]; then
   mkdir -p tests/test_logs
   if [ -n "${specific_test}" ]; then
-    if [ -n "${parallel_option}" ]; then
-      run_script="/cleansumstats/tests/run-tests.sh ${specific_test} --parallel ${parallel_option}"
-    else
-      run_script="/cleansumstats/tests/run-tests.sh ${specific_test}"
-    fi
+    run_script="/cleansumstats/tests/run-tests.sh ${specific_test}"
   else
-    if [ -n "${parallel_option}" ]; then
-      run_script="/cleansumstats/tests/run-tests.sh --parallel ${parallel_option}"
-    else
-      run_script="/cleansumstats/tests/run-tests.sh"
-    fi
+    run_script="/cleansumstats/tests/run-tests.sh"
   fi
 elif [ "${runtype}" == "utest" ]; then
   mkdir -p tests/test_logs
@@ -426,17 +413,9 @@ elif [ "${runtype}" == "etest" ]; then
   mkdir -p tmp
   mkdir -p tests/test_logs
   if [ -n "${specific_test}" ]; then
-    if [ -n "${parallel_option}" ]; then
-      run_script="/cleansumstats/tests/run-e2e-tests.sh ${specific_test} --parallel ${parallel_option}"
-    else
-      run_script="/cleansumstats/tests/run-e2e-tests.sh ${specific_test}"
-    fi
+    run_script="/cleansumstats/tests/run-e2e-tests.sh ${specific_test}"
   else
-    if [ -n "${parallel_option}" ]; then
-      run_script="/cleansumstats/tests/run-e2e-tests.sh --parallel ${parallel_option}"
-    else
-      run_script="/cleansumstats/tests/run-e2e-tests.sh"
-    fi
+    run_script="/cleansumstats/tests/run-e2e-tests.sh"
   fi
 elif [ "${runtype}" == "prepare-dbsnp" ]; then
   run_script="/cleansumstats --generateDbSNPreference"
@@ -499,33 +478,26 @@ if ${pathquicktest}; then
  echo "--libdirdbsnp ${dbsnpdir_container}"
  echo "--kg1000AFGRCh38 ${kgpfile_container}"
 elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
+  # Dedicated simplified flow for test modes
+  # Use existing mount infrastructure for clean, minimal mounting
+  
+  echo "container: $runimage"
+  
   if [ "${container_image}" == "dockerhub_biopsyk" ]; then
-    echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
     exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   elif [ "${container_image}" == "docker" ]; then
-    echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
     exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
   else
-    echo "container: $runimage"
+    # Singularity - use existing mount infrastructure
     mount_flags=$(format_mount_flags "-B")
     singularity run \
-       --net \
-       --network none \
        --no-eval \
        --cleanenv \
        --containall \
-       --home "${outdir_container}" \
+       --home "/cleansumstats/tmp" \
        ${mount_flags} \
-       ${extrapaths2} \
-       -B "${indir_host}:${indir_container}" \
-       -B "${outdir_host}:${outdir_container}" \
-       -B "${dbsnpdir_host}:${dbsnpdir_container}" \
-       -B "${kgpdir_host}:${kgpdir_container}" \
-       -B "${tmpdir_host}:${tmpdir_container}" \
-       -B "${workdir_host}:${workdir_container}" \
-       -B "${testlogs_host}:${testlogs_container}" \
        "${runimage}" \
        ${run_script}
   fi
@@ -578,21 +550,11 @@ else
   mount_flags=$(format_mount_flags "-B")
   
   singularity run \
-     --net \
-     --network none \
      --no-eval \
      --cleanenv \
      --containall \
-     --home "${outdir_container}" \
+     --home "/cleansumstats/tmp" \
      ${mount_flags} \
-     ${extrapaths2} \
-     -B "${indir_host}:${indir_container}" \
-     -B "${outdir_host}:${outdir_container}" \
-     -B "${dbsnpdir_host}:${dbsnpdir_container}" \
-     -B "${kgpdir_host}:${kgpdir_container}" \
-     -B "${tmpdir_host}:${tmpdir_container}" \
-     -B "${workdir_host}:${workdir_container}" \
-     -B "${testlogs_host}:${testlogs_container}" \
      "${runimage}" \
      ${run_script}
 fi

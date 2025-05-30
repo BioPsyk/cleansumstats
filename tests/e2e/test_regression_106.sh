@@ -11,7 +11,7 @@ project_dir=$(dirname "${tests_dir}")
 schemas_dir="${project_dir}/assets/schemas"
 work_dir="${project_dir}/tmp/regression-106"
 outdir="${work_dir}/out"
-log_dir="${project_dir}/test_logs"
+log_dir="${tests_dir}/test_logs"
 
 # Create log directory if it doesn't exist
 mkdir -p "${log_dir}"
@@ -89,6 +89,7 @@ EOF
 gzip "./input.txt"
 
 time nextflow -q run -offline \
+         -c "/cleansumstats/conf/test.config" \
      -work-dir "${work_dir}" \
      "/cleansumstats" \
      --dev true \

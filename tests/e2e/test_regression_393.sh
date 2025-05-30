@@ -83,6 +83,7 @@ EOF
 gzip "./input.txt"
 
 time nextflow -q run -offline \
+         -c "/cleansumstats/conf/test.config" \
      -work-dir "${work_dir}" \
      "/cleansumstats" \
      --dev true \
