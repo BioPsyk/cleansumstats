@@ -493,10 +493,9 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
     # Singularity - use existing mount infrastructure
     mount_flags=$(format_mount_flags "-B")
     singularity run \
-       --no-eval \
        --cleanenv \
        --containall \
-       --home "/cleansumstats/tmp" \
+       --home "${outdir_container}" \
        ${mount_flags} \
        "${runimage}" \
        ${run_script}
@@ -550,10 +549,9 @@ else
   mount_flags=$(format_mount_flags "-B")
   
   singularity run \
-     --no-eval \
      --cleanenv \
      --containall \
-     --home "/cleansumstats/tmp" \
+     --home "${outdir_container}" \
      ${mount_flags} \
      -B "${indir_host}:${indir_container}" \
      -B "${outdir_host}:${outdir_container}" \
