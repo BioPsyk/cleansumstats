@@ -555,8 +555,22 @@ else
      --containall \
      --home "/cleansumstats/tmp" \
      ${mount_flags} \
+     -B "${indir_host}:${indir_container}" \
+     -B "${outdir_host}:${outdir_container}" \
+     -B "${dbsnpdir_host}:${dbsnpdir_container}" \
+     -B "${kgpdir_host}:${kgpdir_container}" \
+     -B "${tmpdir_host}:${tmpdir_container}" \
+     -B "${workdir_host}:${workdir_container}" \
      "${runimage}" \
-     ${run_script}
+     nextflow \
+       -log "${outdir_container}/.nextflow.log" \
+       run ${run_script} \
+       --extrapaths ${extrapaths3} \
+       ${devmode} \
+       --input "${infile_container}" \
+       --outdir "${outdir_container}" \
+       --libdirdbsnp "${dbsnpdir_container}" \
+       --kg1000AFGRCh38 "${kgpfile_container}"
 fi
 
 if ${pathquicktest}; then
@@ -574,8 +588,12 @@ else
   else
     function cleanup {
       echo ">> Cleaning up (disable with -l) "
-      echo ">> Removing ${outdir_host}/.nextflow"
-      rm -r ${outdir_host}/.nextflow
+      if [ -d "${outdir_host}/.nextflow" ]; then
+        echo ">> Removing ${outdir_host}/.nextflow"
+        rm -r ${outdir_host}/.nextflow
+      else
+        echo ">> No .nextflow directory to remove"
+      fi
       echo ">> Done"
     }
     trap cleanup EXIT
