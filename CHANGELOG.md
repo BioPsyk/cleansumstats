@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.1] - 2025-06-11
+
+### Fixed
+- Fixed Singularity execution to include proper nextflow parameters and bind mounts
+- Set Singularity home directory to output directory to ensure .nextflow directory is created where cleanup expects it
+- Removed --no-eval flag for compatibility with older Singularity versions
+- Fixed permission denied error when running main.nf by adding execute permissions
+- Added directory existence check in cleanup function to prevent rm warnings
+- Addresses GitHub issue #441
+
 ## [1.12.0] - 2025-05-30
 
 ### Added
