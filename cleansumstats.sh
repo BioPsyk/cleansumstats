@@ -6,36 +6,127 @@
 # Help page
 ################################################################################
 
+# For devs:
+#  - Short options work: -j docker, -i file, -o dir
+#  - Long options work: --image docker, --input file, --output dir
+#  - Mixed usage works: test -j docker or test --image docker
+#  - The = syntax works: --input=file
+
 function general_usage(){
  echo "Usage:"
- echo " ./cleansumstats.sh -i <file> -o <dir> -d <dir> -k <dir>"
+ echo " ./cleansumstats.sh [OPTIONS]"
+ echo " ./cleansumstats.sh COMMAND [OPTIONS]"
  echo ""
- echo "Example usage, using the quick example flag:"
- echo " ./cleansumstats.sh -o <dir> -e"
+ echo "Available Commands:"
+ echo " prepare-dbsnp    Generate dbSNP reference files"
+ echo " prepare-1kgp     Generate 1000 Genomes reference files"
+ echo " test             Run tests (use -h for test-specific options)"
  echo ""
- echo "Generate references:"
- echo " ./cleansumstats.sh prepare-dbsnp -i <file> -o <dir>"
- echo " ./cleansumstats.sh prepare-1kgp -i <file> -d <dir> -o <dir>"
+ echo "Common Options:"
+ echo " -h, --help                Display help message"
+ echo " -v, --version             Display version number"
+ echo " -i, --input <file>        Path to input metadata file"
+ echo " -o, --output <dir>        Path to output directory"
+ echo " -d, --dbsnp <dir>         Path to dbSNP processed reference"
+ echo " -k, --1kgp, --kgp <dir>   Path to 1000 Genomes processed reference"
+ echo " -b, --tmpdir <dir>        Path to system tmp or scratch (default: /tmp)"
+ echo " -w, --workdir <dir>       Path to workdir/intermediate files (default: work)"
+ echo " -p, --paths <path1:path2> Path to metadata associated folders"
+ echo " -e, --example [1|2]       Quick example run using reduced test data"
+ echo " -l, --dev                 Dev mode, saves intermediate files, no cleanup"
+ echo " -j, --image <type>        Container image: docker, dockerhub_biopsyk, or singularity"
+ echo " -t, --test                Quick test for all paths and params"
  echo ""
- echo "Run tests (requires container):"
- echo " ./cleansumstats.sh test      # Run all tests"
- echo " ./cleansumstats.sh utest     # Run unit tests only"
- echo " ./cleansumstats.sh etest     # Run end-to-end tests only"
+ echo "Examples:"
+ echo " # Standard cleaning run"
+ echo " ./cleansumstats.sh --input metadata.yaml --output results --dbsnp dbsnp_ref --1kgp kgp_ref"
  echo ""
- echo "options:"
- echo "-h		 Display help message for cleansumstats"
- echo "-i <file> 	 path to infile"
- echo "-o <dir> 	 path to output directory"
- echo "-d <dir> 	 path to dbsnp processed reference"
- echo "-k <dir> 	 path to 1000 genomes processed reference"
- echo "-b <dir> 	 path to system tmp or scratch (default: /tmp)"
- echo "-w <dir> 	 path to workdir/intermediate files (default: work)"
- echo "-p path1:path2 	 path to metadata associated folders"
- echo "-t  	 	 quick test for all paths and params"
- echo "-e  	 	 quick example run using shrinked dbsnp and 1000 genomes references"
- echo "-l  	 	 dev mode, saving intermediate files, no cleanup of workdir(default: not active)"
- echo "-j  	 	 image mode, run docker, dockerhub_biopsyk or singularity (if unset or empty: singularity)"
- echo "-v  	 	 get the version number"
+ echo " # Quick example with reduced data"
+ echo " ./cleansumstats.sh --output out_test --example 1"
+ echo ""
+ echo " # Get help for a specific command"
+ echo " ./cleansumstats.sh test --help"
+ echo " ./cleansumstats.sh prepare-dbsnp --help"
+ echo ""
+ echo "For more information on a specific command, use:"
+ echo " ./cleansumstats.sh COMMAND --help"
+}
+
+function test_usage(){
+ echo "Usage: ./cleansumstats.sh test [OPTIONS]"
+ echo ""
+ echo "Run tests for the cleansumstats pipeline. Requires a container (Docker or Singularity)."
+ echo ""
+ echo "Test Options:"
+ echo " -h, --help          Display this help message"
+ echo " -u, --unit          Run unit tests only"
+ echo " -e, --e2e           Run end-to-end tests only"
+ echo " -j, --image <type>  Container to use: docker, dockerhub_biopsyk, or singularity"
+ echo ""
+ echo "Examples:"
+ echo " # Run all tests"
+ echo " ./cleansumstats.sh test --image docker"
+ echo ""
+ echo " # Run unit tests only"
+ echo " ./cleansumstats.sh test -u --image docker"
+ echo ""
+ echo " # Run end-to-end tests only"
+ echo " ./cleansumstats.sh test -e --image docker"
+ echo ""
+ echo " # Run tests with specific container"
+ echo " ./cleansumstats.sh test --image dockerhub_biopsyk"
+}
+
+function prepare_dbsnp_usage(){
+ echo "Usage: ./cleansumstats.sh prepare-dbsnp [OPTIONS]"
+ echo ""
+ echo "Generate dbSNP reference files for the cleansumstats pipeline."
+ echo ""
+ echo "Required Options:"
+ echo " -i, --input <file>   Path to dbSNP VCF file (e.g., GCF_000001405.40.gz)"
+ echo " -o, --output <dir>   Output directory for generated reference files"
+ echo ""
+ echo "Optional:"
+ echo " -h, --help           Display this help message"
+ echo " -j, --image <type>   Container to use: docker, dockerhub_biopsyk, or singularity"
+ echo " -l, --dev            Dev mode, saves intermediate files"
+ echo ""
+ echo "Examples:"
+ echo " # Generate dbSNP reference from downloaded VCF"
+ echo " ./cleansumstats.sh prepare-dbsnp --input dbsnp/GCF_000001405.40.gz --output out_dbsnp"
+ echo ""
+ echo " # Use with Docker container"
+ echo " ./cleansumstats.sh prepare-dbsnp -i dbsnp.vcf.gz -o out_dbsnp --image docker"
+ echo ""
+ echo "Note: This process requires significant memory (400GB) and time (~5 hours)."
+ echo "      For testing, use the -e flag with the main command for reduced test data."
+}
+
+function prepare_1kgp_usage(){
+ echo "Usage: ./cleansumstats.sh prepare-1kgp [OPTIONS]"
+ echo ""
+ echo "Generate 1000 Genomes Project reference files for the cleansumstats pipeline."
+ echo ""
+ echo "Required Options:"
+ echo " -i, --input <file>   Path to 1000 Genomes VCF file"
+ echo " -d, --dbsnp <dir>    Path to prepared dbSNP reference directory"
+ echo " -o, --output <dir>   Output directory for generated reference files"
+ echo ""
+ echo "Optional:"
+ echo " -h, --help           Display this help message"
+ echo " -j, --image <type>   Container to use: docker, dockerhub_biopsyk, or singularity"
+ echo " -l, --dev            Dev mode, saves intermediate files"
+ echo ""
+ echo "Examples:"
+ echo " # Generate 1KGP reference"
+ echo " ./cleansumstats.sh prepare-1kgp --input 1kgp/1000GENOMES-phase_3.vcf.gz \\"
+ echo "                                  --dbsnp out_dbsnp \\"
+ echo "                                  --output out_1kgp"
+ echo ""
+ echo " # Use with Docker container"
+ echo " ./cleansumstats.sh prepare-1kgp -i 1kgp.vcf.gz -d out_dbsnp -o out_1kgp --image docker"
+ echo ""
+ echo "Note: Requires dbSNP reference to be prepared first using prepare-dbsnp."
 }
 
 # If no arguments are provided, display usage and exit
@@ -54,34 +145,46 @@ project_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ################################################################################
 # Parameter parsing
 ################################################################################
-# whatever the input make it array
-paramarray=($@)
+# Save original arguments
+original_args=("$@")
 
-# check for modifiers
-if [ ${paramarray[0]} == "prepare-dbsnp" ] ; then
-  runtype="prepare-dbsnp"
-  # remove modifier, 1st element
-  paramarray=("${paramarray[@]:1}")
-elif [ ${paramarray[0]} == "prepare-1kgp" ] ; then
-  runtype="prepare-1kgp"
-  # remove modifier, 1st element
-  paramarray=("${paramarray[@]:1}")
-elif [ ${paramarray[0]} == "test" ] ; then
-  runtype="test"
-  paramarray=("${paramarray[@]:1}")
-elif [ ${paramarray[0]} == "utest" ] ; then
-  runtype="utest"
-  paramarray=("${paramarray[@]:1}")
-elif [ ${paramarray[0]} == "etest" ] ; then
-  runtype="etest"
-  paramarray=("${paramarray[@]:1}")
-else
-  runtype="default"
+# Check for command modifiers (first argument)
+runtype="default"
+command=""
+if [ $# -gt 0 ]; then
+  case "$1" in
+    prepare-dbsnp)
+      runtype="prepare-dbsnp"
+      command="prepare-dbsnp"
+      shift
+      # Check if help is requested for this command
+      if [ $# -gt 0 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+        prepare_dbsnp_usage
+        exit 0
+      fi
+      ;;
+    prepare-1kgp)
+      runtype="prepare-1kgp"
+      command="prepare-1kgp"
+      shift
+      # Check if help is requested for this command
+      if [ $# -gt 0 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+        prepare_1kgp_usage
+        exit 0
+      fi
+      ;;
+    test)
+      runtype="test"
+      command="test"
+      shift
+      # Check if help is requested for this command
+      if [ $# -gt 0 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+        test_usage
+        exit 0
+      fi
+      ;;
+  esac
 fi
-
-
-# starting getops with :, puts the checking in silent mode for errors.
-getoptsstring=":hvi:o:d:k:b:w:p:e:j:tl"
 
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
@@ -105,6 +208,10 @@ container_image_given=false
 pathquicktest=false
 runexampledata=false
 
+# Test-specific flags
+run_unit_tests=false
+run_e2e_tests=false
+
 # default extrapaths values
 unset extrapaths
 unset extrapaths2
@@ -114,66 +221,284 @@ tmpdir="/tmp"
 workdir="${present_dir}/work"
 devmode=""
 
-while getopts "${getoptsstring}" opt "${paramarray[@]}"; do
-  case ${opt} in
-    h )
+# Parse both short and long options using the common portable pattern
+while [ $# -gt 0 ]; do
+  case "$1" in
+    # Long options
+    --help)
       general_usage 1>&2
       exit 0
       ;;
-    v )
-      #write a something that parses the actual version number
+    --version)
       cat ${project_dir}/VERSION 1>&2
       exit 0
       ;;
-    i )
-      infile="$OPTARG"
+    --input)
+      infile="$2"
       infile_given=true
+      shift 2
       ;;
-    o )
-      outdir="$OPTARG"
+    --input=*)
+      infile="${1#*=}"
+      infile_given=true
+      shift
+      ;;
+    --output)
+      outdir="$2"
       outdir_given=true
+      shift 2
       ;;
-    d )
-      dbsnpdir="$OPTARG"
+    --output=*)
+      outdir="${1#*=}"
+      outdir_given=true
+      shift
+      ;;
+    --dbsnp)
+      dbsnpdir="$2"
       dbsnpdir_given=true
+      shift 2
       ;;
-    k )
-      kgpdir="$OPTARG"
+    --dbsnp=*)
+      dbsnpdir="${1#*=}"
+      dbsnpdir_given=true
+      shift
+      ;;
+    --1kgp|--kgp)
+      kgpdir="$2"
       kgpdir_given=true
+      shift 2
       ;;
-    b )
-      tmpdir="$OPTARG"
+    --1kgp=*|--kgp=*)
+      kgpdir="${1#*=}"
+      kgpdir_given=true
+      shift
+      ;;
+    --tmpdir)
+      tmpdir="$2"
       tmpdir_given=true
+      shift 2
       ;;
-    w )
-      workdir="$OPTARG"
+    --tmpdir=*)
+      tmpdir="${1#*=}"
+      tmpdir_given=true
+      shift
+      ;;
+    --workdir)
+      workdir="$2"
       workdir_given=true
+      shift 2
       ;;
-    p )
-      extrapaths="$OPTARG"
+    --workdir=*)
+      workdir="${1#*=}"
+      workdir_given=true
+      shift
+      ;;
+    --paths)
+      extrapaths="$2"
       extrapaths_given=true
+      shift 2
       ;;
-    e )
-      runexampledatanr="$OPTARG"
+    --paths=*)
+      extrapaths="${1#*=}"
+      extrapaths_given=true
+      shift
+      ;;
+    --example)
+      if [ -n "$2" ] && [[ "$2" != -* ]]; then
+        runexampledatanr="$2"
+        shift 2
+      else
+        runexampledatanr="1"
+        shift
+      fi
       runexampledata=true
       ;;
-    l )
+    --example=*)
+      runexampledatanr="${1#*=}"
+      runexampledata=true
+      shift
+      ;;
+    --dev)
       devmode="--dev"
       devmode_given=true
+      shift
       ;;
-    j )
-      container_image="$OPTARG"
+    --image|--container)
+      container_image="$2"
       container_image_given=true
+      shift 2
       ;;
-    t )
+    --image=*|--container=*)
+      container_image="${1#*=}"
+      container_image_given=true
+      shift
+      ;;
+    --test)
       pathquicktest=true
+      shift
       ;;
-    \? )
-      echo "Invalid Option: -$OPTARG" 1>&2
+    --unit)
+      run_unit_tests=true
+      shift
+      ;;
+    --e2e)
+      run_e2e_tests=true
+      shift
+      ;;
+    
+    # Short options
+    -h)
+      # Show command-specific help if in a command context
+      if [ "$command" = "test" ]; then
+        test_usage 1>&2
+      elif [ "$command" = "prepare-dbsnp" ]; then
+        prepare_dbsnp_usage 1>&2
+      elif [ "$command" = "prepare-1kgp" ]; then
+        prepare_1kgp_usage 1>&2
+      else
+        general_usage 1>&2
+      fi
+      exit 0
+      ;;
+    -v)
+      cat ${project_dir}/VERSION 1>&2
+      exit 0
+      ;;
+    -u)
+      # Unit test flag (only valid with test command)
+      if [ "$command" = "test" ]; then
+        run_unit_tests=true
+      else
+        echo "Error: -u flag is only valid with 'test' command" 1>&2
+        exit 1
+      fi
+      shift
+      ;;
+    -i)
+      infile="$2"
+      infile_given=true
+      shift 2
+      ;;
+    -o)
+      outdir="$2"
+      outdir_given=true
+      shift 2
+      ;;
+    -d)
+      dbsnpdir="$2"
+      dbsnpdir_given=true
+      shift 2
+      ;;
+    -k)
+      kgpdir="$2"
+      kgpdir_given=true
+      shift 2
+      ;;
+    -b)
+      tmpdir="$2"
+      tmpdir_given=true
+      shift 2
+      ;;
+    -w)
+      workdir="$2"
+      workdir_given=true
+      shift 2
+      ;;
+    -p)
+      extrapaths="$2"
+      extrapaths_given=true
+      shift 2
+      ;;
+    -e)
+      # Check if this is for e2e tests (with test command) or example data
+      if [ "$command" = "test" ]; then
+        run_e2e_tests=true
+        shift
+      else
+        # Original behavior for example data
+        if [ -n "$2" ] && [[ "$2" != -* ]]; then
+          runexampledatanr="$2"
+          shift 2
+        else
+          runexampledatanr="1"
+          shift
+        fi
+        runexampledata=true
+      fi
+      ;;
+    -l)
+      devmode="--dev"
+      devmode_given=true
+      shift
+      ;;
+    -j)
+      container_image="$2"
+      container_image_given=true
+      shift 2
+      ;;
+    -t)
+      pathquicktest=true
+      shift
+      ;;
+    
+    # Handle combined short options (e.g., -vt)
+    -[^-]*)
+      # Split combined options
+      opts="${1#-}"
+      shift
+      while [ -n "$opts" ]; do
+        opt="${opts:0:1}"
+        opts="${opts:1}"
+        case "$opt" in
+          h)
+            general_usage 1>&2
+            exit 0
+            ;;
+          v)
+            cat ${project_dir}/VERSION 1>&2
+            exit 0
+            ;;
+          t)
+            pathquicktest=true
+            ;;
+          l)
+            devmode="--dev"
+            devmode_given=true
+            ;;
+          e)
+            # Check context for e flag
+            if [ "$command" = "test" ]; then
+              run_e2e_tests=true
+            else
+              runexampledata=true
+              runexampledatanr="1"
+            fi
+            ;;
+          u)
+            # Unit test flag
+            if [ "$command" = "test" ]; then
+              run_unit_tests=true
+            else
+              echo "Invalid Option: -u (only valid with 'test' command)" 1>&2
+              exit 1
+            fi
+            ;;
+          *)
+            echo "Invalid Option: -$opt" 1>&2
+            exit 1
+            ;;
+        esac
+      done
+      ;;
+    
+    # Error handling
+    -*)
+      echo "Invalid Option: $1" 1>&2
       exit 1
       ;;
-    : )
-      echo "Invalid Option: -$OPTARG requires an argument" 1>&2
+    *)
+      # Non-option argument
+      echo "Unexpected argument: $1" 1>&2
       exit 1
       ;;
   esac
@@ -240,12 +565,25 @@ if $runexampledata; then
     echo "${runtype}"
     echo "unknown runtype"
   fi
-elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
+elif [ "${runtype}" == "test" ]; then
   # All are placeholders and not used
   infile="${project_dir}/VERSION"
   outdir="${outdir}"
   dbsnpdir="${outdir}"
   kgpdir="${outdir}"
+  
+  # Determine which test type to run based on flags
+  if ${run_unit_tests} && ${run_e2e_tests}; then
+    # Both flags set, run all tests (default behavior)
+    :
+  elif ${run_unit_tests}; then
+    # Override runtype to run unit tests only
+    runtype="utest"
+  elif ${run_e2e_tests}; then
+    # Override runtype to run e2e tests only
+    runtype="etest"
+  fi
+  # If neither flag is set, runtype remains "test" (run all tests)
 fi
 
 ################################################################################
