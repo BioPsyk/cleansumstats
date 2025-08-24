@@ -20,6 +20,7 @@ function general_usage(){
  echo "Available Commands:"
  echo " prepare-dbsnp    Generate dbSNP reference files"
  echo " prepare-1kgp     Generate 1000 Genomes reference files"
+ echo " map-only         Map variants without full cleaning (ALL variants mapped)"
  echo " test             Run tests (use -h for test-specific options)"
  echo ""
  echo "Common Options:"
@@ -61,11 +62,15 @@ function test_usage(){
  echo " -h, --help          Display this help message"
  echo " -u, --unit          Run unit tests only"
  echo " -e, --e2e           Run end-to-end tests only"
+ echo " -n, --name <test>   Run specific e2e test by name (use with -e)"
  echo " -j, --image <type>  Container to use: docker, dockerhub_biopsyk, or singularity"
  echo ""
  echo "Examples:"
  echo " # Run all tests"
  echo " ./cleansumstats.sh test --image docker"
+ echo ""
+ echo " # Run specific e2e test"
+ echo " ./cleansumstats.sh test -e -n maponly_basics --image docker"
  echo ""
  echo " # Run unit tests only"
  echo " ./cleansumstats.sh test -u --image docker"
@@ -129,6 +134,42 @@ function prepare_1kgp_usage(){
  echo "Note: Requires dbSNP reference to be prepared first using prepare-dbsnp."
 }
 
+function map_only_usage(){
+ echo "Usage: ./cleansumstats.sh map-only [OPTIONS]"
+ echo ""
+ echo "Map GWAS summary statistics to dbSNP references without full cleaning."
+ echo "ALL variants are mapped using a two-step approach:"
+ echo "  1. dbSNP mapping for common variants"
+ echo "  2. Liftover fallback for unmapped variants (indels, rare/novel variants)"
+ echo ""
+ echo "Required Options:"
+ echo " -i, --input <file>        Path to input metadata file"
+ echo " -o, --output <dir>        Output directory for mapped files"
+ echo " -d, --dbsnp <dir>         Path to dbSNP processed reference"
+ echo ""
+ echo "Optional:"
+ echo " -h, --help                Display this help message"
+ echo " -k, --1kgp <dir>          Path to 1000 Genomes reference (for AF)"
+ echo " -j, --image <type>        Container: docker, dockerhub_biopsyk, or singularity"
+ echo " --target-build <build>    Output genome build: GRCh37, GRCh38, or both (default)"
+ echo " --apply-mapping           Apply mapping directly to input file (creates mapped sumstats)"
+ echo " --keep-unmapped           Include unmapped variants in output"
+ echo " --output-format <format>  Output format: full or minimal (default: minimal)"
+ echo " -l, --dev                 Dev mode, saves intermediate files"
+ echo ""
+ echo "Examples:"
+ echo " # Generate mapping files for both genome builds"
+ echo " ./cleansumstats.sh map-only -i metadata.yaml -o mapped_output -d out_dbsnp"
+ echo ""
+ echo " # Map to GRCh38 and apply directly to input"
+ echo " ./cleansumstats.sh map-only -i metadata.yaml -o mapped_output -d out_dbsnp \\"
+ echo "                              --target-build GRCh38 --apply-mapping"
+ echo ""
+ echo " # Generate mapping file only (for manual paste later)"
+ echo " ./cleansumstats.sh map-only -i metadata.yaml -o mapped_output -d out_dbsnp \\"
+ echo "                              --target-build GRCh37 --output-format minimal"
+}
+
 # If no arguments are provided, display usage and exit
 if [ "$#" -eq 0 ]; then
     general_usage
@@ -183,6 +224,16 @@ if [ $# -gt 0 ]; then
         exit 0
       fi
       ;;
+    map-only)
+      runtype="map-only"
+      command="map-only"
+      shift
+      # Check if help is requested for this command
+      if [ $# -gt 0 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+        map_only_usage
+        exit 0
+      fi
+      ;;
   esac
 fi
 
@@ -211,6 +262,13 @@ runexampledata=false
 # Test-specific flags
 run_unit_tests=false
 run_e2e_tests=false
+specific_test_name=""
+
+# Map-only specific flags
+target_build="both"
+apply_mapping=false
+keep_unmapped=false
+output_format="minimal"
 
 # default extrapaths values
 unset extrapaths
@@ -345,6 +403,40 @@ while [ $# -gt 0 ]; do
       run_e2e_tests=true
       shift
       ;;
+    --name)
+      # Specific test name (only valid with test command)
+      if [ "$command" = "test" ]; then
+        specific_test_name="$2"
+        shift 2
+      else
+        echo "Error: --name flag is only valid with 'test' command" 1>&2
+        exit 1
+      fi
+      ;;
+    --target-build)
+      target_build="$2"
+      shift 2
+      ;;
+    --target-build=*)
+      target_build="${1#*=}"
+      shift
+      ;;
+    --apply-mapping)
+      apply_mapping=true
+      shift
+      ;;
+    --keep-unmapped)
+      keep_unmapped=true
+      shift
+      ;;
+    --output-format)
+      output_format="$2"
+      shift 2
+      ;;
+    --output-format=*)
+      output_format="${1#*=}"
+      shift
+      ;;
     
     # Short options
     -h)
@@ -355,6 +447,8 @@ while [ $# -gt 0 ]; do
         prepare_dbsnp_usage 1>&2
       elif [ "$command" = "prepare-1kgp" ]; then
         prepare_1kgp_usage 1>&2
+      elif [ "$command" = "map-only" ]; then
+        map_only_usage 1>&2
       else
         general_usage 1>&2
       fi
@@ -408,6 +502,16 @@ while [ $# -gt 0 ]; do
       extrapaths="$2"
       extrapaths_given=true
       shift 2
+      ;;
+    -n)
+      # Specific test name (only valid with test command)
+      if [ "$command" = "test" ]; then
+        specific_test_name="$2"
+        shift 2
+      else
+        echo "Error: -n flag is only valid with 'test' command" 1>&2
+        exit 1
+      fi
       ;;
     -e)
       # Check if this is for e2e tests (with test command) or example data
@@ -716,6 +820,16 @@ elif [ "${runtype}" == "prepare-dbsnp" ]; then
   run_script="/cleansumstats --generateDbSNPreference"
 elif [ "${runtype}" == "prepare-1kgp" ]; then
   run_script="/cleansumstats --generate1KgAfSNPreference"
+elif [ "${runtype}" == "map-only" ]; then
+  run_script="/cleansumstats/main.nf"
+  # Add map-only specific parameters to the nextflow run command
+  map_only_params="--mapping_only true --targetGenomeBuild ${target_build} --mappingOutputFormat ${output_format}"
+  if [ "${apply_mapping}" = true ]; then
+    map_only_params="${map_only_params} --applyMapping"
+  fi
+  if [ "${keep_unmapped}" = true ]; then
+    map_only_params="${map_only_params} --keepUnmapped"
+  fi
 else
   echo "option not available"
   exit 1
@@ -776,39 +890,38 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
   if [ "${container_image}" == "dockerhub_biopsyk" ]; then
     echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
-    exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
+    # Add specific test name if provided
+    if [ -n "${specific_test_name}" ] && [ "${runtype}" == "etest" ]; then
+      exec docker run --rm ${mount_flags} "${runimage}" ${run_script} "${specific_test_name}"
+    else
+      exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
+    fi
   elif [ "${container_image}" == "docker" ]; then
     echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
-    exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
+    # Add specific test name if provided
+    if [ -n "${specific_test_name}" ] && [ "${runtype}" == "etest" ]; then
+      exec docker run --rm ${mount_flags} "${runimage}" ${run_script} "${specific_test_name}"
+    else
+      exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
+    fi
   else
     echo "container: $runimage"
     mount_flags=$(format_mount_flags "-B")
-    singularity run \
-       --net \
-       --network none \
-       --no-eval \
-       --cleanenv \
-       --containall \
-       --home "${outdir_container}" \
-       ${mount_flags} \
-       ${extrapaths2} \
-       -B "${indir_host}:${indir_container}" \
-       -B "${outdir_host}:${outdir_container}" \
-       -B "${dbsnpdir_host}:${dbsnpdir_container}" \
-       -B "${kgpdir_host}:${kgpdir_container}" \
-       -B "${tmpdir_host}:${tmpdir_container}" \
-       -B "${workdir_host}:${workdir_container}" \
-       "${runimage}" \
-       nextflow \
-         -log "${outdir_container}/.nextflow.log" \
-         run ${run_script} \
-         --extrapaths ${extrapaths3} \
-         ${devmode} \
-         --input "${infile_container}" \
-         --outdir "${outdir_container}" \
-         --libdirdbsnp "${dbsnpdir_container}" \
-         --kg1000AFGRCh38 "${kgpfile_container}"
+    # Add specific test name if provided
+    if [ -n "${specific_test_name}" ] && [ "${runtype}" == "etest" ]; then
+      singularity exec \
+         --cleanenv \
+         ${mount_flags} \
+         "${runimage}" \
+         ${run_script} "${specific_test_name}"
+    else
+      singularity exec \
+         --cleanenv \
+         ${mount_flags} \
+         "${runimage}" \
+         ${run_script}
+    fi
   fi
 elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
   echo "container: $runimage"
@@ -831,7 +944,8 @@ elif [ "${container_image}" == "dockerhub_biopsyk" ]; then
        --input "${infile_container}" \
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \
-       --kg1000AFGRCh38 "${kgpfile_container}"
+       --kg1000AFGRCh38 "${kgpfile_container}" \
+       ${map_only_params:-}
 elif [ "${container_image}" == "docker" ]; then
   echo "container: $runimage"
   mount_flags=$(format_mount_flags "-v")
@@ -853,7 +967,8 @@ elif [ "${container_image}" == "docker" ]; then
        --input "${infile_container}" \
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \
-       --kg1000AFGRCh38 "${kgpfile_container}"
+       --kg1000AFGRCh38 "${kgpfile_container}" \
+       ${map_only_params:-}
 else
   echo "container: $runimage"
   mount_flags=$(format_mount_flags "-B")
@@ -882,7 +997,8 @@ else
        --input "${infile_container}" \
        --outdir "${outdir_container}" \
        --libdirdbsnp "${dbsnpdir_container}" \
-       --kg1000AFGRCh38 "${kgpfile_container}"
+       --kg1000AFGRCh38 "${kgpfile_container}" \
+       ${map_only_params:-}
 fi
 
 if ${pathquicktest}; then

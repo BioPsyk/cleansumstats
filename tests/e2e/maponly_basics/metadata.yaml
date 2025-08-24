@@ -1,0 +1,32 @@
+cleansumstats_metafile_date: 2025-01-23
+cleansumstats_metafile_user: test
+cleansumstats_metafile_kind: library
+
+col_CHR: chr
+col_EffectAllele: a1
+col_BETA: beta
+col_N: n
+col_OR: or
+col_OtherAllele: a2
+col_P: p
+stats_neglog10P: false
+col_POS: bp
+col_SE: se
+col_SNP: snp
+
+path_sumStats: sumstats.txt.gz
+
+study_Title: Test study for maponly workflow
+study_PMID: "https://doi.org/10.1038/test"
+study_Year: 2025
+study_PhenoCode:
+  - "EFO:0000692"
+study_PhenoDesc: Test phenotype for maponly workflow
+study_AccessDate: 2025-01-23
+study_Use: open
+study_Ancestry: EUR
+study_Gender: mixed
+study_Array: meta
+stats_TraitType: quantitative
+stats_Model: linear
+stats_TotalN: 388028
