@@ -33,7 +33,10 @@ function general_usage(){
  echo " -b, --tmpdir <dir>        Path to system tmp or scratch (default: /tmp)"
  echo " -w, --workdir <dir>       Path to workdir/intermediate files (default: work)"
  echo " -p, --paths <path1:path2> Path to metadata associated folders"
- echo " -e, --example [1|2]       Quick example run using reduced test data"
+ echo " -e, --example [N]         Quick example run using test data:"
+ echo "                           1-6: Standard cleaning examples"
+ echo "                           maponly: Test mapping-only workflow"
+ echo "                           applymapping: Test applyMapping feature"
  echo " -l, --dev                 Dev mode, saves intermediate files, no cleanup"
  echo " -j, --image <type>        Container image: docker, dockerhub_biopsyk, or singularity"
  echo " -t, --test                Quick test for all paths and params"
@@ -671,6 +674,16 @@ if $runexampledata; then
         if [ ! -f "${project_dir}/tests/e2e/maponly_basics/sumstats.txt.gz" ]; then
           gzip -c "${project_dir}/tests/e2e/maponly_basics/sumstats.txt" > "${project_dir}/tests/e2e/maponly_basics/sumstats.txt.gz"
         fi
+      elif [ "${runexampledatanr}" == "applymapping" ] ; then
+        # Special case for applyMapping test
+        infile="${project_dir}/tests/e2e/maponly_basics/metadata.yaml"
+        # Enable both mapping_only and applyMapping modes
+        export MAPPING_ONLY_TEST=true
+        export APPLY_MAPPING_TEST=true
+        # Create gzipped version of sumstats if it doesn't exist
+        if [ ! -f "${project_dir}/tests/e2e/maponly_basics/sumstats.txt.gz" ]; then
+          gzip -c "${project_dir}/tests/e2e/maponly_basics/sumstats.txt" > "${project_dir}/tests/e2e/maponly_basics/sumstats.txt.gz"
+        fi
       else
         infile="${project_dir}/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
       fi
@@ -681,6 +694,8 @@ if $runexampledata; then
       # Add suffix based on example number
       if [ "${runexampledatanr}" == "maponly" ] ; then
         outdir="out_test_maponly"
+      elif [ "${runexampledatanr}" == "applymapping" ] ; then
+        outdir="out_test_applymapping"
       elif [ "${runexampledatanr}" != "1" ] && [ -n "${runexampledatanr}" ] ; then
         outdir="out_test_${runexampledatanr}"
       else
@@ -688,8 +703,8 @@ if $runexampledata; then
       fi
     fi
     # Set reference directories based on example type
-    if [ "${runexampledatanr}" == "maponly" ] ; then
-      # Use standard example references for maponly (more realistic results)
+    if [ "${runexampledatanr}" == "maponly" ] || [ "${runexampledatanr}" == "applymapping" ] ; then
+      # Use standard example references for mapping tests (more realistic results)
       dbsnpdir="${project_dir}/tests/example_data/dbsnp/generated_reference"
       kgpdir="${project_dir}/tests/example_data/1kgp/generated_reference"
     else
