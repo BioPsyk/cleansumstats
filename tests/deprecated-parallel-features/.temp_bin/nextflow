@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Temporary wrapper to use test configuration for Nextflow
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+tests_dir=$(dirname "${script_dir}")
+exec "${tests_dir}/lib/test-nextflow.sh" "$@"

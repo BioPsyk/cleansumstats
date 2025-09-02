@@ -74,6 +74,7 @@ CHR	POS	0	RSID	EffectAllele	OtherAllele	B	SE	Z	P	OR	EAF_1KG	INFO	Direction
 EOF
 
 time nextflow -q run -offline \
+         -c "/cleansumstats/conf/test.config" \
      -work-dir "${work_dir}" \
      "/cleansumstats" \
      --dev true \

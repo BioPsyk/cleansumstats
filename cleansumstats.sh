@@ -192,17 +192,22 @@ project_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Save original arguments
 original_args=("$@")
 
+# Save original arguments array
+paramarray=("$@")
+
 # Check for command modifiers (first argument)
 runtype="default"
 command=""
-if [ $# -gt 0 ]; then
-  case "$1" in
+specific_test=""
+
+if [ ${#paramarray[@]} -gt 0 ]; then
+  case "${paramarray[0]}" in
     prepare-dbsnp)
       runtype="prepare-dbsnp"
       command="prepare-dbsnp"
-      shift
+      paramarray=("${paramarray[@]:1}")
       # Check if help is requested for this command
-      if [ $# -gt 0 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+      if [ ${#paramarray[@]} -gt 0 ] && { [ "${paramarray[0]}" = "-h" ] || [ "${paramarray[0]}" = "--help" ]; }; then
         prepare_dbsnp_usage
         exit 0
       fi
@@ -210,9 +215,9 @@ if [ $# -gt 0 ]; then
     prepare-1kgp)
       runtype="prepare-1kgp"
       command="prepare-1kgp"
-      shift
+      paramarray=("${paramarray[@]:1}")
       # Check if help is requested for this command
-      if [ $# -gt 0 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+      if [ ${#paramarray[@]} -gt 0 ] && { [ "${paramarray[0]}" = "-h" ] || [ "${paramarray[0]}" = "--help" ]; }; then
         prepare_1kgp_usage
         exit 0
       fi
@@ -220,9 +225,14 @@ if [ $# -gt 0 ]; then
     test)
       runtype="test"
       command="test"
-      shift
+      paramarray=("${paramarray[@]:1}")
+      # Check if a specific test is specified
+      if [ ${#paramarray[@]} -gt 0 ] && [[ "${paramarray[0]}" != -* ]]; then
+        specific_test="${paramarray[0]}"
+        paramarray=("${paramarray[@]:1}")
+      fi
       # Check if help is requested for this command
-      if [ $# -gt 0 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+      if [ ${#paramarray[@]} -gt 0 ] && { [ "${paramarray[0]}" = "-h" ] || [ "${paramarray[0]}" = "--help" ]; }; then
         test_usage
         exit 0
       fi
@@ -230,16 +240,47 @@ if [ $# -gt 0 ]; then
     map-only)
       runtype="map-only"
       command="map-only"
-      shift
+      paramarray=("${paramarray[@]:1}")
       # Check if help is requested for this command
-      if [ $# -gt 0 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+      if [ ${#paramarray[@]} -gt 0 ] && { [ "${paramarray[0]}" = "-h" ] || [ "${paramarray[0]}" = "--help" ]; }; then
         map_only_usage
         exit 0
       fi
       ;;
-  esac
+  else
+    specific_test=""
+    paramarray=("${paramarray[@]:1}")
+  fi
+elif [ ${paramarray[0]} == "utest" ] ; then
+  runtype="utest"
+  # Check if a specific test is specified
+  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
+    specific_test="${paramarray[1]}"
+    paramarray=("${paramarray[@]:2}")
+  else
+    specific_test=""
+    paramarray=("${paramarray[@]:1}")
+  fi
+elif [ ${paramarray[0]} == "etest" ] ; then
+  runtype="etest"
+  # Check if a specific test is specified
+  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
+    specific_test="${paramarray[1]}"
+    paramarray=("${paramarray[@]:2}")
+  else
+    specific_test=""
+    paramarray=("${paramarray[@]:1}")
+  fi
+else
+  runtype="default"
+  specific_test=""
 fi
 
+
+# starting getops with :, puts the checking in silent mode for errors.
+getoptsstring=":hvi:o:d:k:b:w:p:e:j:tl:"
+
+>>>>>>> develop
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
 # NOTE: If you are a sysadmin, remember to symlink back here in case these files are moved to a 
@@ -837,6 +878,9 @@ kgpfile_name="1kg_af_ref.txt"
 kgpdir_container="/cleansumstats/kgpdir"
 kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 
+# test_logs (for test modes)
+testlogs_host="${project_dir}/tests/test_logs"
+testlogs_container="/cleansumstats/tests/test_logs"
 
 # Use outdir as fake home to avoid lock issues for the hidden .nextflow/history file
 #FAKE_HOME="${outdir_container}"
@@ -857,12 +901,27 @@ kgpfile_container="${kgpdir_container}/${kgpfile_name}"
 if [ "${runtype}" == "default" ]; then
   run_script="/cleansumstats/main.nf"
 elif [ "${runtype}" == "test" ]; then
-  run_script="/cleansumstats/tests/run-tests.sh"
+  mkdir -p tests/test_logs
+  if [ -n "${specific_test}" ]; then
+    run_script="/cleansumstats/tests/run-tests.sh ${specific_test}"
+  else
+    run_script="/cleansumstats/tests/run-tests.sh"
+  fi
 elif [ "${runtype}" == "utest" ]; then
-  run_script="/cleansumstats/tests/run-unit-tests.sh"
+  mkdir -p tests/test_logs
+  if [ -n "${specific_test}" ]; then
+    run_script="/cleansumstats/tests/run-unit-tests.sh ${specific_test}"
+  else
+    run_script="/cleansumstats/tests/run-unit-tests.sh"
+  fi
 elif [ "${runtype}" == "etest" ]; then
   mkdir -p tmp
-  run_script="/cleansumstats/tests/run-e2e-tests.sh"
+  mkdir -p tests/test_logs
+  if [ -n "${specific_test}" ]; then
+    run_script="/cleansumstats/tests/run-e2e-tests.sh ${specific_test}"
+  else
+    run_script="/cleansumstats/tests/run-e2e-tests.sh"
+  fi
 elif [ "${runtype}" == "prepare-dbsnp" ]; then
   run_script="/cleansumstats --generateDbSNPreference"
 elif [ "${runtype}" == "prepare-1kgp" ]; then
@@ -943,8 +1002,12 @@ if ${pathquicktest}; then
  echo "--libdirdbsnp ${dbsnpdir_container}"
  echo "--kg1000AFGRCh38 ${kgpfile_container}"
 elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}" == "etest" ]; then
+  # Dedicated simplified flow for test modes
+  # Use existing mount infrastructure for clean, minimal mounting
+  
+  echo "container: $runimage"
+  
   if [ "${container_image}" == "dockerhub_biopsyk" ]; then
-    echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
     # Add specific test name if provided
     if [ -n "${specific_test_name}" ] && [ "${runtype}" == "etest" ]; then
@@ -953,7 +1016,6 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
       exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
     fi
   elif [ "${container_image}" == "docker" ]; then
-    echo "container: $runimage"
     mount_flags=$(format_mount_flags "-v")
     # Add specific test name if provided
     if [ -n "${specific_test_name}" ] && [ "${runtype}" == "etest" ]; then
@@ -962,18 +1024,22 @@ elif [ "${runtype}" == "test" ] || [ "${runtype}" == "utest" ] || [ "${runtype}"
       exec docker run --rm ${mount_flags} "${runimage}" ${run_script}
     fi
   else
-    echo "container: $runimage"
+    # Singularity - use existing mount infrastructure
     mount_flags=$(format_mount_flags "-B")
     # Add specific test name if provided
     if [ -n "${specific_test_name}" ] && [ "${runtype}" == "etest" ]; then
       singularity exec \
          --cleanenv \
+         --containall \
+         --home "${outdir_container}" \
          ${mount_flags} \
          "${runimage}" \
          ${run_script} "${specific_test_name}"
     else
       singularity exec \
          --cleanenv \
+         --containall \
+         --home "${outdir_container}" \
          ${mount_flags} \
          "${runimage}" \
          ${run_script}
@@ -1030,14 +1096,10 @@ else
   mount_flags=$(format_mount_flags "-B")
   
   singularity run \
-     --net \
-     --network none \
-     --no-eval \
      --cleanenv \
      --containall \
      --home "${outdir_container}" \
      ${mount_flags} \
-     ${extrapaths2} \
      -B "${indir_host}:${indir_container}" \
      -B "${outdir_host}:${outdir_container}" \
      -B "${dbsnpdir_host}:${dbsnpdir_container}" \
@@ -1072,8 +1134,12 @@ else
   else
     function cleanup {
       echo ">> Cleaning up (disable with -l) "
-      echo ">> Removing ${outdir_host}/.nextflow"
-      rm -r ${outdir_host}/.nextflow
+      if [ -d "${outdir_host}/.nextflow" ]; then
+        echo ">> Removing ${outdir_host}/.nextflow"
+        rm -r ${outdir_host}/.nextflow
+      else
+        echo ">> No .nextflow directory to remove"
+      fi
       echo ">> Done"
     }
     trap cleanup EXIT

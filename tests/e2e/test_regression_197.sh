@@ -46,6 +46,7 @@ cat <<EOF > ./expected-result-grch37-grch38.txt
 EOF
 
 time nextflow -q run -offline \
+         -c "/cleansumstats/conf/test.config" \
      -work-dir "${work_dir}" \
      "/cleansumstats" \
      --dev true \
