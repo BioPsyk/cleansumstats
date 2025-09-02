@@ -42,7 +42,15 @@ process handle_unmapped {
   
   # Extract unmapped variants by row index
   if [ -s unmapped_indices.txt ]; then
-    catfile ${sumstats} | tail -n +2 | awk -F'\t' 'NR==FNR{idx[\$1]; next} FNR in idx' unmapped_indices.txt - >> unmapped
+    # Debug: show what's in unmapped_indices.txt
+    echo "DEBUG: unmapped indices:" >&2
+    cat unmapped_indices.txt >&2
+    echo "DEBUG: first 5 data lines:" >&2
+    catfile ${sumstats} | tail -n +2 | head -5 >&2
+    
+    # Read unmapped indices and extract corresponding lines from sumstats
+    # Use awk to extract specific line numbers from the data
+    catfile ${sumstats} | tail -n +2 | awk 'NR==FNR{lines[\$1]=1; next} FNR in lines' unmapped_indices.txt - >> unmapped
   fi
   
   # Compress output

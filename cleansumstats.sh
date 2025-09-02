@@ -654,6 +654,23 @@ if $runexampledata; then
         infile="${project_dir}/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
       elif [ "${runexampledatanr}" == "2" ] ; then
         infile="${project_dir}/tests/example_data/sumstat_2/sumstat_2_raw_meta.txt"
+      elif [ "${runexampledatanr}" == "3" ] ; then
+        infile="${project_dir}/tests/example_data/sumstat_3/sumstat_3_raw_meta.txt"
+      elif [ "${runexampledatanr}" == "4" ] ; then
+        infile="${project_dir}/tests/example_data/sumstat_4/sumstat_4_raw_meta.txt"
+      elif [ "${runexampledatanr}" == "5" ] ; then
+        infile="${project_dir}/tests/example_data/sumstat_5/sumstat_5_raw_meta.txt"
+      elif [ "${runexampledatanr}" == "6" ] ; then
+        infile="${project_dir}/tests/example_data/sumstat_6/sumstat_6_raw_meta.yaml"
+      elif [ "${runexampledatanr}" == "maponly" ] ; then
+        # Special case for maponly test
+        infile="${project_dir}/tests/e2e/maponly_basics/metadata.yaml"
+        # Enable mapping_only mode via config
+        export MAPPING_ONLY_TEST=true
+        # Create gzipped version of sumstats if it doesn't exist
+        if [ ! -f "${project_dir}/tests/e2e/maponly_basics/sumstats.txt.gz" ]; then
+          gzip -c "${project_dir}/tests/e2e/maponly_basics/sumstats.txt" > "${project_dir}/tests/e2e/maponly_basics/sumstats.txt.gz"
+        fi
       else
         infile="${project_dir}/tests/example_data/sumstat_1/sumstat_1_raw_meta.txt"
       fi
@@ -661,10 +678,25 @@ if $runexampledata; then
     if ${outdir_given}; then
       :
     else
-      outdir="out_test"
+      # Add suffix based on example number
+      if [ "${runexampledatanr}" == "maponly" ] ; then
+        outdir="out_test_maponly"
+      elif [ "${runexampledatanr}" != "1" ] && [ -n "${runexampledatanr}" ] ; then
+        outdir="out_test_${runexampledatanr}"
+      else
+        outdir="out_test"
+      fi
     fi
-    dbsnpdir="${project_dir}/tests/example_data/dbsnp/generated_reference"
-    kgpdir="${project_dir}/tests/example_data/1kgp/generated_reference"
+    # Set reference directories based on example type
+    if [ "${runexampledatanr}" == "maponly" ] ; then
+      # Use standard example references for maponly (more realistic results)
+      dbsnpdir="${project_dir}/tests/example_data/dbsnp/generated_reference"
+      kgpdir="${project_dir}/tests/example_data/1kgp/generated_reference"
+    else
+      # Use standard example references
+      dbsnpdir="${project_dir}/tests/example_data/dbsnp/generated_reference"
+      kgpdir="${project_dir}/tests/example_data/1kgp/generated_reference"
+    fi
   else
     echo "${runtype}"
     echo "unknown runtype"
@@ -833,6 +865,11 @@ elif [ "${runtype}" == "map-only" ]; then
 else
   echo "option not available"
   exit 1
+fi
+
+# Add mapping_only parameter if MAPPING_ONLY_TEST is set
+if [ "${MAPPING_ONLY_TEST}" = "true" ]; then
+  map_only_params="--mapping_only true"
 fi
 
 source "${project_dir}/scripts/init-containerization.sh"
