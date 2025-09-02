@@ -870,6 +870,10 @@ fi
 # Add mapping_only parameter if MAPPING_ONLY_TEST is set
 if [ "${MAPPING_ONLY_TEST}" = "true" ]; then
   map_only_params="--mapping_only true"
+  # Also enable applyMapping for testing
+  if [ "${APPLY_MAPPING_TEST}" = "true" ]; then
+    map_only_params="${map_only_params} --applyMapping true"
+  fi
 fi
 
 source "${project_dir}/scripts/init-containerization.sh"

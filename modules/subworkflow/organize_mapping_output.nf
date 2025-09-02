@@ -4,6 +4,10 @@ include {
   organize_mapping_output as organize_mapping_output_process
 } from '../process/organize_mapping_output.nf'
 
+include {
+  generate_ordered_mapping
+} from '../process/generate_ordered_mapping.nf'
+
 workflow organize_mapping_output {
   take:
   mapped_variants      // Channel: tuple(mID, path(mapped_file))
@@ -18,10 +22,20 @@ workflow organize_mapping_output {
       .join(original_sumstats, by: 0)
   )
   
+  // Generate ordered mapping output if applyMapping is enabled
+  if (params.applyMapping) {
+    generate_ordered_mapping(
+      original_sumstats
+        .join(mapped_variants, by: 0)
+        .join(unmapped_variants, by: 0)
+    )
+  }
+  
   emit:
   grch37_mapped = organize_mapping_output_process.out.grch37_mapped
   grch38_mapped = organize_mapping_output_process.out.grch38_mapped
   unmapped_final = organize_mapping_output_process.out.unmapped_final
+  ordered_mapping = params.applyMapping ? generate_ordered_mapping.out.ordered_mapping : Channel.empty()
 }
 
 // Keep the complex workflow for future use
