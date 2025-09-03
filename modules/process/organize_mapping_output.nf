@@ -4,14 +4,17 @@ process organize_mapping_output {
   publishDir "${params.outdir}", mode: 'copy'
   
   input:
-  tuple val(mID), path(mapped), path(unmapped), path(sumstats)
+  tuple val(mID), path(mapped), path(unmapped), path(sumstats), path(metadata)
   
   output:
   tuple val(mID), path("GRCh37_mapped.gz"), emit: grch37_mapped
   tuple val(mID), path("GRCh38_mapped.gz"), emit: grch38_mapped
   tuple val(mID), path("unmapped.gz"), emit: unmapped_final
+  tuple val(mID), path("raw/*"), emit: raw_files
+  tuple val(mID), path("mapped_metadata.yaml"), emit: mapped_metadata
   
   script:
+  pipelineVersion = new File("$projectDir/VERSION").text.trim()
   """
   # For mapping-only workflow, just copy the mapped and unmapped files
   # The mapped file already contains all genome build information
@@ -24,6 +27,10 @@ process organize_mapping_output {
       cat "\$1"
     fi
   }
+  
+  # Create raw folder and copy original metadata
+  mkdir -p raw
+  cp ${metadata} raw/metadata.yaml
   
   # The mapped file contains both GRCh37 and GRCh38 mappings
   # For now, copy it as both outputs (in a real implementation, 
@@ -39,6 +46,24 @@ process organize_mapping_output {
   if [ "${unmapped}" != "unmapped.gz" ]; then
     cp ${unmapped} unmapped.gz
   fi
+  
+  # Create mapped metadata file with cleansumstats version and processing info
+  dateOfCreation="\$(date +%F-%H%M)"
+  cat <<EOF > mapped_metadata.yaml
+# Mapping-only workflow metadata
+cleansumstats_version: ${pipelineVersion}
+cleansumstats_date: \${dateOfCreation}
+cleansumstats_user: \$(id -u -n)
+cleansumstats_workflow: mapping_only
+cleansumstats_mapped_GRCh38: GRCh38_mapped.gz
+cleansumstats_mapped_GRCh37: GRCh37_mapped.gz
+cleansumstats_unmapped: unmapped.gz
+
+# Original metadata
+EOF
+  
+  # Append original metadata (excluding any comments)
+  grep -v "^#" ${metadata} >> mapped_metadata.yaml
   """
 }
 

@@ -13,6 +13,7 @@ workflow organize_mapping_output {
   mapped_variants      // Channel: tuple(mID, path(mapped_file))
   unmapped_variants    // Channel: tuple(mID, path(unmapped_file))
   original_sumstats    // Channel: tuple(mID, path(sumstats_file))
+  metadata_file        // Channel: tuple(mID, path(metadata_file))
   
   main:
   // Organize the mapping output files
@@ -20,6 +21,7 @@ workflow organize_mapping_output {
     mapped_variants
       .join(unmapped_variants, by: 0)
       .join(original_sumstats, by: 0)
+      .join(metadata_file, by: 0)
   )
   
   // Generate ordered mapping output if applyMapping is enabled
@@ -35,6 +37,8 @@ workflow organize_mapping_output {
   grch37_mapped = organize_mapping_output_process.out.grch37_mapped
   grch38_mapped = organize_mapping_output_process.out.grch38_mapped
   unmapped_final = organize_mapping_output_process.out.unmapped_final
+  raw_files = organize_mapping_output_process.out.raw_files
+  mapped_metadata = organize_mapping_output_process.out.mapped_metadata
   ordered_mapping = params.applyMapping ? generate_ordered_mapping.out.ordered_mapping : Channel.empty()
 }
 

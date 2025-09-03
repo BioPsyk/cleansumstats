@@ -39,10 +39,11 @@ echo "-- Running map-only workflow with Nextflow"
 if [[ -f /.dockerenv ]] || [[ -n "${SINGULARITY_CONTAINER:-}" ]]; then
     # We're inside a container, run nextflow directly
     time nextflow -q run -offline \
+         -c "/cleansumstats/conf/test.config" \
          -with-report "${reports_dir}/${case_name}_report.html" \
          -with-timeline "${reports_dir}/${case_name}_timeline.html" \
          -work-dir "${case_dir}" \
-         "/cleansumstats/main.nf" \
+         "/cleansumstats" \
          --dev true \
          --mapping_only true \
          --input '*.yaml' \

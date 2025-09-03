@@ -313,7 +313,8 @@ workflow {
       organize_mapping_output(
         ch_mapped_file,
         handle_unmapped.out.unmapped,
-        main_init_checks_crucial_paths.out.spath
+        main_init_checks_crucial_paths.out.spath,
+        ch_mfile_checkX
       )
       
     } else if (doCompleteCleaningWorkflow){
