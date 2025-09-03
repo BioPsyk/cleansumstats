@@ -247,40 +247,30 @@ if [ ${#paramarray[@]} -gt 0 ]; then
         exit 0
       fi
       ;;
-  else
-    specific_test=""
-    paramarray=("${paramarray[@]:1}")
-  fi
-elif [ ${paramarray[0]} == "utest" ] ; then
-  runtype="utest"
-  # Check if a specific test is specified
-  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
-    specific_test="${paramarray[1]}"
-    paramarray=("${paramarray[@]:2}")
-  else
-    specific_test=""
-    paramarray=("${paramarray[@]:1}")
-  fi
-elif [ ${paramarray[0]} == "etest" ] ; then
-  runtype="etest"
-  # Check if a specific test is specified
-  if [ ${#paramarray[@]} -gt 1 ] && [[ ${paramarray[1]} != -* ]]; then
-    specific_test="${paramarray[1]}"
-    paramarray=("${paramarray[@]:2}")
-  else
-    specific_test=""
-    paramarray=("${paramarray[@]:1}")
-  fi
-else
-  runtype="default"
-  specific_test=""
+    utest)
+      runtype="utest"
+      paramarray=("${paramarray[@]:1}")
+      # Check if a specific test is specified
+      if [ ${#paramarray[@]} -gt 0 ] && [[ "${paramarray[0]}" != -* ]]; then
+        specific_test="${paramarray[0]}"
+        paramarray=("${paramarray[@]:1}")
+      fi
+      ;;
+    etest)
+      runtype="etest"  
+      paramarray=("${paramarray[@]:1}")
+      # Check if a specific test is specified
+      if [ ${#paramarray[@]} -gt 0 ] && [[ "${paramarray[0]}" != -* ]]; then
+        specific_test="${paramarray[0]}"
+        paramarray=("${paramarray[@]:1}")
+      fi
+      ;;
+  esac
 fi
 
 
 # starting getops with :, puts the checking in silent mode for errors.
 getoptsstring=":hvi:o:d:k:b:w:p:e:j:tl:"
-
->>>>>>> develop
 # Set default dbsnpdir to where the files are automatically placed when
 # following the instrucitons in the README.md
 # NOTE: If you are a sysadmin, remember to symlink back here in case these files are moved to a 
@@ -324,6 +314,9 @@ workdir="${present_dir}/work"
 devmode=""
 
 # Parse both short and long options using the common portable pattern
+# Use set to replace positional parameters with paramarray contents
+set -- "${paramarray[@]}"
+
 while [ $# -gt 0 ]; do
   case "$1" in
     # Long options
