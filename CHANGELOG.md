@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2025-09-03
+
+### Added
+- New mapping-only workflow mode (`--mapping_only`) for variant mapping without full cleaning pipeline
+- New applyMapping feature to preserve original variant order when mapping to dbSNP
+- Quick test options for mapping-only (`-e maponly`) and applyMapping (`-e applymapping`) workflows
+- Comprehensive e2e test for mapping-only workflow (`test_maponly_basics.sh`)
+- Support for unmapped variants output in mapping-only mode
+- Documentation for mapping-only workflow (sumstat_6 example dataset)
+
+### Changed
+- Improved output organization for mapping-only workflow with separate GRCh37/GRCh38/unmapped files
+- Enhanced parameter parsing and help text for cleansumstats.sh wrapper
+- Standardized test data file naming conventions
+
+### Fixed
+- Test data file compression issue in maponly_basics test
+
 ## [1.12.1] - 2025-06-11
 
 ### Fixed
