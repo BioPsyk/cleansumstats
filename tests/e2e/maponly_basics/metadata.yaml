@@ -1,0 +1,25 @@
+# Minimal metadata example for mapping-only workflow
+# Only required fields for pipeline execution
+cleansumstats_metafile_kind: minimal
+
+# Required: path to sumstats file
+path_sumStats: sumstats.txt.gz
+
+# Required: statistical model
+stats_Model: linear
+
+# Required: variant identification (using SNP column)
+col_SNP: snp
+
+# Required: effect allele column
+col_EffectAllele: a1
+
+# Required: at least one statistics column (using BETA)
+col_BETA: beta
+
+# Optional but useful columns
+col_CHR: chr
+col_POS: bp
+col_OtherAllele: a2
+col_P: p
+col_SE: se

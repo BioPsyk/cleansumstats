@@ -1,0 +1,23 @@
+# Minimal metadata for mapping-only workflow - Example 2
+# Uses CHR:POS for variant identification (no SNP column)
+cleansumstats_metafile_kind: minimal
+
+# Required fields
+path_sumStats: sumstat_7_raw.gz
+stats_Model: logistic
+
+# Using CHR:POS instead of SNP column
+col_CHR: chromosome
+col_POS: position
+
+# Required: effect allele
+col_EffectAllele: effect_allele
+
+# Using OR and P-value for statistics
+col_OR: odds_ratio
+col_P: pvalue
+
+# Optional columns
+col_OtherAllele: other_allele
+col_SE: standard_error
+col_N: sample_size
