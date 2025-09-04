@@ -1,0 +1,22 @@
+# Minimal metadata for mapping-only workflow - Example 1
+# Uses SNP column for variant identification
+cleansumstats_metafile_kind: minimal
+
+# Required fields
+path_sumStats: sumstat_6_raw.gz
+stats_Model: linear
+col_SNP: SNP
+col_EffectAllele: A1
+
+# At least one statistics column (using BETA and P-value)
+col_BETA: BETA
+col_P: P
+
+# Optional but useful columns for mapping
+col_CHR: CHR
+col_POS: BP
+col_OtherAllele: A2
+col_SE: SE
+
+# Optional: specify if P-values are transformed
+stats_neglog10P: false

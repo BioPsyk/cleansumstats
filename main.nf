@@ -215,6 +215,8 @@ include { map_to_dbsnp } from './modules/subworkflow/map_to_dbsnp.nf'
 include { allele_correction } from './modules/subworkflow/allele_correction.nf'
 include { update_stats } from './modules/subworkflow/update_stats.nf'
 include { organize_output } from './modules/subworkflow/organize_output.nf'
+include { handle_unmapped } from './modules/subworkflow/handle_unmapped.nf'
+include { organize_mapping_output } from './modules/subworkflow/organize_mapping_output.nf'
 
 workflow {
   main:
@@ -292,7 +294,30 @@ workflow {
     check_sumstat_format(main_init_checks_crucial_paths.out.mfile_check_format)
     add_sorted_rowindex_to_sumstat(check_sumstat_format.out.sfile)
 
-    if (doCompleteCleaningWorkflow){
+    if (params.mapping_only) {
+      // Mapping-only workflow
+      map_to_dbsnp(add_sorted_rowindex_to_sumstat.out.main)
+      
+      // Extract just the file from the dbsnp_mapped output (remove build info)
+      map_to_dbsnp.out.dbsnp_mapped
+        .map { mID, build, file -> tuple(mID, file) }
+        .set { ch_mapped_file }
+      
+      // Handle unmapped variants
+      handle_unmapped(
+        add_sorted_rowindex_to_sumstat.out.main,
+        ch_mapped_file
+      )
+      
+      // Organize mapping output
+      organize_mapping_output(
+        ch_mapped_file,
+        handle_unmapped.out.unmapped,
+        main_init_checks_crucial_paths.out.spath,
+        ch_mfile_checkX
+      )
+      
+    } else if (doCompleteCleaningWorkflow){
 
       map_to_dbsnp(add_sorted_rowindex_to_sumstat.out.main)
       ch_allele_correction_combine=map_to_dbsnp.out.dbsnp_mapped.join(add_sorted_rowindex_to_sumstat.out.main, by: 0)

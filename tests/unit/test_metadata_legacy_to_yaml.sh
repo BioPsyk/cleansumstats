@@ -36,8 +36,9 @@ echo ">> Test ${test_script}"
 # Cases
 #=================================================================================
 
-for example_data in "${PROJECT_DIR}/tests/example_data/"sumstat_*
+for i in 1 2 3 4 5
 do
+  example_data="${PROJECT_DIR}/tests/example_data/sumstat_${i}"
   name=$(basename "${example_data}")
   _setup "${name}"
 
